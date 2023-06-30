@@ -205,7 +205,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         FileMove fileMove = createRenameFileMove();
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.NOT_FOUND, null);
     }
 
     @Test

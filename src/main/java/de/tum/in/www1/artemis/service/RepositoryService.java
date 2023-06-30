@@ -29,10 +29,13 @@ public class RepositoryService {
 
     private final GitService gitService;
 
+    private final FileService fileService;
+
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService) {
+    public RepositoryService(GitService gitService, FileService fileService) {
         this.gitService = gitService;
+        this.fileService = fileService;
     }
 
     /**
@@ -260,19 +263,21 @@ public class RepositoryService {
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
-        Path newSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.newFilename(), false);
-        checkIfPathExistsInRepositoryAndFileIsValidAndReturnFileSafeFile(repository, newSafePath);
+        String newFilename = fileService.sanitizeFilename(fileMove.newFilename());
 
         Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
         if (existingFile.isEmpty()) {
-            throw new IllegalArgumentException("Existing path is not valid");
+            throw new FileNotFoundException();
         }
         if (!repository.isValidFile(existingFile.get())) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
-        File newFile = new File(existingFile.get().toPath().getParent().resolve(newSafePath), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(newFilename), repository);
         if (!repository.isValidFile(newFile)) {
             throw new IllegalArgumentException("Existing path is not valid");
+        }
+        if (gitService.getFileByName(repository, newFile.getPath().toString()).isPresent()) {
+            throw new FileAlreadyExistsException("New path is not valid");
         }
         boolean isRenamed = existingFile.get().renameTo(newFile);
         if (!isRenamed) {
