@@ -169,9 +169,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final List<ExerciseGroup> exerciseGroupsNow = request.postListWithResponseBody(
                 "/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore, ExerciseGroup.class, HttpStatus.OK);
 
-        assertThat(exerciseGroupsNow).hasSize(9);
-        assertThat(exerciseGroupsNow).containsAll(exerciseGroupsBefore);
-        assertThat(exerciseGroupsNow).allMatch(element -> element.getId() != null);
+        assertThat(exerciseGroupsNow).hasSize(9).containsAll(exerciseGroupsBefore).allMatch(element -> element.getId() != null);
 
         for (var exerciseGroup : exerciseGroupsBefore) {
             assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getId(), exerciseGroup.getId())).hasSize(1);
