@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +29,10 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final FileService fileService;
-
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, FileService fileService) {
+    public RepositoryService(GitService gitService) {
         this.gitService = gitService;
-        this.fileService = fileService;
     }
 
     /**
@@ -186,26 +184,10 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
-        String cleanFilePath = Paths.get(filePath).normalize().toString();
-        if (cleanFilePath.startsWith("..")) {
-            throw new IllegalArgumentException();
-        }
-        File file = checkIfFileExistsInRepository(repository, cleanFilePath);
+        File file = checkIfPathIsValidAndExistsInRepositoryAndReturnFile(repository, filePath);
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
-    }
-
-    private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
-        if (gitService.getFileByName(repository, filename).isPresent()) {
-            throw new FileAlreadyExistsException("file already exists");
-        }
-
-        File file = new File(Path.of(repository.getLocalPath().toString(), filename).toFile(), repository);
-        if (!repository.isValidFile(file)) {
-            throw new IllegalArgumentException();
-        }
-        return file;
     }
 
     /**
@@ -217,17 +199,33 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
-        String cleanFolderName = Paths.get(folderPath).toString();
-        if (cleanFolderName.startsWith("..")) {
-            throw new IllegalArgumentException();
-        }
-        checkIfFileExistsInRepository(repository, cleanFolderName);
-        Files.createDirectory(repository.getLocalPath().resolve(cleanFolderName));
+        checkIfPathIsValidAndExistsInRepositoryAndReturnFile(repository, folderPath);
+        Files.createDirectory(repository.getLocalPath().resolve(folderPath));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(cleanFolderName).resolve(".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(folderPath).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
+    }
+
+    private File checkIfPathIsValidAndExistsInRepositoryAndReturnFile(Repository repository, String path) throws FileAlreadyExistsException {
+        String unescapedPath = StringEscapeUtils.unescapeJava(path);
+        Path unknownInputPath = Paths.get(unescapedPath);
+        Path absoluteInputPath = unknownInputPath.normalize().toAbsolutePath();
+        Path absoluteRepositoryPath = repository.getLocalPath().normalize().toAbsolutePath();
+        if (!absoluteInputPath.startsWith(absoluteRepositoryPath) || !absoluteInputPath.toFile().exists()) {
+            throw new IllegalArgumentException("Path is not valid");
+        }
+
+        if (gitService.getFileByName(repository, path).isPresent()) {
+            throw new FileAlreadyExistsException("Path already exists");
+        }
+
+        File file = new File(absoluteInputPath.toFile(), repository);
+        if (!repository.isValidFile(file)) {
+            throw new IllegalArgumentException("Path is not valid");
+        }
+        return file;
     }
 
     /**

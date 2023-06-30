@@ -129,23 +129,17 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Sanitize the filename and replace all invalid characters with an underscore
+     * Sanitize the filename
+     * <ul>
+     * <li>replace all invalid characters with an underscore</li>
+     * <li>replace multiple . with a single one</li>
+     * </ul>
      *
      * @param filename the filename to sanitize
      * @return the sanitized filename
      */
     public String sanitizeFilename(String filename) {
-        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
-    }
-
-    /**
-     * Sanitize the folder name and replace all invalid characters with an underscore
-     *
-     * @param folderName the folder name to sanitize
-     * @return the sanitized folder name
-     */
-    public String sanitizeFolderName(String folderName) {
-        return folderName.replaceAll("[^a-zA-Z\\d\\-]", "_");
+        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
     }
 
     /**
