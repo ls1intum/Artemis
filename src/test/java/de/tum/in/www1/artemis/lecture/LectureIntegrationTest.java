@@ -79,7 +79,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         userUtilService.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        var lecture = this.course1.getLectures().stream().findFirst().get();
+        var lecture = this.course1.getLectures().stream().findFirst().orElseThrow();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
         Channel channel = new Channel();
         channel.setCourse(course1);
@@ -91,7 +91,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         this.lecture1 = lectureRepository.save(lecture);
         channel.setLecture(this.lecture1);
         channelRepository.save(channel);
-        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
+        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
@@ -181,7 +181,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
-        Lecture originalLecture = lectureRepository.findById(lecture1.getId()).get();
+        Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
         String channelName = "lecture-channel";
@@ -202,7 +202,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
         originalLecture.setChannelName("test");
 
@@ -214,7 +214,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
-        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().get();
+        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
         assertThat(lecture.getLectureUnits()).isEmpty();
     }
 
@@ -230,7 +230,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
 
         final Lecture finalLectureWithSlides = lectureWithSlides;
-        Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().get();
+        Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
 
         assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentUnitWithSlides);
@@ -250,7 +250,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void getLectureForCourse_withLectureUnits_shouldGetLecturesWithLectureUnits() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
-        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().get();
+        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(4);
     }
 
@@ -305,9 +305,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLecture_AttachmentNotReleased_shouldGetLectureWithoutAttachmentUnitAndAttachment() throws Exception {
-        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentUnit.getId()).get();
+        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentUnit.getId()).orElseThrow();
         unitAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
-        Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).get();
+        Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow();
         lectureAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
         attachmentRepository.saveAll(Set.of(unitAttachment, lectureAttachment));
 

@@ -493,7 +493,7 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
-            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().get());
+            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }
 
