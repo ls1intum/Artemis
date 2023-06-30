@@ -184,7 +184,8 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
-        File file = checkIfPathIsValidAndExistsInRepositoryAndReturnFile(repository, filePath);
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
+        File file = checkIfPathExistsInRepositoryAndFileIsValidAndReturnFileSafeFile(repository, safePath);
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -199,29 +200,49 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
-        checkIfPathIsValidAndExistsInRepositoryAndReturnFile(repository, folderPath);
-        Files.createDirectory(repository.getLocalPath().resolve(folderPath));
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, folderPath, false);
+        checkIfPathExistsInRepositoryAndFileIsValidAndReturnFileSafeFile(repository, safePath);
+        Files.createDirectory(repository.getLocalPath().resolve(safePath));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(folderPath).resolve(".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
     }
 
-    private File checkIfPathIsValidAndExistsInRepositoryAndReturnFile(Repository repository, String path) throws FileAlreadyExistsException {
+    private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
-        Path unknownInputPath = Paths.get(unescapedPath);
-        Path absoluteInputPath = unknownInputPath.normalize().toAbsolutePath();
+        Path unknownInputPath = Paths.get(unescapedPath).normalize();
         Path absoluteRepositoryPath = repository.getLocalPath().normalize().toAbsolutePath();
-        if (!absoluteInputPath.startsWith(absoluteRepositoryPath) || !absoluteInputPath.toFile().exists()) {
+        Path absoluteInputPath = absoluteRepositoryPath.resolve(unknownInputPath).normalize();
+        if (!absoluteInputPath.startsWith(absoluteRepositoryPath)) {
+            throw new IllegalArgumentException("Path is not valid");
+        }
+        return unknownInputPath;
+    }
+
+    private Path checkIfPathIsValidAndExistanceAndReturnSafePath(Repository repository, String path, boolean exists) {
+        Path safePath = checkIfPathIsValidAndReturnSafePath(repository, path);
+        Path fullPath = repository.getLocalPath().resolve(safePath);
+        if ((exists && !fullPath.toFile().exists()) || (!exists && fullPath.toFile().exists())) {
+            throw new IllegalArgumentException("Path is not valid");
+        }
+        return safePath;
+    }
+
+    /**
+     * Checks if the path exists in the repository and if the file is valid.
+     *
+     * @param repository the repository
+     * @param path       the relative path
+     * @return the file for the path in the repository
+     */
+    private File checkIfPathExistsInRepositoryAndFileIsValidAndReturnFileSafeFile(Repository repository, Path path) {
+        if (gitService.getFileByName(repository, path.toString()).isPresent()) {
             throw new IllegalArgumentException("Path is not valid");
         }
 
-        if (gitService.getFileByName(repository, path).isPresent()) {
-            throw new FileAlreadyExistsException("Path already exists");
-        }
-
-        File file = new File(absoluteInputPath.toFile(), repository);
+        File file = new File(Path.of(repository.getLocalPath().toString()).resolve(path).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException("Path is not valid");
         }
@@ -238,26 +259,24 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        if (Paths.get(fileMove.currentFilePath()).normalize().toString().startsWith("..") || Paths.get(fileMove.newFilename()).normalize().toString().startsWith("..")) {
-            throw new IllegalArgumentException("Invalid file path");
-        }
-        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath());
+        Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
+        Path newSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.newFilename(), false);
+        checkIfPathExistsInRepositoryAndFileIsValidAndReturnFileSafeFile(repository, newSafePath);
+
+        Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
         if (existingFile.isEmpty()) {
-            throw new FileNotFoundException();
+            throw new IllegalArgumentException("Existing path is not valid");
         }
         if (!repository.isValidFile(existingFile.get())) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Existing path is not valid");
         }
-        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.newFilename()), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(newSafePath), repository);
         if (!repository.isValidFile(newFile)) {
-            throw new IllegalArgumentException();
-        }
-        if (gitService.getFileByName(repository, newFile.getName()).isPresent()) {
-            throw new FileAlreadyExistsException("file already exists");
+            throw new IllegalArgumentException("Existing path is not valid");
         }
         boolean isRenamed = existingFile.get().renameTo(newFile);
         if (!isRenamed) {
-            throw new FileNotFoundException();
+            throw new IllegalArgumentException("Existing path is not valid");
         }
 
         repository.setContent(null); // invalidate cache
@@ -273,11 +292,8 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
-        String cleanFileName = Paths.get(filename).normalize().toString();
-        if (cleanFileName.startsWith("..")) {
-            throw new IllegalArgumentException();
-        }
-        Optional<File> file = gitService.getFileByName(repository, cleanFileName);
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filename, true);
+        Optional<File> file = gitService.getFileByName(repository, safePath.toString());
 
         if (file.isEmpty()) {
             throw new FileNotFoundException();
