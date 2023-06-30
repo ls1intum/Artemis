@@ -232,8 +232,8 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
             assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
 
-            Exercise expected = listReceived.get(i).getExercises().stream().findFirst().get();
-            Exercise exerciseReceived = listExpected.get(i).getExercises().stream().findFirst().get();
+            Exercise expected = listReceived.get(i).getExercises().stream().findFirst().orElseThrow();
+            Exercise exerciseReceived = listExpected.get(i).getExercises().stream().findFirst().orElseThrow();
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
             assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(expected.getExerciseGroup());
             assertThat(exerciseReceived.getTitle()).isEqualTo(expected.getTitle());

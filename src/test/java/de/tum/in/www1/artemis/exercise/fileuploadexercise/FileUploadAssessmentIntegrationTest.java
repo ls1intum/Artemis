@@ -487,7 +487,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         exam.setEndDate(ZonedDateTime.now().minusHours(1));
         exam = examRepository.save(exam);
 
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         FileUploadExercise exercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("test.pdf", exerciseGroup1);
         exercise = fileUploadExerciseRepository.save(exercise);
@@ -566,8 +566,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(1);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         // SECOND ROUND OF CORRECTION
 
@@ -600,8 +600,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
         feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
