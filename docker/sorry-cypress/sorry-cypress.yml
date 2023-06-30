@@ -6,7 +6,6 @@ services:
   mongo:
     image: docker.io/library/mongo:4.4
     container_name: sry-cypress-mongo
-    hostname: mongo
     restart: always
     volumes:
       - ${MONGO_VOLUME_MOUNT:-./files/mongo}:/data/db
@@ -16,7 +15,6 @@ services:
   director:
     image: docker.io/agoldis/sorry-cypress-director:${SORRY_CYPRESS_TAG:-latest}
     container_name: sry-cypress-director
-    hostname: director
     restart: always
     env_file:
       - ${SORRY_CYPRESS_ENV_FILE:-./sorry-cypress.env}
@@ -33,7 +31,6 @@ services:
   api:
     image: docker.io/agoldis/sorry-cypress-api:${SORRY_CYPRESS_TAG:-latest}
     container_name: sry-cypress-api
-    hostname: api
     restart: always
     env_file:
       - ${SORRY_CYPRESS_ENV_FILE:-./sorry-cypress.env}
@@ -45,7 +42,6 @@ services:
   dashboard:
     image: docker.io/agoldis/sorry-cypress-dashboard:${SORRY_CYPRESS_TAG:-latest}
     container_name: sry-cypress-dashboard
-    hostname: dashboard
     restart: always
     env_file:
       - ${SORRY_CYPRESS_ENV_FILE:-./sorry-cypress.env}
@@ -62,7 +58,6 @@ services:
   storage:
     image: docker.io/minio/minio
     container_name: sry-cypress-minio
-    hostname: storage
     restart: always
     env_file:
       - ${SORRY_CYPRESS_ENV_FILE:-./sorry-cypress.env}
