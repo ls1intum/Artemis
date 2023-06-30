@@ -174,7 +174,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(exerciseGroupsNow).allMatch(element -> element.getId() != null);
 
         for (var exerciseGroup : exerciseGroupsBefore) {
-            assertThat(exerciseGroupsNow).filteredOn((element -> Objects.equals(element.getId(), exerciseGroup.getId()))).hasSize(1);
+            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getId(), exerciseGroup.getId())).hasSize(1);
 
             assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getTitle(), exerciseGroup.getTitle()))
                     .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSizeGreaterThan(1);
