@@ -564,7 +564,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExam);
     });
 
-    it('should show error (already submitted)', () => {
+    it('should show error when already submitted', () => {
         const httpError = new Error();
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
@@ -579,7 +579,7 @@ describe('ExamParticipationComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should show error (not submitted)', () => {
+    it('should show error when not submitted', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
