@@ -174,8 +174,9 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         for (var exerciseGroup : exerciseGroupsBefore) {
             assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getId(), exerciseGroup.getId())).hasSize(1);
 
+            // empty group did not get imported
             assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getTitle(), exerciseGroup.getTitle()))
-                    .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSizeGreaterThan(1);
+                    .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSize(exerciseGroup.getExercises().isEmpty() ? 1 : 2);
         }
     }
 
