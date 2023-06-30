@@ -13,7 +13,7 @@ import { courseManagementRequest } from 'src/test/cypress/support/requests/Artem
 import { Interception } from 'cypress/types/net-stubbing';
 
 // Common primitives
-const textFixture = 'loremIpsum.txt';
+const textFixture = 'loremIpsum-short.txt';
 
 describe('Test exam participation', () => {
     let course: Course;

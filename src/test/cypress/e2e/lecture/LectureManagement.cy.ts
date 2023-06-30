@@ -23,7 +23,7 @@ describe('Lecture management', () => {
         lectureManagement.getLectures().click();
         lectureManagement.clickCreateLecture();
         lectureCreation.setTitle(lectureTitle);
-        cy.fixture('loremIpsum.txt').then((text) => {
+        cy.fixture('loremIpsum-short.txt').then((text) => {
             lectureCreation.typeDescription(text);
         });
         lectureCreation.setStartDate(dayjs());
@@ -65,7 +65,7 @@ describe('Lecture management', () => {
         it('Adds a text unit to the lecture', () => {
             cy.login(instructor, '/course-management/' + course.id + '/lectures');
             lectureManagement.openUnitsPage(lecture.id!);
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 lectureManagement.addTextUnit('Text unit', text);
             });
             cy.contains('Text unit').should('be.visible');

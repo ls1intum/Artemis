@@ -37,7 +37,7 @@ export class OnlineEditorPage {
             this.createFileInRootPackage(exerciseID, newFile.name, packageName);
             cy.fixture(newFile.path).then(($fileContent) => {
                 const sanitizedContent = this.sanitizeInput($fileContent, packageName);
-                this.focusCodeEditor(exerciseID).type(sanitizedContent, { delay: 8 });
+                this.focusCodeEditor(exerciseID).type(sanitizedContent, { delay: 4 });
                 // Delete the remaining content which has been automatically added by the code editor.
                 // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
                 const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);

@@ -75,12 +75,12 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            cy.fixture('loremIpsum.txt').then((submission) => {
+            cy.fixture('loremIpsum-short.txt').then((submission) => {
                 textExerciseEditor.shouldShowNumberOfWords(0);
                 textExerciseEditor.shouldShowNumberOfCharacters(0);
                 textExerciseEditor.typeSubmission(exercise.id!, submission);
-                textExerciseEditor.shouldShowNumberOfWords(100);
-                textExerciseEditor.shouldShowNumberOfCharacters(591);
+                textExerciseEditor.shouldShowNumberOfWords(16);
+                textExerciseEditor.shouldShowNumberOfCharacters(83);
                 textExerciseEditor.submit().then((request: Interception) => {
                     expect(request.response!.body.text).to.eq(submission);
                     expect(request.response!.body.submitted).to.be.true;

@@ -188,7 +188,7 @@ function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: EXERCISE_TY
                 additionalData = { submission: partiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
                 break;
             case EXERCISE_TYPE.Text:
-                additionalData = { textFixture: 'loremIpsum.txt' };
+                additionalData = { textFixture: 'loremIpsum-short.txt' };
                 break;
             case EXERCISE_TYPE.Quiz:
                 additionalData = { quizExerciseID: 0 };
