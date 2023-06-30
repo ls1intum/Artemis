@@ -205,7 +205,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         FileMove fileMove = createRenameFileMove();
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -281,6 +281,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         Repository mockRepository = mock(Repository.class);
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
@@ -301,6 +302,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         Repository mockRepository = mock(Repository.class);
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(true).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
