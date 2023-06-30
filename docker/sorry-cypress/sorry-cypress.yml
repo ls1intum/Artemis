@@ -4,8 +4,8 @@
 
 services:
   mongo:
-    image: mongo:4.4
-    container_name: Mongo
+    image: docker.io/library/mongo:4.4
+    container_name: sry-cypress-mongo
     hostname: mongo
     restart: always
     volumes:
@@ -14,8 +14,8 @@ services:
       - ${SORRY_CYPRESS_ENV_FILE:-./sorry-cypress.env}
 
   director:
-    image: agoldis/sorry-cypress-director:${SORRY_CYPRESS_TAG:-latest}
-    container_name: Director
+    image: docker.io/agoldis/sorry-cypress-director:${SORRY_CYPRESS_TAG:-latest}
+    container_name: sry-cypress-director
     hostname: director
     restart: always
     env_file:
@@ -31,8 +31,8 @@ services:
       - mongo
 
   api:
-    image: agoldis/sorry-cypress-api:${SORRY_CYPRESS_TAG:-latest}
-    container_name: API
+    image: docker.io/agoldis/sorry-cypress-api:${SORRY_CYPRESS_TAG:-latest}
+    container_name: sry-cypress-api
     hostname: api
     restart: always
     env_file:
@@ -43,8 +43,8 @@ services:
       - mongo
 
   dashboard:
-    image: agoldis/sorry-cypress-dashboard:${SORRY_CYPRESS_TAG:-latest}
-    container_name: Dashboard
+    image: docker.io/agoldis/sorry-cypress-dashboard:${SORRY_CYPRESS_TAG:-latest}
+    container_name: sry-cypress-dashboard
     hostname: dashboard
     restart: always
     env_file:
@@ -60,8 +60,8 @@ services:
       - api
 
   storage:
-    image: minio/minio
-    container_name: Minio
+    image: docker.io/minio/minio
+    container_name: sry-cypress-minio
     hostname: storage
     restart: always
     env_file:
@@ -71,8 +71,8 @@ services:
     command: minio server --console-address ":9090" /data
 
   createbuckets:
-    image: minio/mc
-    container_name: MinioBucketCreator
+    image: docker.io/minio/mc
+    container_name: sry-cypress-minio-bucket-creator
     depends_on:
       - storage
     env_file:
@@ -87,8 +87,8 @@ services:
       "
 
   nginx:
-    image: nginx
-    container_name: Nginx
+    image: docker.io/library/nginx
+    container_name: sry-cypress-nginx
     restart: always
     ports:
       - 80:80
