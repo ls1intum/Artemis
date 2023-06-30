@@ -422,8 +422,8 @@ node {
 }
 
 // Set the npm cache (used in the Dockerfile)
-npm_set_cache {
-    args = ['/opt/artemis/.npm']
+task npmSetCacheDockerfile(type: NpmTask) {
+    args = ['set', 'cache', '/opt/artemis/.npm']
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain

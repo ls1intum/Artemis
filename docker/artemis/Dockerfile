@@ -40,7 +40,7 @@ RUN \
   # Create .npm directory if not yet available
   mkdir -p /opt/artemis/.npm \
   # Set .npm directory as npm cache
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_set_cache \
+  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npmSetCacheDockerfile \
   # Pre-populate the npm and gradle caches if related files change (see COPY statements above)
   && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar npm_ci
 
