@@ -341,7 +341,7 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
-    public static Channel createChannel(Course course, String channelName) {
+    public Channel createChannel(Course course, String channelName) {
         Channel channel = new Channel();
         channel.setCourse(course);
         channel.setName(channelName);
@@ -349,7 +349,7 @@ public class ConversationUtilService {
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
         channel.setDescription("Test channel");
-        return channel;
+        return conversationRepository.save(channel);
     }
 
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
