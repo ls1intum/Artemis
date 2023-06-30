@@ -133,7 +133,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
-    @AfterEach()
+    @AfterEach
     void stopQuizScheduler() {
         quizScheduleService.stopSchedule();
         quizScheduleService.clearAllQuizData();

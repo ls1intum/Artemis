@@ -271,7 +271,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
             final var studentParticipation = studentParticipationRepository
-                    .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(quizExercise.getId(), user.getLogin(), false).get();
+                    .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(quizExercise.getId(), user.getLogin(), false).orElseThrow();
             QuizSubmission quizSubmission2 = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);

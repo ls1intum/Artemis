@@ -313,7 +313,7 @@ public class ProgrammingExerciseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
-        courseRepo.findById(course.getId()).get();
+        courseRepo.findById(course.getId()).orElseThrow();
     }
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
