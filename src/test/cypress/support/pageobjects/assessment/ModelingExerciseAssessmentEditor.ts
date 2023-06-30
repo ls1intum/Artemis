@@ -24,6 +24,7 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     rejectComplaint(response: string, examMode: false) {
         return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Modeling);
     }
+
     acceptComplaint(response: string, examMode: false) {
         return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Modeling);
     }

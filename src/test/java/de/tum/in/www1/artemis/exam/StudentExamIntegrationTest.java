@@ -410,7 +410,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
-            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+            assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
         }
 
@@ -460,7 +460,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class, headers);
         assertThat(response).isEqualTo(studentExamForStart);
-        assertThat(studentExamRepository.findById(studentExamForStart.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(studentExamForStart.getId()).orElseThrow().isStarted()).isTrue();
         assertParticipationAndSubmissions(response, student1);
 
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
@@ -551,7 +551,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getStudentParticipations()).hasSize(1);
         }
         // Ensure that student exam was marked as started
-        assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isStarted()).isTrue();
     }
 
     @Test
@@ -715,7 +715,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
     }
 
     @Test
@@ -727,14 +727,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
 
         newWorkingTime = -10;
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
     }
 
@@ -748,8 +748,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(messagingTemplate, times(1)).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
+        verify(messagingTemplate).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test
@@ -795,7 +795,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         // Ensure that student exam has been marked as submitted
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
         // Ensure that student exam has been set
@@ -837,7 +837,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
         // Important: we have to retrieve the specific exam, because the order in the list is not guaranteed, otherwise the test will be flaky
-        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals(TEST_PREFIX + "student1")).findFirst().get();
+        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         studentExamResponse.setExercises(null);
@@ -880,7 +880,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                 }
@@ -916,7 +916,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                     }
@@ -958,7 +958,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                 }
@@ -1000,7 +1000,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                     }
@@ -1183,7 +1183,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     final var newText = "New Text";
                     textSubmission.setText(newText);
                     request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).get();
+                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
                     // check that a submitted version was created
@@ -1256,7 +1256,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
                 var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst()
+                        .orElseThrow();
                 var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
                 var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
@@ -1421,7 +1422,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1596,7 +1597,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
@@ -2031,7 +2032,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
@@ -2213,7 +2214,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
-        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).get();
+        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).orElseThrow();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
