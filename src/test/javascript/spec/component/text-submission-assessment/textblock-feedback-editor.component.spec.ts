@@ -21,14 +21,6 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { SubmissionExerciseType, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { of } from 'rxjs';
-import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
 describe('TextblockFeedbackEditorComponent', () => {
@@ -180,107 +172,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(confirmSpy).toHaveBeenCalledOnce();
     });
 
-    it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
-        // additionally component needs to have some credits, have no conflicts and be a Manual type feedback
-        component.feedback.credits = 1;
-        component.conflictMode = false;
-        textBlock.numberOfAffectedSubmissions = 5;
-        component.feedback.type = FeedbackType.MANUAL;
-        fixture.detectChanges();
-
-        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="[object Object]"]');
-        expect(warningIcon).toBeTruthy();
-        const text = compiled.querySelector('[jhiTranslate$=impactWarning]');
-        expect(text).toBeTruthy();
-    });
-
-    it('should not show warning when numberOfAffectedSubmissions = 0', () => {
-        textBlock.numberOfAffectedSubmissions = 0;
-        fixture.detectChanges();
-
-        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
-        expect(text).toBeFalsy();
-    });
-
-    it('should show view origin icon when there is an automatic feedback label', () => {
-        component.feedback.type = FeedbackType.AUTOMATIC;
-        fixture.detectChanges();
-
-        const searchOriginIcon = compiled.querySelector('fa-icon[ng-reflect-icon="[object Object]"]');
-        expect(searchOriginIcon).toBeTruthy();
-    });
-
-    it('should open modal when open origin of feedback function is called', async () => {
-        const modalService: NgbModal = TestBed.inject(NgbModal);
-        const content = {};
-        const modalServiceSpy = jest.spyOn(modalService, 'open');
-
-        await expect(component.openOriginOfFeedbackModal(content))
-            .toResolve()
-            .then(() => {
-                expect(modalServiceSpy).toHaveBeenCalledOnce();
-            });
-    });
-
-    it('should connect automatic feedback origin blocks with current feedback', async () => {
-        component.feedback.suggestedFeedbackOriginSubmissionReference = 1;
-        component.feedback.suggestedFeedbackParticipationReference = 1;
-        const textAssessmentService = TestBed.inject(TextAssessmentService);
-
-        const participation: StudentParticipation = {
-            type: ParticipationType.STUDENT,
-        } as unknown as StudentParticipation;
-
-        const textSubmission = {
-            submissionExerciseType: SubmissionExerciseType.TEXT,
-            id: 1,
-            submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
-            text: 'First text. Second text.',
-            participation,
-        } as unknown as TextSubmission;
-
-        textSubmission.results = [
-            {
-                id: 2374,
-                completionDate: dayjs('2019-07-09T11:51:23.251Z'),
-                textSubmission,
-            } as unknown as Result,
-        ];
-        textSubmission.latestResult = getLatestSubmissionResult(textSubmission);
-        textSubmission.latestResult!.feedbacks = [
-            {
-                id: 1,
-                detailText: 'text',
-                reference: 'First text id',
-                credits: 1.5,
-            } as Feedback,
-        ];
-        textSubmission.blocks = [
-            {
-                id: 'First text id',
-                text: 'First text.',
-                textSubmission,
-                numberOfAffectedSubmissions: 3,
-            } as unknown as TextBlock,
-        ];
-        participation.submissions = [textSubmission];
-
-        const participationStub = jest.spyOn(textAssessmentService, 'getFeedbackDataForExerciseSubmission').mockReturnValue(of(participation));
-
-        await component.connectAutomaticFeedbackOriginBlocksWithFeedback();
-
-        expect(participationStub).toHaveBeenCalledOnce();
-        expect(component.listOfBlocksWithFeedback).toEqual([
-            {
-                text: 'First text.',
-                feedback: 'text',
-                credits: 1.5,
-                reusedCount: 3,
-                type: 'MANUAL',
-            },
-        ]);
-    });
-
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback.gradingInstruction = new GradingInstruction();
         fixture.detectChanges();
@@ -311,15 +202,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.dismiss();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
-    });
-
-    it('should send assessment event on hovering over warning', () => {
-        component.feedback.type = FeedbackType.MANUAL;
-        component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        component.mouseEnteredWarningLabel();
-        fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
     });
 
     it('should set correctionStatus of the feedback to undefined on score click', () => {
