@@ -53,8 +53,8 @@ examples.forEach((activeConversation) => {
                     MockPipe(ArtemisTranslatePipe),
                     RouterTestingModule.withRoutes([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
-                        { path: 'courses/:courseId/exercises/:lectureId', component: CourseExerciseDetailsComponent },
-                        { path: 'courses/:courseId/exams/:lectureId', component: ExamDetailComponent },
+                        { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
+                        { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                 ],
                 providers: [

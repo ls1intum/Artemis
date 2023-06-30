@@ -371,7 +371,7 @@ export class MetisService implements OnDestroy {
 
     /**
      * returns the router link required for navigating to the exam
-     * @param {string} lectureId ID of the exam to be navigated to
+     * @param {string} examId ID of the exam to be navigated to
      * @return {string} router link of the exam
      */
     getLinkForExam(examId: string): string {
