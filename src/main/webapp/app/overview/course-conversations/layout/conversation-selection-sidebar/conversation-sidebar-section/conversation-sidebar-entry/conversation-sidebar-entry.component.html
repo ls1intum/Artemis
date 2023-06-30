@@ -21,14 +21,14 @@
                 <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
             </button>
             <div ngbDropdownMenu>
-                <button
+                <a
                     *ngIf="getAsChannel(conversation)?.subTypeReferenceId"
                     class="sub-type-reference"
                     ngbDropdownItem
                     [routerLink]="[metisService.getLinkForChannelSubType(getAsChannel(conversation))]"
                 >
                     {{ getChannelSubTypeReferenceTranslationKey(getAsChannel(conversation)?.subType) | artemisTranslate }}
-                </button>
+                </a>
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
                     {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
                 </button>
