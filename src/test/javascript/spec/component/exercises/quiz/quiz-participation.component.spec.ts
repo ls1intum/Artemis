@@ -43,7 +43,15 @@ import { NgModel } from '@angular/forms';
 // Store a copy of now to avoid timing issues
 const now = dayjs();
 const question1: QuizQuestion = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true };
-const question2: MultipleChoiceQuestion = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true };
+const question2: MultipleChoiceQuestion = {
+    id: 2,
+    type: QuizQuestionType.MULTIPLE_CHOICE,
+    points: 2,
+    answerOptions: [{ id: 1 } as AnswerOption],
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+};
 const question3: QuizQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true };
 
 const quizExercise: QuizExercise = {
