@@ -133,6 +133,7 @@ describe('QuizParticipationComponent', () => {
     let resultForSolutionServiceSpy: jest.SpyInstance;
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
+    let participationService: ParticipationService;
 
     describe('live mode', () => {
         beforeEach(() => {
@@ -170,7 +171,7 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    const participationService = fixture.debugElement.injector.get(ParticipationService);
+                    participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
                         .spyOn(participationService, 'findParticipationForCurrentUser')
@@ -206,15 +207,66 @@ describe('QuizParticipationComponent', () => {
             expect(component.submission).not.toBeNull();
         });
 
-        it('should update in intervals', fakeAsync(() => {
+        it('should update in intervals (individual quiz)', fakeAsync(() => {
+            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
+                of({
+                    body: {
+                        exercise: {
+                            ...quizExercise,
+                            quizStarted: false,
+                            quizBatches: [
+                                {
+                                    startTime: dayjs(now).subtract(2, 'minutes'),
+                                    started: false,
+                                },
+                            ],
+                            quizMode: QuizMode.INDIVIDUAL,
+                        },
+                    },
+                } as HttpResponse<StudentParticipation>),
+            );
             fixture.detectChanges();
 
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
             fixture.detectChanges();
             discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
+            expect(refreshSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should update in intervals (not individual quiz)', fakeAsync(() => {
+            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
+                of({
+                    body: {
+                        exercise: {
+                            ...quizExercise,
+                            quizStarted: false,
+                            quizBatches: [
+                                {
+                                    startTime: dayjs(now).subtract(2, 'minutes'),
+                                    started: false,
+                                },
+                            ],
+                            quizMode: QuizMode.SYNCHRONIZED,
+                        },
+                    },
+                } as HttpResponse<StudentParticipation>),
+            );
+            fixture.detectChanges();
+
+            const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
+            tick(5000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(updateSpy).toHaveBeenCalledTimes(50);
+            expect(refreshSpy).toHaveBeenCalledTimes(0);
+
+            tick(5000);
         }));
 
         it('should check quiz end in intervals', fakeAsync(() => {
@@ -257,7 +309,14 @@ describe('QuizParticipationComponent', () => {
             component.quizBatch!.startTime = undefined;
 
             // Returns the started exercise
-            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(
+                of({
+                    body: {
+                        ...quizExercise,
+                        quizEnded: true,
+                    },
+                } as HttpResponse<QuizExercise>),
+            );
             fixture.detectChanges();
 
             const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
@@ -306,6 +365,16 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
+            participationSpy = jest.spyOn(participationService, 'findParticipationForCurrentUser').mockReturnValue(
+                of({
+                    body: {
+                        exercise: {
+                            ...quizExercise,
+                            quizMode: QuizMode.INDIVIDUAL,
+                        },
+                    },
+                } as HttpResponse<StudentParticipation>),
+            );
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
@@ -325,6 +394,9 @@ describe('QuizParticipationComponent', () => {
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
+            expect(component.areAllQuestionsAnswered()).toBeTrue();
+
+            component.quizExercise = { ...quizExercise, quizQuestions: [] };
             expect(component.areAllQuestionsAnswered()).toBeTrue();
 
             component.quizExercise = quizExercise;
