@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -117,9 +116,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     private Course course;
 

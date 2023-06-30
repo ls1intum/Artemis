@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.assessment;
+package de.tum.in.www1.artemis.service.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 
 class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
