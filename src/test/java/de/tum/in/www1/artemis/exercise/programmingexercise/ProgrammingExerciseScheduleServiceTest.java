@@ -653,7 +653,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void foo() {
+    void testExamWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));

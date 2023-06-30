@@ -53,7 +53,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var planKey = (programmingExerciseResultTestService.getProgrammingExercise().getProjectKey() + "-" + loginName).toUpperCase();
-        var notification = ProgrammingExerciseFactory.generateBambooBuildResult("assignment", planKey, null, null, List.of("test1"), List.of(), new ArrayList<>());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1"), List.of(),
+                new ArrayList<>());
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
@@ -146,6 +147,31 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldGenerateTestwiseCoverageFileReport() throws Exception {
         var resultNotification = TestwiseCoverageTestUtil.generateBambooBuildResultWithCoverage();
         programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateRatedResultWithGracePeriod() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldCreateRatedResultWithGracePeriod(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotUseGracePeriodForExamExercise() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldNotUseGracePeriodForExamExercise(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotUseGracePeriodWithoutHiddenTests() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldNotUseGracePeriodWithoutHiddenTests(resultNotification);
+    }
+
+    private Object createSimpleBuildResult() {
+        return ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(), List.of(), List.of());
     }
 
     @Test

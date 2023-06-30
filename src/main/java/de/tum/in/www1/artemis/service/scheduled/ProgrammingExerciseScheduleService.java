@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUT
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.ParallelExecutorService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -77,12 +79,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GitService gitService;
 
+    private final ParallelExecutorService parallelExecutorService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
-            GitService gitService) {
+            GitService gitService, ParallelExecutorService parallelExecutorService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -98,6 +102,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
         this.gitService = gitService;
+        this.parallelExecutorService = parallelExecutorService;
     }
 
     @PostConstruct
@@ -274,7 +279,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleDueDateLockAndScoreUpdate(ProgrammingExercise exercise) {
-        // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
         final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
 
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
@@ -295,7 +299,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Schedules all necessary tasks for participations with individual due dates.
-     *
+     * <p>
      * Also removes schedules for individual participations of their individual due date no longer exists.
      *
      * @param exercise the participations belong to.
@@ -365,6 +369,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private boolean isScoreUpdateAfterDueDateNeeded(ProgrammingExercise exercise) {
+        // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
         return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null && programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
     }
 
@@ -454,7 +459,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will
      * (1) lock all student repositories and
      * (2) stash all student changes in the online editor for manual assessments.
-     *
+     * <p>
      * NOTE: this will not lock the student participations. See {@link #lockAllStudentRepositoriesAndParticipations(ProgrammingExercise)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
@@ -499,7 +504,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will
      * (1) lock all student repositories for students for which no individual due date is set and
      * (2) stash all student changes in the online editor for manual assessments.
-     *
+     * <p>
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise for which the repositories should be locked.
@@ -513,10 +518,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     /**
      * Returns a runnable, that, once executed, will update all results for the given exercise for students for which no
      * individual due date is set.
-     *
+     * <p>
      * This might be needed for an exercise that has test cases marked with
      * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
-     *
+     * <p>
      * Those test cases might already have been run in the continuous integration
      * service and their feedbacks are therefore stored in the database.
      * However, they are not included in the student score before the due date has passed.
@@ -550,9 +555,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                List<ProgrammingExerciseStudentParticipation> failedLockOperations = removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(programmingExerciseId,
-                        condition);
-                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
+                var failedLockOperations = removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(programmingExerciseId, condition);
+                failedLockOperations.thenAccept(failures -> stashStudentChangesAndNotifyInstructor(exercise, failures.size(), condition));
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -575,8 +579,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                List<ProgrammingExerciseStudentParticipation> failedLockOperations = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
-                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
+                var failedLockOperationsFuture = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
+                failedLockOperationsFuture.thenAccept(failedLockOperations -> stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition));
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -599,8 +603,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                List<ProgrammingExerciseStudentParticipation> failedLockOperations = updateParticipationsLockedInDatabase(programmingExerciseId, condition);
-                stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition);
+                var failedLockOperations = updateParticipationsLockedInDatabase(programmingExerciseId, condition);
+                failedLockOperations.thenAccept(failures -> stashStudentChangesAndNotifyInstructor(exercise, failures.size(), condition));
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -616,19 +620,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private void stashStudentChangesAndNotifyInstructor(ProgrammingExercise exercise, long numberOfFailedLockOperations,
             Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(programmingExerciseId);
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        if (programmingExercise.isEmpty()) {
-            throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-        }
         if (numberOfFailedLockOperations > 0) {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
                     Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
         }
         else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                    Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
         }
 
         // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
@@ -636,16 +636,18 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // in the case they still have saved changes on the Artemis server which have not been committed / pushed
         // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
         if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
-            List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
-            long numberOfFailedStashOperations = failedStashOperations.size();
-            if (numberOfFailedStashOperations > 0) {
-                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                        Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
-            }
-            else {
-                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                        Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
-            }
+            var failedStashOperationsFuture = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
+            failedStashOperationsFuture.thenAccept(failedStashOperations -> {
+                long numberOfFailedStashOperations = failedStashOperations.size();
+                if (numberOfFailedStashOperations > 0) {
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
+                            Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
+                }
+                else {
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
+                }
+            });
         }
     }
 
@@ -695,18 +697,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
                     unlockOperation.accept(programmingExercise, participation);
                 };
-                List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
-                        unlockAndCollectOperation, condition, "add write permissions to all student repositories");
+                var failedUnlockOperationsFuture = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, unlockAndCollectOperation, condition,
+                        "add write permissions to all student repositories");
 
-                // We send a notification to the instructor about the success of the repository unlocking operation.
-                long numberOfFailedUnlockOperations = failedUnlockOperations.size();
-                if (numberOfFailedUnlockOperations > 0) {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
-                            Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
-                }
-                else {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
-                }
+                failedUnlockOperationsFuture.thenAccept(failedUnlockOperations -> {
+                    // We send a notification to the instructor about the success of the repository unlocking operation.
+                    long numberOfFailedUnlockOperations = failedUnlockOperations.size();
+                    if (numberOfFailedUnlockOperations > 0) {
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
+                                Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
+                    }
+                    else {
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
+                                Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
+                    }
+                });
                 // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
                 // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
                 // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
@@ -826,25 +831,25 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 
-    private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(Long programmingExerciseId,
+    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepositoryAndParticipation, condition,
                 "remove write permissions from all student repositories and lock participations");
     }
 
-    private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
+    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepository, condition,
                 "remove write permissions from all student repositories");
     }
 
-    private List<ProgrammingExerciseStudentParticipation> updateParticipationsLockedInDatabase(Long programmingExerciseId,
+    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> updateParticipationsLockedInDatabase(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentParticipation, condition,
                 "lock all student participations");
     }
 
-    private List<ProgrammingExerciseStudentParticipation> stashChangesInAllStudentRepositories(Long programmingExerciseId,
+    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> stashChangesInAllStudentRepositories(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::stashChangesInStudentRepositoryAfterDueDateHasPassed,
                 condition, "stash changes from all student repositories");
@@ -861,32 +866,36 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a list containing all participations for which the operation has failed with an exception
      * @throws EntityNotFoundException if the programming exercise can't be found.
      */
-    private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
+    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
         log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
 
-        // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed
-        // synchronously so this might not be an issue
+        // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server
 
-        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            try {
-                if (condition.test(programmingExerciseStudentParticipation)) {
-                    operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+        CompletableFuture<ProgrammingExerciseStudentParticipation>[] futures = parallelExecutorService.runForAll(programmingExercise.getStudentParticipations(),
+                studentParticipation -> {
+                    SecurityUtils.setAuthorizationObject();
+                    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+                    if (condition.test(programmingExerciseStudentParticipation)) {
+                        operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                    }
+                    return programmingExerciseStudentParticipation;
+                });
+
+        for (var future : futures) {
+            future.whenComplete((participation, exception) -> {
+                if (exception != null) {
+                    log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
+                            programmingExercise.getId(), participation.getId()), exception);
+                    failedOperations.add(participation);
                 }
-            }
-            catch (Exception e) {
-                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
-                        programmingExercise.getId(), studentParticipation.getId()), e);
-                failedOperations.add(programmingExerciseStudentParticipation);
-            }
+            });
         }
 
-        return failedOperations;
+        return CompletableFuture.allOf(futures).thenApply(ignore -> failedOperations);
     }
 }

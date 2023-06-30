@@ -9,6 +9,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
@@ -210,7 +212,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
+    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime exerciseDueDate, @NotNull ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
     }
 
@@ -220,11 +222,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
      *
-     * @param exerciseDueDate date after which no normal submission is considered rated.
-     * @param submission      to which the result belongs.
-     * @param participation   to wich the submission belongs
+     * @param dueDate    due date of the exercise or individual due date if applicable
+     * @param submission to which the result belongs.
      */
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
+    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull Submission submission) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
@@ -232,8 +233,31 @@ public class Result extends DomainObject implements Comparable<Result> {
             this.rated = false;
         }
         else {
-            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate());
         }
+    }
+
+    /**
+     * Sets the rated attribute depending on the submission type and date.
+     * This method takes the individual due date specified by the participation attribute into account
+     *
+     * @param submission    to which the result belongs.
+     * @param participation to wich the submission belongs
+     */
+    public void setRatedIfNotAfterDueDate(@NotNull Submission submission, @NotNull Participation participation) {
+        setRatedIfNotAfterDueDate(ExerciseDateService.getDueDate(participation).orElse(null), submission);
+    }
+
+    /**
+     * Sets the rated attribute depending on the submission type and date.
+     * This method takes the individual due date specified by the participation attribute into account
+     *
+     * @param submissionDate The date of the submission of this result
+     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, Submission)
+     */
+    public void setRatedIfNotAfterDueDate(@NotNull ZonedDateTime submissionDate) {
+        ZonedDateTime dueDate = ExerciseDateService.getDueDate(getParticipation()).orElse(null);
+        setRatedIfNotAfterDueDate(dueDate, submissionDate);
     }
 
     public Submission getSubmission() {
