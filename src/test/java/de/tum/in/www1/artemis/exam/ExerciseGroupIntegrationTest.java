@@ -6,8 +6,10 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -158,33 +160,26 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
-    @Test
+    @RepeatedTest(100)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
-        final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
+        final List<ExerciseGroup> exerciseGroupsBefore = targetExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                listExpected, ExerciseGroup.class, HttpStatus.OK);
-        assertThat(listReceived).hasSize(9);
+        final List<ExerciseGroup> exerciseGroupsNow = request.postListWithResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore, ExerciseGroup.class, HttpStatus.OK);
+        assertThat(exerciseGroupsNow).hasSize(9);
 
-        assertThat(listReceived).containsAnyElementsOf(listExpected);
+        assertThat(exerciseGroupsNow).containsAll(exerciseGroupsBefore);
+        assertThat(exerciseGroupsNow).allMatch(element -> element.getId() != null);
 
-        /*
-         * TODO assertions for imported groups
-         * // The first 5 should be the old ones
-         * for (int i = 0; i <= 4; i++) {
-         * assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
-         * }
-         * // The last 4
-         * for (int i = 5; i <= 8; i++) {
-         * assertThat(listReceived.get(i).getId()).isNotNull();
-         * assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
-         * assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
-         * assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
-         * }
-         */
+        for (var exerciseGroup : exerciseGroupsBefore) {
+            assertThat(exerciseGroupsNow).filteredOn((element -> Objects.equals(element.getId(), exerciseGroup.getId()))).hasSize(1);
+
+            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getTitle(), exerciseGroup.getTitle()))
+                    .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSizeGreaterThan(1);
+        }
     }
 
     @Test
