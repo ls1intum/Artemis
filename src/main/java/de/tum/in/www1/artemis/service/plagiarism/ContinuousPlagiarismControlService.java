@@ -1,5 +1,11 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Stream;
+
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,11 +14,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import de.jplag.exceptions.ExitException;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -25,13 +36,22 @@ public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
 
+    private static final String PLAGIARISM_RESULT_FEEDBACK = "Plagiarisms detected. Score reduced to 0.";
+
     private final ExerciseRepository exerciseRepository;
 
     private final PlagiarismChecksService plagiarismChecksService;
 
-    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismChecksService plagiarismChecksService) {
+    private final SubmissionRepository submissionRepository;
+
+    private final ResultRepository resultRepository;
+
+    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismChecksService plagiarismChecksService, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismChecksService = plagiarismChecksService;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -49,7 +69,8 @@ public class ContinuousPlagiarismControlService {
             PlagiarismChecksConfigHelper.createAndSaveDefaultIfNull(exercise, exerciseRepository);
 
             try {
-                executeChecksForExercise(exercise);
+                var result = executeChecksForExercise(exercise);
+                updatePlagiarismDetectedInSubmissions(exercise, result);
             }
             catch (ExitException e) {
                 log.error("Cannot check plagiarism due to Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
@@ -64,12 +85,60 @@ public class ContinuousPlagiarismControlService {
         log.debug("Continuous plagiarism control done.");
     }
 
-    private void executeChecksForExercise(Exercise exercise) throws Exception {
-        switch (exercise.getExerciseType()) {
+    private void addResultWithPlagiarismFeedback(Submission submission, StudentParticipation participation) {
+        var result = new Result();
+        result.setSubmission(submission);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now());
+        result.setParticipation(participation);
+        result.setRated(true);
+        result.setExampleResult(false);
+        result.setSuccessful(false);
+        result.setScore(0.0, participation.getExercise().getCourseViaExerciseGroupOrCourseMember());
+
+        var feedback = new Feedback();
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setPositive(false);
+        feedback.setText(PLAGIARISM_RESULT_FEEDBACK);
+        feedback.setResult(result);
+        feedback.setVisibility(Visibility.ALWAYS);
+        feedback.setCredits(0.0);
+        result.setFeedbacks(List.of(feedback));
+
+        resultRepository.save(result);
+    }
+
+    private void deletePastResultsWithPlagiarismFeedback(long submissionId) {
+        resultRepository.findAllWithFeedbackBySubmissionId(submissionId).stream()
+                .filter(result -> result.getFeedbacks().stream().anyMatch(it -> it.getText().contains(PLAGIARISM_RESULT_FEEDBACK))).forEach(resultRepository::delete);
+    }
+
+    private void updatePlagiarismDetectedInSubmissions(Exercise exercise, PlagiarismResult<?> plagiarismResult) {
+        var submissionsIdsWithPlagiarism = plagiarismResult.getComparisons().stream()
+                .flatMap(it -> Stream.of(it.getSubmissionA().getSubmissionId(), it.getSubmissionB().getSubmissionId())).collect(toUnmodifiableSet());
+
+        exercise.getStudentParticipations().stream().filter(participation -> participation.findLatestSubmission().isPresent()).forEach(participation -> {
+            var submission = participation.findLatestSubmission().get();
+
+            boolean plagiarismDetected = submissionsIdsWithPlagiarism.contains(submission.getId());
+            submissionRepository.setPlagiarismDetected(plagiarismDetected, submission.getId());
+
+            if (plagiarismDetected) {
+                addResultWithPlagiarismFeedback(submission, participation);
+            }
+            else {
+                deletePastResultsWithPlagiarismFeedback(submission.getId());
+            }
+
+        });
+    }
+
+    private PlagiarismResult<?> executeChecksForExercise(Exercise exercise) throws Exception {
+        return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismChecksService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismChecksService.checkProgrammingExercise((ProgrammingExercise) exercise);
             case MODELING -> plagiarismChecksService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> log.error("Cannot check plagiarism for exercise: type={}, id={}.", exercise.getExerciseType(), exercise.getId());
-        }
+            case FILE_UPLOAD, QUIZ -> throw new Exception("Cannot check plagiarism for exercise: type={}, id={}."); // , exercise.getExerciseType(), exercise.getId());
+        };
     }
 }

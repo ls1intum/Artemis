@@ -76,6 +76,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
+    @Column(name = "plagiarism_detected")
+    @JsonView(QuizView.Before.class)
+    private Boolean plagiarismDetected;
+
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;

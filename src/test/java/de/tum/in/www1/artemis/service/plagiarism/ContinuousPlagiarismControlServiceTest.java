@@ -22,7 +22,7 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismChecksService plagiarismChecksService = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService);
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, null, null);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
