@@ -252,7 +252,7 @@ describe('Notification Sidebar Component', () => {
             expect(notificationSidebarComponent.loadNotifications).toHaveBeenCalledOnce();
         });
 
-        it('should not load notifications if some are present', () => {
+        it('should not load notifications repeatedly', () => {
             jest.spyOn(notificationSidebarComponent, 'loadNotifications');
             notificationSidebarComponent.page = 42;
             notificationSidebarComponent.toggleSidebar();
