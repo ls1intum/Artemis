@@ -345,15 +345,15 @@ public class MetricsBean {
         // We set the number of students once to prevent multiple queries for the same date
         courses.forEach(course -> course.setNumberOfStudents((long) userRepository.getStudents(course).size()));
 
-        var activeCourses = courses.stream()
-                .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
-                .toList();
-
         courses.forEach(course -> {
             if (course.getSemester() == null) {
                 course.setSemester("No semester");
             }
         });
+
+        var activeCourses = courses.stream()
+                .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
+                .toList();
 
         studentsCourseGauge.register(
                 // TODO: Change this back
