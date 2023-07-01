@@ -109,7 +109,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         // Creating result for team2
         Team team2 = teamRepository.findById(idOfTeam2).orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
-
+        participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
     }
