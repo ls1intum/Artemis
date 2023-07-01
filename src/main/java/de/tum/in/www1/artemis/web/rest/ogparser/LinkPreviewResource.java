@@ -25,7 +25,7 @@ public class LinkPreviewResource {
     }
 
     /**
-     * GET /link-preview : get link preview for url.
+     * POST /link-preview : link preview for given url.
      *
      * @param url the url to parse
      * @return the LinkPreviewDTO containing the meta information
