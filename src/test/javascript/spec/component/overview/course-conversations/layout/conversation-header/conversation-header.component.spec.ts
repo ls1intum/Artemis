@@ -1,5 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
+import { Location } from '@angular/common';
+import { RouterTestingModule } from '@angular/router/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
@@ -17,13 +19,27 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 
+const examples: ConversationDto[] = [
+    generateOneToOneChatDTO({}),
+    generateExampleGroupChatDTO({}),
+    generateExampleChannelDTO({}),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+];
 examples.forEach((activeConversation) => {
-    describe('ConversationHeaderComponent with' + activeConversation.type, () => {
+    describe('ConversationHeaderComponent with' + +(activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') + activeConversation.type, () => {
         let component: ConversationHeaderComponent;
         let fixture: ComponentFixture<ConversationHeaderComponent>;
         let metisConversationService: MetisConversationService;
+        let location: Location;
         const course = { id: 1 } as any;
         const canAddUsers = jest.fn();
 
@@ -35,8 +51,18 @@ examples.forEach((activeConversation) => {
                     MockComponent(GroupChatIconComponent),
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
+                    RouterTestingModule.withRoutes([
+                        { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
+                        { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
+                        { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
+                    ]),
                 ],
-                providers: [MockProvider(NgbModal), MockProvider(MetisConversationService), MockProvider(ConversationService)],
+                providers: [
+                    MockProvider(NgbModal),
+                    MockProvider(MetisConversationService),
+                    MockProvider(ConversationService),
+                    { provide: MetisService, useClass: MockMetisService },
+                ],
             }).compileComponents();
         }));
 
@@ -46,6 +72,8 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
+
+            location = TestBed.inject(Location);
 
             fixture = TestBed.createComponent(ConversationHeaderComponent);
             component = fixture.componentInstance;
@@ -91,6 +119,20 @@ examples.forEach((activeConversation) => {
         it('should open dialog details dialog with info tab', fakeAsync(() => {
             detailDialogTest('info', ConversationDetailTabs.INFO);
         }));
+
+        if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
+            it(
+                'should navigate to ' + activeConversation.subType,
+                fakeAsync(() => {
+                    const button = fixture.debugElement.nativeElement.querySelector('.sub-type-reference');
+                    button.click();
+                    tick();
+
+                    // Assert that the router has navigated to the correct link
+                    expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
+                }),
+            );
+        }
 
         function detailDialogTest(className: string, tab: ConversationDetailTabs) {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
