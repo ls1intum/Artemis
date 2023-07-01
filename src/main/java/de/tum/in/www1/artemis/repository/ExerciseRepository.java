@@ -90,13 +90,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.plagiarismChecksConfig
+            LEFT JOIN FETCH e.plagiarismChecksConfig c
             LEFT JOIN FETCH e.studentParticipations p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :now
-            	AND e.continuousPlagiarismControlEnabled = TRUE
+            	AND c.continuousPlagiarismControlEnabled = TRUE
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue(@Param("now") ZonedDateTime now);

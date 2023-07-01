@@ -144,9 +144,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @Column(name = "continuous_plagiarism_control_enabled")
-    private boolean continuousPlagiarismControlEnabled = false;
-
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
@@ -407,14 +404,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
         this.plagiarismCases = plagiarismCases;
-    }
-
-    public boolean isContinuousPlagiarismControlEnabled() {
-        return continuousPlagiarismControlEnabled;
-    }
-
-    public void setContinuousPlagiarismControlEnabled(boolean continuousPlagiarismControlEnabled) {
-        this.continuousPlagiarismControlEnabled = continuousPlagiarismControlEnabled;
     }
 
     public PlagiarismChecksConfig getPlagiarismChecksConfig() {
