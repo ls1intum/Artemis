@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.hestia;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -129,21 +132,22 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         addCodeHints();
         var solutionEntries = codeHint.getSolutionEntries().stream().toList();
 
-        var testCases = testCaseRepository.findByExerciseId(exercise.getId());
+        Map<String, ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, test -> test));
 
         var changedEntry = solutionEntries.get(0);
         changedEntry.setLine(100);
         changedEntry.setPreviousLine(200);
         changedEntry.setCode("Changed code");
         changedEntry.setPreviousCode("Changed previous code");
-        changedEntry.setTestCase(testCases.stream().toList().get(2));
+        changedEntry.setTestCase(testCases.get("test3"));
 
         var newEntry = new ProgrammingExerciseSolutionEntry();
         newEntry.setLine(200);
         newEntry.setPreviousLine(300);
         newEntry.setCode("New code");
         newEntry.setPreviousCode("New previous code");
-        var testCase = testCases.stream().toList().get(0);
+        var testCase = testCases.get("test1");
         newEntry.setTestCase(testCase);
         var savedNewEntry = solutionEntryRepository.save(newEntry);
         savedNewEntry.setTestCase(testCase);
