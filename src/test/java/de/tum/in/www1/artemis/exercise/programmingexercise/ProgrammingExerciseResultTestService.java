@@ -122,7 +122,7 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
-        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
@@ -170,7 +170,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(updatedResults).containsExactlyInAnyOrderElementsOf(resultsWithFeedback);
 
         var semiAutoResultId = semiAutoResult.getId();
-        semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().get();
+        semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().orElseThrow();
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
@@ -233,7 +233,7 @@ public class ProgrammingExerciseResultTestService {
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.get().getId());
+        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.orElseThrow().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -267,10 +267,10 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
         var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification) - 3;  // 3 of those should be filtered
-        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(((ProgrammingSubmission) optionalResult.orElseThrow().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -283,10 +283,10 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
         var expectedNoOfLogs = 0; // No logs should be stored because the build was successful
-        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(((ProgrammingSubmission) optionalResult.orElseThrow().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);

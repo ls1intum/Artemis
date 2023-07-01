@@ -135,19 +135,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
-    // Note: this is currently only used for testing purposes
-    @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-                LEFT JOIN FETCH c.exercises exercises
-                LEFT JOIN FETCH c.lectures lectures
-                LEFT JOIN FETCH lectures.attachments
-                LEFT JOIN FETCH exercises.categories
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                """)
-    List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
-
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 

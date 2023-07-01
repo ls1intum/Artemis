@@ -160,7 +160,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckSubmissionAllowance_testRun() {
-        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "instructor1").get();
+        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         studentExam.setTestRun(true);
         studentExam.setUser(instructor);
         studentExamRepository.save(studentExam);

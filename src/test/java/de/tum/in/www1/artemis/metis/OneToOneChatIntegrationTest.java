@@ -47,7 +47,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSent();
 
         // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
         conversationRepository.delete(conversation);
     }
 
@@ -107,7 +107,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSent();
 
         // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
         conversationRepository.delete(conversation);
     }
 
@@ -124,7 +124,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
 
         // cleanup
-        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+        var conversation = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
         conversationMessageRepository.deleteById(post.getId());
         conversationRepository.delete(conversation);
     }

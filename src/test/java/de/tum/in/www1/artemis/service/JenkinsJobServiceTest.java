@@ -83,7 +83,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // This call shall not fail, since the job will be created ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job should be invoked on JenkinsServer
-        verify(jenkinsServer, times(1)).createJob(any(FolderJob.class), eq("JenkinsJob"), eq("JenkinsConfigStringMock"), any());
+        verify(jenkinsServer).createJob(any(FolderJob.class), eq("JenkinsJob"), eq("JenkinsConfigStringMock"), any());
     }
 
     @Test

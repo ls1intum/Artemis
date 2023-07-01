@@ -30,6 +30,7 @@ export class Competency implements BaseEntity {
     public description?: string;
     public taxonomy?: CompetencyTaxonomy;
     public masteryThreshold?: number;
+    public optional?: boolean;
     public course?: Course;
     public exercises?: Exercise[];
     public lectureUnits?: LectureUnit[];
