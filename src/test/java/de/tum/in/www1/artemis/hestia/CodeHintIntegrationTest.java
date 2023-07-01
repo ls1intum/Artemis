@@ -92,7 +92,9 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
         programmingExerciseUtilService.addSolutionEntriesToProgrammingExercise(exercise);
         programmingExerciseUtilService.addCodeHintsToProgrammingExercise(exercise);
-        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findByExerciseId(exercise.getId()).stream().findAny().orElseThrow().getId());
+        Set<CodeHint> hints = codeHintRepository.findByExerciseId(exercise.getId());
+        codeHint = hints.stream().filter(hint -> hint.getProgrammingExerciseTask().getTaskName().equals("Task for test1")).findFirst().orElseThrow();
+        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHint.getId());
         solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
@@ -140,7 +142,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         changedEntry.setPreviousLine(200);
         changedEntry.setCode("Changed code");
         changedEntry.setPreviousCode("Changed previous code");
-        changedEntry.setTestCase(testCases.get("test3"));
+        changedEntry.setTestCase(testCases.get("test1"));
 
         var newEntry = new ProgrammingExerciseSolutionEntry();
         newEntry.setLine(200);
@@ -156,7 +158,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         request.put("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.OK);
 
         var updatedHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHint.getId());
-        assertThat(updatedHint.getSolutionEntries()).containsExactly(changedEntry, savedNewEntry);
+        assertThat(updatedHint.getSolutionEntries()).containsExactlyInAnyOrder(changedEntry, savedNewEntry);
     }
 
     @Test
