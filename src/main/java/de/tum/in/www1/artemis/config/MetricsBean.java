@@ -71,6 +71,24 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
+    private MultiGauge activeUserMultiGauge;
+
+    private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
+
+    private final AtomicInteger coursesGauge = new AtomicInteger(0);
+
+    private MultiGauge studentsCourseGauge;
+
+    private final AtomicInteger activeExamsGauge = new AtomicInteger(0);
+
+    private final AtomicInteger examsGauge = new AtomicInteger(0);
+
+    private MultiGauge studentsExamGauge;
+
+    private MultiGauge exerciseGauge;
+
+    private MultiGauge activeExerciseGauge;
+
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
@@ -201,6 +219,29 @@ public class MetricsBean {
                 .tag("range", String.valueOf(range)).description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
     }
 
+    private void registerPublicArtemisMetrics() {
+        SecurityUtils.setAuthorizationObject();
+
+        activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
+                .register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_courses", activeCoursesGauge::get).description("Number of active courses").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.courses", coursesGauge::get).description("Number of courses").register(meterRegistry);
+
+        studentsCourseGauge = MultiGauge.builder("artemis.statistics.public.course_students").description("Number of registered students per course").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.active_exams", activeExamsGauge::get).description("Number of active exams").register(meterRegistry);
+
+        Gauge.builder("artemis.statistics.public.exams", examsGauge::get).description("Number of exams").register(meterRegistry);
+
+        studentsExamGauge = MultiGauge.builder("artemis.statistics.public.exam_students").description("Number of registered students per exam").register(meterRegistry);
+
+        activeExerciseGauge = MultiGauge.builder("artemis.statistics.public.active_exercises").description("Number of active exercises by type").register(meterRegistry);
+
+        exerciseGauge = MultiGauge.builder("artemis.statistics.public.exercises").description("Number of exercises by type").register(meterRegistry);
+    }
+
     private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {
         if (webSocketHandler instanceof SubProtocolWebSocketHandler subProtocolWebSocketHandler) {
             return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
@@ -288,47 +329,6 @@ public class MetricsBean {
         return examRepository.countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
-    private MultiGauge activeUserMultiGauge;
-
-    private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
-
-    private final AtomicInteger coursesGauge = new AtomicInteger(0);
-
-    private MultiGauge studentsCourseGauge;
-
-    private final AtomicInteger activeExamsGauge = new AtomicInteger(0);
-
-    private final AtomicInteger examsGauge = new AtomicInteger(0);
-
-    private MultiGauge studentsExamGauge;
-
-    private MultiGauge exerciseGauge;
-
-    private MultiGauge activeExerciseGauge;
-
-    private void registerPublicArtemisMetrics() {
-        SecurityUtils.setAuthorizationObject();
-
-        activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
-                .register(meterRegistry);
-
-        Gauge.builder("artemis.statistics.public.active_courses", activeCoursesGauge::get).description("Number of active courses").register(meterRegistry);
-
-        Gauge.builder("artemis.statistics.public.courses", coursesGauge::get).description("Number of courses").register(meterRegistry);
-
-        studentsCourseGauge = MultiGauge.builder("artemis.statistics.public.course_students").description("Number of registered students per course").register(meterRegistry);
-
-        Gauge.builder("artemis.statistics.public.active_exams", activeExamsGauge::get).description("Number of active exams").register(meterRegistry);
-
-        Gauge.builder("artemis.statistics.public.exams", examsGauge::get).description("Number of exams").register(meterRegistry);
-
-        studentsExamGauge = MultiGauge.builder("artemis.statistics.public.exam_students").description("Number of registered students per exam").register(meterRegistry);
-
-        activeExerciseGauge = MultiGauge.builder("artemis.statistics.public.active_exercises").description("Number of active exercises by type").register(meterRegistry);
-
-        exerciseGauge = MultiGauge.builder("artemis.statistics.public.exercises").description("Number of exercises by type").register(meterRegistry);
-    }
-
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
     public void updatePublicArtemisMetrics() {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -357,7 +357,8 @@ public class MetricsBean {
 
         studentsCourseGauge.register(
                 activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList()),
+                true);
 
         activeCoursesGauge.set(activeCourses.size());
         coursesGauge.set(courseRepository.findAll().size());
@@ -370,13 +371,18 @@ public class MetricsBean {
         studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
                 // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
                 "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
-                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toList()));
+                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toList()), true);
 
-        activeExerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass()))).collect(Collectors.toList()));
+        activeExerciseGauge
+                .register(
+                        Stream.of(ExerciseType.values())
+                                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
+                                        exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
+                                .collect(Collectors.toList()),
+                        true);
 
         exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toList()));
+                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toList()), true);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

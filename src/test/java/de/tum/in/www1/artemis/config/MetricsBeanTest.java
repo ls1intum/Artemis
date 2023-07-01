@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +107,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
 
-        // This is still zero because the update function has not been called yet
+        // This is still the old value because the update function has not been called yet
         assertMetricEquals(courseCountBefore, "artemis.statistics.public.courses");
 
         metricsBean.updatePublicArtemisMetrics();
@@ -145,30 +147,82 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testPublicMetricsActiveCourses() {
-        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        var course1 = courseUtilService.createCourse();
+    void testPublicMetricsCourses() {
+        var activeCourse = courseUtilService.createCourse();
+        activeCourse.setStartDate(ZonedDateTime.now().minusDays(1));
+        activeCourse.setEndDate(ZonedDateTime.now().plusDays(1));
+        courseRepository.save(activeCourse);
 
-        var course2 = courseUtilService.createCourse();
+        var inactiveCourse = courseUtilService.createCourse();
+        inactiveCourse.setStartDate(ZonedDateTime.now().minusDays(2));
+        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(1));
+        courseRepository.save(inactiveCourse);
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(courseRepository.count(), "artemis.statistics.public.courses");
+        var totalNumberOfCourses = courseRepository.count();
+        var numberOfActiveCourses = courseRepository.findAllActive(ZonedDateTime.now()).size();
+
+        // Assert that there is at least one non-active course in the database so that the values returned from the metrics are different
+        assertNotEquals(totalNumberOfCourses, numberOfActiveCourses);
+
+        assertMetricEquals(totalNumberOfCourses, "artemis.statistics.public.courses");
+        assertMetricEquals(numberOfActiveCourses, "artemis.statistics.public.active_courses");
     }
 
     @Test
-    void testPublicMetricsCourseStudents() {
+    void testPublicMetricsExams() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        var courseWithActiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.get(0));
+        var activeExam = examRepository.findByCourseId(courseWithActiveExam.getId()).get(0);
+        activeExam.setStartDate(ZonedDateTime.now().minusDays(1));
+        activeExam.setEndDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(activeExam);
+
+        var courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.get(0));
+        var inactiveExam = examRepository.findByCourseId(courseWithInactiveExam.getId()).get(0);
+        inactiveExam.setStartDate(ZonedDateTime.now().minusDays(1));
+        inactiveExam.setEndDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(inactiveExam);
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        var totalNumberOfExams = examRepository.count();
+        var numberOfActiveExams = examRepository.countAllActiveExams(ZonedDateTime.now());
+
+        // Assert that there is at least one non-active exam in the database so that the values returned from the metrics are different
+        assertNotEquals(totalNumberOfExams, numberOfActiveExams.intValue());
+
+        assertMetricEquals(totalNumberOfExams, "artemis.statistics.public.exams");
+        assertMetricEquals(numberOfActiveExams, "artemis.statistics.public.active_exams");
+    }
+
+    @Test
+    void testPublicMetricsCourseAndExamStudents() {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+
         var course1 = courseUtilService.createCourse();
         course1.setSemester(null);
         course1.setStudentGroupName(TEST_PREFIX + "course1Students");
         courseRepository.save(course1);
+        var exam1 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam1.setTitle("exam" + UUID.randomUUID());
+        examRepository.save(exam1);
+        examUtilService.addStudentExamWithUser(exam1, users.get(0));
+        examUtilService.addStudentExamWithUser(exam1, users.get(1));
 
         var course2 = courseUtilService.createCourse();
         course2.setSemester("WS 2023/24");
         course2.setStudentGroupName(TEST_PREFIX + "course2Students");
         courseRepository.save(course2);
+        var exam2 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
+        exam2.setTitle("exam" + UUID.randomUUID());
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam2);
+        examUtilService.addStudentExamWithUser(exam2, users.get(0));
 
+        users.forEach(user -> user.setGroups(new HashSet<>()));
         users.get(0).getGroups().add(TEST_PREFIX + "course1Students");
         users.get(1).getGroups().add(TEST_PREFIX + "course1Students");
         users.get(2).getGroups().add(TEST_PREFIX + "course1Students");
@@ -179,6 +233,39 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         assertMetricEquals(3, "artemis.statistics.public.course_students", "courseName", course1.getTitle(), "semester", "No semester");
         assertMetricEquals(1, "artemis.statistics.public.course_students", "courseName", course2.getTitle(), "semester", "WS 2023/24");
+
+        assertMetricEquals(2, "artemis.statistics.public.exam_students", "examName", exam1.getTitle(), "semester", "No semester");
+        assertMetricEquals(1, "artemis.statistics.public.exam_students", "examName", exam2.getTitle(), "semester", "WS 2023/24");
+    }
+
+    @Test
+    void testPublicMetricsExercises() {
+        var course1 = courseUtilService.createCourse();
+        // Active quiz
+        course1.addExercises(
+                exerciseRepository.save(quizExerciseUtilService.createQuiz(course1, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED)));
+        // Not active quiz (in past)
+        course1.addExercises(
+                exerciseRepository.save(quizExerciseUtilService.createQuiz(course1, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED)));
+
+        // Active text exercise
+        course1.addExercises(exerciseRepository.save(
+                textExerciseUtilService.createIndividualTextExercise(course1, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1))));
+        // Not active text exercise (in future)
+        course1.addExercises(exerciseRepository.save(
+                textExerciseUtilService.createIndividualTextExercise(course1, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3))));
+
+        courseRepository.save(course1);
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
+        assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
+
+        assertMetricEquals(exerciseRepository.countExercisesByExerciseType(ExerciseType.QUIZ.getExerciseClass()), "artemis.statistics.public.exercises", "exerciseType",
+                ExerciseType.QUIZ.toString());
+        assertMetricEquals(exerciseRepository.countExercisesByExerciseType(ExerciseType.TEXT.getExerciseClass()), "artemis.statistics.public.exercises", "exerciseType",
+                ExerciseType.TEXT.toString());
     }
 
     @Test
