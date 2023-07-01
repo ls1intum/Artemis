@@ -356,7 +356,8 @@ public class MetricsBean {
         });
 
         studentsCourseGauge.register(
-                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
+                // TODO: Change this back
+                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", "testTitle", "semester", "testSemester"), course.getNumberOfStudents()))
                         .collect(Collectors.toList()),
                 true);
 
