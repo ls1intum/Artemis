@@ -206,7 +206,7 @@ public class ResultService {
      * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
-    public List<Feedback> getFeedbacksForResult(Result result) {
+    public List<Feedback> filterFeedbackForClient(Result result) {
         this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
         return result.getFeedbacks().stream() //
@@ -262,7 +262,7 @@ public class ResultService {
             result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-            boolean beforeAssessmentDueDate = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+            boolean beforeAssessmentDueDate = !ExerciseDateService.isAfterAssessmentDueDate(exercise);
 
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {

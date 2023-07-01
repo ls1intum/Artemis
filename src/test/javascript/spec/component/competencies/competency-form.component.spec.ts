@@ -9,12 +9,14 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import dayjs from 'dayjs/esm';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -25,7 +27,7 @@ describe('CompetencyFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule)],
-            declarations: [CompetencyFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
+            declarations: [CompetencyFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe), MockComponent(FormDateTimePickerComponent)],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -102,6 +104,7 @@ describe('CompetencyFormComponent', () => {
             id: 1,
             title: 'test',
             description: 'lorem ipsum',
+            softDueDate: dayjs(),
             connectedLectureUnits: [textUnit],
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
@@ -112,6 +115,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
         expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
+        expect(competencyFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(competencyFormComponent.optionalControl?.value).toEqual(formData.optional);
         expect(competencyFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
