@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import submission from '../../../fixtures/exercise/programming/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
@@ -14,17 +14,16 @@ import { admin, instructor } from '../../../support/users';
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
-let exerciseArray: Array<Exercise> = [];
-
 describe('Test exam test run', () => {
     let course: Course;
     let exam: Exam;
     let testRun: any;
+    let exerciseArray: Array<Exercise> = [];
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .testExam()
@@ -118,7 +117,7 @@ describe('Test exam test run', () => {
 
     it('Conducts a test run', () => {
         examTestRun.startParticipation(instructor, course, exam, testRun.id);
-        cy.get('#testRunRibbon').contains('Test Run');
+        examTestRun.getTestRunRibbon().contains('Test Run');
 
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
@@ -147,10 +146,7 @@ describe('Test exam test run', () => {
         examTestRun.getTestRun(testRun.id).should('not.exist');
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

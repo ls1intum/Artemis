@@ -488,7 +488,7 @@ public class ProgrammingExerciseExportService {
     public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
 
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());

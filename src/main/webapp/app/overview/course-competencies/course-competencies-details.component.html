@@ -21,6 +21,7 @@
                     ></fa-icon>
                     <span>{{ competency!.title }}</span>
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                    <span *ngIf="competency.optional" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
                 </h3>
                 <div *ngIf="competency.description">{{ competency.description }}</div>
             </div>

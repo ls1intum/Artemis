@@ -72,6 +72,10 @@ export function getExercise(exerciseId: number) {
     return cy.get(`#exercise-${exerciseId}`);
 }
 
+export function convertBooleanToYesNo(boolean: boolean) {
+    return boolean ? 'Yes' : 'No';
+}
+
 export function parseArrayBufferAsJsonObject(buffer: ArrayBuffer) {
     const bodyString = Cypress.Blob.arrayBufferToBinaryString(buffer);
     return JSON.parse(bodyString);
