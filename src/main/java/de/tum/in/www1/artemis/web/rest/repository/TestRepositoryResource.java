@@ -79,7 +79,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        return versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+        return versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Override

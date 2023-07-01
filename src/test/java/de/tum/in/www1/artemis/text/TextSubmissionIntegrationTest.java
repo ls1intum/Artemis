@@ -360,7 +360,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userUtilService.changeUser(TEST_PREFIX + "student1");
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
@@ -373,7 +373,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userUtilService.changeUser(TEST_PREFIX + "student2");
         version = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
 
         submission.setText(submission.getText() + " Even more.");

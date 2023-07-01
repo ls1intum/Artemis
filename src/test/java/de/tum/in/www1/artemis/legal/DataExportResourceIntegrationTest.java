@@ -225,7 +225,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Path getCourseDirectoryPath(Path rootPath) throws IOException {
         try (var files = Files.list(rootPath).filter(Files::isDirectory)) {
-            return files.findFirst().get();
+            return files.findFirst().orElseThrow();
         }
     }
 
@@ -238,7 +238,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownloadSuccess() throws Exception {
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         // create an export
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
@@ -273,7 +273,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntBelongToUser_forbidden() throws Exception {
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);

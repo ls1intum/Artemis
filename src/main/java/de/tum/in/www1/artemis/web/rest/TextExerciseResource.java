@@ -337,7 +337,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
+        if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
@@ -352,6 +352,11 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
+            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                textSubmission.setResults(Collections.emptyList());
+                participation.setResults(Collections.emptySet());
+            }
+
             Result result = textSubmission.getLatestResult();
             if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
@@ -364,7 +369,7 @@ public class TextExerciseResource {
                 }
 
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                    result.setAssessor(null);
+                    result.filterSensitiveInformation();
                 }
             }
 
