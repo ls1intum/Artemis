@@ -37,9 +37,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                             )
                         )
                         OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
-                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
-                            OR notification.title IS NULL
-                        )
+                            AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                                OR notification.title IS NULL
+                            )
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                     )
             """)
@@ -64,9 +64,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                             )
                         )
                         OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
-                        AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
-                            OR notification.title IS NULL
-                        )
+                            AND (notification.title NOT IN :#{#titlesToNotLoadNotification}
+                                OR notification.title IS NULL
+                            )
                         OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                     )
             """)
@@ -87,11 +87,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                                 OR notification.title IS NULL
                             )
                             AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
-                           OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
-                           OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
-                           OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
-                     )
-                     OR (type(notification) = SingleUserNotification
+                            OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                            OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                            OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
+                    )
+                    OR (type(notification) = SingleUserNotification
                         AND notification.recipient.login = :login
                         AND (notification.title NOT IN :titlesToNotLoadNotification
                             OR notification.title IS NULL
@@ -99,12 +99,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
-                     )
-                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
+                    )
+                    OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
                         AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
-                     )
+                    )
                 )
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
@@ -125,11 +125,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                                 OR notification.title IS NULL
                             )
                             AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
-                           OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
-                           OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
-                           OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
-                     )
-                     OR (type(notification) = SingleUserNotification
+                            OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                            OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                            OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
+                    )
+                    OR (type(notification) = SingleUserNotification
                         AND notification.recipient.login = :login
                         AND (notification.title NOT IN :titlesToNotLoadNotification
                             OR notification.title IS NULL
@@ -137,12 +137,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
-                     )
-                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
+                    )
+                    OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :tutorialGroupIds
                         AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
-                     )
+                    )
                 )
             """)
     int countAllUnreadNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="stoehrj" id="20230701100700">
+        <createIndex indexName="notification_jhi_type_key" tableName="notification">
+            <column name="jhi_type"/>
+        </createIndex>
+        <createIndex indexName="course_student_group_name_key" tableName="course">
+            <column name="student_group_name"/>
+        </createIndex>
+        <createIndex indexName="course_teaching_assistant_group_name_key" tableName="course">
+            <column name="teaching_assistant_group_name"/>
+        </createIndex>
+        <createIndex indexName="course_editor_group_name_key" tableName="course">
+            <column name="editor_group_name"/>
+        </createIndex>
+        <createIndex indexName="course_instructor_group_name_key" tableName="course">
+            <column name="instructor_group_name"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
