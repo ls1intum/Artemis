@@ -161,9 +161,9 @@
                         type="checkbox"
                         id="continuous_plagiarism_control_enabled"
                         class="plagiarism-option-checkbox form-check-input"
-                        name="textExercise.continuousPlagiarismControlEnabled"
-                        #textExercise.continuousPlagiarismControlEnabled="ngModel"
-                        [(ngModel)]="textExercise.continuousPlagiarismControlEnabled"
+                        name="textExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
+                        #textExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
+                        [(ngModel)]="textExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
                     />
                     <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
                 </div>

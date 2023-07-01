@@ -69,7 +69,7 @@ class PlagiarismChecksServiceTest {
     }
 
     @Test
-    void shouldExecuteChecksForProgrammingExercise() throws IOException, ExitException, ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+    void shouldExecuteChecksForProgrammingExercise() throws IOException, ExitException, ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
@@ -96,11 +96,11 @@ class PlagiarismChecksServiceTest {
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
-        assertThatThrownBy(() -> service.checkProgrammingExercise(programmingExercise)).isInstanceOf(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class);
+        assertThatThrownBy(() -> service.checkProgrammingExercise(programmingExercise)).isInstanceOf(ProgrammingLanguageNotSupportedForPlagiarismChecksException.class);
     }
 
     @Test
-    void shouldExecuteChecksWithJplagReportForProgrammingExercise() throws ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+    void shouldExecuteChecksWithJplagReportForProgrammingExercise() throws ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
@@ -127,6 +127,6 @@ class PlagiarismChecksServiceTest {
 
         // expect
         assertThatThrownBy(() -> service.checkProgrammingExerciseWithJplagReport(programmingExercise))
-                .isInstanceOf(ProgrammingLanguageNotSupportedFroPlagiarismChecksException.class);
+                .isInstanceOf(ProgrammingLanguageNotSupportedForPlagiarismChecksException.class);
     }
 }

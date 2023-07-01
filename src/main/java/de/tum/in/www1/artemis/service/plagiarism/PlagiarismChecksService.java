@@ -62,11 +62,11 @@ public class PlagiarismChecksService {
         return plagiarismResult;
     }
 
-    private void checkProgrammingLanguageSupport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+    private void checkProgrammingLanguageSupport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         var language = exercise.getProgrammingLanguage();
         var programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
         if (!programmingLanguageFeature.plagiarismCheckSupported()) {
-            throw new ProgrammingLanguageNotSupportedFroPlagiarismChecksException(language);
+            throw new ProgrammingLanguageNotSupportedForPlagiarismChecksException(language);
         }
     }
 
@@ -77,7 +77,7 @@ public class PlagiarismChecksService {
      * @return result of plagiarism checks
      */
     public TextPlagiarismResult checkProgrammingExercise(ProgrammingExercise exercise)
-            throws ExitException, IOException, ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+            throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         checkProgrammingLanguageSupport(exercise);
 
         var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
@@ -94,7 +94,7 @@ public class PlagiarismChecksService {
      * @param exercise exercise to check plagiarism
      * @return Jplag report of plagiarism checks
      */
-    public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+    public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         checkProgrammingLanguageSupport(exercise);
         return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), exercise.getPlagiarismChecksConfig().getSimilarityThreshold(),
                 exercise.getPlagiarismChecksConfig().getMinimumScore());

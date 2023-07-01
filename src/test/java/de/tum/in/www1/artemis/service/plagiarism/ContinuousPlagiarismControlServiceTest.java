@@ -25,7 +25,7 @@ class ContinuousPlagiarismControlServiceTest {
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, null, null);
 
     @Test
-    void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedFroPlagiarismChecksException {
+    void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         // given
         var textExercise = new TextExercise();
         var modelingExercise = new ModelingExercise();
