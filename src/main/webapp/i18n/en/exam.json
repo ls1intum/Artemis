@@ -316,6 +316,7 @@
             "assessment": "Assessment",
             "id": "ID",
             "exam": "Exam",
+            "examTimeline": "Exam timeline",
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",

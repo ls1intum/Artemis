@@ -1,7 +1,9 @@
 import { Submission } from 'app/entities/submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { Directive, Input } from '@angular/core';
 
+@Directive()
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
     /**
      * checks whether the component has unsaved changes.
@@ -24,4 +26,5 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
 
     abstract getSubmission(): Submission | undefined;
     abstract getExercise(): Exercise;
+    @Input() readonly = false;
 }

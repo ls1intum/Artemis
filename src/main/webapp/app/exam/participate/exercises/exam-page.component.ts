@@ -1,5 +1,6 @@
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Directive } from '@angular/core';
 
+@Directive()
 export abstract class ExamPageComponent {
     protected constructor(protected changeDetectorReference: ChangeDetectorRef) {}
 

@@ -52,7 +52,10 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
+import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -87,6 +90,8 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
+        ArtemisExamNavigationBarModule,
+        ArtemisExamSubmissionComponentsModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -115,6 +120,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamImportComponent,
         ExamExerciseImportComponent,
         BonusComponent,
+        StudentExamTimelineComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

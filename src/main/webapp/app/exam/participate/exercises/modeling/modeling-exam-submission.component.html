@@ -15,6 +15,7 @@
                         [umlModel]="umlModel"
                         [diagramType]="exercise.diagramType!"
                         (onModelChanged)="modelChanged($event)"
+                        [readOnly]="readonly"
                         [withExplanation]="true"
                         [explanation]="explanationText"
                         (explanationChange)="explanationChanged($event)"

@@ -26,6 +26,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
+    @Input() examTimeLineView = false;
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
@@ -51,10 +52,12 @@ export class ExamNavigationBarComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
-            // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
-            this.changeExerciseById(exerciseIdToNavigateTo);
-        });
+        if (!this.examTimeLineView) {
+            this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
+                // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
+                this.changeExerciseById(exerciseIdToNavigateTo);
+            });
+        }
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
@@ -179,6 +182,13 @@ export class ExamNavigationBarComponent implements OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        this.icon = faCheck;
+        if (this.examTimeLineView && this.exerciseIndex === exerciseIndex) {
+            return 'synced active';
+        } else if (this.examTimeLineView) {
+            return 'synced';
+        }
+
         // start with a yellow status (edit icon)
         // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !

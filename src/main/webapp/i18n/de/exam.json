@@ -300,6 +300,7 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "examSessions": "Sitzungen",
+            "examTimeline": "Klausur Verlauf",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",

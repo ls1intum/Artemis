@@ -55,6 +55,7 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -277,6 +278,18 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/student-exams/:studentExamId/timeline',
+        component: StudentExamTimelineComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
         component: GradingKeyOverviewComponent,
         data: {
@@ -307,7 +320,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId/summary',
-        component: StudentExamSummaryComponent,
+        component: StudentExamTimelineComponent,
         resolve: {
             studentExam: StudentExamResolve,
         },

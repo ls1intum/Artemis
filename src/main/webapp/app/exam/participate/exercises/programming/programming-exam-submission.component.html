@@ -9,7 +9,7 @@
     </div>
 
     <jhi-code-editor-container
-        [editable]="!participationIsLocked"
+        [editable]="!participationIsLocked && !readonly"
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
         [course]="getCourseFromExercise(exercise)"
@@ -41,6 +41,7 @@
                 [exercise]="exercise"
                 [participation]="studentParticipation"
                 [btnSize]="ButtonSize.MEDIUM"
+                *ngIf="!readonly"
             ></jhi-programming-exercise-student-trigger-build-button>
         </div>
         <jhi-programming-exercise-instructions
