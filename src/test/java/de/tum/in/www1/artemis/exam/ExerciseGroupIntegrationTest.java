@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -163,25 +164,19 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
-        final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
+        final List<ExerciseGroup> exerciseGroupsBefore = targetExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                listExpected, ExerciseGroup.class, HttpStatus.OK);
-        assertThat(listReceived).hasSize(9);
+        final List<ExerciseGroup> exerciseGroupsNow = request.postListWithResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore, ExerciseGroup.class, HttpStatus.OK);
 
-        // We import into the same exam -> double the exercise groups
-        listExpected.addAll(listExpected);
+        assertThat(exerciseGroupsNow).hasSize(9).containsAll(exerciseGroupsBefore).allMatch(element -> element.getId() != null);
 
-        // The first 5 should be the old ones
-        for (int i = 0; i <= 4; i++) {
-            assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
-        }
-        // The last 4
-        for (int i = 5; i <= 8; i++) {
-            assertThat(listReceived.get(i).getId()).isNotNull();
-            assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
-            assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
-            assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
+        for (var exerciseGroup : exerciseGroupsBefore) {
+            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getId(), exerciseGroup.getId())).hasSize(1);
+
+            // empty group did not get imported
+            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getTitle(), exerciseGroup.getTitle()))
+                    .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSize(exerciseGroup.getExercises().isEmpty() ? 1 : 2);
         }
     }
 
@@ -236,8 +231,8 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
             assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
 
-            Exercise expected = listReceived.get(i).getExercises().stream().findFirst().get();
-            Exercise exerciseReceived = listExpected.get(i).getExercises().stream().findFirst().get();
+            Exercise expected = listReceived.get(i).getExercises().stream().findFirst().orElseThrow();
+            Exercise exerciseReceived = listExpected.get(i).getExercises().stream().findFirst().orElseThrow();
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
             assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(expected.getExerciseGroup());
             assertThat(exerciseReceived.getTitle()).isEqualTo(expected.getTitle());

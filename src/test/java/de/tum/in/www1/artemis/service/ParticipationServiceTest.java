@@ -104,11 +104,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
 
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
+                SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getStudent()).contains(student.get());
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().get();
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above
     }
@@ -144,7 +145,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         assertThat(studentParticipationReceived.getId()).isNotEqualTo(practiceParticipation.getId());
         assertThat(programmingExercise.getStudentParticipations()).hasSize(2);
