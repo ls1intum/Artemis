@@ -63,8 +63,8 @@ public class TutorialGroupUtilService {
     private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     public void addTutorialCourse() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
-                tutorialGroupEditors.get(), tutorialGroupInstructors.get());
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
+                tutorialGroupTutors.orElseThrow(), tutorialGroupEditors.orElseThrow(), tutorialGroupInstructors.orElseThrow());
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
     }

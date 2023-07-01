@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -149,15 +150,15 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
 
         // Creating result for student1
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
         // Creating result for team1
-        Team team = teamRepository.findById(idOfTeam1).get();
+        Team team = teamRepository.findById(idOfTeam1).orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
 
         // setting up exam
@@ -204,7 +205,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
-        var exercise = exerciseRepository.findById(idOfIndividualTextExercise).get();
+        var exercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
         exercise.setTitle("1"); // The exercise must have a short name because otherwise the corresponding audit event is too long for the database
         exerciseRepository.save(exercise);
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
@@ -246,7 +247,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
@@ -256,12 +257,12 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).orElseThrow();
 
         GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
         gradingScaleRepository.save(gradingScale);
 
-        User student = userRepository.findById(idOfStudent1).get();
+        User student = userRepository.findById(idOfStudent1).orElseThrow();
 
         Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(exam.getCourse().getId());
         studentParticipationRepository.getAllParticipationsOfUserInExercises(student, exercises, false).forEach(participation -> {
@@ -271,7 +272,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(3);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(15.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(60.0);
@@ -283,7 +284,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
-        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().orElseThrow();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(5.6);
@@ -292,7 +293,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     private TextExercise createIndividualTextExerciseForExam() {
         Exam exam;
-        exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
+        exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).orElseThrow();
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
         textExercise.setMaxPoints(10.0);

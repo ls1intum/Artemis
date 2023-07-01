@@ -13,11 +13,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryService;
-import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    private static final String TEST_PREFIX = "progexreposervice";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -26,125 +23,134 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
 
-    private ProgrammingExercise programmingExercise1;
+    private ProgrammingExercise programmingExerciseBeforeUpdate;
 
-    private ProgrammingExercise programmingExercise2;
+    private ProgrammingExercise updatedProgrammingExercise;
 
     @BeforeEach
     void init() {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseBeforeUpdate = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExerciseBeforeUpdate.setReleaseDate(null);
+        programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
-        var course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course1, ProgrammingExercise.class);
-        programmingExercise1.setReleaseDate(null);
-        programmingExerciseRepository.save(programmingExercise1);
-
-        var course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise2 = exerciseUtilService.getFirstExerciseWithType(course2, ProgrammingExercise.class);
-        programmingExercise2.setReleaseDate(null);
-        programmingExerciseRepository.save(programmingExercise2);
+        updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
     }
 
     @Test
     void shouldLockRepositoriesWhenOfflineIDEGetsForbidden() {
-        programmingExercise1.setAllowOfflineIde(true);
-        programmingExercise2.setAllowOfflineIde(false);
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendLockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(true);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
     void shouldUnlockRepositoriesWhenOfflineIDEGetsAllowed() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(true);
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(true);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldNotUnlockRepositoriesWhenOfflineIDEGetsAllowedAndDueDateInPast() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(true);
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+    void shouldUnlockRepositoriesAndParticipationsWhenOfflineIDEGetsAllowedAndStartDateIsSetInThePast() {
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(true);
+        programmingExerciseBeforeUpdate.setStartDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldLockRepositoriesWhenDueDateIsSetInThePast() {
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
+    void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePast() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExercise1.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(2)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldLockRepositoriesWhenDueDateIsSetInThePastAndNoDueDateBefore() {
-        programmingExercise1.setDueDate(null);
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
+    void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePastAndNoDueDateBefore() {
+        programmingExerciseBeforeUpdate.setDueDate(null);
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldUnlockRepositoriesWhenDueDateIsSetInTheFuture() {
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExercise1.getId());
+    void shouldLockParticipationsWhenDueDateIsSetInThePastAndOfflineIDEGetsForbidden() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(true);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
 
-        programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(2)).sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
+    }
+
+    @Test
+    void shouldUnlockRepositoriesAndParticipationsWhenDueDateIsSetInTheFuture() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
     void shouldNotUnlockRepositoriesWhenDueDateIsSetInTheFutureAndNoOfflineIDE() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(false);
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService).sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldLockRepositoriesWhenExerciseGetsUnreleased() {
-        programmingExercise2.setReleaseDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+    void shouldLockRepositoriesAndParticipationsWhenExerciseGetsUnreleased() {
+        updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
-    void shouldUnlockRepositoriesWhenExerciseGetsReleasedImmediately() {
-        programmingExercise1.setReleaseDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+    void shouldUnlockRepositoriesAndParticipationsWhenExerciseGetsReleasedImmediately() {
+        programmingExerciseBeforeUpdate.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now());
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 }

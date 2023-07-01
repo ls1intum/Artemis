@@ -239,7 +239,7 @@ public class GitService {
             public HostConfig lookupDefault(String hostName, int port, String userName) {
                 return lookup(hostName, port, userName);
             }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
+        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
         sshCallback = transport -> {
             if (transport instanceof SshTransport sshTransport) {
@@ -283,7 +283,7 @@ public class GitService {
     }
 
     private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        URI templateUri = new URI(sshUrlTemplate.get());
+        URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUrl.getURI();
@@ -922,13 +922,13 @@ public class GitService {
             }
             else {
                 log.debug("Last valid submission is not present for participation");
-                // Get last commit before deadline
+                // Get last commit before due date
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
-                commitHash = latestCommitBeforeDeadline.getId().getName();
+                RevCommit latestCommitBeforeDueDate = commits.iterator().next();
+                commitHash = latestCommitBeforeDueDate.getId().getName();
             }
             log.debug("Last commit hash is {}", commitHash);
 

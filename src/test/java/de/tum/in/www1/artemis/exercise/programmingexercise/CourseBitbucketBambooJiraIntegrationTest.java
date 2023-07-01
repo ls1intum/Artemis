@@ -412,7 +412,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnenrollFromCourse() throws Exception {
-        User student = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "student1").get();
+        User student = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "student1").orElseThrow();
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
         bitbucketRequestMockProvider.mockRemoveUserFromGroup(student.getLogin(), "unenrolltestcourse1");
         courseTestService.testUnenrollFromCourse();
@@ -446,12 +446,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
-        User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin(), false, true);
         bitbucketRequestMockProvider.mockUpdateUserDetails(tutor.getLogin(), tutor.getEmail(), tutor.getName());
         bitbucketRequestMockProvider.mockRemoveUserFromGroup(tutor.getLogin(), course.getTeachingAssistantGroupName());
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
-        tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").get();
+        tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         assertThat(tutor.getGroups()).doesNotContain(course.getTeachingAssistantGroupName());
     }
 

@@ -2,26 +2,18 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
 
-// Common primitives
-let courseName: string;
-let courseShortName: string;
-
 describe('Course messages', () => {
     let course: Course;
-    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseId = course.id!;
+        courseManagementRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
@@ -108,7 +100,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createLecture(course, 'Test Lecture');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseLectureChannelsButton();
                 courseMessages.checkChannelsExists('lecture-test-lecture');
             });
 
@@ -116,7 +108,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseExerciseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');
             });
 
@@ -125,7 +117,7 @@ describe('Course messages', () => {
                 const examContent = new ExamBuilder(course).build();
                 courseManagementRequest.createExam(examContent);
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseExamChannelsButton();
                 courseMessages.checkChannelsExists(titleLowercase(examContent.title));
             });
         });
@@ -227,7 +219,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -402,7 +394,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -419,10 +411,7 @@ describe('Course messages', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

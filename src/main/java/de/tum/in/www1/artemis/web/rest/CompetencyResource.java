@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
@@ -173,6 +176,7 @@ public class CompetencyResource {
         existingCompetency.setDescription(competency.getDescription());
         existingCompetency.setTaxonomy(competency.getTaxonomy());
         existingCompetency.setMasteryThreshold(competency.getMasteryThreshold());
+        existingCompetency.setOptional(competency.isOptional());
         var persistedCompetency = competencyRepository.save(existingCompetency);
 
         linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
@@ -208,6 +212,7 @@ public class CompetencyResource {
         competencyToCreate.setDescription(competency.getDescription());
         competencyToCreate.setTaxonomy(competency.getTaxonomy());
         competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
+        competencyToCreate.setOptional(competency.isOptional());
         competencyToCreate.setCourse(course);
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);

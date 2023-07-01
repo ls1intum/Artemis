@@ -261,11 +261,14 @@ public class ProgrammingExerciseGradingService {
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
         if (isStudentParticipation) {
-            // When a student receives a new result, we want to check whether we need to lock the participation
+            // When a student receives a new result, we want to check whether we need to lock the participation and the
             // repository when a lock repository policy is present. At this point, we know that the programming
-            // exercise exists.
+            // exercise exists and that the participation must be a ProgrammingExerciseStudentParticipation.
+            // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
+            // test run repository).
+            // Student test exam participations will still be locked by this.
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isTestRun()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 

@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.3.0"
+version = "6.3.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -91,6 +91,8 @@ springBoot {
 modernizer {
     failOnViolations = false
     includeTestClasses = true
+    // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
+    exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
 // Execute the test cases: ./gradlew test

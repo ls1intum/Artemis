@@ -108,7 +108,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
         }
         else {
-            String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingParticipation);
+            String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
         }
     }
@@ -140,11 +140,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return versionControlService.get().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+            return versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
         }
         else {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-            return versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+            return versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
         }
     }
 
@@ -296,7 +296,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         catch (AccessForbiddenException e) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+            FileSubmissionError error = new FileSubmissionError(participationId, e.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
 
