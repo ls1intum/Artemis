@@ -4,6 +4,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -36,6 +37,9 @@ export class SubmissionResultStatusComponent implements OnChanges {
     exerciseMissedDueDate: boolean;
     uninitialized: boolean;
     notSubmitted: boolean;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     ngOnChanges() {
         // It's enough to look at the normal due date as students with time extension cannot start after the regular due date

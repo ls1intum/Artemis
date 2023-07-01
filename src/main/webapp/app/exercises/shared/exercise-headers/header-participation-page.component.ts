@@ -4,6 +4,7 @@ import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
@@ -23,9 +24,13 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public achievedPoints?: number;
+    public plagiarismDetected = false;
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Sets the status badge and categories of the exercise on init
@@ -62,6 +67,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
                     (this.participation.results?.[0].score! * this.exercise.maxPoints!) / 100,
                     getCourseFromExercise(this.exercise),
                 );
+                this.plagiarismDetected = !!this.participation?.submissions?.[0].plagiarismDetected;
             }
         }
     }
