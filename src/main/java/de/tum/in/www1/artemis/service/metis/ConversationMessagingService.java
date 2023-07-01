@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
@@ -47,14 +48,17 @@ public class ConversationMessagingService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final ConversationRepository conversationRepository;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService) {
+            ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
@@ -76,7 +80,9 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation(), author);
+        conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+
+        var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels

@@ -102,6 +102,18 @@ public class ConversationService {
     }
 
     /**
+     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     */
+    public void isMemberElseThrow(Long conversationId, Long userId) {
+        if (!isMember(conversationId, userId)) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+    }
+
+    /**
      * Gets the conversation in a course for which the user is a member
      *
      * @param courseId       the id of the course
@@ -306,24 +318,6 @@ public class ConversationService {
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-    }
-
-    /**
-     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
-     *
-     * @param conversation the conversation the user wants to interact with
-     * @param user         the user to check
-     * @return conversation if the user is a member
-     */
-    public Conversation mayInteractWithConversationElseThrow(Conversation conversation, User user) {
-        Conversation conversationWithParticipants = conversationRepository.findWithConversationParticipantsByIdElseThrow(conversation.getId());
-        // Find the alleged participant to determine if they are in the conversation in O(1) runtime
-        ConversationParticipant allegedParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
-                user.getId());
-        if (!conversationWithParticipants.getConversationParticipants().contains(allegedParticipant)) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
-        }
-        return conversationWithParticipants;
     }
 
     /**

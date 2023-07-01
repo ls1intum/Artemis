@@ -72,14 +72,15 @@ public class AnswerMessageService extends PostingService {
      */
     public AnswerPost createAnswerMessage(Long courseId, AnswerPost answerMessage) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        Conversation conversation = answerMessage.getPost().getConversation();
 
         // check
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
+        conversationService.isMemberElseThrow(conversation.getId(), user.getId());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation(), user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {
