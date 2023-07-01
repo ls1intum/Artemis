@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksConfigHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismChecksService;
-import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedFroPlagiarismChecksException;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismChecksException;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -100,7 +100,7 @@ public class ProgrammingExercisePlagiarismResource {
             var plagiarismResult = plagiarismChecksService.checkProgrammingExercise(programmingExercise);
             return ResponseEntity.ok(plagiarismResult);
         }
-        catch (ProgrammingLanguageNotSupportedFroPlagiarismChecksException e) {
+        catch (ProgrammingLanguageNotSupportedForPlagiarismChecksException e) {
             throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "programmingLanguageNotSupported");
         }
         finally {
@@ -136,7 +136,7 @@ public class ProgrammingExercisePlagiarismResource {
             var resource = new InputStreamResource(new FileInputStream(zipFile));
             return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
         }
-        catch (ProgrammingLanguageNotSupportedFroPlagiarismChecksException e) {
+        catch (ProgrammingLanguageNotSupportedForPlagiarismChecksException e) {
             throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "programmingLanguageNotSupported");
         }
         finally {

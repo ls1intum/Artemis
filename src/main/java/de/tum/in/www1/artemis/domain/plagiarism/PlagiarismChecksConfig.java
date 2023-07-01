@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -27,6 +24,9 @@ public class PlagiarismChecksConfig extends DomainObject {
     @JsonIgnoreProperties("plagiarismChecksConfig")
     private Exercise exercise;
 
+    @Column(name = "continuous_plagiarism_control_enabled")
+    private boolean continuousPlagiarismControlEnabled = false;
+
     private float similarityThreshold;
 
     private int minimumScore;
@@ -39,6 +39,14 @@ public class PlagiarismChecksConfig extends DomainObject {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    public boolean isContinuousPlagiarismControlEnabled() {
+        return continuousPlagiarismControlEnabled;
+    }
+
+    public void setContinuousPlagiarismControlEnabled(boolean continuousPlagiarismControlEnabled) {
+        this.continuousPlagiarismControlEnabled = continuousPlagiarismControlEnabled;
     }
 
     public float getSimilarityThreshold() {
