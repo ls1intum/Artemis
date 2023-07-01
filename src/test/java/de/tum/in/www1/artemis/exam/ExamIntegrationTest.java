@@ -238,10 +238,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private static final int NUMBER_OF_TUTORS = 2;
 
-    private StudentExam studentExam1;
-
-    private static final int numberOfStudents = 10;
-
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
     private User instructor;
@@ -276,11 +272,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examUtilService.addExamChannel(exam2, "exam2 channel");
         testExam1 = examUtilService.addTestExam(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
-
-        studentExam1 = examUtilService.addStudentExam(exam1);
-        studentExam1.setWorkingTime(7200);
-        studentExam1.setUser(student1);
-        studentExamRepository.save(studentExam1);
 
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
@@ -2597,7 +2588,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         studentExamRepository.save(studentExam3);
 
         final var individualWorkingTimes = examDateService.getAllIndividualExamEndDates(exam.getId());
-        assertThat(individualWorkingTimes).hasSize(3);
+        assertThat(individualWorkingTimes).hasSize(2);
     }
 
     @Test
@@ -3252,7 +3243,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examUser1 = examUserRepository.save(examUser1);
         exam.addExamUser(examUser1);
         examRepository.save(exam);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
     }
 
     @Test
