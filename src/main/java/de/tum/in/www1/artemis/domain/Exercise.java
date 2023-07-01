@@ -150,7 +150,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private PlagiarismChecksConfig plagiarismChecksConfig = new PlagiarismChecksConfig();
+    private PlagiarismChecksConfig plagiarismChecksConfig;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
