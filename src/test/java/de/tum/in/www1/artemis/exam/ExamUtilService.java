@@ -377,7 +377,7 @@ public class ExamUtilService {
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
         for (int i = 0; i <= 4; i++) {
-            ExamFactory.generateExerciseGroup(true, exam);
+            ExamFactory.generateExerciseGroupWithTitle(true, exam, "Group " + i);
         }
         exam.setNumberOfExercisesInExam(5);
         exam.setExamMaxPoints(5 * 5);
