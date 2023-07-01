@@ -57,7 +57,7 @@ class HttpRequestUtilsTest {
         assertThat(ipAddress.toFullString()).isEqualTo("0000:0000:0000:0000:0000:0000:0000:0001");
     }
 
-    @Test()
+    @Test
     void testInvalidIPv4String() {
         HttpServletRequest request = httpRequestMockWithIp("192.256.2.235");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request);

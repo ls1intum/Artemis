@@ -8,6 +8,7 @@
             "title": "Kompetenzen",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
+            "softDueDate": "Empfohlen bis",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "optional": "Optional",
             "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
@@ -64,6 +65,8 @@
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz mit diesem Titel in dem Kurs",
                 "descriptionPlaceholder": "Was sollen die Studierenden lernen? Beispiel: \"Du kannst den Unterschied zwischen Rekursion und Schleifen erklären.\"",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal 10 000 Symbole beschränkt",
+                "softDueDate": "Empfohlenes Fertigstellungsdatum",
+                "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "suggestedTaxonomy": "Vorschlag",
                 "averageStudentScore": "Aktuelle durchschnittliche Konfidenz",
                 "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
@@ -105,7 +108,8 @@
                 "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Kompetenzen verfügbar, welche mit Lerneinheiten verbunden wurden.",
                 "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
-                "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
+                "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
+                "softDueDate": "Empfohlen"
             },
             "competencyPopover": {
                 "connectedCompetencies": "Verbundene Kompetenzen",
