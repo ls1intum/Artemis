@@ -142,7 +142,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         changedEntry.setPreviousLine(200);
         changedEntry.setCode("Changed code");
         changedEntry.setPreviousCode("Changed previous code");
-        changedEntry.setTestCase(testCases.get("test1"));
+        changedEntry.setTestCase(testCases.get("test3"));
 
         var newEntry = new ProgrammingExerciseSolutionEntry();
         newEntry.setLine(200);
