@@ -33,7 +33,7 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
 
-    private static final List<String> timeoutException = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+    private static final List<String> TIMEOUT_EXCEPTIONS = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
             "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
 
     private final ProfileService profileService;
@@ -56,7 +56,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         // Defining two pattern groups, (1) the exception name and (2) the exception text
-        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", timeoutException) + "):?(.*)");
+        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
         Matcher matcher = findTimeoutPattern.matcher(message);
         if (matcher.find()) {
             String exceptionText = matcher.group(2);
@@ -101,7 +101,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
         // Replace all "." with "\\." and join with regex alternative symbol "|"
-        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
+        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replace(".", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
         // Match any of the exceptions at the start of the line and with ": " after it
         String pattern = String.format("^(?:%s): \n*", assertionRegex);
 
