@@ -66,10 +66,11 @@ export class CreateCompetencyComponent implements OnInit {
             return;
         }
 
-        const { title, description, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
 
         this.competencyToCreate.title = title;
         this.competencyToCreate.description = description;
+        this.competencyToCreate.softDueDate = softDueDate;
         this.competencyToCreate.taxonomy = taxonomy;
         this.competencyToCreate.masteryThreshold = masteryThreshold;
         this.competencyToCreate.optional = optional;
