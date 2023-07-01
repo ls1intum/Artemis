@@ -10,6 +10,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { intersection } from 'lodash-es';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
@@ -47,6 +48,7 @@ export interface CompetencyFormData {
     id?: number;
     title?: string;
     description?: string;
+    softDueDate?: dayjs.Dayjs;
     taxonomy?: CompetencyTaxonomy;
     optional?: boolean;
     masteryThreshold?: number;
@@ -64,6 +66,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         id: undefined,
         title: undefined,
         description: undefined,
+        softDueDate: undefined,
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
@@ -111,6 +114,10 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
         return this.form.get('description');
     }
 
+    get softDueDateControl() {
+        return this.form.get('softDueDate');
+    }
+
     get masteryThresholdControl() {
         return this.form.get('masteryThreshold');
     }
@@ -145,6 +152,7 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
                 [this.titleUniqueValidator(this.competencyService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
+            softDueDate: [undefined],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.competencyTaxonomy).join('|') + ')$')]],
             masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
             optional: [false],
