@@ -31,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 const examples: (ConversationDto | undefined)[] = [
     undefined,
@@ -96,6 +97,7 @@ examples.forEach((activeConversation) => {
                         MockProvider(NgbModal),
                         MockProvider(MetisConversationService),
                         MockProvider(AccountService),
+                        MockProvider(MetisService),
                         { provide: LocalStorageService, useClass: MockLocalStorageService },
                         MockProvider(ConversationService, {
                             getConversationName: (conversation: ConversationDto) => {
