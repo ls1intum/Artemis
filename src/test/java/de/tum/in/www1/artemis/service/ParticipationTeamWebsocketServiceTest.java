@@ -73,7 +73,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
-        verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
+        verify(messagingTemplate).convertAndSend(websocketTopic(participation), List.of());
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
@@ -82,7 +82,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
         participationTeamWebsocketService.triggerSendOnlineTeamStudents(participation.getId());
-        verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
+        verify(messagingTemplate).convertAndSend(websocketTopic(participation), List.of());
     }
 
     @Test

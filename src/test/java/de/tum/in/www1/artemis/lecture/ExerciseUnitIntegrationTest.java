@@ -68,13 +68,13 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 2);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        this.lecture1 = this.course1.getLectures().stream().findFirst().get();
+        this.lecture1 = this.course1.getLectures().stream().findFirst().orElseThrow();
 
-        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().get();
-        this.quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
+        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+        this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().orElseThrow();
+        this.quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+        this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -128,7 +128,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExerciseUnit_withId_shouldReturnBadRequest() throws Exception {
-        Exercise exercise = course1.getExercises().stream().findFirst().get();
+        Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
@@ -138,7 +138,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
     void createExerciseUnit_asStudent_shouldForbidden() throws Exception {
-        Exercise exercise = course1.getExercises().stream().findFirst().get();
+        Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
@@ -148,7 +148,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
-        Exercise exercise = course1.getExercises().stream().findFirst().get();
+        Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
@@ -157,7 +157,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createExerciseUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
-        Exercise exercise = course1.getExercises().stream().findFirst().get();
+        Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);

@@ -267,7 +267,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
         manualEntry.setLine(1);
         manualEntry.setFilePath("src/de/tum/in/ase/BubbleSort.java");
 
-        var testCase = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().findFirst().get();
+        var testCase = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().findFirst().orElseThrow();
         manualEntry.setTestCase(testCase);
 
         request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries", manualEntry,
