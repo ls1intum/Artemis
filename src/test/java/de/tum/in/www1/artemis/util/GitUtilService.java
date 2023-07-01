@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Fail.fail;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -99,25 +101,42 @@ public class GitUtilService {
     }
 
     public void deleteRepos() {
+        if (remoteRepo != null) {
+            remoteRepo.close();
+        }
+        if (localRepo != null) {
+            localRepo.close();
+        }
+        if (localGit != null) {
+            localGit.close();
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+
         try {
-            if (remoteRepo != null) {
-                remoteRepo.close();
-            }
-            if (localRepo != null) {
-                localRepo.close();
-            }
-            if (localGit != null) {
-                localGit.close();
-            }
-            if (remoteGit != null) {
-                remoteGit.close();
-            }
-            FileUtils.deleteDirectory(localPath.toFile());
-            FileUtils.deleteDirectory(remotePath.toFile());
+            tryToDeleteDirectory(localPath);
             localRepo = null;
+            tryToDeleteDirectory(remotePath);
             remoteRepo = null;
         }
-        catch (IOException ignored) {
+        catch (Exception e) {
+            fail("Failed while deleting the repositories", e);
+        }
+    }
+
+    private void tryToDeleteDirectory(Path path) throws Exception {
+        for (int i = 0; i < 10 && FileUtils.isDirectory(path.toFile()); i++) {
+            try {
+                FileUtils.deleteDirectory(path.toFile());
+            }
+            catch (IOException e) {
+                Thread.sleep(10);
+            }
+        }
+
+        if (FileUtils.isDirectory(path.toFile())) {
+            fail("Could not delete directory with path " + path);
         }
     }
 

@@ -75,7 +75,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         programmingExerciseTestCaseRepository.save(testCase1);
         var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase2);
-        var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
@@ -93,8 +93,8 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(report.getCoveredLineRatio()).isEqualTo(0.32);
 
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        var testCase1 = testCases.stream().filter(testCase -> "test1()".equals(testCase.getTestName())).findFirst().get();
-        var testCase2 = testCases.stream().filter(testCase -> "test2()".equals(testCase.getTestName())).findFirst().get();
+        var testCase1 = testCases.stream().filter(testCase -> "test1()".equals(testCase.getTestName())).findFirst().orElseThrow();
+        var testCase2 = testCases.stream().filter(testCase -> "test2()".equals(testCase.getTestName())).findFirst().orElseThrow();
 
         var optionalFullReportWithFileReports = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntries(report.getId());
         assertThat(optionalFullReportWithFileReports).isPresent();
@@ -102,7 +102,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var fileReports = fullReportWithFileReports.getFileReports();
         assertThat(fileReports).hasSize(2);
 
-        var bubbleSortFileReport = fileReports.stream().filter(fileReport -> "src/de/tum/in/ase/BubbleSort.java".equals(fileReport.getFilePath())).findFirst().get();
+        var bubbleSortFileReport = fileReports.stream().filter(fileReport -> "src/de/tum/in/ase/BubbleSort.java".equals(fileReport.getFilePath())).findFirst().orElseThrow();
         var entriesBubbleSort = bubbleSortFileReport.getTestwiseCoverageEntries();
         assertThat(entriesBubbleSort).hasSize(4);
         checkIfSetContainsEntry(entriesBubbleSort, 15, 3, testCase1);
@@ -110,7 +110,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         checkIfSetContainsEntry(entriesBubbleSort, 2, 1, testCase2);
         checkIfSetContainsEntry(entriesBubbleSort, 16, 3, testCase2);
 
-        var contextFileReport = fileReports.stream().filter(fileReport -> "src/de/tum/in/ase/Context.java".equals(fileReport.getFilePath())).findFirst().get();
+        var contextFileReport = fileReports.stream().filter(fileReport -> "src/de/tum/in/ase/Context.java".equals(fileReport.getFilePath())).findFirst().orElseThrow();
         assertThat(contextFileReport.getTestwiseCoverageEntries()).hasSize(1);
         checkIfSetContainsEntry(contextFileReport.getTestwiseCoverageEntries(), 1, 10, testCase2);
     }
