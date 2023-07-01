@@ -103,6 +103,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicMetricsUpdatedWhenTriggered() {
+        metricsBean.updatePublicArtemisMetrics();
         var courseCountBefore = courseRepository.count();
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
