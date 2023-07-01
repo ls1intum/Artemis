@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.metis;
 
 import static de.tum.in.www1.artemis.metis.AnswerPostIntegrationTest.MAX_POSTS_PER_PAGE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -386,7 +387,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .getConversationParticipants().stream()
                 .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
-
+        await().until(() -> unreadMessages == 0L);
         assertThat(unreadMessages).isZero();
     }
 
