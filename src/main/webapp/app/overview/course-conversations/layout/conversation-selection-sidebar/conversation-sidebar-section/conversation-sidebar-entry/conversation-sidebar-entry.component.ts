@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
@@ -50,11 +50,14 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     @Output()
     conversationFavoriteStatusChange = new EventEmitter<void>();
 
+    conversationAsChannel?: ChannelDTO;
+    channelSubTypeReferenceTranslationKey?: string;
+    channelSubTypeReferenceRouterLink?: string;
+
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(public conversationService: ConversationService, public metisService: MetisService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(public conversationService: ConversationService, private metisService: MetisService, private alertService: AlertService, private modalService: NgbModal) {}
 
-    getChannelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey;
     get isConversationUnread(): boolean {
         // do not show unread count for open conversation that the user is currently reading
         if (this.isActiveConversation || !this.conversation) {
@@ -68,7 +71,6 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         return this.activeConversation && this.conversation && this.activeConversation.id! === this.conversation.id!;
     }
 
-    getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
 
     isOneToOneChat = isOneToOneChatDto;
@@ -118,6 +120,9 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+        this.conversationAsChannel = getAsChannelDto(this.conversation);
+        this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
+        this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
     ngOnDestroy() {

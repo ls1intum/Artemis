@@ -44,7 +44,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
         public conversationService: ConversationService,
-        public metisService: MetisService,
+        private metisService: MetisService,
     ) {}
 
     getAsGroupChat = getAsGroupChatDto;
