@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -37,6 +39,10 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -54,11 +60,15 @@ public class ProgrammingExerciseParticipationResource {
     private final ResultService resultService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationRepository participationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService submissionService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, ResultService resultService,
+            ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
+        this.solutionParticipationRepository = solutionParticipationRepository;
+        this.templateParticipationRepository = templateParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionService = submissionService;
@@ -90,20 +100,28 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Get the latest result for a given programming exercise participation including its result.
      *
-     * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
-     * @param withSubmission  flag determining whether the corresponding submission should also be returned
+     * @param participationId                       for which to retrieve the programming exercise participation with latest result and feedbacks.
+     * @param withSubmission                        flag determining whether the corresponding submission should also be returned
+     * @param withTemplateAndSolutionParticipations flag determining whether the nested exercise object should contain solution and template participation objects
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
-            @RequestParam(defaultValue = "false") boolean withSubmission) {
+            @RequestParam(defaultValue = "false") boolean withSubmission, @RequestParam(defaultValue = "false") boolean withTemplateAndSolutionParticipations) {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
+
+        if (withTemplateAndSolutionParticipations && result.isPresent()) {
+            final var solutionParticipation = solutionParticipationRepository.findByProgrammingExerciseId(participation.getExercise().getId());
+            final var templateParticipation = templateParticipationRepository.findByProgrammingExerciseId(participation.getExercise().getId());
+            ((ProgrammingExercise) result.get().getParticipation().getExercise()).setSolutionParticipation(solutionParticipation.orElse(null));
+            ((ProgrammingExercise) result.get().getParticipation().getExercise()).setTemplateParticipation(templateParticipation.orElse(null));
+        }
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
