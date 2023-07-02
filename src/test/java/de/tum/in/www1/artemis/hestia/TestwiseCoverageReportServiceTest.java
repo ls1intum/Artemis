@@ -8,6 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -85,16 +86,17 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 
-        var report = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId());
-        assertThat(report).isPresent();
+        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        assertThat(reports).hasSize(1);
+        var report = reports.get(0);
         // 18/50 lines covered = 32%
-        assertThat(report.get().getCoveredLineRatio()).isEqualTo(0.32);
+        assertThat(report.getCoveredLineRatio()).isEqualTo(0.32);
 
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         var testCase1 = testCases.stream().filter(testCase -> "test1()".equals(testCase.getTestName())).findFirst().orElseThrow();
         var testCase2 = testCases.stream().filter(testCase -> "test2()".equals(testCase.getTestName())).findFirst().orElseThrow();
 
-        var optionalFullReportWithFileReports = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntries(report.get().getId());
+        var optionalFullReportWithFileReports = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntries(report.getId());
         assertThat(optionalFullReportWithFileReports).isPresent();
         var fullReportWithFileReports = optionalFullReportWithFileReports.get();
         var fileReports = fullReportWithFileReports.getFileReports();
