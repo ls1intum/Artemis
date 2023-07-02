@@ -113,7 +113,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
-        verify(generalInstantNotificationService, times(1)).sendNotification(sentNotification, Arrays.asList(user1, user2), null);
+        verify(generalInstantNotificationService).sendNotification(sentNotification, Arrays.asList(user1, user2), null);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
