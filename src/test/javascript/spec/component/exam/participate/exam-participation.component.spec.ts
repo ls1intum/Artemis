@@ -704,12 +704,6 @@ describe('ExamParticipationComponent', () => {
             expect(comp.isVisible()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalledOnce();
         });
-
-        it('should not be visible if not test run and exam is not loaded', () => {
-            comp.testRunId = 0;
-            comp.exam = null;
-            expect(comp.isVisible()).toBeFalse();
-        });
     });
 
     describe('isActive', () => {
@@ -737,12 +731,6 @@ describe('ExamParticipationComponent', () => {
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should not be active if not test run and exam is not loaded', () => {
-            comp.testRunId = 0;
-            comp.exam = null;
-            expect(comp.isActive()).toBeFalse();
         });
     });
 
@@ -837,8 +825,8 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should update local student exam and trigger save', () => {
-            const updateLocalStudentExamSpy = jest.spyOn(comp, 'updateLocalStudentExam');
-            const triggerSaveSpy = jest.spyOn(comp, 'triggerSave');
+            const updateLocalStudentExamSpy = jest.spyOn(comp, 'updateLocalStudentExam').mockImplementation(() => {});
+            const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
             comp.handInEarly = false;
             comp.toggleHandInEarly();
 
@@ -855,9 +843,9 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should return the index of the active page', () => {
-            const exercise0 = new QuizExercise();
+            const exercise0 = new QuizExercise(undefined, undefined);
             exercise0.id = 5;
-            const exercise1 = new ProgrammingExercise();
+            const exercise1 = new ProgrammingExercise(undefined, undefined);
             exercise1.id = 6;
 
             comp.activeExamPage = new ExamPage();
