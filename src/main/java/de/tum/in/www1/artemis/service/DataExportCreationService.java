@@ -363,7 +363,7 @@ public class DataExportCreationService {
 
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
         boolean includeResults = exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
-                || exercise.isCourseExercise() && exercise.isAssessmentDueDateOver();
+                || exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise);
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
