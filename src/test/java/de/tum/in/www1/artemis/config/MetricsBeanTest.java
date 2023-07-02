@@ -124,10 +124,14 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicMetricsActiveUsers() {
-        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var submissions = submissionRepository.findAll();
+        submissions.forEach(submission -> submission.setSubmissionDate(ZonedDateTime.now().minusDays(30)));
+        submissionRepository.saveAll(submissions);
+
+        var users = userUtilService.addUsers(TEST_PREFIX + "active", 3, 0, 0, 0);
 
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        course1.setStudentGroupName(TEST_PREFIX + "tumuser");
+        course1.setStudentGroupName(TEST_PREFIX + "active" + "tumuser");
         courseRepository.save(course1);
 
         var textExercise = exerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
