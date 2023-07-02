@@ -8,7 +8,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
