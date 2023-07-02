@@ -279,7 +279,7 @@ public class TestwiseCoverageService {
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();
         }
@@ -294,7 +294,7 @@ public class TestwiseCoverageService {
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
                 Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return Optional.empty();

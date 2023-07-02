@@ -86,7 +86,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 
-        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         assertThat(reports).hasSize(1);
         var report = reports.get(0);
         // 18/50 lines covered = 32%
