@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ModelingExerciseImportService extends ExerciseImportService {
@@ -23,10 +25,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
+    private final ChannelService channelService;
+
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -44,9 +49,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        modelingExerciseRepository.save(newExercise);
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
-        return newExercise;
+
+        ModelingExercise newModelingExercise = modelingExerciseRepository.save(newExercise);
+
+        Channel createdChannel = channelService.createExerciseChannel(newModelingExercise, importedExercise.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, newModelingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+        return newModelingExercise;
     }
 
     /**

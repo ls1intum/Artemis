@@ -104,7 +104,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
 
-        // Initialize with 3 max complaints and 7 days max complaint deadline
+        // Initialize with 3 max complaints and 7 days max complaint due date
         course = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
         modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         saveModelingSubmissionAndAssessment();
@@ -225,8 +225,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
-    void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
-        // Set deadline for mock course to 2 weeks. Complaint created one week after result date is fine.
+    void submitComplaintAboutModelingAssessment_validDueDate() throws Exception {
+        // Set due date for mock course to 2 weeks. Complaint created one week after result date is fine.
         course.setMaxComplaintTimeDays(14);
         courseRepository.save(course);
 
@@ -243,7 +243,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        // 3 weeks is already past the deadline
+        // 3 weeks is already past the due date
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(4));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         exerciseUtilService.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(2));

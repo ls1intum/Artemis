@@ -25,7 +25,7 @@
             "submit": {
                 "headline": "Submit your solution",
                 "content": "You can submit your solution here and then wait for your feedback.",
-                "hint": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score."
+                "hint": "You can submit multiple times until the exercise due date. Your last submission will count towards your score."
             }
         }
     }

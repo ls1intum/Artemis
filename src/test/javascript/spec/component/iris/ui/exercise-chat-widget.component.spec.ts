@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockPipe } from 'ng-mocks';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
@@ -10,18 +11,24 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
-import { throwError } from 'rxjs';
+import {
+    ActiveConversationMessageLoadedAction,
+    NumNewMessagesResetAction,
+    RateMessageSuccessAction,
+    SessionReceivedAction,
+    StudentMessageSentAction,
+} from 'app/iris/state-store.model';
+import { of, throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
-import { IrisSender } from 'app/entities/iris/iris-message.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -41,6 +48,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         mockHttpMessageService = {
             createMessage: jest.fn(),
+            rateMessage: jest.fn(),
         } as any;
 
         stateStore = new IrisStateStore();
@@ -185,6 +193,109 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
+    }));
+
+    it('should render rate message buttons for server resonses only', waitForAsync(async () => {
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage, mockServerMessage]));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
+        const myChats = chatBodyElement.querySelectorAll('.my-chat');
+        const clientChats = chatBodyElement.querySelectorAll('.client-chat');
+        const buttons = chatBodyElement.querySelectorAll('.rate-message-buttons');
+
+        expect(myChats).toHaveLength(1);
+        expect(clientChats).toHaveLength(2);
+        expect(buttons).toHaveLength(2);
+    }));
+
+    it('should render rate buttons with correct class style', () => {
+        const mockMessageContent = {
+            textContent: 'Hello, world!',
+            type: IrisMessageContentType.TEXT,
+        } as IrisMessageContent;
+        const helpfulMessage = { sender: IrisSender.LLM, content: [mockMessageContent], helpful: true } as IrisServerMessage;
+        const unhelpfulMessage = { sender: IrisSender.LLM, content: [mockMessageContent], helpful: false } as IrisServerMessage;
+        const neutralMessage = { sender: IrisSender.LLM, content: [mockMessageContent] } as IrisServerMessage;
+
+        stateStore.dispatch(new SessionReceivedAction(123, [helpfulMessage, unhelpfulMessage, neutralMessage, unhelpfulMessage]));
+
+        fixture.detectChanges();
+
+        const thumbsUpClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.thumbs-up-clicked');
+        const thumbsDownClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.thumbs-down-clicked');
+        const rateNotClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.rate-button-not-clicked');
+        const rateClickableButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.clickable');
+        expect(thumbsUpClickedButtons).toHaveLength(1);
+        expect(thumbsDownClickedButtons).toHaveLength(2);
+        expect(rateNotClickedButtons).toHaveLength(5);
+        expect(rateClickableButtons).toHaveLength(5);
+    });
+
+    it('should send request when pressing thums up button on a message', waitForAsync(async () => {
+        jest.spyOn(stateStore, 'dispatch');
+        const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
+            of(
+                new HttpResponse<IrisMessage>({
+                    status: 200,
+                    body: mockServerMessage,
+                }),
+            ),
+        );
+        const mockMessageContent = {
+            textContent: 'Hello, world!',
+            type: IrisMessageContentType.TEXT,
+        } as IrisMessageContent;
+        const unhelpfulMessage = {
+            sender: IrisSender.LLM,
+            id: 18,
+            content: [mockMessageContent],
+            helpful: false,
+        } as IrisServerMessage;
+
+        stateStore.dispatch(new SessionReceivedAction(123, [unhelpfulMessage]));
+        fixture.detectChanges();
+
+        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.rate-button-not-clicked');
+
+        button.click();
+
+        expect(rateMessageMock).toHaveBeenCalledWith(123, 18, true);
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, true));
+    }));
+
+    it('should send request when pressing thums down button on a message', waitForAsync(async () => {
+        jest.spyOn(stateStore, 'dispatch');
+        const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
+            of(
+                new HttpResponse<IrisMessage>({
+                    status: 200,
+                    body: mockServerMessage,
+                }),
+            ),
+        );
+        const mockMessageContent = {
+            textContent: 'Hello, world!',
+            type: IrisMessageContentType.TEXT,
+        } as IrisMessageContent;
+        const helpfulMessage = {
+            sender: IrisSender.LLM,
+            id: 18,
+            content: [mockMessageContent],
+            helpful: true,
+        } as IrisServerMessage;
+
+        stateStore.dispatch(new SessionReceivedAction(123, [helpfulMessage]));
+        fixture.detectChanges();
+
+        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.rate-button-not-clicked');
+
+        button.click();
+
+        expect(rateMessageMock).toHaveBeenCalledWith(123, 18, false);
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, false));
     }));
 
     it('should render unread message line with correct position', () => {

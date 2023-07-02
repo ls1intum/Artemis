@@ -1,4 +1,4 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faThumbsDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -7,9 +7,9 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, NumNewMessagesResetAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
@@ -75,6 +75,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faRobot = faRobot;
     faCircleInfo = faCircleInfo;
     faCompress = faCompress;
+    faThumbsUp = faThumbsUp;
+    faThumbsDown = faThumbsDown;
 
     ngOnInit() {
         this.accountService.identity().then((user: User) => {
@@ -275,6 +277,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         scrollArrow.style.bottom = '60 px';
         chatBody.style.height = `calc(100% - 100px)`;
         this.stateStore.dispatch(new NumNewMessagesResetAction());
+    }
+
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        this.httpMessageService
+            .rateMessage(<number>this.sessionId, message_id, helpful)
+            .toPromise()
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        return isStudentSentMessage(message);
+    }
+
+    isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isServerSentMessage(message);
     }
 
     private newUserMessage(message: string): IrisClientMessage {

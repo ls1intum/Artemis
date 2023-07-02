@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { Subscription, combineLatest } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -111,7 +111,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            context: [this.currentPostContextFilter],
+            context: [[]],
             sortBy: [PostSortCriterion.CREATION_DATE],
             filterToUnresolved: false,
             filterToOwn: false,
@@ -140,6 +140,25 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.page = 1;
         // will scroll to the top of the posts
         this.forceReload = true;
+
+        const lectureIds: number[] = [];
+        const exerciseIds: number[] = [];
+        const courseWideContexts: CourseWideContext[] = [];
+
+        for (const context of this.formGroup.get('context')?.value || []) {
+            if (context.lectureId) {
+                lectureIds.push(context.lectureId);
+            } else if (context.exerciseId) {
+                exerciseIds.push(context.exerciseId);
+            } else if (context.courseWideContext) {
+                courseWideContexts.push(context.courseWideContext);
+            }
+        }
+
+        this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
+        this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
+        this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
+
         super.onSelectContext();
     }
 
@@ -157,7 +176,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * required for distinguishing different select options for the context selector,
      * Angular needs to be able to identify the currently selected option
      */
-    compareContextFilterOptionFn(option1: PostContextFilter, option2: PostContextFilter) {
+    compareContextFilterOptionFn(option1: any, option2: any) {
         if (option1.exerciseId && option2.exerciseId) {
             return option1.exerciseId === option2.exerciseId;
         } else if (option1.lectureId && option2.lectureId) {
@@ -199,9 +218,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      **/
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(
-            this.currentPostContextFilter.courseWideContext,
-            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
-            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
+            this.currentPostContextFilter.courseWideContexts?.[0],
+            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseIds?.[0]),
+            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureIds?.[0]),
         );
     }
     /**
@@ -215,11 +234,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
-            courseId: undefined,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            ...this.formGroup.get('context')?.value,
+            ...this.currentPostContextFilter,
+            courseId: this.course?.id,
             searchText: this.searchText,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
@@ -238,9 +254,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
