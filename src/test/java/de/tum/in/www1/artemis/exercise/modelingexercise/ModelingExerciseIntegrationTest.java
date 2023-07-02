@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +22,8 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -32,6 +33,9 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -70,6 +74,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private TutorParticipationRepository tutorParticipationRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -114,6 +124,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_asTA() throws Exception {
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+        channel.setExercise(classExercise);
+        channelRepository.save(channel);
+
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(receivedModelingExercise);
         assertThat(receivedModelingExercise.getGradingCriteria().get(0).getTitle()).isNull();
@@ -140,7 +158,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
         feedbackRepository.save(feedback);
-
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+        channel.setExercise(classExercise);
+        channelRepository.save(channel);
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
 
         assertThat(receivedModelingExercise.isGradingInstructionFeedbackUsed()).isTrue();
@@ -162,16 +186,30 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        modelingExercise.setChannelName(uniqueChannelName);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.getId());
+
         assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(-1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 4; // 2 student, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -185,6 +223,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
@@ -230,15 +271,20 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var newCriteria = new GradingCriterion();
         newCriteria.setTitle("new");
         modelingExercise.addGradingCriteria(newCriteria);
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria()).hasSize(currentCriteriaSize + 1);
 
         modelingExercise.getGradingCriteria().get(1).setTitle("UPDATE");
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
+
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("UPDATE");
 
         // If the grading criteria are deleted then their instructions should also be deleted
         modelingExercise.setGradingCriteria(null);
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
+
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria()).isEmpty();
     }
@@ -254,14 +300,18 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         newInstruction.setInstructionDescription("New Instruction");
 
         modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstruction(newInstruction);
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(currentInstructionsSize + 1);
 
         modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).setInstructionDescription("UPDATE");
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
+
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).getInstructionDescription()).isEqualTo("UPDATE");
 
         modelingExercise.getGradingCriteria().get(1).setStructuredGradingInstructions(null);
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria()).isNotEmpty();
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isNullOrEmpty();
@@ -362,15 +412,29 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(course2);
         ModelingExercise modelingExerciseToImport = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1),
                 DiagramType.ClassDiagram, course1);
         modelingExerciseRepository.save(modelingExerciseToImport);
         modelingExerciseToImport.setCourse(course2);
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        modelingExerciseToImport.setChannelName(uniqueChannelName);
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison()
-                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(modelingExerciseToImport);
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient")
+                .isEqualTo(modelingExerciseToImport);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        assertThat(channelFromDB).isNotNull();
+        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+
+        // Check that the conversation participants are added correctly to the exercise channel
+        await().until(() -> {
+            SecurityUtils.setAuthorizationObject();
+            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelFromDB.getId());
+            return conversationParticipants.size() == 4; // 2 student, 1 tutor, 1 instructor (see @BeforeEach)
+        });
     }
 
     @Test
@@ -389,17 +453,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
-        participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
+        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).orElseThrow();
+        participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(),
+                Objects.requireNonNull(submission.getLatestResult()));
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         modelingExercise.setCourse(course2);
         var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(modelingExercise.getId()).get();
+        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(modelingExercise.getId()).orElseThrow();
 
-        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
+        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
         assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
     }
@@ -419,7 +485,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
+        assertThat(channelFromDB).isNull();
     }
 
     @Test
@@ -446,7 +516,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
-
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
     }
 
@@ -501,12 +571,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         modelingExerciseRepository.save(modelingExercise);
         modelingExercise.setCourse(course2);
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
 
-        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseRepository.findById(newModelingExercise.getId()).get();
+        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseRepository.findById(newModelingExercise.getId()).orElseThrow();
         assertThat(newModelingExerciseFromDatabase.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the database")
                 .isNull();
     }
@@ -523,6 +594,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setDifficulty(difficulty);
 
         ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        Channel channelFromDB = channelRepository.findChannelByExerciseId(newModelingExercise.getId());
+
+        assertThat(channelFromDB).isNull(); // there should not be any channel for exam exercise
 
         assertThat(newModelingExercise.getTitle()).as("modeling exercise title was correctly set").isEqualTo(title);
         assertThat(newModelingExercise.getDifficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -685,7 +759,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
-
+        exerciseToBeImported.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
@@ -695,7 +769,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
-        sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
+        sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
@@ -725,7 +799,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exerciseToBeImported = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
-
+        exerciseToBeImported.setChannelName("channelName-" + UUID.randomUUID().toString().substring(0, 8));
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
@@ -734,7 +808,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
-        sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
+        sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).orElseThrow();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
@@ -884,7 +958,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
         var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -893,6 +967,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setDueDate(baseTime.plusHours(3));
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
 
         result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
@@ -914,7 +989,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
         // Utility function to avoid duplication
         Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
-                .get();
+                .orElseThrow();
 
         classExercise.setExampleSolutionModel("<Sample solution model>");
         classExercise.setExampleSolutionExplanation("<Sample solution explanation>");
@@ -991,33 +1066,33 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
+        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).orElseThrow();
 
         Feedback feedback = ParticipationFactory.generateFeedback().get(0);
         feedback.setGradingInstruction(gradingInstruction);
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
-
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCourse(course2);
         var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
 
-        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
+        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
         assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull(); // To avoid infinite recursion when serializing to JSON.
         assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
         assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
         assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedModelingExercise.getId()).get();
-        var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().get().getSubmission().getLatestResult()
+        var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedModelingExercise.getId()).orElseThrow();
+        var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
                 .getFeedbacks().get(0).getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());

@@ -156,7 +156,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
-        tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).get());
+        tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
@@ -179,27 +179,27 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroup buildAndSaveTutorialGroupWithoutSchedule(String tutorLogin, String... studentLogins) {
         Set<User> students = Set.of();
         if (studentLogins != null) {
-            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).get()).collect(Collectors.toSet());
+            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).orElseThrow()).collect(Collectors.toSet());
         }
         return tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + tutorLogin).get(), students);
+                userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow(), students);
     }
 
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
-        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
-        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
         return tutorialGroup;
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
-        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
+        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
 
         newTutorialGroup.setTutorialGroupSchedule(this.buildExampleSchedule(validFromInclusive, validToInclusive));
 

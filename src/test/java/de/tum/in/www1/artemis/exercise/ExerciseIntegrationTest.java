@@ -474,14 +474,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
-            // Programming exercises should only have one automatic result
+
+            StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+            Submission submission = participation.getSubmissions().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                // Programming exercises should only have one automatic result
+                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+                assertThat(participation.getSubmissions()).hasSize(1);
+                assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
-                // All other exercises have only one visible result now
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+                // All other exercises have no visible result
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(submission.getResults()).isEmpty();
             }
         }
     }
@@ -751,7 +756,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
+    void testGetLatestDueDateWhenNoIndividualDueDate() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");

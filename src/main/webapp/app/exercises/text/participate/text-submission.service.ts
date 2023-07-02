@@ -77,7 +77,6 @@ export class TextSubmissionService {
                 if (submission) {
                     submission.participation!.submissions = [submission];
                     submission.participation!.results = [submission.latestResult!];
-                    submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }
 
                 return submission;

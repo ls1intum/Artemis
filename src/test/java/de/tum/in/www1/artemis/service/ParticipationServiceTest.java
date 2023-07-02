@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -103,13 +102,14 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        mockCreationOfExerciseParticipation(false, null);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
 
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
+                SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getStudent()).contains(student.get());
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().get();
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above
     }
@@ -135,7 +135,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        mockCreationOfExerciseParticipation(false, null);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, urlService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -145,7 +145,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         assertThat(studentParticipationReceived.getId()).isNotEqualTo(practiceParticipation.getId());
         assertThat(programmingExercise.getStudentParticipations()).hasSize(2);
@@ -177,7 +177,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult);
+        participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, urlService, versionControlService,
+                continuousIntegrationService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
@@ -232,24 +233,5 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isPresent();
         participationService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
         assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.get(0).getId())).isEmpty();
-    }
-
-    private void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult) throws URISyntaxException {
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
-        String templateRepoName;
-        if (useGradedParticipationOfResult) {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
-        }
-        else {
-            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl());
-        }
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
-        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }

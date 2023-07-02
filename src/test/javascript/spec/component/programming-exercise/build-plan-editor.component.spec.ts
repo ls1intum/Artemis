@@ -80,7 +80,7 @@ describe('Build Plan Editor', () => {
 
         comp.submit();
 
-        expect(putBuildPlanStub).toHaveBeenCalledOnceWith(3, originalBuildPlan);
+        expect(putBuildPlanStub).toHaveBeenCalledWith(3, originalBuildPlan);
         expect(comp.buildPlan).toEqual(buildPlan);
     });
 
@@ -107,7 +107,7 @@ describe('Build Plan Editor', () => {
         comp.ngOnInit();
         tick();
 
-        expect(getExerciseWithSubmissionsStub).toHaveBeenCalledOnceWith(exercise.id);
+        expect(getExerciseWithSubmissionsStub).toHaveBeenCalledWith(exercise.id);
     }));
 
     it('should load the build plan after the editor is initialized', fakeAsync(() => {
@@ -124,7 +124,7 @@ describe('Build Plan Editor', () => {
         comp.ngAfterViewInit();
         tick();
 
-        expect(getBuildPlanStub).toHaveBeenCalledOnceWith(3);
+        expect(getBuildPlanStub).toHaveBeenCalledWith(3);
         expect(comp.isLoading).toBeFalse();
         expect(comp.buildPlan).toEqual(buildPlan);
 

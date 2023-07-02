@@ -105,7 +105,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     ROLE_INSTRUCTOR > ROLE_EDITOR
                     ROLE_EDITOR > ROLE_TA
                     ROLE_TA > ROLE_USER
-                    ROLE_USER > ROLE_ANONYMOUS
                 """);
         return roleHierarchy;
     }

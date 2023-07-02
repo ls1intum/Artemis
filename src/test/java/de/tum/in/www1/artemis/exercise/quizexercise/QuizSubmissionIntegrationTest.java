@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +29,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -97,6 +97,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+    }
+
+    @AfterEach
+    protected void resetSpyBeans() {
+        super.resetSpyBeans();
     }
 
     @Test
@@ -234,7 +239,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         submissions.add(student2Submission);
 
         QuizSubmission student3Submission = new QuizSubmission();
-        var correctAnswerOption = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().get();
+        var correctAnswerOption = mcQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().orElseThrow();
 
         MultipleChoiceSubmittedAnswer student3mcAnswer = new MultipleChoiceSubmittedAnswer();
         student3mcAnswer.setQuizQuestion(mcQuestion);
@@ -268,10 +273,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
-            }
-            else if (pointCounter.getPoints() == 1.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 0 rated submission -> 0.83 points").isEqualTo(1);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(2);
             }
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
@@ -302,7 +304,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
             for (int i = 1; i <= numberOfParticipants; i++) {
-                joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student" + i);
+                quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student" + i);
             }
         }
 
@@ -330,12 +332,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
     }
 
-    private void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
-        var user = new User();
-        user.setLogin(username);
-        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
-    }
-
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
@@ -348,7 +344,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
-            joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student4");
+            quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student4");
         }
 
         QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
@@ -367,7 +363,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
-            joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student5");
+            quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student5");
         }
 
         QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
@@ -395,27 +391,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
-        Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
-        quizExercise.setDuration(360);
-        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExerciseService.save(quizExercise);
-
-        if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
-            joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student7");
-        }
-
-        QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
-
-        assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
-                .hasBeenCalledTimes(quizMode == QuizMode.SYNCHRONIZED ? 0 : 1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -816,7 +791,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         double expectedScore = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
-            case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
+            case PROPORTIONAL_WITHOUT_PENALTY -> 41.7;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
     }

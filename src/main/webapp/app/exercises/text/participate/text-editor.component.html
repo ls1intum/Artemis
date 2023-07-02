@@ -7,11 +7,11 @@
             id="submit"
             *ngIf="isOwnerOfParticipation"
             submitbutton
-            [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+            [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
             (onClick)="submit()"
             [disabled]="!isActive || !submission"
             [isLoading]="isSaving"
-            [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
+            [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
             [tooltip]="submitButtonTooltip"
         >
         </jhi-button>

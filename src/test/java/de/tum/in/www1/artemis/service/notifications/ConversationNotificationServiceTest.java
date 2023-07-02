@@ -66,8 +66,8 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = courseUtilService.createCourse();
-        user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        User user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
 
         oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
@@ -102,12 +102,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post = conversationMessageRepository.save(post);
 
         conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
+        var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
-        conversationMessageRepository.deleteAll();
-        conversationParticipantRepository.deleteAll();
-        conversationRepository.deleteAll();
+        conversationMessageRepository.deleteAllById(List.of(post.getId()));
+        conversationParticipantRepository.deleteAllById(participants.stream().map(ConversationParticipant::getId).toList());
+        conversationRepository.deleteAllById(List.of(oneToOneChat.getId()));
     }
 }

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +22,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -62,8 +62,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
-
     private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
@@ -77,10 +75,9 @@ public class TextAssessmentResource extends AssessmentResource {
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
-            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            SingleUserNotificationService singleUserNotificationService, ResultService resultService) {
+            GradingCriterionRepository gradingCriterionRepository, ExamService examService, Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService,
+            FeedbackConflictRepository feedbackConflictRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService, ResultService resultService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
@@ -90,7 +87,6 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
         this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
         this.feedbackConflictRepository = feedbackConflictRepository;
         this.feedbackRepository = feedbackRepository;
@@ -107,7 +103,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
     @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
                 && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -142,7 +138,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
@@ -176,7 +172,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment/feedback")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -218,7 +214,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
@@ -260,7 +256,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("participations/{participationId}/submissions/{submissionId}/text-assessment-after-complaint")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -293,7 +289,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PostMapping("participations/{participationId}/submissions/{submissionId}/cancel-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (!submission.getParticipation().getId().equals(participationId)) {
@@ -313,7 +309,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("participations/{participationId}/text-submissions/{submissionId}/results/{resultId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
     }
@@ -333,7 +329,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
 
@@ -397,18 +393,13 @@ public class TextAssessmentResource extends AssessmentResource {
             textSubmission.setResults(Collections.singletonList(result));
         }
         else {
-            result = textSubmission.getResultForCorrectionRound(correctionRound);
+            textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        final Result finalResult = result;
-
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, finalResult));
-        return bodyBuilder.body(participation);
+        return ResponseEntity.ok().body(participation);
     }
 
     /**
@@ -419,7 +410,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return the example result linked to the submission
      */
     @GetMapping("/exercises/{exerciseId}/submissions/{submissionId}/example-result")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -481,7 +472,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return - Set of text submissions
      */
     @GetMapping("/participations/{participationId}/submissions/{submissionId}/feedbacks/{feedbackId}/feedback-conflicts")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long participationId, @PathVariable long submissionId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
 
@@ -523,7 +514,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return - solved feedback conflict
      */
     @PostMapping("/exercises/{exerciseId}/feedback-conflicts/{feedbackConflictId}/solve")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
 

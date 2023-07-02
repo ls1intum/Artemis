@@ -87,8 +87,8 @@ class AppleFirebasePushNotificationServiceTest {
         firebasePushNotificationService.sendNotification(notification, student, null);
 
         // Then
-        verify(appleRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
-        verify(firebaseRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(appleRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(firebaseRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
     }
 
     @Test

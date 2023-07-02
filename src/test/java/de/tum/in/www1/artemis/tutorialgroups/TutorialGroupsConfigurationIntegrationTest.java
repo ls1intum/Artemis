@@ -38,8 +38,10 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
-        this.exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
-                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
+        this.exampleTutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
+                        userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").orElseThrow()))
+                .getId();
     }
 
     @Override
@@ -180,6 +182,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
         // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
+        textExercise.setChannelName("testchannelname");
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
@@ -223,7 +226,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // given
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).orElseThrow();
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), firstSeptemberMonday);
         tutorialGroupUtilService.addTutorialGroupFreeDay(configuration.getId(), fourthAugustMonday, "Holiday");
 

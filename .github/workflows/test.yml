@@ -57,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -84,6 +84,9 @@ jobs:
         name: H2 Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
+    - name: Number of Server Starts
+      if: success() || failure()
+      run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-mysql:
       needs: [ server-tests ]
@@ -104,18 +107,28 @@ jobs:
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
-            if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            if: failure()
+            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
-            if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Report action
+            if: failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+          - name: Report action failure
+            if: failure()
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - MySQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
+                state: 'failure'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Report action success
+            if: success()
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - MySQL'
+                description: '✅ Test succeeded'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
@@ -125,6 +138,9 @@ jobs:
                 name: MySQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-postgres:
       needs: [ server-tests ]
@@ -145,18 +161,28 @@ jobs:
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
-            if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            if: failure()
+            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
-            if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Report action
+            if: failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+          - name: Report action failure
+            if: failure()
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - PostgreSQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
+                state: 'failure'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Report action success
+            if: success()
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - PostgreSQL'
+                description: '✅ Test succeeded'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
@@ -166,6 +192,9 @@ jobs:
                 name: PostgreSQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-style:
     runs-on: ubuntu-latest
