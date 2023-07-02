@@ -13,7 +13,6 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
