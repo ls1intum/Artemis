@@ -60,7 +60,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonInclude
+    @JsonIgnore
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
