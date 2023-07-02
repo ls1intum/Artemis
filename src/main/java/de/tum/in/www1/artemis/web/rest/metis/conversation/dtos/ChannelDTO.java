@@ -47,9 +47,15 @@ public class ChannelDTO extends ConversationDTO {
      */
     private ChannelSubType subType;
 
+    // property not taken from entity
+    /**
+     * Contains the lecture/exercise/exam id if the channel is associated with a lecture/exercise/exam, else null
+     */
+    private Long subTypeReferenceId;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
-        this.setSubTypeFromChannel(channel);
+        this.setSubTypeWithReferenceFromChannel(channel);
         this.name = channel.getName();
         this.description = channel.getDescription();
         this.isPublic = channel.getIsPublic();
@@ -146,6 +152,10 @@ public class ChannelDTO extends ConversationDTO {
         return subType;
     }
 
+    public Long getSubTypeReferenceId() {
+        return subTypeReferenceId;
+    }
+
     @Override
     public String toString() {
         return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
@@ -154,15 +164,18 @@ public class ChannelDTO extends ConversationDTO {
                 + super.toString();
     }
 
-    private void setSubTypeFromChannel(Channel channel) {
+    private void setSubTypeWithReferenceFromChannel(Channel channel) {
         if (channel.getExercise() != null) {
             this.subType = ChannelSubType.EXERCISE;
+            this.subTypeReferenceId = channel.getExercise().getId();
         }
         else if (channel.getLecture() != null) {
             this.subType = ChannelSubType.LECTURE;
+            this.subTypeReferenceId = channel.getLecture().getId();
         }
         else if (channel.getExam() != null) {
             this.subType = ChannelSubType.EXAM;
+            this.subTypeReferenceId = channel.getExam().getId();
         }
         else {
             this.subType = ChannelSubType.GENERAL;
