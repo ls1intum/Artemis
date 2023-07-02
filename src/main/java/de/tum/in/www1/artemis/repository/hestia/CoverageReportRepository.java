@@ -31,21 +31,22 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
     void deleteBySubmissionId(Long submissionId);
 
     @Query("""
-            SELECT DISTINCT r FROM CoverageReport r
-            LEFT JOIN FETCH r.submission s
-            JOIN ProgrammingExercise pe
-            ON s.participation = pe.solutionParticipation
-            WHERE pe.id = :#{#programmingExerciseId}
-            AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            order by s.submissionDate desc
+            SELECT DISTINCT r
+            FROM CoverageReport r
+                LEFT JOIN FETCH r.submission s
+                JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
+            WHERE pe.id = :programmingExerciseId
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            ORDER BY s.submissionDate DESC
             """)
     List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @Query("""
-            SELECT DISTINCT r FROM CoverageReport r
-            LEFT JOIN FETCH r.fileReports f
-            LEFT JOIN FETCH f.testwiseCoverageEntries
-            WHERE r.id = :#{#coverageReportId}
+            SELECT DISTINCT r
+            FROM CoverageReport r
+                LEFT JOIN FETCH r.fileReports f
+                LEFT JOIN FETCH f.testwiseCoverageEntries
+            WHERE r.id = :coverageReportId
             """)
     Optional<CoverageReport> findCoverageReportByIdWithEagerFileReportsAndEntries(@Param("coverageReportId") Long coverageReportId);
 
