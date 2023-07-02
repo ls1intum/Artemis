@@ -25,6 +25,7 @@
         "@angular/platform-browser-dynamic": "16.1.3",
         "@angular/router": "16.1.3",
         "@angular/service-worker": "16.1.3",
+        "ngx-slider-v2": "16.0.2",
         "@ctrl/ngx-emoji-mart": "9.2.0",
         "@danielmoncada/angular-datetime-picker": "16.0.1",
         "@fingerprintjs/fingerprintjs": "3.4.1",

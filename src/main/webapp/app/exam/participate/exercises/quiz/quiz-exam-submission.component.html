@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="quiz-navigation sticky-top" *ngIf="exercise">
+    <div class="quiz-navigation sticky-top" *ngIf="exercise && !examTimeline">
         <div class="quiz-navigation-content">
             <div class="stepwizardquiz">
                 <div *ngFor="let question of exercise.quizQuestions; let i = index" class="stepwizardquiz__step">

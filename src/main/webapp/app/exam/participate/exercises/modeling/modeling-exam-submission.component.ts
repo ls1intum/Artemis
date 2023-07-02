@@ -8,6 +8,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -24,6 +25,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: ModelingSubmission;
+    @Input()
+    submissionVersion: SubmissionVersion;
+    @Input()
+    examTimeline = false;
 
     @Input()
     exercise: ModelingExercise;
@@ -41,8 +46,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     ngOnInit(): void {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
+        if (this.examTimeline) {
+            this.updateViewFromSubmissionVersion();
+        } else {
+            // show submission answers in UI
+            this.updateViewFromSubmission();
+        }
     }
 
     /**
@@ -115,5 +124,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     explanationChanged(explanation: string) {
         this.studentSubmission.isSynced = false;
         this.explanationText = explanation;
+    }
+
+    private updateViewFromSubmissionVersion() {
+        if (this.submissionVersion) {
+            if (this.submissionVersion.content) {
+                // Updates the Apollon editor model state (view) with the latest modeling submission
+                this.umlModel = JSON.parse(this.submissionVersion.content);
+            }
+            //TODO include explanation in submission version??
+            // Updates explanation text with the latest submission
+            this.explanationText = this.studentSubmission.explanationText ?? '';
+        }
     }
 }

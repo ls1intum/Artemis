@@ -11,7 +11,7 @@
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
         <div class="row">
-            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission">
+            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission && !readonly">
                 <div class="form-group">
                     <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                     <div class="input-group background-file">

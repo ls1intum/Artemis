@@ -22,6 +22,7 @@
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
+                            [examTimeline]="true"
                         ></jhi-quiz-submission-exam>
                         <jhi-file-upload-submission-exam
                             *ngSwitchCase="FILEUPLOAD"
@@ -40,6 +41,7 @@
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
+                            [examTimeline]="true"
                         ></jhi-modeling-submission-exam>
                         <jhi-programming-submission-exam
                             *ngSwitchCase="PROGRAMMING"
@@ -54,4 +56,4 @@
         </ng-container>
     </ng-container>
 </div>
-<input type="range" min="0" [max]="studentExam?.workingTime" step="30" />
+<ngx-slider [(value)]="value" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>

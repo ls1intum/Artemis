@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -38,7 +39,7 @@ import io.swagger.annotations.ApiResponses;
  * REST controller for managing ModelingSubmission.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
@@ -62,10 +63,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final SubmissionVersionRepository submissionVersionRepository;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, SubmissionVersionRepository submissionVersionRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -73,6 +76,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.plagiarismService = plagiarismService;
+        this.submissionVersionRepository = submissionVersionRepository;
     }
 
     /**
@@ -83,7 +87,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param modelingSubmission the modelingSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/exercises/{exerciseId}/modeling-submissions")
+    @PostMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
@@ -103,7 +107,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/modeling-submissions")
+    @PutMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
@@ -149,7 +153,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
+    @GetMapping(value = "exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -170,7 +174,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
-    @GetMapping("/modeling-submissions/{submissionId}")
+    @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
@@ -233,7 +237,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
+    @GetMapping(value = "exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -276,7 +280,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param participationId the participationId for which to find the submission and data for the modeling editor
      * @return the ResponseEntity with the submission as body
      */
-    @GetMapping("/participations/{participationId}/latest-modeling-submission")
+    @GetMapping("participations/{participationId}/latest-modeling-submission")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
@@ -338,5 +342,18 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
+    }
+
+    /**
+     * Retrieve all submission versions for a given submission id
+     *
+     * @param submissionId id of the submission
+     * @return a list of submission versions ordered by creation date
+     */
+    @GetMapping("modeling-submissions/{submissionId}/versions")
+    @EnforceAtLeastInstructor
+    public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
+        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
+
     }
 }

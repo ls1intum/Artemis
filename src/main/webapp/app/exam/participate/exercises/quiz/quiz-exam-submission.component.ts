@@ -48,10 +48,11 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     studentSubmission: AbstractQuizSubmission;
 
     @Input() exercise: QuizExercise;
+    @Input() examTimeline = false;
+
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-
     constructor(private quizService: ArtemisQuizService, changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
         smoothscroll.polyfill();

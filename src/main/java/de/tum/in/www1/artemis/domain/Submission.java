@@ -58,9 +58,9 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonInclude
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
@@ -298,6 +298,14 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     public void setExampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
+    }
+
+    public Set<SubmissionVersion> getVersions() {
+        return versions;
+    }
+
+    public void setVersions(Set<SubmissionVersion> versions) {
+        this.versions = versions;
     }
 
     /**

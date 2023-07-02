@@ -56,7 +56,7 @@ import { StudentExamTimelineComponent } from './student-exams/student-exam-timel
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
-
+import { NgxSliderModule } from 'ngx-slider-v2';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
@@ -92,6 +92,7 @@ const ENTITY_STATES = [...examManagementState];
         TitleChannelNameModule,
         ArtemisExamNavigationBarModule,
         ArtemisExamSubmissionComponentsModule,
+        NgxSliderModule,
     ],
     declarations: [
         ExamManagementComponent,

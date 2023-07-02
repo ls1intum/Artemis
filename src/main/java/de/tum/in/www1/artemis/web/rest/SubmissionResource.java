@@ -59,9 +59,11 @@ public class SubmissionResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final SubmissionVersionRepository submissionVersionRepository;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, SubmissionVersionRepository submissionVersionRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -71,6 +73,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.submissionVersionRepository = submissionVersionRepository;
     }
 
     /**
@@ -220,5 +223,14 @@ public class SubmissionResource {
         }
 
         return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+    }
+
+    @GetMapping("/submissions/{submissionId}/versions")
+    @EnforceAtLeastInstructor
+    public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
+        var submission = submissionRepository.findById(submissionId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
+        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
+
     }
 }
