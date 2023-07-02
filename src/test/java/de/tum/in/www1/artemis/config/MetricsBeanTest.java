@@ -34,6 +34,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private static final String TEST_PREFIX = "metricsbeans";
 
     @Autowired
+    MeterRegistry meterRegistry;
+
+    @Autowired
+    MetricsBean metricsBean;
+
+    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -55,10 +61,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    MeterRegistry meterRegistry;
-
-    @Autowired
-    MetricsBean metricsBean;
+    private StatisticsRepository statisticsRepository;
 
     @Autowired
     CourseService courseService;
@@ -119,6 +122,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicMetricsActiveUsers() {
+        var activeUsersBefore1Day = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
+        var activeUsersBefore7Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
+        var activeUsersBefore14Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
+        var activeUsersBefore30Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
+
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         course1.setStudentGroupName(TEST_PREFIX + "students");
@@ -141,10 +149,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(1, "artemis.statistics.public.active_users", "period", "1");
-        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "7");
-        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "14");
-        assertMetricEquals(3, "artemis.statistics.public.active_users", "period", "30");
+        assertMetricEquals(activeUsersBefore1Day + 1, "artemis.statistics.public.active_users", "period", "1");
+        assertMetricEquals(activeUsersBefore7Days + 2, "artemis.statistics.public.active_users", "period", "7");
+        assertMetricEquals(activeUsersBefore14Days + 2, "artemis.statistics.public.active_users", "period", "14");
+        assertMetricEquals(activeUsersBefore30Days + 3, "artemis.statistics.public.active_users", "period", "30");
     }
 
     @Test
