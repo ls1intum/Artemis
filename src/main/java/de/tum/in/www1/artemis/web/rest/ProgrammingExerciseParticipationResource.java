@@ -116,11 +116,8 @@ public class ProgrammingExerciseParticipationResource {
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
-        if (withTemplateAndSolutionParticipations && result.isPresent()) {
-            final var solutionParticipation = solutionParticipationRepository.findByProgrammingExerciseId(participation.getExercise().getId());
-            final var templateParticipation = templateParticipationRepository.findByProgrammingExerciseId(participation.getExercise().getId());
-            ((ProgrammingExercise) result.get().getParticipation().getExercise()).setSolutionParticipation(solutionParticipation.orElse(null));
-            ((ProgrammingExercise) result.get().getParticipation().getExercise()).setTemplateParticipation(templateParticipation.orElse(null));
+        if (true && result.isPresent()) {
+            result = Optional.of(resultService.addTemplateAndSolutionParticipationsToResult(result.get()));
         }
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));

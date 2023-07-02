@@ -200,6 +200,24 @@ public class ResultService {
         return shouldSaveResult(result, shouldSave);
     }
 
+    // TODO: add documentation
+    @NotNull
+    public Result addTemplateAndSolutionParticipationsToResult(@NotNull Result result) {
+        var participationInResult = result.getParticipation();
+        var exerciseInResult = (ProgrammingExercise) participationInResult.getExercise();
+        final var exerciseId = exerciseInResult.getId();
+
+        final var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId);
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId);
+
+        exerciseInResult.setSolutionParticipation(solutionParticipation.orElse(null));
+        exerciseInResult.setTemplateParticipation(templateParticipation.orElse(null));
+
+        participationInResult.setExercise(exerciseInResult);
+        result.setParticipation(participationInResult);
+        return result;
+    }
+
     /**
      * Returns a list of feedbacks that is filtered for students depending on the settings and the time.
      *
