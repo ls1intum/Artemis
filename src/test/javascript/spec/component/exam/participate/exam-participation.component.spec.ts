@@ -47,6 +47,9 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ExamPage } from 'app/entities/exam-page.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -564,7 +567,22 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExam);
     });
 
-    it('should show error when already submitted', () => {
+    it('should show error when already submitted for test run and successfully loading student exam', () => {
+        const httpError = new Error();
+        httpError.message = 'artemisApp.studentExam.alreadySubmitted';
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
+        const studentExam = new StudentExam();
+        const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.exam = new Exam();
+        comp.onExamEndConfirmed();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+        expect(comp.studentExam).toEqual(studentExam);
+    });
+
+    it('should show error when already submitted for test run and failed to load student exam', () => {
         const httpError = new Error();
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
@@ -576,6 +594,36 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show error when already submitted and successfully loading student exam', () => {
+        const httpError = new Error();
+        httpError.message = 'artemisApp.studentExam.alreadySubmitted';
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
+        const studentExam = new StudentExam();
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.exam = new Exam();
+        comp.testRunId = undefined;
+        comp.onExamEndConfirmed();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+        expect(comp.studentExam).toEqual(studentExam);
+    });
+
+    it('should show error when already submitted and failed to load student exam', () => {
+        const httpError = new Error();
+        httpError.message = 'artemisApp.studentExam.alreadySubmitted';
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(throwError(() => new Error()));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.exam = new Exam();
+        comp.testRunId = undefined;
+        comp.onExamEndConfirmed();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
@@ -656,6 +704,12 @@ describe('ExamParticipationComponent', () => {
             expect(comp.isVisible()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalledOnce();
         });
+
+        it('should not be visible if not test run and exam is not loaded', () => {
+            comp.testRunId = undefined;
+            comp.exam = undefined;
+            expect(comp.isVisible()).toBeFalse();
+        });
     });
 
     describe('isActive', () => {
@@ -684,6 +738,12 @@ describe('ExamParticipationComponent', () => {
             expect(comp.isActive()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalledOnce();
         });
+
+        it('should not be active if not test run and exam is not loaded', () => {
+            comp.testRunId = undefined;
+            comp.exam = undefined;
+            expect(comp.isActive()).toBeFalse();
+        });
     });
 
     it('should clear autoSaveInterval when exam ended', () => {
@@ -695,22 +755,53 @@ describe('ExamParticipationComponent', () => {
         expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
     });
 
-    it('should trigger save and initialize exercise when exercise changed', () => {
-        comp.exerciseIndex = 0;
-        const exercise1 = new TextExercise(new Course(), undefined);
-        exercise1.id = 15;
-        const exercise2 = new ProgrammingExercise(new Course(), undefined);
-        exercise2.id = 42;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.exercises = [exercise1, exercise2];
-        const triggerSpy = jest.spyOn(comp, 'triggerSave');
-        const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
-        const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
-        comp.exam = new Exam();
-        comp.onPageChange(exerciseChange);
-        expect(triggerSpy).toHaveBeenCalledWith(true, false);
-        expect(comp.exerciseIndex).toBe(1);
-        expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
+    describe('onPageChange', () => {
+        it('should trigger save and initialize exercise when exercise changed', () => {
+            comp.exerciseIndex = 0;
+            const exercise1 = new TextExercise(new Course(), undefined);
+            exercise1.id = 15;
+            const exercise2 = new ProgrammingExercise(new Course(), undefined);
+            exercise2.id = 42;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2];
+            const triggerSpy = jest.spyOn(comp, 'triggerSave');
+            const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
+            const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
+            comp.exam = new Exam();
+            comp.onPageChange(exerciseChange);
+            expect(triggerSpy).toHaveBeenCalledWith(true, false);
+            expect(comp.exerciseIndex).toBe(1);
+            expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
+        });
+
+        it('should activate active component when exercise participation is valid', () => {
+            const exercise = new QuizExercise(new Course(), undefined);
+            exercise.id = 42;
+            const participation = new StudentParticipation();
+            participation.initializationState = InitializationState.INITIALIZED;
+            exercise.studentParticipations = [participation];
+            const triggerSpy = jest.spyOn(comp, 'triggerSave');
+            const exerciseChange = { overViewChange: false, exercise: exercise, forceSave: true };
+            comp.exam = new Exam();
+            const examPageComponent = new QuizExamSubmissionComponent();
+            jest.spyOn(examPageComponent, 'getExerciseId').mockReturnValue(exercise.id);
+            comp.activeExamPage = new ExamPage();
+            comp.activeExamPage.exercise = exercise;
+            comp.currentPageComponents = [examPageComponent];
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise];
+            comp.pageComponentVisited = [false];
+
+            const activePageComponentActivateSpy = jest.spyOn(comp.activePageComponent, 'onActivate').mockImplementation();
+            const activePageComponentDeactivateSpy = jest.spyOn(comp.activePageComponent, 'onDeactivate').mockImplementation();
+            comp.onPageChange(exerciseChange);
+
+            expect(triggerSpy).toHaveBeenCalledWith(true, false);
+            expect(comp.exerciseIndex).toBe(0);
+            expect(comp.pageComponentVisited[0]).toBeTrue();
+            expect(activePageComponentDeactivateSpy).toHaveBeenCalledOnce();
+            expect(activePageComponentActivateSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('toggleHandInEarly', () => {
@@ -750,6 +841,38 @@ describe('ExamParticipationComponent', () => {
             // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
             expect(comp.pageComponentVisited).toEqual([false, true, false]);
             expect(comp.exerciseIndex).toBe(1);
+        });
+
+        it('should update local student exam and trigger save', () => {
+            const updateLocalStudentExamSpy = jest.spyOn(comp, 'updateLocalStudentExam');
+            const triggerSaveSpy = jest.spyOn(comp, 'triggerSave');
+            comp.handInEarly = false;
+            comp.toggleHandInEarly();
+
+            expect(updateLocalStudentExamSpy).toHaveBeenCalledOnce();
+            expect(triggerSaveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('activePageIndex', () => {
+        it('should return -1 if no active page', () => {
+            comp.activeExamPage = undefined;
+            expect(comp.activePageIndex).toBe(-1);
+        });
+
+        it('should return the index of the active page', () => {
+            const exercise0 = new Exercise();
+            exercise0.id = 5;
+            const exercise1 = new Exercise();
+            exercise1.id = 6;
+
+            comp.activeExamPage = new ExamPage();
+            comp.activeExamPage.exercise = exercise1;
+
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise0, exercise1];
+
+            expect(comp.activePageIndex).toBe(1);
         });
     });
 });
