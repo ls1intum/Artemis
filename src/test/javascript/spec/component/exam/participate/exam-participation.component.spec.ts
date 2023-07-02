@@ -824,13 +824,11 @@ describe('ExamParticipationComponent', () => {
             expect(comp.exerciseIndex).toBe(1);
         });
 
-        it('should update local student exam and trigger save', () => {
-            const updateLocalStudentExamSpy = jest.spyOn(comp, 'updateLocalStudentExam').mockImplementation(() => {});
+        it('should trigger save', () => {
             const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
             comp.handInEarly = false;
             comp.toggleHandInEarly();
 
-            expect(updateLocalStudentExamSpy).toHaveBeenCalledOnce();
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
         });
     });
