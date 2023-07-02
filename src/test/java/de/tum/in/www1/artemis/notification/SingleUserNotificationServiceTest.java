@@ -13,8 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import javax.mail.MessagingException;
@@ -457,7 +456,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
-        verify(generalInstantNotificationService, times(1)).sendNotification(any(), (User) any(), any());
+        Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
+
+        SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);
+        verify(generalInstantNotificationService, times(1)).sendNotification(sentNotification, user, notificationSubject);
 
         verifyRepositoryCallWithCorrectNotification(MESSAGE_REPLY_IN_CONVERSATION_TITLE);
     }

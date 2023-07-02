@@ -6,8 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,12 +16,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -58,16 +59,21 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
+
     private OneToOneChat oneToOneChat;
 
     private User user1;
+
+    private User user2;
 
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = courseUtilService.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        User user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
 
         oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
@@ -104,7 +110,10 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         conversationNotificationService.notifyAboutNewMessage(post);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
-        verify(generalInstantNotificationService, times(1)).sendNotification(any(), anyList(), any());
+
+        Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
+
+        verify(generalInstantNotificationService, times(1)).sendNotification(sentNotification, Arrays.asList(user1, user2), null);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
