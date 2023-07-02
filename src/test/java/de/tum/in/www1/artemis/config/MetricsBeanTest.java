@@ -123,9 +123,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testPublicMetricsActiveUsers() {
         var activeUsersBefore1Day = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
-        var activeUsersBefore7Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
-        var activeUsersBefore14Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
-        var activeUsersBefore30Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
+        var activeUsersBefore7Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(7), ZonedDateTime.now());
+        var activeUsersBefore14Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
+        var activeUsersBefore30Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(30), ZonedDateTime.now());
 
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
@@ -282,6 +282,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = courseUtilService.createCourse();
         course1.setStudentGroupName(TEST_PREFIX + "students");
+        courseRepository.save(course1);
 
         course1.addExercises(exerciseRepository
                 .save(quizExerciseUtilService.createQuiz(course1, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED)));
@@ -323,7 +324,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         userUtilService.addUsers(TEST_PREFIX + "2", 3, 0, 0, 0);
         var course2 = courseUtilService.createCourse();
-        course1.setStudentGroupName(TEST_PREFIX + "2" + "students");
+        course2.setStudentGroupName(TEST_PREFIX + "2" + "students");
+        courseRepository.save(course2);
         exerciseRepository.save(quizExerciseUtilService.createQuiz(course2, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
 
         // 3 quizzes end within the next 120 minutes, and are in two different courses -> 6 different users in total
