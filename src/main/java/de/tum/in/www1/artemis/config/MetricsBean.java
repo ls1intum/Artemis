@@ -338,7 +338,7 @@ public class MetricsBean {
 
         var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
         activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
-                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays.toString()), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
                 .collect(Collectors.toCollection(ArrayList::new)), true);
 
         var courses = courseRepository.findAll();
@@ -364,7 +364,6 @@ public class MetricsBean {
                 .toList();
 
         studentsCourseGauge.register(
-                // TODO: Change this back
                 activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
                         .collect(Collectors.toCollection(ArrayList::new)),
                 true);

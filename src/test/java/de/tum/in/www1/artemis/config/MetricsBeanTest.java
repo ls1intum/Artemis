@@ -126,11 +126,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testPublicMetricsActiveUsers() {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
 
-        var activeUsersBefore1Day = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
-        var activeUsersBefore7Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(7), ZonedDateTime.now());
-        var activeUsersBefore14Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
-        var activeUsersBefore30Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(30), ZonedDateTime.now());
-
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         course1.setStudentGroupName(TEST_PREFIX + "tumuser");
         courseRepository.save(course1);
@@ -152,10 +147,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(activeUsersBefore1Day + 1, "artemis.statistics.public.active_users", "period", "1");
-        assertMetricEquals(activeUsersBefore7Days + 2, "artemis.statistics.public.active_users", "period", "7");
-        assertMetricEquals(activeUsersBefore14Days + 2, "artemis.statistics.public.active_users", "period", "14");
-        assertMetricEquals(activeUsersBefore30Days + 3, "artemis.statistics.public.active_users", "period", "30");
+        assertMetricEquals(1, "artemis.statistics.public.active_users", "period", "1");
+        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "7");
+        assertMetricEquals(2, "artemis.statistics.public.active_users", "period", "14");
+        assertMetricEquals(3, "artemis.statistics.public.active_users", "period", "30");
     }
 
     @Test
