@@ -339,7 +339,7 @@ public class MetricsBean {
         var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
         activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
                 .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays + ""), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
-                .collect(Collectors.toList()), true);
+                .collect(Collectors.toCollection(ArrayList::new)), true);
 
         var courses = courseRepository.findAll();
         // We set the number of students once to prevent multiple queries for the same date
@@ -366,7 +366,7 @@ public class MetricsBean {
         studentsCourseGauge.register(
                 // TODO: Change this back
                 activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
-                        .collect(Collectors.toList()),
+                        .collect(Collectors.toCollection(ArrayList::new)),
                 true);
 
         activeCoursesGauge.set(activeCourses.size());
@@ -380,18 +380,15 @@ public class MetricsBean {
         studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
                 // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
                 "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
-                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toList()), true);
+                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toCollection(ArrayList::new)), true);
 
-        activeExerciseGauge
-                .register(
-                        Stream.of(ExerciseType.values())
-                                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                                        exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
-                                .collect(Collectors.toList()),
-                        true);
+        activeExerciseGauge.register(Stream.of(ExerciseType.values())
+                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
+                        exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
+                .collect(Collectors.toCollection(ArrayList::new)), true);
 
         exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toList()), true);
+                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toCollection(ArrayList::new)), true);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

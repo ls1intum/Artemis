@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -122,14 +124,15 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPublicMetricsActiveUsers() {
+        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+
         var activeUsersBefore1Day = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(1), ZonedDateTime.now());
         var activeUsersBefore7Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(7), ZonedDateTime.now());
         var activeUsersBefore14Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
         var activeUsersBefore30Days = statisticsRepository.countActiveUsers(ZonedDateTime.now().minusDays(30), ZonedDateTime.now());
 
-        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        course1.setStudentGroupName(TEST_PREFIX + "students");
+        course1.setStudentGroupName(TEST_PREFIX + "tumuser");
         courseRepository.save(course1);
 
         var textExercise = exerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
@@ -173,7 +176,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var numberOfActiveCourses = courseRepository.findAllActive(ZonedDateTime.now()).size();
 
         // Assert that there is at least one non-active course in the database so that the values returned from the metrics are different
-        assertNotEquals(totalNumberOfCourses, numberOfActiveCourses);
+        assertThat(numberOfActiveCourses).isNotEqualTo(totalNumberOfCourses);
 
         assertMetricEquals(totalNumberOfCourses, "artemis.statistics.public.courses");
         assertMetricEquals(numberOfActiveCourses, "artemis.statistics.public.active_courses");
@@ -200,7 +203,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var numberOfActiveExams = examRepository.countAllActiveExams(ZonedDateTime.now());
 
         // Assert that there is at least one non-active exam in the database so that the values returned from the metrics are different
-        assertNotEquals(totalNumberOfExams, numberOfActiveExams.intValue());
+        assertThat(numberOfActiveExams.intValue()).isNotEqualTo(totalNumberOfExams);
 
         assertMetricEquals(totalNumberOfExams, "artemis.statistics.public.exams");
         assertMetricEquals(numberOfActiveExams, "artemis.statistics.public.active_exams");
@@ -279,9 +282,19 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testPrometheusMetricsExercises() {
-        var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        var users = userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 0);
+        // 3 in course 1
+        users.get(0).setGroups(Set.of(TEST_PREFIX + "course1students"));
+        users.get(1).setGroups(Set.of(TEST_PREFIX + "course1students"));
+        users.get(2).setGroups(Set.of(TEST_PREFIX + "course1students"));
+        // 3 in course 2
+        users.get(3).setGroups(Set.of(TEST_PREFIX + "course2students"));
+        users.get(4).setGroups(Set.of(TEST_PREFIX + "course2students"));
+        users.get(5).setGroups(Set.of(TEST_PREFIX + "course2students"));
+        userRepository.saveAll(users);
+
         var course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName(TEST_PREFIX + "students");
+        course1.setStudentGroupName(TEST_PREFIX + "course1students");
         courseRepository.save(course1);
 
         course1.addExercises(exerciseRepository
@@ -322,9 +335,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertMetricEquals(2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
         assertMetricEquals(3 * 1, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
 
-        userUtilService.addUsers(TEST_PREFIX + "2", 3, 0, 0, 0);
         var course2 = courseUtilService.createCourse();
-        course2.setStudentGroupName(TEST_PREFIX + "2" + "students");
+        course2.setStudentGroupName(TEST_PREFIX + "course2students");
         courseRepository.save(course2);
         exerciseRepository.save(quizExerciseUtilService.createQuiz(course2, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
 
@@ -408,6 +420,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private void assertMetricEquals(double expectedValue, String metricName, String... tags) {
         var gauge = meterRegistry.get(metricName).tags(tags).gauge();
-        assertEquals(expectedValue, gauge.value());
+        assertThat(gauge.value()).isEqualTo(expectedValue);
     }
 }
