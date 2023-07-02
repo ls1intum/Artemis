@@ -349,6 +349,14 @@ public class MetricsBean {
             if (course.getSemester() == null) {
                 course.setSemester("No semester");
             }
+            if (course.getTitle() == null) {
+                if (course.getShortName() != null) {
+                    course.setTitle("Course" + course.getShortName());
+                }
+                else {
+                    course.setTitle("Course" + course.getId().toString());
+                }
+            }
         });
 
         var activeCourses = courses.stream()
@@ -357,10 +365,7 @@ public class MetricsBean {
 
         studentsCourseGauge.register(
                 // TODO: Change this back
-                activeCourses.stream()
-                        .map(course -> MultiGauge.Row.of(
-                                Tags.of("courseName", "course.getTitle() == null ? course.getShortName() : course.getTitle()", "semester", course.getSemester()),
-                                course.getNumberOfStudents()))
+                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
                         .collect(Collectors.toList()),
                 true);
 
