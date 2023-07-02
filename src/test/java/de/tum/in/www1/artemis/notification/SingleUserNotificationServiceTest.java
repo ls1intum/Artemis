@@ -248,7 +248,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
-        verify(messagingTemplate, times(0)).convertAndSend(any());
+        verify(messagingTemplate, never()).convertAndSend(any());
     }
 
     /**
@@ -312,7 +312,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
         exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        verify(singleUserNotificationService, times(1)).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
+        verify(singleUserNotificationService).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
     }
 
     /**
@@ -378,7 +378,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
-        verify(javaMailSender, timeout(1000).times(1)).send(mimeMessageCaptor.capture());
+        verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
         assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("New Plagiarism Case: Exercise \"" + exerciseTitle + "\" in the course \"" + course.getTitle() + "\"");
     }
 
@@ -393,7 +393,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
-        verify(javaMailSender, timeout(1000).times(1)).send(mimeMessageCaptor.capture());
+        verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
         assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
     }
 
@@ -404,17 +404,17 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(notificationsBefore);
         // notification should be sent
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
     }
 
     @Test
     void testConversationNotificationsGroupChatCreation() {
         int notificationsBefore = (int) notificationRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
 
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(notificationsBefore + 2);
@@ -428,7 +428,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @MethodSource("getNotificationTypesAndTitlesParametersForGroupChat")
     void testConversationNotificationsGroupChatAddAndRemoveUsers(NotificationType notificationType, String expectedTitle) {
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, notificationType);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
@@ -437,7 +437,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @MethodSource("getNotificationTypesAndTitlesParametersForChannel")
     void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) {
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
@@ -456,7 +456,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         answerPost.setPost(post);
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(MESSAGE_REPLY_IN_CONVERSATION_TITLE);
     }
@@ -539,7 +539,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      * Checks if an email was created and send
      */
     private void verifyEmail() {
-        verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(1000)).send(any(MimeMessage.class));
     }
 
     /**

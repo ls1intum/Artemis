@@ -8,7 +8,6 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -164,16 +163,6 @@ public abstract class BaseExercise extends DomainObject {
 
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
-    }
-
-    /**
-     * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
-     *
-     * @return true if the assessment due date is in the past, otherwise false
-     */
-    @JsonIgnore
-    public boolean isAssessmentDueDateOver() {
-        return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
     @Nullable
