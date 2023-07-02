@@ -38,7 +38,7 @@
             "minimumSizeTooltipText": "Berücksichtige nur Einreichungen, die mindestens so viele Zeichen wie der angegebene Wert haben",
             "noInfoAvailable": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann sehr lange dauern.",
-            "configurationMoved": "Die Konfiguration wurde auf die Seite der Übungsaktualisierung verschoben.",
+            "configurationMoved": "Die Konfiguration wurde auf die Bearbeitungsseite der Übung verschoben.",
             "detect": "Jetzt Plagiate finden",
             "rerun": "Erneut Plagiate finden",
             "resetFilter": "Filter zurücksetzen",
