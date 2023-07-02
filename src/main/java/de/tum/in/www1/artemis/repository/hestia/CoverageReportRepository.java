@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.*;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,9 +38,8 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
             WHERE pe.id = :programmingExerciseId
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
-            LIMIT 1
             """)
-    Optional<CoverageReport> getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId);
+    List<CoverageReport> getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT r
@@ -51,10 +51,9 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
             WHERE pe.id = :programmingExerciseId
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
-            LIMIT 1
             """)
-    Optional<CoverageReport> getLatestCoverageReportForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(
-            @Param("programmingExerciseId") Long programmingExerciseId);
+    List<CoverageReport> getLatestCoverageReportForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(@Param("programmingExerciseId") Long programmingExerciseId,
+            Pageable pageable);
 
     @Query("""
             SELECT DISTINCT r

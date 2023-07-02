@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -278,7 +279,11 @@ public class TestwiseCoverageService {
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        return coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId());
+        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        if (reports.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(reports.get(0));
     }
 
     /**
@@ -289,6 +294,11 @@ public class TestwiseCoverageService {
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        return coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId());
+        var reports = coverageReportRepository.getLatestCoverageReportForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
+                Pageable.ofSize(1));
+        if (reports.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(reports.get(0));
     }
 }
