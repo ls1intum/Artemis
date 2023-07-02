@@ -359,7 +359,7 @@ public class MetricsBean {
                 // TODO: Change this back
                 activeCourses.stream()
                         .map(course -> MultiGauge.Row.of(
-                                Tags.of("courseName", course.getTitle() == null ? course.getShortName() : course.getTitle(), "semester", course.getSemester()),
+                                Tags.of("courseName", course.getTitle() == null ? course.getShortName() : course.getTitle(), "semester", "course.getSemester()"),
                                 course.getNumberOfStudents()))
                         .collect(Collectors.toList()),
                 true);
