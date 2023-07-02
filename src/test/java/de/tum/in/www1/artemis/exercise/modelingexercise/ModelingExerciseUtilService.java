@@ -330,7 +330,7 @@ public class ModelingExerciseUtilService {
     public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
-        checkModelsAreEqual(modelingSubmission.get().getModel(), sentModel);
+        checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
     }
 
     public void checkModelsAreEqual(String storedModel, String sentModel) {
@@ -348,7 +348,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
@@ -365,7 +365,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
     }
 
     public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {

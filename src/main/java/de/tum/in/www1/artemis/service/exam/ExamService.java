@@ -232,7 +232,7 @@ public class ExamService {
         for (StudentExam studentExam : studentExams) {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
+                    .filter(studentParticipation -> studentParticipation.getStudent().orElseThrow().getId().equals(studentExam.getUser().getId())).toList();
             var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
                     examBonusCalculator);
             studentResults.add(studentResult);
@@ -527,19 +527,22 @@ public class ExamService {
 
         // To prevent LazyInitializationException.
         participation.setResults(Set.of());
-        if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
+        if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
-            // Also set the latest result into the participation as the client expects it there for programming exercises
-            Result latestResult = lastSubmission.getLatestResult();
-            if (latestResult != null) {
-                latestResult.setParticipation(null);
-                latestResult.setSubmission(lastSubmission);
-                // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                // lastResult -> lastSubmission
-                participation.setResults(Set.of(latestResult));
+            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+                // Also set the latest result into the participation as the client expects it there for programming exercises
+                Result latestResult = lastSubmission.getLatestResult();
+                if (latestResult != null) {
+                    latestResult.setParticipation(null);
+                    latestResult.setSubmission(lastSubmission);
+                    latestResult.filterSensitiveInformation();
+                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
+                    // lastResult -> lastSubmission
+                    participation.setResults(Set.of(latestResult));
+                }
+                participation.setSubmissions(Set.of(lastSubmission));
             }
             lastSubmission.setResults(null);
-            participation.setSubmissions(Set.of(lastSubmission));
         }
     }
 
@@ -742,7 +745,7 @@ public class ExamService {
 
     private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course, PlagiarismMapping plagiarismMapping) {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
-            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().get().getId(), participation.getExercise().getId());
+            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
 
             return calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course, plagiarismPointDeductionPercentage);
@@ -851,7 +854,7 @@ public class ExamService {
         Double pointsReachableByMandatoryExercises = 0.0;
         Set<ExerciseGroup> mandatoryExerciseGroups = exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).collect(Collectors.toSet());
         for (ExerciseGroup exerciseGroup : mandatoryExerciseGroups) {
-            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().orElseThrow();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
                 pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxPoints();
             }
@@ -864,7 +867,7 @@ public class ExamService {
         // Ensure that the sum of all max points of all exercise groups is at least as big as the max points set in the exam
         Double pointsReachable = 0.0;
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().orElseThrow();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
                 pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }

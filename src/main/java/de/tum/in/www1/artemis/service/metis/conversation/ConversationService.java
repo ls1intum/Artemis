@@ -459,7 +459,7 @@ public class ConversationService {
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
             if (channel.getExercise() != null) {
-                return channel.getExercise().isReleased();
+                return channel.getExercise().isVisibleToStudents();
             }
             else if (channel.getExam() != null) {
                 return channel.getExam().isVisibleToStudents();

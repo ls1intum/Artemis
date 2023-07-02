@@ -388,7 +388,7 @@ public class ExamUtilService {
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
         for (int i = 0; i <= 4; i++) {
-            ExamFactory.generateExerciseGroup(true, exam);
+            ExamFactory.generateExerciseGroupWithTitle(true, exam, "Group " + i);
         }
         exam.setNumberOfExercisesInExam(5);
         exam.setExamMaxPoints(5 * 5);
@@ -594,15 +594,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
@@ -620,15 +620,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());

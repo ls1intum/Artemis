@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
@@ -29,10 +29,13 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     canCreateChannel = canCreateChannel;
     @Input()
-    createChannelFn: (channel: ChannelDTO) => Observable<never>;
+    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
 
     @Input()
     course: Course;
+
+    @Input()
+    channelSubType: ChannelSubType;
 
     channelActions$ = new Subject<ChannelAction>();
 
@@ -44,7 +47,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     isInitialized = false;
 
     initialize() {
-        super.initialize(['course', 'createChannelFn']);
+        super.initialize(['course', 'channelSubType']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }
@@ -112,17 +115,19 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
             case 'create':
-                this.createChannelFn(channelAction.channel)
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        complete: () => {
-                            this.loadChannelsOfCourse();
-                            this.channelModificationPerformed = true;
-                        },
-                    });
+                this.createChannelFn &&
+                    this.createChannelFn(channelAction.channel)
+                        .pipe(takeUntil(this.ngUnsubscribe))
+                        .subscribe({
+                            complete: () => {
+                                this.loadChannelsOfCourse();
+                                this.channelModificationPerformed = true;
+                            },
+                        });
                 break;
         }
     }
+
     loadChannelsOfCourse() {
         this.isLoading = true;
         this.channelService
@@ -136,7 +141,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
-                    this.channels = channels ?? [];
+                    this.channels = channels?.filter((channel) => channel.subType === this.channelSubType) ?? [];
                     this.noOfChannels = this.channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

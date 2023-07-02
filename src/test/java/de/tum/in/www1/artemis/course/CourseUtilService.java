@@ -395,7 +395,7 @@ public class CourseUtilService {
         quizExercise = exerciseRepo.save(quizExercise);
 
         // Get user and setup participations
-        User user = (userRepo.findOneByLogin(userPrefix + "student1")).get();
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).orElseThrow();
         StudentParticipation participationModeling = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
         StudentParticipation participationText = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participationFileUpload = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);

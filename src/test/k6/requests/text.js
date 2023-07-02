@@ -86,7 +86,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                     startIndex: 0,
                     endIndex: 123,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -94,7 +93,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
                     startIndex: 124,
                     endIndex: 231,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -102,7 +100,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
                     startIndex: 232,
                     endIndex: 334,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -110,7 +107,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
                     startIndex: 335,
                     endIndex: 445,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
             ],

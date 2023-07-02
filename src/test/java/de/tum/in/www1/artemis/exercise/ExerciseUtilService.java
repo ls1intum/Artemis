@@ -120,12 +120,13 @@ public class ExerciseUtilService {
     }
 
     public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
-        var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
+        var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
 
     public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
-        var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
+        var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst()
+                .orElseThrow();
         return (T) exercise;
     }
 

@@ -196,9 +196,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = this.computeTotalScore(this.assessments);
         this.isLoading = false;
 
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'start');
-
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
@@ -239,9 +236,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'save');
-
         this.saveBusy = true;
         this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -261,9 +255,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
