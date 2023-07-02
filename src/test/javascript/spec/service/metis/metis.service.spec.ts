@@ -27,6 +27,7 @@ import { of } from 'rxjs';
 import {
     metisCourse,
     metisCoursePostsWithCourseWideContext,
+    metisExam,
     metisExercise,
     metisExercisePosts,
     metisLecture,
@@ -364,6 +365,12 @@ describe('Metis Service', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForLecture(metisLecture.id!.toString());
         expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/lectures/${metisLecture.id!.toString()}`);
+    });
+
+    it('should determine the router link required for referencing a exam page', () => {
+        metisService.setCourse(course);
+        const referenceRouterLink = metisService.getLinkForExam(metisExam.id!.toString());
+        expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/exams/${metisExam.id!.toString()}`);
     });
 
     it('should determine the query param for a reference to a post with course-wide context', () => {

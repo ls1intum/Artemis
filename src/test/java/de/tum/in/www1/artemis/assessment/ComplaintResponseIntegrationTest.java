@@ -77,7 +77,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         textExercise = exerciseRepository.saveAndFlush(textExercise);
 
         // creating participation of student1 by starting the exercise
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation studentParticipation = participationService.startExercise(textExercise, student1, false);
         // creating submission of student1
         TextSubmission submission = new TextSubmission();
@@ -88,7 +88,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission.text("hello world");
         submission = submissionRepository.saveAndFlush(submission);
         // creating assessment by tutor1
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Result result = ParticipationFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
@@ -533,7 +533,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     private ComplaintResponse createLockOnComplaint(String lockOwnerLogin, boolean runOut) {
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
-        User tutor = userRepository.findOneByLogin(lockOwnerLogin).get();
+        User tutor = userRepository.findOneByLogin(lockOwnerLogin).orElseThrow();
         complaintResponse.setReviewer(tutor);
         complaintResponse = complaintResponseRepository.saveAndFlush(complaintResponse);
 
