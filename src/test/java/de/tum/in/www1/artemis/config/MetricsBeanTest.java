@@ -92,7 +92,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             examRepository.save(exam);
         });
 
-        exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate().forEach(exercise -> {
+        exerciseRepository.findAll().forEach(exercise -> {
             // Set dates of existing exercises to past to that they are not returned in the metrics
             exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
             exercise.setStartDate(ZonedDateTime.now().minusHours(2));
