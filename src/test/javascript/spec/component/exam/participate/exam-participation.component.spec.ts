@@ -605,7 +605,7 @@ describe('ExamParticipationComponent', () => {
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.exam = new Exam();
-        comp.testRunId = undefined;
+        comp.testRunId = 0;
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
@@ -620,7 +620,7 @@ describe('ExamParticipationComponent', () => {
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(throwError(() => new Error()));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.exam = new Exam();
-        comp.testRunId = undefined;
+        comp.testRunId = 0;
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
@@ -706,8 +706,8 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should not be visible if not test run and exam is not loaded', () => {
-            comp.testRunId = undefined;
-            comp.exam = undefined;
+            comp.testRunId = 0;
+            comp.exam = null;
             expect(comp.isVisible()).toBeFalse();
         });
     });
@@ -740,8 +740,8 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should not be active if not test run and exam is not loaded', () => {
-            comp.testRunId = undefined;
-            comp.exam = undefined;
+            comp.testRunId = 0;
+            comp.exam = null;
             expect(comp.isActive()).toBeFalse();
         });
     });
@@ -774,7 +774,7 @@ describe('ExamParticipationComponent', () => {
             expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
         });
 
-        it('should activate active component when exercise participation is valid', () => {
+        it('should set pageComponentVisited to true when exercise participation is valid', () => {
             const exercise = new QuizExercise(new Course(), undefined);
             exercise.id = 42;
             const participation = new StudentParticipation();
@@ -783,24 +783,17 @@ describe('ExamParticipationComponent', () => {
             const triggerSpy = jest.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise, forceSave: true };
             comp.exam = new Exam();
-            const examPageComponent = new QuizExamSubmissionComponent();
-            jest.spyOn(examPageComponent, 'getExerciseId').mockReturnValue(exercise.id);
             comp.activeExamPage = new ExamPage();
             comp.activeExamPage.exercise = exercise;
-            comp.currentPageComponents = [examPageComponent];
             comp.studentExam = new StudentExam();
             comp.studentExam.exercises = [exercise];
             comp.pageComponentVisited = [false];
 
-            const activePageComponentActivateSpy = jest.spyOn(comp.activePageComponent, 'onActivate').mockImplementation();
-            const activePageComponentDeactivateSpy = jest.spyOn(comp.activePageComponent, 'onDeactivate').mockImplementation();
             comp.onPageChange(exerciseChange);
 
             expect(triggerSpy).toHaveBeenCalledWith(true, false);
             expect(comp.exerciseIndex).toBe(0);
             expect(comp.pageComponentVisited[0]).toBeTrue();
-            expect(activePageComponentDeactivateSpy).toHaveBeenCalledOnce();
-            expect(activePageComponentActivateSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -855,15 +848,16 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('activePageIndex', () => {
-        it('should return -1 if no active page', () => {
-            comp.activeExamPage = undefined;
+        it('should return -1 if active page is overview page', () => {
+            comp.activeExamPage = new ExamPage();
+            comp.activeExamPage.isOverviewPage = true;
             expect(comp.activePageIndex).toBe(-1);
         });
 
         it('should return the index of the active page', () => {
-            const exercise0 = new Exercise();
+            const exercise0 = new QuizExercise();
             exercise0.id = 5;
-            const exercise1 = new Exercise();
+            const exercise1 = new ProgrammingExercise();
             exercise1.id = 6;
 
             comp.activeExamPage = new ExamPage();
