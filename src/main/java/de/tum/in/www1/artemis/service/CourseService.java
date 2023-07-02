@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -467,7 +468,7 @@ public class CourseService {
      * @param course The course to which the user should get added to
      */
     public void enrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -512,7 +513,7 @@ public class CourseService {
      * @param course The course from which the user should be removed from
      */
     public void unenrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);

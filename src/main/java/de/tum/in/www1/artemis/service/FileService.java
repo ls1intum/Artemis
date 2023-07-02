@@ -129,6 +129,16 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Sanitize the filename and replace all invalid characters with an underscore
+     *
+     * @param filename the filename to sanitize
+     * @return the sanitized filename
+     */
+    public String sanitizeFilename(String filename) {
+        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
+    }
+
+    /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
      *
      * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
@@ -144,8 +154,7 @@ public class FileService implements DisposableBean {
             throw new IllegalArgumentException("Filename cannot be null");
         }
 
-        // sanitize the filename and replace all invalid characters with with an underscore
-        filename = filename.replaceAll("[^a-zA-Z\\d.\\-]", "_");
+        filename = sanitizeFilename(filename);
 
         // Check the allowed file extensions
         final String fileExtension = FilenameUtils.getExtension(filename);
@@ -159,14 +168,31 @@ public class FileService implements DisposableBean {
         final String fileNameAddition = markdown ? "Markdown_" : "Temp_";
         final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
 
+        String savedFileName = saveFile(filePath, filename, fileNameAddition, fileExtension, keepFileName, file);
+        responsePath.append(savedFileName);
+
+        return responsePath.toString();
+    }
+
+    /**
+     * Saves a file to the given path
+     *
+     * @param filePath         the path to save the file to excluding the filename
+     * @param filename         the filename of the file to save including the extension
+     * @param fileNameAddition the addition to the filename to make sure it is unique
+     * @param fileExtension    the extension of the file to save
+     * @param keepFileName     specifies if original file name should be kept
+     * @param file             the file to save
+     * @return the name of the saved file
+     */
+    public String saveFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName, MultipartFile file) {
         try {
             File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
-            responsePath.append(newFile.toPath().getFileName());
 
             // copy contents of uploaded file into newly created file
             Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
 
-            return responsePath.toString();
+            return newFile.toPath().getFileName().toString();
         }
         catch (IOException e) {
             log.error("Could not save file {}", filename, e);
@@ -224,11 +250,11 @@ public class FileService implements DisposableBean {
     public String copyExistingFileToTarget(String oldFilePath, String targetFolder, Long entityId) {
         if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
             try {
-                Path source = Path.of(actualPathForPublicPath(oldFilePath));
+                Path source = Path.of(actualPathForPublicPathOrThrow(oldFilePath));
                 File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
                 Path target = targetFile.toPath();
                 Files.copy(source, target, REPLACE_EXISTING);
-                String newFilePath = publicPathForActualPath(target.toString(), entityId);
+                String newFilePath = publicPathForActualPathOrThrow(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
                 return newFilePath;
             }
@@ -275,7 +301,7 @@ public class FileService implements DisposableBean {
                 // delete old file
                 log.debug("Delete old file {}", oldFilePath);
                 try {
-                    File oldFile = new File(actualPathForPublicPath(oldFilePath));
+                    File oldFile = new File(actualPathForPublicPathOrThrow(oldFilePath));
 
                     if (!FileSystemUtils.deleteRecursively(oldFile)) {
                         log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
@@ -289,22 +315,43 @@ public class FileService implements DisposableBean {
                 }
             }
         }
-        // check if newFilePath is a temp file
-        if (newFilePath != null && newFilePath.contains("files/temp")) {
+
+        return moveFileIfTemporaryAndReturnPath(newFilePath, targetFolder, entityId, keepFileName);
+    }
+
+    private String moveFileIfTemporaryAndReturnPath(String path, String targetFolder, Long entityId, Boolean keepFileName) {
+        if (path != null && path.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Path.of(actualPathForPublicPath(newFilePath));
-                File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
+                Path source = Path.of(actualPathForPublicPathOrThrow(path));
+                File targetFile = generateTargetFile(path, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
-                newFilePath = publicPathForActualPath(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
+                return publicPathForActualPathOrThrow(target.toString(), entityId);
             }
             catch (IOException e) {
-                log.error("Error moving file: {}", newFilePath);
+                log.error("Error moving file: {}", path);
             }
         }
-        return newFilePath;
+        return path;
+    }
+
+    /**
+     * Convert the given public file url to its corresponding local path
+     *
+     * @param publicPath the public file url to convert
+     * @throws FilePathParsingException if the path is unknown
+     * @return the actual path to that file in the local filesystem
+     */
+    public String actualPathForPublicPathOrThrow(String publicPath) {
+        String actualPath = actualPathForPublicPath(publicPath);
+        if (actualPath == null) {
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + publicPath);
+        }
+
+        return actualPath;
     }
 
     /**
@@ -367,8 +414,25 @@ public class FileService implements DisposableBean {
             return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
         }
 
-        // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + publicPath);
+        return null;
+    }
+
+    /**
+     * Generate the public path for the file at the given path
+     *
+     * @param actualPathString the path to the file in the local filesystem
+     * @param entityId         the id of the entity associated with the file
+     * @throws FilePathParsingException if the path is unknown
+     * @return the public file url that can be used by users to access the file from outside
+     */
+    public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
+        String publicPath = publicPathForActualPath(actualPathString, entityId);
+        if (publicPath == null) {
+            // path is unknown => cannot convert
+            throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        }
+
+        return publicPath;
     }
 
     /**
@@ -435,8 +499,7 @@ public class FileService implements DisposableBean {
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }
 
-        // path is unknown => cannot convert
-        throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
+        return null;
     }
 
     /**
@@ -444,10 +507,11 @@ public class FileService implements DisposableBean {
      *
      * @param originalFilename the original filename of the file (needed to determine the file type)
      * @param targetFolder     the folder where the new file should be created
+     * @param keepFileName     if true, the original filename will be kept, otherwise a new filename will be generated
      * @return the newly created file
      * @throws IOException if the file can't be generated.
      */
-    private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
+    public File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {

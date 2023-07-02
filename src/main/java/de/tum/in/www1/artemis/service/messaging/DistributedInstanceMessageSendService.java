@@ -81,27 +81,52 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendUnlockAllRepositories(Long exerciseId) {
+    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositories(Long exerciseId) {
-        log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
+    public void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all repositories and participations with a start date in the past and a due date in the future for programming exercise {} to broker.",
+                exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all student repositories with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all student participations with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositories(Long exerciseId) {
+        log.info("Sending lock all student repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
-        log.info("Sending unlock all repositories without an individual due date before now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_WITHOUT_EARLIER_DUE_DATE, exerciseId);
+    public void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
-        log.info("Sending lock all repositories without an individual due date after now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_WITHOUT_LATER_DUE_DATE, exerciseId);
+    public void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override

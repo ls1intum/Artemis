@@ -6,11 +6,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
@@ -29,7 +30,9 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @RestController
@@ -82,22 +85,70 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
     @GetMapping("/{courseId}/channels/overview")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var result = channelRepository.findChannelsByCourseId(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
-        var filteredStream = result;
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
+        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
+        var channels = channelRepository.findChannelsByCourseId(courseId).stream();
+
+        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
+
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
-            filteredStream = result
-                    // we only want to show public channels and in addition private channels that the requestingUser is a member of
-                    .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+            channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
-        return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+
+        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+    }
+
+    /**
+     * GET /api/courses/:courseId/exercises/:exerciseId/channel Returns the channel by exercise id
+     *
+     * @param courseId   the id of the course
+     * @param exerciseId the id of the channel
+     * @return ResponseEntity with status 200 (OK) and with body containing the channel
+     */
+    @GetMapping("/{courseId}/exercises/{exerciseId}/channel")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Channel> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+        log.debug("REST request to get channel of exercise: {}", exerciseId);
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channel = channelRepository.findChannelByExerciseId(exerciseId);
+
+        checkChannelMembership(channel, requestingUser.getId());
+
+        return ResponseEntity.ok(channel);
+    }
+
+    /**
+     * GET /api/courses/:courseId/lectures/:lectureId/channel Returns the channel by lecture id
+     *
+     * @param courseId  the id of the course
+     * @param lectureId the id of the channel
+     * @return ResponseEntity with status 200 (OK) and with body containing the channel
+     */
+    @GetMapping("/{courseId}/lectures/{lectureId}/channel")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Channel> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
+        log.debug("REST request to get channel of lecture: {}", lectureId);
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channel = channelRepository.findChannelByLectureId(lectureId);
+
+        checkChannelMembership(channel, requestingUser.getId());
+
+        return ResponseEntity.ok(channel);
     }
 
     /**
@@ -108,7 +159,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 201 (Created) and with body containing the created channel
      */
     @PostMapping("/{courseId}/channels")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -140,7 +191,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated channel
      */
     @PutMapping("/{courseId}/channels/{channelId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
         checkMessagingEnabledElseThrow(courseId);
@@ -168,7 +219,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/{courseId}/channels/{channelId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -199,7 +250,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/archive")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -218,7 +269,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/unarchive")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -238,7 +289,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/grant-channel-moderator")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -261,7 +312,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-moderator")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
         checkMessagingEnabledElseThrow(courseId);
@@ -291,7 +342,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/register")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
@@ -329,7 +380,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/deregister")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         checkMessagingEnabledElseThrow(courseId);
         if (userLogins == null || userLogins.isEmpty()) {
@@ -371,4 +422,15 @@ public class ChannelResource extends ConversationManagementResource {
         });
     }
 
+    private Stream<ChannelDTO> filterVisibleChannelsForNonInstructors(Stream<ChannelDTO> channelDTOs) {
+        return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+    }
+
+    private void checkChannelMembership(Channel channel, Long userId) {
+        if (channel != null && !conversationService.isMember(channel.getId(), userId)) {
+            // suppress error alert with skipAlert: true so that the client can display a custom error message
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
+                    true);
+        }
+    }
 }

@@ -14,7 +14,8 @@ day.extend(utc);
  * Generates a unique identifier.
  * */
 export function generateUUID() {
-    return uuidv4().replace(/-/g, '');
+    const uuid = uuidv4().replace(/-/g, '');
+    return uuid.substr(0, 5);
 }
 
 /**
@@ -63,8 +64,16 @@ export function titleCaseWord(str: string) {
     return sentence.join(' ');
 }
 
+export function titleLowercase(title: string) {
+    return title.replace(' ', '-').toLowerCase();
+}
+
 export function getExercise(exerciseId: number) {
     return cy.get(`#exercise-${exerciseId}`);
+}
+
+export function convertBooleanToYesNo(boolean: boolean) {
+    return boolean ? 'Yes' : 'No';
 }
 
 export function parseArrayBufferAsJsonObject(buffer: ArrayBuffer) {

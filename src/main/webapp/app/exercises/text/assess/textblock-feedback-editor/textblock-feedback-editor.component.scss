@@ -40,56 +40,6 @@ label {
     float: right;
 }
 
-.impactWarningLabel {
-    font-size: small;
-}
-
-.findOrigin {
-    margin-left: 5px;
-    cursor: pointer;
-}
-
-.text-with-feedback {
-    text-decoration-line: underline;
-    padding: 2px 4px;
-    border-radius: 4px;
-    margin-top: 7px;
-    margin-bottom: 4px;
-    display: table;
-
-    &.positive-feedback {
-        text-decoration-style: double;
-        text-decoration-color: var(--textblock-feedback-editor-feedback-positive-color);
-        color: var(--textblock-feedback-editor-feedback-positive-color);
-        background-color: var(--textblock-feedback-editor-feedback-positive-background-color);
-    }
-
-    &.neutral-feedback {
-        text-decoration-style: solid;
-        text-decoration-color: var(--textblock-feedback-editor-feedback-neutral-color);
-        background-color: var(--textblock-feedback-editor-feedback-neutral-background-color);
-        color: var(--textblock-feedback-editor-feedback-neutral-color);
-    }
-
-    b {
-        font-weight: 600;
-    }
-}
-
-.white-space {
-    margin-top: 5px;
-}
-
-.text-inline {
-    display: inline;
-}
-
-.reused-feedback-preview {
-    border: 2px solid var(--textblock-feedback-editor-reused-feedback-preview-border);
-    border-radius: 2px;
-    padding: 10px;
-}
-
 .btn {
     position: relative;
     flex: none;

@@ -20,7 +20,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -30,6 +29,8 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -127,7 +128,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
 
@@ -164,7 +165,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
@@ -185,7 +186,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
     @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
@@ -229,7 +230,7 @@ public class StudentExamResource {
      *         400 if student exam was in an illegal state
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/submit")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
 
@@ -271,7 +272,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
@@ -318,7 +319,7 @@ public class StudentExamResource {
      */
     // TODO: use the same REST call as for real exams and test exams
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
@@ -355,7 +356,7 @@ public class StudentExamResource {
      * @return all StudentExams for test exam for the specified course and user
      */
     @GetMapping("courses/{courseId}/test-exams-per-user")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
@@ -376,7 +377,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -422,7 +423,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
@@ -451,7 +452,7 @@ public class StudentExamResource {
      * @return the list of test runs
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
@@ -470,7 +471,7 @@ public class StudentExamResource {
      * @return the created test run student exam
      */
     @PostMapping("courses/{courseId}/exams/{examId}/test-run")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
         if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
@@ -496,7 +497,7 @@ public class StudentExamResource {
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
@@ -531,7 +532,7 @@ public class StudentExamResource {
      * @return the deleted test run student exam
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
@@ -550,7 +551,7 @@ public class StudentExamResource {
      * @return ResponseEntity containing the list of generated participations
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -581,7 +582,7 @@ public class StudentExamResource {
      * @return ResponseEntity containing the status
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -670,7 +671,7 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -706,7 +707,7 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
 

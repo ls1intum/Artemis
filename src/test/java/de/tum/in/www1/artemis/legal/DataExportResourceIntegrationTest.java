@@ -2,9 +2,8 @@ package de.tum.in.www1.artemis.legal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,29 +12,31 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.eclipse.jgit.lib.Repository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseResultTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
@@ -43,13 +44,11 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
-@ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "dataexport";
@@ -66,17 +65,11 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private DataExportRepository dataExportRepository;
 
-    @SpyBean
-    private DataExportService dataExportService;
-
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
-
-    @Autowired
-    private ProgrammingExerciseResultTestService programmingExerciseResultTestService;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -91,9 +84,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     private UserUtilService userUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -102,7 +92,17 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ConversationUtilService conversationUtilService;
 
-    @MockBean
+    @Autowired
+    private ApollonRequestMockProvider apollonRequestMockProvider;
+
+    @Autowired
+    @Qualifier("apollonRestTemplate")
+    RestTemplate restTemplate;
+
+    @Value("${artemis.apollon.conversion-service-url}")
+    private String apollonConversionUrl;
+
+    @Autowired
     private ApollonConversionService apollonConversionService;
 
     private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
@@ -111,12 +111,28 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws IOException {
-        userUtilService.addUsers(TEST_PREFIX, 5, 4, 1, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
-        // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
-        var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
-        when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
+        userUtilService.addUsers(TEST_PREFIX, 2, 4, 1, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 4, 1, 1);
 
+        apollonConversionService.setRestTemplate(restTemplate);
+        ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
+
+        apollonRequestMockProvider.enableMockingOfRequests();
+
+        // mock apollon conversion twice
+        mockApollonConversion();
+        mockApollonConversion();
+    }
+
+    void mockApollonConversion() throws IOException {
+        Resource mockResource = Mockito.mock(Resource.class);
+        Mockito.when(mockResource.getInputStream()).thenReturn(new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream());
+        apollonRequestMockProvider.mockConvertModel(true, mockResource);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        apollonRequestMockProvider.reset();
     }
 
     @Test
@@ -209,7 +225,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Path getCourseDirectoryPath(Path rootPath) throws IOException {
         try (var files = Files.list(rootPath).filter(Files::isDirectory)) {
-            return files.findFirst().get();
+            return files.findFirst().orElseThrow();
         }
     }
 
@@ -222,7 +238,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDownloadSuccess() throws Exception {
-        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         // create an export
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
@@ -257,21 +273,12 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportDoesntBelongToUser_forbidden() throws Exception {
-        var user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
         var dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
         request.get("/api/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportErrorDuringCreation_internalServerError() throws Exception {
-        when(dataExportService.requestDataExport()).thenThrow(new RuntimeException("Error!"));
-        request.putWithResponseBody("/api/data-export", null, DataExport.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 

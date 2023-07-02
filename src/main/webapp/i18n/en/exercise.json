@@ -7,7 +7,6 @@
             },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
-            "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
@@ -180,6 +179,7 @@
             "showNoSubmissions": "Show No Submissions",
             "showNoPracticeMode": "Show only graded participations",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
+            "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
             "tagPlaceholder": "+ Category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modeling exercise",
@@ -204,6 +204,9 @@
                 "title": {
                     "undefined": "There has to be a title set!",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
+                },
+                "channelName": {
+                    "empty": "There has to be a channel name set!"
                 },
                 "shortName": {
                     "undefined": "There has to be a short name set!",

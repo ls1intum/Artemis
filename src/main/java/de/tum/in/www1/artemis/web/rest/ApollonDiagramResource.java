@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -17,6 +16,9 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -57,7 +59,7 @@ public class ApollonDiagramResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
@@ -86,7 +88,7 @@ public class ApollonDiagramResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
@@ -111,7 +113,7 @@ public class ApollonDiagramResource {
      * @return the title of the diagram wrapped in an ResponseEntity or 404 Not Found if no diagram with that id exists
      */
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -124,7 +126,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
     @GetMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
@@ -142,7 +144,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
     @GetMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
@@ -161,7 +163,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
 

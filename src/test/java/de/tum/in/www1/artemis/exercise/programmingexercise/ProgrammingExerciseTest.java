@@ -88,7 +88,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(programmingExerciseRepository.count()).isEqualTo(programmingExerciseCountBefore);
         // The programming exercise in the db should also be updated.
         ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         assertThat(programmingExerciseFromDb.getProblemStatement()).isEqualTo(newProblem);
         assertThat(programmingExerciseFromDb.getTitle()).isEqualTo(newTitle);
     }
@@ -97,7 +97,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseOnce() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
@@ -105,7 +105,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
         updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
     }
@@ -119,7 +119,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
 
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).get();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).orElseThrow();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 
@@ -127,7 +127,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEmpty();
@@ -141,7 +141,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         // test cases with weights > 0, changing to automatic feedback: update should work
@@ -154,7 +154,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -194,7 +194,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
 
-        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1").get();
+        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1")
+                .orElseThrow();
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
         submission.setParticipation(participation);
 

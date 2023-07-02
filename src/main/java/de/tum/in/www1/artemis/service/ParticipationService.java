@@ -177,7 +177,7 @@ public class ParticipationService {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
         }
         else {
             participation = new StudentParticipation();
@@ -234,7 +234,7 @@ public class ParticipationService {
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
-        // Step 1b) configure the student repository (e.g. access right, etc.)
+        // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);
@@ -242,7 +242,7 @@ public class ParticipationService {
         participation = configureBuildPlan(participation);
         // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
         // (when the web hook was already initialized, see below)
-        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
@@ -263,7 +263,7 @@ public class ParticipationService {
      *
      * @param exercise                           the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant                        the user or team who starts the exercise
-     * @param optionalGradedStudentParticipation the optional graded participation before the deadline
+     * @param optionalGradedStudentParticipation the optional graded participation before the due date
      * @param useGradedParticipation             flag if the graded student participation should be used as baseline for the new repository
      * @return the participation connecting the given exercise and user
      */
@@ -281,7 +281,7 @@ public class ParticipationService {
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
@@ -317,7 +317,7 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+                participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
             }
             else {
                 participation = new StudentParticipation();
@@ -340,7 +340,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
-            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
+            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
@@ -349,7 +349,7 @@ public class ParticipationService {
                     || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
                 // restrict access for the student
                 try {
-                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                    versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
                             programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
@@ -392,7 +392,7 @@ public class ParticipationService {
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
 
-        // If a graded participation gets reset after the deadline set the state back to finished. Otherwise, the participation is initialized
+        // If a graded participation gets reset after the due date set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
         if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(InitializationState.FINISHED);
@@ -416,7 +416,7 @@ public class ParticipationService {
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
-            String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+            String templateBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
             var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
@@ -437,7 +437,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
             boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getParticipationStartDate());
-            versionControlService.get().configureRepository(exercise, participation, allowAccess);
+            versionControlService.orElseThrow().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -456,7 +456,7 @@ public class ParticipationService {
                     + participation.getExercise().getTitle();
             final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, targetPlanName, true);
+            final var buildPlanId = continuousIntegrationService.orElseThrow().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, targetPlanName, true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
@@ -469,8 +469,8 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                String branch = versionControlService.get().getOrRetrieveBranchOfStudentParticipation(participation);
-                continuousIntegrationService.get().configureBuildPlan(participation, branch);
+                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(participation);
+                continuousIntegrationService.orElseThrow().configureBuildPlan(participation, branch);
             }
             catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
@@ -491,7 +491,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.get().addWebHookForParticipation(participation);
+            versionControlService.orElseThrow().addWebHookForParticipation(participation);
         }
         return participation;
     }
@@ -641,9 +641,9 @@ public class ParticipationService {
         // ignore participations without build plan id
         if (participation.getBuildPlanId() != null) {
             final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
-            continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
+            continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
 
-            // If a graded participation gets cleaned up after the deadline set the state back to finished. Otherwise, the participation is initialized
+            // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
             var dueDate = ExerciseDateService.getDueDate(participation);
             if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
                 participation.setInitializationState(InitializationState.FINISHED);
@@ -665,7 +665,7 @@ public class ParticipationService {
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
         // ignore participations without repository URL
         if (participation.getRepositoryUrl() != null) {
-            versionControlService.get().deleteRepository(participation.getVcsRepositoryUrl());
+            versionControlService.orElseThrow().deleteRepository(participation.getVcsRepositoryUrl());
             gitService.deleteLocalRepository(participation.getVcsRepositoryUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);
@@ -729,11 +729,11 @@ public class ParticipationService {
 
             if (deleteBuildPlan && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.get().deleteBuildPlan(projectKey, buildPlanId);
+                continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
-                    versionControlService.get().deleteRepository(repositoryUrl);
+                    versionControlService.orElseThrow().deleteRepository(repositoryUrl);
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: {}", ex.getMessage());

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
@@ -244,7 +244,8 @@ export class ComplaintService implements IComplaintService {
         if (
             !result?.completionDate ||
             (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments) ||
-            (!exercise.allowComplaintsForAutomaticAssessments && !result.rated)
+            (!exercise.allowComplaintsForAutomaticAssessments && !result.rated) ||
+            exercise.type === ExerciseType.QUIZ
         ) {
             return undefined;
         }

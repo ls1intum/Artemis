@@ -5,7 +5,6 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -14,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorEffortService;
 
@@ -53,7 +53,7 @@ public class TutorEffortResource {
      * @return list of TutorEffort objects or no content if no results found
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/tutor-effort")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
 

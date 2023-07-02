@@ -11,12 +11,12 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -42,7 +42,7 @@ public class DataExportResource {
      * @return the data export object
      */
     @PutMapping("data-export")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public DataExport requestDataExport() {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
         // for now we return the data export object, so the client can make the request to download the export.
@@ -66,7 +66,7 @@ public class DataExportResource {
      * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
     @GetMapping("data-export/{dataExportId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
@@ -113,8 +113,7 @@ public class DataExportResource {
             return false;
         }
         else {
-            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }
-
 }

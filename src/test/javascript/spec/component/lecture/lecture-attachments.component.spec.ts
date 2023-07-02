@@ -200,7 +200,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentFile = file;
         const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(new Error(errorMessage)));
         comp.saveAttachment();
-        expect(attachmentServiceCreateStub).toHaveBeenCalledOnceWith(attachment, file);
+        expect(attachmentServiceCreateStub).toHaveBeenCalledExactlyOnceWith(attachment, file);
         expect(comp.attachmentToBeCreated).toEqual(attachment);
         expect(comp.attachmentFile).toBeUndefined();
         expect(comp.erroredFile).toEqual(file);
@@ -238,7 +238,7 @@ describe('LectureAttachmentsComponent', () => {
 
             const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(new Error(errorMessage)));
             comp.saveAttachment();
-            expect(attachmentServiceUpdateStub).toHaveBeenCalledOnceWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
+            expect(attachmentServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
             expect(comp.attachmentToBeCreated).toEqual(attachment);
             expect(comp.errorMessage).toBe(errorMessage);
             expect(comp.fileInput.nativeElement.value).toBe('');
@@ -309,7 +309,7 @@ describe('LectureAttachmentsComponent', () => {
         const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments).toHaveLength(1);
-        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnceWith(attachmentId);
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledExactlyOnceWith(attachmentId);
         tick();
     }));
 
@@ -329,7 +329,7 @@ describe('LectureAttachmentsComponent', () => {
         const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(throwError(new Error(errorMessage)));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments).toHaveLength(2);
-        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnceWith(attachmentId);
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledExactlyOnceWith(attachmentId);
         tick();
     }));
 
@@ -364,8 +364,8 @@ describe('LectureAttachmentsComponent', () => {
         const object = {
             target: {
                 files: [myBlob1, myBlob2],
-            },
-        };
+            } as unknown as EventTarget,
+        } as Event;
         comp.attachmentToBeCreated = newAttachment;
         comp.setLectureAttachment(object);
         expect(comp.attachmentFile).toBe(myBlob1);

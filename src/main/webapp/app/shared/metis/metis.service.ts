@@ -31,6 +31,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -172,9 +173,7 @@ export class MetisService implements OnDestroy {
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
-            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
-            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
-            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
+            this.hasDifferentContexts(postContextFilter) ||
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
@@ -371,6 +370,39 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * returns the router link required for navigating to the exam
+     * @param {string} examId ID of the exam to be navigated to
+     * @return {string} router link of the exam
+     */
+    getLinkForExam(examId: string): string {
+        return `/courses/${this.getCourse().id}/exams/${examId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the channel subtype reference
+     *
+     * @param {ChannelDTO} channel
+     * @return {string} router link of the channel subtype reference
+     */
+    getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
+        const referenceId = channel?.subTypeReferenceId?.toString();
+        if (!referenceId) {
+            return undefined;
+        }
+
+        switch (channel?.subType) {
+            case ChannelSubType.EXERCISE:
+                return this.getLinkForExercise(referenceId);
+            case ChannelSubType.LECTURE:
+                return this.getLinkForLecture(referenceId);
+            case ChannelSubType.EXAM:
+                return this.getLinkForExam(referenceId);
+            default:
+                return undefined;
+        }
+    }
+
+    /**
      * determines the routing params required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
      * @return {Params} required parameter key-value pair
@@ -437,41 +469,39 @@ export class MetisService implements OnDestroy {
             postDTO.post.answers?.forEach((answer: AnswerPost) => {
                 answer.creationDate = dayjs(answer.creationDate);
             });
-            switch (postDTO.action) {
-                case MetisPostAction.CREATE:
-                    // determine if either the current post context filter is not set to a specific course-wide topic
-                    // or the sent post has a different context,
-                    // or the sent post has a course-wide context which matches the current filter
-                    if (
-                        !this.currentPostContextFilter.courseWideContext ||
-                        !postDTO.post.courseWideContext ||
-                        this.currentPostContextFilter.courseWideContext === postDTO.post.courseWideContext
-                    ) {
+
+            if (
+                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) ||
+                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) ||
+                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) ||
+                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId)
+            )
+                switch (postDTO.action) {
+                    case MetisPostAction.CREATE:
                         // we can add the sent post to the cached posts without violating the current context filter setting
                         this.cachedPosts.push(postDTO.post);
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.UPDATE:
-                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToUpdate > -1) {
-                        this.cachedPosts[indexToUpdate] = postDTO.post;
-                    } else {
-                        console.error(`Post with id ${postDTO.post.id} could not be updated`);
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.DELETE:
-                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToDelete > -1) {
-                        this.cachedPosts.splice(indexToDelete, 1);
-                    } else {
-                        console.error(`Post with id ${postDTO.post.id} could not be deleted`);
-                    }
-                    break;
-                default:
-                    break;
-            }
+                        this.addTags(postDTO.post.tags);
+                        break;
+                    case MetisPostAction.UPDATE:
+                        const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                        if (indexToUpdate > -1) {
+                            this.cachedPosts[indexToUpdate] = postDTO.post;
+                        } else {
+                            console.error(`Post with id ${postDTO.post.id} could not be updated`);
+                        }
+                        this.addTags(postDTO.post.tags);
+                        break;
+                    case MetisPostAction.DELETE:
+                        const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                        if (indexToDelete > -1) {
+                            this.cachedPosts.splice(indexToDelete, 1);
+                        } else {
+                            console.error(`Post with id ${postDTO.post.id} could not be deleted`);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             // emit updated version of cachedPosts to subscribing components
             if (PageType.OVERVIEW === this.pageType) {
                 // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
@@ -496,11 +526,7 @@ export class MetisService implements OnDestroy {
      */
     private createSubscriptionFromPostContextFilter(): void {
         let channel = MetisWebsocketChannelPrefix;
-        if (this.currentPostContextFilter.exerciseId) {
-            channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
-        } else if (this.currentPostContextFilter.lectureId) {
-            channel += `lectures/${this.currentPostContextFilter.lectureId}`;
-        } else if (this.currentPostContextFilter.conversationId) {
+        if (this.currentPostContextFilter.conversationId) {
             channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
@@ -517,5 +543,21 @@ export class MetisService implements OnDestroy {
             const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...tags]));
             this.tags$.next(updatedTags);
         }
+    }
+
+    private hasDifferentContexts(other: PostContextFilter): boolean {
+        this.currentPostContextFilter.courseWideContexts?.sort();
+        this.currentPostContextFilter.exerciseIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.lectureIds?.sort((a, b) => a - b);
+
+        other.courseWideContexts?.sort();
+        other.exerciseIds?.sort((a, b) => a - b);
+        other.lectureIds?.sort((a, b) => a - b);
+
+        return (
+            this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
+            this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
+            this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString()
+        );
     }
 }

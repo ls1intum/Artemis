@@ -96,7 +96,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
@@ -137,14 +137,14 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).orElseThrow();
 
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).get();
+        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
         assertThat(mrrobotUser.getEmail()).isEqualTo(email);
         assertThat(mrrobotUser.getFirstName()).isEqualTo(firstName);
         assertThat(mrrobotUser.getGroups()).containsAll(groups);
