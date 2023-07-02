@@ -294,6 +294,29 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void participateInProgrammingExercise_dueDatePassed_asInstructor() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("instructorRepo", "instructorOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "instructor1", Set.of(user), true);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
+                HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isTestRun()).isFalse();
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceProgrammingExercise_beforeDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(2));
