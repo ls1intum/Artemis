@@ -116,7 +116,7 @@ public class ProgrammingExerciseParticipationResource {
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
-        if (true && result.isPresent()) {
+        if (withTemplateAndSolutionParticipations && result.isPresent()) {
             result = Optional.of(resultService.addTemplateAndSolutionParticipationsToResult(result.get()));
         }
 

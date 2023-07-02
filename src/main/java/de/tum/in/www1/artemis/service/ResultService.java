@@ -200,7 +200,12 @@ public class ResultService {
         return shouldSaveResult(result, shouldSave);
     }
 
-    // TODO: add documentation
+    /**
+     * Adds template and solution participations to the exercise contained in the participation of the given result.
+     *
+     * @param result the result where template and solution participations should be added
+     * @return the updated result
+     */
     @NotNull
     public Result addTemplateAndSolutionParticipationsToResult(@NotNull Result result) {
         var participationInResult = result.getParticipation();
