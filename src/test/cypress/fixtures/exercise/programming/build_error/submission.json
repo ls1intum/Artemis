@@ -2,8 +2,9 @@
     "files": [
         {
             "name": "BubbleSort.java",
-            "path": "exercise/programming/build_error/BubbleSort.txt"
+            "path": "exercise/programming/build_error/BubbleSort.java"
         }
     ],
-    "expectedResult": "0%"
+    "expectedResult": "0%",
+    "packageName": "de.test"
 }

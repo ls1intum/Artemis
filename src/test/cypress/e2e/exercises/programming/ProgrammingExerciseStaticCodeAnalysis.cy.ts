@@ -29,7 +29,7 @@ describe('Static code analysis tests', () => {
 
         // Make submission with SCA errors
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, scaSubmission, () => {
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, scaSubmission, () => {
             programmingExerciseEditor.getResultScore().contains(scaSubmission.expectedResult).and('be.visible').click();
             programmingExerciseScaFeedback.shouldShowPointChart();
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise

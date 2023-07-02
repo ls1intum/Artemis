@@ -158,7 +158,7 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, partiallySuccessful, () => {
+            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, partiallySuccessful, () => {
                 programmingExerciseEditor.getResultScore().contains(partiallySuccessful.expectedResult).and('be.visible');
             });
         });

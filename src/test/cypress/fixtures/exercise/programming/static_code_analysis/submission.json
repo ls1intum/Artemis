@@ -2,28 +2,29 @@
     "files": [
         {
             "name": "BubbleSort.java",
-            "path": "exercise/programming/static_code_analysis/BubbleSort.txt"
+            "path": "exercise/programming/static_code_analysis/BubbleSort.java"
         },
         {
             "name": "Context.java",
-            "path": "exercise/programming/all_successful/Context.txt"
+            "path": "exercise/programming/all_successful/Context.java"
         },
         {
             "name": "Client.java",
-            "path": "exercise/programming/all_successful/Client.txt"
+            "path": "exercise/programming/all_successful/Client.java"
         },
         {
             "name": "MergeSort.java",
-            "path": "exercise/programming/all_successful/MergeSort.txt"
+            "path": "exercise/programming/all_successful/MergeSort.java"
         },
         {
             "name": "Policy.java",
-            "path": "exercise/programming/all_successful/Policy.txt"
+            "path": "exercise/programming/all_successful/Policy.java"
         },
         {
             "name": "SortStrategy.java",
-            "path": "exercise/programming/all_successful/SortStrategy.txt"
+            "path": "exercise/programming/all_successful/SortStrategy.java"
         }
     ],
-    "expectedResult": "50%"
+    "expectedResult": "50%",
+    "packageName": "de.test"
 }
