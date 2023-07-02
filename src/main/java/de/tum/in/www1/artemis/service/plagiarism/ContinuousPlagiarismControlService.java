@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.lang.String.format;
+
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +77,8 @@ public class ContinuousPlagiarismControlService {
             case TEXT -> plagiarismChecksService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismChecksService.checkProgrammingExercise((ProgrammingExercise) exercise);
             case MODELING -> plagiarismChecksService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> throw new Exception("Cannot check plagiarism for exercise: type={}, id={}."); // , exercise.getExerciseType(), exercise.getId());
+            case FILE_UPLOAD, QUIZ -> throw new IllegalStateException(
+                    format("Cannot check plagiarism for exercise: type=%s, id=%s.", exercise.getExerciseType(), exercise.getId()));
         };
     }
 }
