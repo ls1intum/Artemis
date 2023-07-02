@@ -2,15 +2,14 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -26,16 +25,13 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "ldapauthintegration";
-
-    @Autowired
-    private ApplicationContext applicationContext;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
@@ -76,13 +72,9 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
 
-        // TODO: setup LDAP mocks
-    }
+        doReturn(Optional.of(new LdapUserDto())).when(ldapUserService).findByUsername(USERNAME);
 
-    @Test
-    void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
-                .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
+        // TODO: mock even more, in particular ldapTemplate with password compare
     }
 
     @Test

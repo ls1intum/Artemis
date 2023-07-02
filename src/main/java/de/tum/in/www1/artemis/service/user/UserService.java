@@ -12,7 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -339,23 +342,56 @@ public class UserService {
         throw new AccountRegistrationBlockedException(existingUser.getEmail());
     }
 
+    // TODO use this code
+
     /**
-     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user.
-     * Also creates the user in the external user management (e.g. JIRA), in case this is activated
-     * Note: this method should only be used if the user does not yet exist in the database
+     * Creates a new Artemis user from LDAP in case this is active and a user with the login can be found
      *
-     * @param registrationNumber the matriculation number of the student
+     * @param login the login of the user
      * @return a new user or null if the LDAP user was not found
      */
-    public Optional<User> createUserFromLdap(String registrationNumber) {
-        if (!StringUtils.hasText(registrationNumber)) {
+    public Optional<User> createUserFromLdapWithLogin(String login) {
+        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByUsername(login));
+    }
+
+    /**
+     * Creates a new Artemis user from LDAP in case this is active and a user with the email can be found
+     *
+     * @param email the email of the user
+     * @return a new user or null if the LDAP user was not found
+     */
+    public Optional<User> createUserFromLdapWithEmail(String email) {
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByUsername(email));
+    }
+
+    /**
+     * Creates a new Artemis user from LDAP in case this is active and a user with the registration number can be found
+     *
+     * @param registrationNumber the matriculation number of the user
+     * @return a new user or null if the LDAP user was not found
+     */
+    public Optional<User> createUserFromLdapWithRegistrationNumber(String registrationNumber) {
+        return findUserInLdap(registrationNumber, () -> ldapUserService.orElseThrow().findByRegistrationNumber(registrationNumber));
+    }
+
+    /**
+     * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
+     * and returns a new Artemis user. Also creates the user in the external user management (e.g. JIRA), in case this is activated
+     * Note: this method should only be used if the user does not yet exist in the database
+     *
+     * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
+     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByUsername(email)"
+     * @return a new user or null if the LDAP user was not found
+     */
+    private Optional<User> findUserInLdap(String userIdentifier, Supplier<Optional<LdapUserDto>> userSupplierFunction) {
+        if (!StringUtils.hasText(userIdentifier)) {
             return Optional.empty();
         }
         if (ldapUserService.isPresent()) {
-            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
+            Optional<LdapUserDto> ldapUserOptional = userSupplierFunction.get();
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
+                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
                 if (StringUtils.hasText(ldapUser.getUsername())) {
@@ -369,14 +405,14 @@ public class UserService {
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
-                        registrationNumber, null, "en", false);
+                        ldapUser.getRegistrationNumber(), null, "en", false);
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);
                 }
                 return Optional.of(user);
             }
             else {
-                log.warn("Ldap User with registration number {} not found", registrationNumber);
+                log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
             }
         }
         return Optional.empty();
@@ -647,26 +683,41 @@ public class UserService {
 
     /**
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
-     *
+     * In case the user cannot be found, we additionally search the connected LDAP in case it is configured properly.
+     * <p>
      * Steps:
-     *
-     * 1) we use the registration number and try to find the student in the Artemis user database
-     * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
+     * <p>
+     * 1) it uses the registration number and tries to find the student in the Artemis user database
+     * 2) if it cannot find the student, it uses the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
      * management system
      * 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
      * 4) if we still cannot find the user, we try again using the email
      *
      * @param registrationNumber the registration number of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
-     * @param courseGroupRole    the courseGroupRole enum
      * @param login              the login of the user
      * @param email              the email of the user
+     * @param courseGroupName    the courseGroup the user has to be added to
+     * @param courseGroupRole    the courseGroupRole enum
      * @return the found student, otherwise returns an empty optional
      */
-    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
+    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName,
+            Role courseGroupRole) {
+        if (!StringUtils.hasText(login) || !StringUtils.hasText(email) || !StringUtils.hasText(registrationNumber)) {
+            // if none of the three values is specified, the user cannot be found
+            return Optional.empty();
+        }
         try {
-            var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            Optional<User> optionalStudent = Optional.empty();
+            if (StringUtils.hasText(login)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            }
+
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
@@ -677,8 +728,17 @@ public class UserService {
                 return optionalStudent;
             }
 
-            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber).or(() -> (this.createUserFromLdap(registrationNumber)))
-                    .or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByLogin(login))).or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByEmail(email)));
+            // In this case, the user was NOT found in the database! We can try to create if from the external user management, in case it is configured
+            if (StringUtils.hasText(login)) {
+                optionalStudent = createUserFromLdapWithLogin(login);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
+                optionalStudent = createUserFromLdapWithEmail(email);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
+                optionalStudent = createUserFromLdapWithRegistrationNumber(registrationNumber);
+            }
+
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // the newly created user needs to get the rights to access the course
@@ -686,7 +746,7 @@ public class UserService {
                 return optionalStudent;
             }
 
-            log.warn("User with registration number '{}', login '{}' and email '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login, email);
+            log.warn("User with registration number '{}', login '{}' and email '{}' NOT found in Artemis user database NOR in connected LDAP", registrationNumber, login, email);
         }
         catch (Exception ex) {
             log.warn("Error while processing user with registration number {}", registrationNumber, ex);

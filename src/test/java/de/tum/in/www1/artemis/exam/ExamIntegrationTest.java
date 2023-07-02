@@ -417,25 +417,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
         assertThat(storedExam.getExamUsers()).isEmpty();
 
-        var studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
-        var studentDto2 = new StudentDTO().registrationNumber(registrationNumber2);
-        var studentDto3 = new StudentDTO().registrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure later
-        var studentDto5 = new StudentDTO().registrationNumber(registrationNumber5WithTypo); // explicit typo, should fall back to login name later
-        studentDto5.setLogin(student5.getLogin());
-        var studentDto7 = new StudentDTO();
-        studentDto7.setLogin(student7.getLogin());
-        var studentDto8 = new StudentDTO();
-        studentDto8.setLogin(student8.getLogin());
-        var studentDto9 = new StudentDTO();
-        studentDto9.setLogin(student9.getLogin());
-        var studentDto10 = new StudentDTO(); // completely empty
+        var studentDto1 = new StudentDTO(null, null, null, registrationNumber1, null);
+        var studentDto2 = new StudentDTO(null, null, null, registrationNumber2, null);
+        var studentDto3 = new StudentDTO(null, null, null, registrationNumber3WithTypo, null); // explicit typo, should be a registration failure later
+        var studentDto5 = new StudentDTO(student5.getLogin(), null, null, registrationNumber5WithTypo, null); // explicit typo, should fall back to login name later
+        var studentDto7 = new StudentDTO(student7.getLogin(), null, null, null, null);
+        var studentDto8 = new StudentDTO(student8.getLogin(), null, null, null, null);
+        var studentDto9 = new StudentDTO(student9.getLogin(), null, null, null, null);
+        var studentDto10 = new StudentDTO(null, null, null, null, null); // completely empty
 
-        var studentDto99 = new StudentDTO().registrationNumber(registrationNumber99);
-        var studentDto111 = new StudentDTO().registrationNumber(registrationNumber111);
+        var studentDto99 = new StudentDTO(null, null, null, registrationNumber99, null).registrationNumber();
+        var studentDto111 = new StudentDTO(null, null, null, registrationNumber111, null).registrationNumber();
 
         // Add a student with login but empty registration number
-        var studentDto6 = new StudentDTO().registrationNumber(emptyRegistrationNumber);
-        studentDto6.setLogin(student6.getLogin());
+        var studentDto6 = new StudentDTO(student6.getLogin(), null, null, emptyRegistrationNumber, null).registrationNumber();
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto5, studentDto99, studentDto111, studentDto6, studentDto7, studentDto8, studentDto9,
                 studentDto10);
         bitbucketRequestMockProvider.mockUpdateUserDetails(student6.getLogin(), student6.getEmail(), student6.getName());
@@ -488,7 +483,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         student1.setRegistrationNumber(registrationNumber1);
         userRepo.save(student1);
 
-        StudentDTO studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
+        StudentDTO studentDto1 = new StudentDTO(null, null, null, registrationNumber1, null);
         List<StudentDTO> studentDTOS = List.of(studentDto1);
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, StudentDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -532,17 +527,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         private final List<StudentExam> createdStudentExams = new ArrayList<>();
 
-        private User student1;
-
-        private User student2;
-
         @BeforeEach
         void init() throws Exception {
             doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
             // registering users
-            student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
             registeredUsers = Set.of(student1, student2);
             exam2.setExamUsers(Set.of(new ExamUser()));
             // setting dates
@@ -993,7 +984,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+                HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
     }
 
@@ -2536,7 +2528,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Add students to exam
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+                HttpStatus.FORBIDDEN);
         // Delete student from exam
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
         // Update order of exerciseGroups

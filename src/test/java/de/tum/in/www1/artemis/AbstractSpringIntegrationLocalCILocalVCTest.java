@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
@@ -66,6 +67,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
+
+    @SpyBean
+    protected LdapUserService ldapUserService;
 
     @SpyBean
     protected LocalVCService versionControlService;
