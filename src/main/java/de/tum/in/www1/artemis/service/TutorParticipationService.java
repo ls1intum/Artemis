@@ -173,7 +173,8 @@ public class TutorParticipationService {
             }
 
             // Return the highest priority error (the closest instructor feedback match)
-            return matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).get()).max(Comparator.naturalOrder());
+            return matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).orElseThrow())
+                    .max(Comparator.naturalOrder());
         }
         else {
             if (matchingInstructorFeedback.size() > 1) {

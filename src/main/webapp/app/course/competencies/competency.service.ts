@@ -6,6 +6,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
@@ -19,9 +20,10 @@ export class CompetencyService {
     constructor(private httpClient: HttpClient, private entityTitleService: EntityTitleService, private lectureUnitService: LectureUnitService) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' })
-            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+        return this.httpClient.get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => CompetencyService.convertArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -104,6 +106,9 @@ export class CompetencyService {
     }
 
     convertCompetencyResponseFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body?.softDueDate) {
+            res.body.softDueDate = convertDateFromServer(res.body.softDueDate);
+        }
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
@@ -115,7 +120,9 @@ export class CompetencyService {
     }
 
     convertCompetencyFromClient(competency: Competency): Competency {
-        const copy = Object.assign({}, competency);
+        const copy = Object.assign({}, competency, {
+            softDueDate: convertDateFromClient(competency.softDueDate),
+        });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
         }
@@ -123,6 +130,16 @@ export class CompetencyService {
             copy.exercises = copy.exercises.map((exercise) => ExerciseService.convertExerciseFromClient(exercise));
         }
         return copy;
+    }
+
+    /**
+     * Helper methods for date conversion from server and client
+     */
+    private static convertArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.map((competency: Competency) => (competency.softDueDate = convertDateFromServer(competency.softDueDate)));
+        }
+        return res;
     }
 
     private sendTitlesToEntityTitleService(competency: Competency | undefined | null) {

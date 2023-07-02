@@ -85,8 +85,6 @@
         }
 
         &__commands {
-            margin: 0 5px 5px 5px;
-
             &-default,
             &-domain {
                 display: flex;
@@ -94,8 +92,8 @@
                 align-items: center;
             }
 
-            &-default > * {
-                margin-top: 5px;
+            .mat-mdc-button {
+                height: fit-content;
             }
         }
 
@@ -123,4 +121,8 @@
 }
 .nested-slide {
     padding-left: 50px;
+}
+
+.default-font-size {
+    font-size: var(--bs-body-font-size);
 }

@@ -74,6 +74,7 @@ describe('CreateCompetency', () => {
         const formData: CompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
+            optional: true,
             connectedLectureUnits: [textUnit],
         };
 
@@ -94,6 +95,7 @@ describe('CreateCompetency', () => {
             const competency = new Competency();
             competency.title = formData.title;
             competency.description = formData.description;
+            competency.optional = formData.optional;
             competency.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);

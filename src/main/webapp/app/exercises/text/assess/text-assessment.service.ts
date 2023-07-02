@@ -8,7 +8,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { cloneDeep } from 'lodash-es';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -157,7 +156,6 @@ export class TextAssessmentService {
                         result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                     }
                     TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
-                    (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
                 map<HttpResponse<StudentParticipation>, StudentParticipation>((response: HttpResponse<StudentParticipation>) => response.body!),
             );
@@ -272,47 +270,6 @@ export class TextAssessmentService {
                     feedbacks.find(({ reference }) => block.id === reference),
                 ),
         );
-    }
-
-    /**
-     * Track the change of the Feedback in Athene.
-     *
-     * The routing to athene is done using nginx on the production server.
-     *
-     * @param submission - The submission object that holds the data that is tracked
-     * @param origin - The method that calls the the tracking method
-     */
-    public trackAssessment(submission?: TextSubmission, origin?: string) {
-        if (submission?.atheneTextAssessmentTrackingToken) {
-            // clone submission and resolve circular json properties
-            const submissionForSending = cloneDeep(submission);
-            if (submissionForSending.participation) {
-                submissionForSending.participation.submissions = [];
-                if (submissionForSending.participation.exercise) {
-                    submissionForSending.participation.exercise.course = undefined;
-                    submissionForSending.participation.exercise.exerciseGroup = undefined;
-                }
-            }
-            submissionForSending.atheneTextAssessmentTrackingToken = undefined;
-
-            submissionForSending.participation?.results!.forEach((result) => {
-                result.participation = undefined;
-                result.submission = undefined;
-            });
-
-            const trackingObject = {
-                origin,
-                textBlocks: submissionForSending.blocks,
-                participation: submissionForSending.participation,
-            };
-
-            // The request is directly routed to athene via nginx
-            this.http
-                .post(`athene-tracking/text-exercise-assessment`, trackingObject, {
-                    headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
-                })
-                .subscribe();
-        }
     }
 
     /**

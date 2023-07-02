@@ -53,7 +53,9 @@ describe('CompetencySelection', () => {
     });
 
     it('should get competencies from cache', () => {
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [new Competency()] });
+        const nonOptional = { id: 1, optional: false } as Competency;
+        const optional = { id: 2, optional: true } as Competency;
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
         const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse');
 
         fixture.detectChanges();
@@ -63,20 +65,22 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
-        expect(component.competencies).toBeArrayOfSize(1);
+        expect(component.competencies).toBeArrayOfSize(2);
         expect(select).not.toBeNull();
     });
 
     it('should get competencies from service', () => {
+        const nonOptional = { id: 1, optional: false } as Competency;
+        const optional = { id: 2, optional: true } as Competency;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [new Competency()] })));
+        const getAllForCourseSpy = jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
 
         fixture.detectChanges();
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
-        expect(component.competencies).toBeArrayOfSize(1);
+        expect(component.competencies).toBeArrayOfSize(2);
         expect(component.competencies.first()?.course).toBeUndefined();
         expect(component.competencies.first()?.userProgress).toBeUndefined();
     });

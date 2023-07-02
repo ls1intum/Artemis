@@ -179,7 +179,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         var persistedAttachment = persistedAttachmentUnit.getAttachment();
         assertThat(persistedAttachment.getId()).isNotNull();
-        var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
+        var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).orElseThrow();
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
@@ -224,8 +224,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit1.getId());
         assertThat(oldSlides).isNotEqualTo(updatedSlides);
         // testing if bidirectional relationship is kept
-        AttachmentUnit attachmentUnit2 = attachmentUnitRepository.findById(attachmentUnit1.getId()).get();
-        attachment = attachmentRepository.findById(attachment.getId()).get();
+        AttachmentUnit attachmentUnit2 = attachmentUnitRepository.findById(attachmentUnit1.getId()).orElseThrow();
+        attachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
         assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
         assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
     }
@@ -246,16 +246,16 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.saveAndFlush(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
+        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test

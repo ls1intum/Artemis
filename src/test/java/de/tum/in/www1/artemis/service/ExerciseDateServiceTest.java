@@ -129,8 +129,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
 
-        final var participation = exercise.getStudentParticipations().stream().findAny().get();
-        assertThat(ExerciseDateService.getDueDate(participation).get()).isEqualToIgnoringNanos(now.plusHours(4));
+        final var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(4));
     }
 
     @Test
@@ -143,7 +143,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         participation.setIndividualDueDate(now.plusHours(20));
         participation = participationRepository.save(participation);
 
-        assertThat(ExerciseDateService.getDueDate(participation).get()).isEqualToIgnoringNanos(now.plusHours(20));
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(20));
     }
 
     @Test
@@ -166,6 +166,30 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(participation.getIndividualDueDate()).isNull();
         assertThat(exerciseDateService.isBeforeDueDate(participation)).isTrue();
         assertThat(exerciseDateService.isAfterDueDate(participation)).isFalse();
+    }
+
+    @Test
+    void testAssessmentDueDate_notSet() {
+        exercise.setAssessmentDueDate(null);
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+    }
+
+    @Test
+    void testAssessmentDueDate_inFuture() {
+        exercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1));
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+    }
+
+    @Test
+    void testAssessmentDueDate_inPast() {
+        exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        exercise = exerciseRepository.save(exercise);
+
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
     }
 
     @Nested
@@ -216,6 +240,41 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setStartDate(ZonedDateTime.now().minusMinutes(20));
             exam.setEndDate(ZonedDateTime.now().minusMinutes(10));
             exam = examRepository.save(exam);
+        }
+
+        @Test
+        void testExamAssessmentDueDate_reviewPeriodUnset() {
+            exam.setExamStudentReviewStart(null);
+            exam.setExamStudentReviewEnd(null);
+            exam = examRepository.save(exam);
+
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+        }
+
+        @Test
+        void testExamAssessmentDueDate_resultsNotPublished() {
+            exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
+            exam = examRepository.save(exam);
+
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+        }
+
+        @Test
+        void testExamAssessmentDueDate_resultsPublished() {
+            exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
+            exam = examRepository.save(exam);
+
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+        }
+
+        @Test
+        void testExamAssessmentDueDate_afterReviewPeriod() {
+            exam.setPublishResultsDate(ZonedDateTime.now().minusHours(2));
+            exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(2));
+            exam.setExamStudentReviewEnd(ZonedDateTime.now().minusHours(1));
+            exam = examRepository.save(exam);
+
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
         }
     }
 

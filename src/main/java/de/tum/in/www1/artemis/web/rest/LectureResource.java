@@ -243,10 +243,13 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
-        final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        Channel createdChannel = channelService.createLectureChannel(result, "change-imported-lecture-" + result.getId());
-        channelService.registerUsersToChannelAsynchronously(true, result.getCourse(), createdChannel);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
+
+        String channelName = generateChannelNameFromTitle(savedLecture.getTitle());
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, channelName);
+
+        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -370,5 +373,21 @@ public class LectureResource {
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    /**
+     * Generates the channel name based on the lecture title and the "lecture-" prefix.
+     * It replaces alternating/consecutive occurrences of spaces and hyphens and limits length of the name to 30 characters.
+     *
+     * @param title title of the lecture
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(String title) {
+        String channelName = "lecture-" + title;
+        channelName = channelName.replaceAll("[-\\s]+", "-");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
     }
 }
