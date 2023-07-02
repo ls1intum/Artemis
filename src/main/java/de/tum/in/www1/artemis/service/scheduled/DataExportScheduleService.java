@@ -31,8 +31,6 @@ public class DataExportScheduleService {
 
     private final DataExportCreationService dataExportCreationService;
 
-    private static final String DEFAULT_CREATION_TIME = "0 0 4 * * *"; // execute this every night at 4:00:00 am
-
     private final DataExportService dataExportService;
 
     private final ProfileService profileService;

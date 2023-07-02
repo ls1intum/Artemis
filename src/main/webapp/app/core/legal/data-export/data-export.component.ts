@@ -64,9 +64,9 @@ export class DataExportComponent implements OnInit {
                 if (this.canDownload) {
                     this.dataExport.id = dataExport.id!;
                     this.dataExportId = dataExport.id!;
-                    this.dataExport.dataExportState = dataExport.dataExportState;
-                    this.state = dataExport.dataExportState!;
                 }
+                this.dataExport.dataExportState = dataExport.dataExportState;
+                this.state = dataExport.dataExportState!;
             });
         }
     }
@@ -79,6 +79,7 @@ export class DataExportComponent implements OnInit {
                 this.dataExportId = response.id!;
                 this.canRequestDataExport = false;
                 this.state = response.dataExportState!;
+                this.dataExport.createdDate = response.createdDate;
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

@@ -103,7 +103,8 @@ public class DataExportService {
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        return new DataExportDTO(null, null, latestDataExport.get().getCreatedDate().atZone(ZoneId.systemDefault()), retrieveNextRequestDate(latestDataExport.get()));
+        return new DataExportDTO(null, latestDataExport.get().getDataExportState(), latestDataExport.get().getCreatedDate().atZone(ZoneId.systemDefault()),
+                retrieveNextRequestDate(latestDataExport.get()));
     }
 
     @NotNull

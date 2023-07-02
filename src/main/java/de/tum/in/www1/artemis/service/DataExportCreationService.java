@@ -143,7 +143,7 @@ public class DataExportCreationService {
      *
      * @param dataExport the data export to be created
      **/
-    private void createDataExportWithContent(DataExport dataExport) throws IOException {
+    private DataExport createDataExportWithContent(DataExport dataExport) throws IOException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
@@ -154,7 +154,7 @@ public class DataExportCreationService {
         addGeneralUserInformation(user, workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
         fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
-        finishDataExportCreation(dataExport, dataExportPath);
+        return finishDataExportCreation(dataExport, dataExportPath);
     }
 
     private void createExercisesExport(Path workingDirectory, long userId) throws IOException {
@@ -224,12 +224,20 @@ public class DataExportCreationService {
      */
     public boolean createDataExport(DataExport dataExport) {
         try {
-            createDataExportWithContent(dataExport);
+            dataExport = createDataExportWithContent(dataExport);
         }
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
             handleCreationFailure(dataExport, e);
             return false;
+        }
+        // the data export should be marked as successful even if the email cannot be sent.
+        // The user still receives a webapp notification, that's why we wrap the following block in a try-catch
+        try {
+            singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
+        }
+        catch (Exception e) {
+            log.warn("Failed to send email about successful data export creation");
         }
         return true;
     }
@@ -246,13 +254,12 @@ public class DataExportCreationService {
         mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
     }
 
-    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
+    private DataExport finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
-        singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExportRepository.save(dataExport);
+        return dataExportRepository.save(dataExport);
     }
 
     private Path prepareDataExport(DataExport dataExport) throws IOException {
