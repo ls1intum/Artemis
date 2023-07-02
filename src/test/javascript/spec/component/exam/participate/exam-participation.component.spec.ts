@@ -744,7 +744,7 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('onPageChange', () => {
-        it('should trigger save and initialize exercise when exercise changed', () => {
+        it('should trigger save and initialize exercise when exercise changed and participation is not valid', () => {
             comp.exerciseIndex = 0;
             const exercise1 = new TextExercise(new Course(), undefined);
             exercise1.id = 15;
@@ -762,11 +762,13 @@ describe('ExamParticipationComponent', () => {
             expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
         });
 
-        it('should set pageComponentVisited to true when exercise participation is valid', () => {
+        it('should trigger save and initialize exercise when exercise changed and participation is valid', () => {
             const exercise = new QuizExercise(new Course(), undefined);
             exercise.id = 42;
             const participation = new StudentParticipation();
             participation.initializationState = InitializationState.INITIALIZED;
+            const submission = new QuizSubmission();
+            participation.submissions = [submission];
             exercise.studentParticipations = [participation];
             const triggerSpy = jest.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise, forceSave: true };
@@ -775,13 +777,15 @@ describe('ExamParticipationComponent', () => {
             comp.activeExamPage.exercise = exercise;
             comp.studentExam = new StudentExam();
             comp.studentExam.exercises = [exercise];
-            comp.pageComponentVisited = [false];
+            comp.pageComponentVisited = [true];
+            comp.examStartConfirmed = true;
+            fixture.detectChanges();
 
+            jest.spyOn(comp.currentPageComponents.get(0), 'getExerciseId').mockReturnValue(exercise.id);
             comp.onPageChange(exerciseChange);
 
             expect(triggerSpy).toHaveBeenCalledWith(true, false);
             expect(comp.exerciseIndex).toBe(0);
-            expect(comp.pageComponentVisited[0]).toBeTrue();
         });
     });
 
