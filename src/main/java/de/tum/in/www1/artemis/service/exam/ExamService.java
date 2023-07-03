@@ -1145,7 +1145,7 @@ public class ExamService {
                 log.debug("------------------------ STORE EXAM START");
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
                 log.debug("------------------------ SET EXAM ARCHIVE PATH TO " + archivedExamPath.get().getFileName().toString());
-                examRepository.save(exam);
+                examRepository.saveAndFlush(exam);
                 log.debug("------------------------ STORE EXAM COMPLETE");
             }
             else {
