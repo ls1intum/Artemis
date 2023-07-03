@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -21,9 +24,16 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
+    private final ChannelRepository channelRepository;
+
+    private final ConversationService conversationService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository,
+            ConversationService conversationService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
+        this.channelRepository = channelRepository;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -107,6 +117,8 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
+        conversationService.deleteConversation(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
     }
 
