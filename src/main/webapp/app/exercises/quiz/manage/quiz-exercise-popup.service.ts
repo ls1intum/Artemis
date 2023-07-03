@@ -17,10 +17,10 @@ export class QuizExercisePopupService {
      * @param component the content that should be shown
      * @param quizExercise the quiz exercise for which the modal should be shown
      */
-    open(component: Component, quizExercise: QuizExercise): Promise<NgbModalRef> {
+    open(component: Component, quizExercise: QuizExercise, files: Map<string, File>): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef == undefined) {
-                this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
+                this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise, files);
             }
             resolve(this.ngbModalRef);
         });
@@ -31,9 +31,10 @@ export class QuizExercisePopupService {
      * @param component the content that should be shown
      * @param quizExercise the quiz exercise for which the modal should be shown
      */
-    quizExerciseModalRef(component: Component, quizExercise: QuizExercise): NgbModalRef {
+    quizExerciseModalRef(component: Component, quizExercise: QuizExercise, files: Map<string, File>): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.quizExercise = quizExercise;
+        modalRef.componentInstance.files = files;
         modalRef.result.then(
             (result) => {
                 if (result === 're-evaluate') {

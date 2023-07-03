@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.competency;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +29,9 @@ public class Competency extends DomainObject {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "soft_due_date")
+    private ZonedDateTime softDueDate;
+
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
 
@@ -40,6 +44,9 @@ public class Competency extends DomainObject {
     @Convert(converter = CompetencyTaxonomy.TaxonomyConverter.class)
     @JsonInclude
     private CompetencyTaxonomy taxonomy;
+
+    @Column(name = "optional")
+    private boolean optional;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -83,6 +90,14 @@ public class Competency extends DomainObject {
         this.description = description;
     }
 
+    public ZonedDateTime getSoftDueDate() {
+        return softDueDate;
+    }
+
+    public void setSoftDueDate(ZonedDateTime dueDate) {
+        this.softDueDate = dueDate;
+    }
+
     public int getMasteryThreshold() {
         return masteryThreshold == null ? 100 : this.masteryThreshold;
     }
@@ -97,6 +112,14 @@ public class Competency extends DomainObject {
 
     public void setTaxonomy(CompetencyTaxonomy taxonomy) {
         this.taxonomy = taxonomy;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public void setOptional(boolean optional) {
+        this.optional = optional;
     }
 
     public Course getCourse() {

@@ -137,7 +137,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         user.setInternal(false);
         userRepository.save(user);
 
@@ -145,7 +145,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         course.setOnlineCourse(true);
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
 
-        programmingExercise = programmingExerciseRepository.findByIdElseThrow(course.getExercises().stream().findFirst().get().getId());
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(course.getExercises().stream().findFirst().orElseThrow().getId());
 
         jiraRequestMockProvider.enableMockingOfRequests();
     }

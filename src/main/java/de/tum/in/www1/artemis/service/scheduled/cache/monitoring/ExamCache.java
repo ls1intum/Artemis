@@ -23,14 +23,14 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * <p>
  * Additionally, we don't need any near cache configuration since reloading all actions from the cache is a very rare case.
  */
-final class ExamCache extends CacheHandler<Long> {
+final class ExamCache extends CacheHandler<Long, ExamMonitoringCache> {
 
     public ExamCache(HazelcastInstance hazelcastInstance) {
         super(hazelcastInstance, Constants.HAZELCAST_MONITORING_CACHE);
     }
 
     @Override
-    protected Cache emptyCacheValue() {
+    protected ExamMonitoringCache emptyCacheValue() {
         return ExamMonitoringCache.empty();
     }
 
@@ -44,7 +44,7 @@ final class ExamCache extends CacheHandler<Long> {
     }
 
     @Override
-    protected Cache createDistributedCacheValue(Long examId) {
+    protected ExamMonitoringCache createDistributedCacheValue(Long examId) {
         var distributedCache = new ExamMonitoringDistributedCache(examId);
         distributedCache.setHazelcastInstance(hazelcastInstance);
 

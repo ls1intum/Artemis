@@ -14,6 +14,21 @@ export class CourseMessagesPage {
         cy.get('#channelOverview').click();
     }
 
+    browseExerciseChannelsButton() {
+        cy.get('#exerciseChannelButton').click();
+        cy.get('#exerciseChannelOverview').click();
+    }
+
+    browseLectureChannelsButton() {
+        cy.get('#lectureChannelButton').click();
+        cy.get('#lectureChannelOverview').click();
+    }
+
+    browseExamChannelsButton() {
+        cy.get('#examChannelButton').click();
+        cy.get('#examChannelOverview').click();
+    }
+
     checkChannelsExists(name: string) {
         cy.get('.channels-overview').find('.list-group-item').contains(name);
     }

@@ -9,10 +9,14 @@
         </span>
         <div *ngIf="showContent">
             <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
+
+            <span class="edited-text" *ngIf="isEdited">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
         </div>
     </div>
     <!-- not in preview mode: content always shown -->
     <div *ngIf="!previewMode" [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
         <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
+
+        <span class="edited-text" *ngIf="isEdited">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
     </div>
 </ng-container>
