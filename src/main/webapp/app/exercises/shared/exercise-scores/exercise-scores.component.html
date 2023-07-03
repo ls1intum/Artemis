@@ -2,7 +2,6 @@
     <h2>
         <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
         <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
-        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredParticipations.length }">results</small>
     </h2>
     <h4 *ngIf="this.rangeFilter" class="d-flex align-items-center">
         <span class="me-2">
@@ -11,60 +10,40 @@
         </span>
         <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">Reset submission filter</button>
     </h4>
-    <div class="mb-2 clearfix">
-        <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
-            <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
-                <fa-icon [icon]="faFilter"></fa-icon>
-                <span class="d-s-none d-md-inline">{{
-                    'artemisApp.exercise.scoresFilter' | artemisTranslate : { filter: ('artemisApp.exercise.show' + resultCriteria.filterProp | artemisTranslate) }
-                }}</span>
-            </button>
-            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                <li>
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li *ngIf="exercise.type === ExerciseType.PROGRAMMING">
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showBuildFailed' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li>
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.UNSUCCESSFUL)" [value]="FilterProp.UNSUCCESSFUL" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showUnsuccessful' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li>
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.SUCCESSFUL)" [value]="FilterProp.SUCCESSFUL" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showSuccessful' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments">
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.MANUAL)" [value]="FilterProp.MANUAL" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showManual' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments">
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.AUTOMATIC)" [value]="FilterProp.AUTOMATIC" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showAutomatic' | artemisTranslate }}</span>
-                    </label>
-                </li>
-                <li *ngIf="newManualResultAllowed && exercise.isAtLeastInstructor">
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.LOCKED)" [value]="FilterProp.LOCKED" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.showLocked' | artemisTranslate }}</span>
-                    </label>
-                </li>
-            </ul>
+    <div class="d-flex flex-wrap">
+        <div class="d-flex flex-fill align-items-center mr-auto">
+            <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <span class="d-s-none d-md-inline"
+                        >{{ 'artemisApp.exercise.scoresFilter' | artemisTranslate : { filter: ('artemisApp.exercise.show' + resultCriteria.filterProp | artemisTranslate) } }} ({{
+                            participationsPerFilter.get(resultCriteria.filterProp) ?? 0
+                        }})
+                    </span>
+                </button>
+                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                    <ng-container *ngFor="let filter of FilterProp | keyvalue">
+                        <li *ngIf="isFilterRelevantForConfiguration(filter.value)">
+                            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                                <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
+                                <span class="ms-1">
+                                    {{ 'artemisApp.exercise.show' + filter.value | artemisTranslate }}
+                                    ({{ participationsPerFilter.get(filter.value) ?? 0 }})
+                                </span>
+                            </label>
+                        </li>
+                    </ng-container>
+                </ul>
+            </div>
+            <span *ngIf="filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) != filteredParticipations.length">
+                {{ 'artemisApp.exercise.showingOfResults' | artemisTranslate: {
+                    filtered: participationsPerFilter.get(resultCriteria.filterProp),
+                    total: filteredParticipations.length,
+                    percent: (participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100 / filteredParticipations.length | number : '1.0-1',
+                } }}
+            </span>
         </div>
-        <div class="d-flex justify-content-end">
+        <div class="p-2">
             <div class="button-toolbar">
                 <a
                     *ngIf="!exercise.exerciseGroup"

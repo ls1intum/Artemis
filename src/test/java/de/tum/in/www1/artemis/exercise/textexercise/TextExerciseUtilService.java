@@ -356,8 +356,8 @@ public class TextExerciseUtilService {
     }
 
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
-        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId,
-                userId, exerciseId, participationId, submissionId);
+        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId);
     }
 
     public Course addCourseWithOneFinishedTextExercise() {

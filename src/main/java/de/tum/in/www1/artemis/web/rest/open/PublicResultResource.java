@@ -92,7 +92,7 @@ public class PublicResultResource {
         // Retrieving the plan key can fail if e.g. the requestBody is malformed. In this case nothing else can be done.
         String planKey;
         try {
-            planKey = continuousIntegrationService.get().getPlanKey(requestBody);
+            planKey = continuousIntegrationService.orElseThrow().getPlanKey(requestBody);
         }
         catch (ContinuousIntegrationException cISException) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
