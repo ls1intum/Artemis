@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,10 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
