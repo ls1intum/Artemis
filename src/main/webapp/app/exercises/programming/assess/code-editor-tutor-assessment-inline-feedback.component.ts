@@ -96,7 +96,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Checks if component is in view mode and focus feedback text area
+     * Checks if component is in view mode and focuses feedback text area
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
