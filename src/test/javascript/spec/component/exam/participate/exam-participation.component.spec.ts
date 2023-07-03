@@ -781,7 +781,8 @@ describe('ExamParticipationComponent', () => {
             comp.examStartConfirmed = true;
             fixture.detectChanges();
 
-            jest.spyOn(comp.currentPageComponents.get(0), 'getExerciseId').mockImplementation(() => exercise.id);
+            const pageComponent = comp.currentPageComponents.get(0);
+            jest.spyOn<any, any>(pageComponent, 'getExerciseId').mockReturnValue(exercise.id);
             comp.onPageChange(exerciseChange);
 
             expect(triggerSpy).toHaveBeenCalledWith(true, false);
