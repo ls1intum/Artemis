@@ -10,11 +10,11 @@ import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { Observable, catchError, combineLatest, combineLatestWith, forkJoin, map, merge, mergeMap, of, toArray } from 'rxjs';
+import { Observable, map, merge, mergeMap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ChangeContext, LabelType, Options } from 'ngx-slider-v2';
+import { ChangeContext, Options } from 'ngx-slider-v2';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -46,10 +46,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     submissionTimeStamps: dayjs.Dayjs[] = [];
     submissionVersions: SubmissionVersion[] = [];
     programmingSubmissions: ProgrammingSubmission[] = [];
-    stepIndex = 0;
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
-    finalValue: dayjs.Dayjs;
     readonly SubmissionVersion = SubmissionVersion;
 
     constructor(
@@ -176,6 +174,14 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         }
         if (exercise) {
             const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === exercise?.id);
+            const correspondingSubmissionComponent = this.currentPageComponents.find(
+                (submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === exercise?.id,
+            );
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                correspondingSubmissionComponent!.submission = submission as ProgrammingSubmission;
+            } else {
+                correspondingSubmissionComponent!.submissionVersion = submission as SubmissionVersion;
+            }
             this.examNavigationBarComponent.changePage(false, exerciseIndex, false);
         }
         // TODO find the corresponding submission for the timestamp instantiate the component with it and navigate to the respective page

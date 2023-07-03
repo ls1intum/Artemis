@@ -26,8 +26,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     @Input()
     studentSubmission: ModelingSubmission;
     @Input()
-    submissionVersion: SubmissionVersion;
-    @Input()
     examTimeline = false;
 
     @Input()

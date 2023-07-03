@@ -2,6 +2,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Directive, Input } from '@angular/core';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Directive()
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
@@ -27,4 +28,6 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract getSubmission(): Submission | undefined;
     abstract getExercise(): Exercise;
     @Input() readonly = false;
+    @Input() submissionVersion: SubmissionVersion;
+    @Input() submission: Submission;
 }
