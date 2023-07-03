@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -61,13 +61,13 @@ public class ExerciseDeletionService {
 
     private final ChannelRepository channelRepository;
 
-    private final ConversationService conversationService;
+    private final ChannelService channelService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            TextClusterRepository textClusterRepository, ChannelRepository channelRepository, ConversationService conversationService) {
+            TextClusterRepository textClusterRepository, ChannelRepository channelRepository, ChannelService channelService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -82,7 +82,7 @@ public class ExerciseDeletionService {
         this.textExerciseService = textExerciseService;
         this.textClusterRepository = textClusterRepository;
         this.channelRepository = channelRepository;
-        this.conversationService = conversationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -128,9 +128,7 @@ public class ExerciseDeletionService {
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        if (exreciseChannel != null) {
-            conversationService.deleteConversation(exreciseChannel);
-        }
+        channelService.deleteChannelAsynchronously(exreciseChannel);
 
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());

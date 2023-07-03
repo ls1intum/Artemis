@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -26,14 +26,13 @@ public class LectureService {
 
     private final ChannelRepository channelRepository;
 
-    private final ConversationService conversationService;
+    private final ChannelService channelService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository,
-            ConversationService conversationService) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
-        this.conversationService = conversationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -118,9 +117,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture) {
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
-        if (lectureChannel != null) {
-            conversationService.deleteConversation(lectureChannel);
-        }
+        channelService.deleteChannelAsynchronously(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
     }
 

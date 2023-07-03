@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ExamDeletionService {
@@ -55,11 +55,11 @@ public class ExamDeletionService {
 
     private final ChannelRepository channelRepository;
 
-    private final ConversationService conversationService;
+    private final ChannelService channelService;
 
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
-            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ConversationService conversationService) {
+            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -70,7 +70,7 @@ public class ExamDeletionService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.channelRepository = channelRepository;
-        this.conversationService = conversationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -96,9 +96,7 @@ public class ExamDeletionService {
         auditEventRepository.add(auditEvent);
 
         Channel examChannel = channelRepository.findChannelByExamId(examId);
-        if (examChannel != null) {
-            conversationService.deleteConversation(examChannel);
-        }
+        channelService.deleteChannelAsynchronously(examChannel);
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);

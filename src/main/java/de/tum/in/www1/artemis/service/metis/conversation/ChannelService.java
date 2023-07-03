@@ -217,6 +217,14 @@ public class ChannelService {
         return usersToRegister;
     }
 
+    @Async
+    public void deleteChannelAsynchronously(Channel channel) {
+        if (channel != null) {
+            SecurityUtils.setAuthorizationObject();
+            conversationService.deleteConversation(channel);
+        }
+    }
+
     /**
      * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
      *
