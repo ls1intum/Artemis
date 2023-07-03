@@ -175,8 +175,10 @@ public class CompetencyResource {
 
         existingCompetency.setTitle(competency.getTitle());
         existingCompetency.setDescription(competency.getDescription());
+        existingCompetency.setSoftDueDate(competency.getSoftDueDate());
         existingCompetency.setTaxonomy(competency.getTaxonomy());
         existingCompetency.setMasteryThreshold(competency.getMasteryThreshold());
+        existingCompetency.setOptional(competency.isOptional());
         var persistedCompetency = competencyRepository.save(existingCompetency);
 
         linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
@@ -210,8 +212,10 @@ public class CompetencyResource {
         Competency competencyToCreate = new Competency();
         competencyToCreate.setTitle(competency.getTitle().trim());
         competencyToCreate.setDescription(competency.getDescription());
+        competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
         competencyToCreate.setTaxonomy(competency.getTaxonomy());
         competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
+        competencyToCreate.setOptional(competency.isOptional());
         competencyToCreate.setCourse(course);
 
         var persistedCompetency = competencyRepository.save(competencyToCreate);

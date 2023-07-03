@@ -62,7 +62,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     void testGetLatestBuildLogsFails() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         var programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = new ProgrammingSubmission();

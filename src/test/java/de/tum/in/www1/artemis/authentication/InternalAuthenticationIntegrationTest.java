@@ -118,7 +118,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
@@ -129,7 +129,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
+        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
         student.setInternal(true);
@@ -141,7 +141,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void teardown() {
         // Set the student group to some other group because only one group can have the tutorialGroupStudents-group
         SecurityUtils.setAuthorizationObject();
-        var tutorialCourse = courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get());
+        var tutorialCourse = courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.orElseThrow());
         if (tutorialCourse != null) {
             tutorialCourse.setStudentGroupName("non-tutorial-course");
             tutorialCourse.setTeachingAssistantGroupName("non-tutorial-course");
@@ -156,14 +156,14 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
         final var user = userUtilService.getUserByLogin(USERNAME);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).orElseThrow();
 
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var updatedStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
+        final var updatedStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
         assertThat(student).isEqualTo(updatedStudent);
     }
 
@@ -220,28 +220,28 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private void assertUserGroups(User user, boolean students, boolean tutors, boolean editors, boolean instructors) {
         if (students) {
-            assertThat(user.getGroups()).contains(tutorialGroupStudents.get());
+            assertThat(user.getGroups()).contains(tutorialGroupStudents.orElseThrow());
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupStudents.get());
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupStudents.orElseThrow());
         }
         if (tutors) {
-            assertThat(user.getGroups()).contains(tutorialGroupTutors.get());
+            assertThat(user.getGroups()).contains(tutorialGroupTutors.orElseThrow());
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupTutors.get());
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupTutors.orElseThrow());
         }
         if (editors) {
-            assertThat(user.getGroups()).contains(tutorialGroupEditors.get());
+            assertThat(user.getGroups()).contains(tutorialGroupEditors.orElseThrow());
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupEditors.get());
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupEditors.orElseThrow());
         }
         if (instructors) {
-            assertThat(user.getGroups()).contains(tutorialGroupInstructors.get());
+            assertThat(user.getGroups()).contains(tutorialGroupInstructors.orElseThrow());
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupInstructors.get());
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupInstructors.orElseThrow());
         }
     }
 
@@ -325,7 +325,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
         final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
 
