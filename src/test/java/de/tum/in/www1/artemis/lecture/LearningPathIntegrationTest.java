@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
@@ -84,6 +85,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     CompetencyProgressService competencyProgressService;
 
+    @Autowired
+    LearningPathUtilService learningPathUtilService;
+
     private Course course;
 
     private Competency[] competencies;
@@ -130,13 +134,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
-    }
-
-    private void enableLearningPathsForTestingCourse() {
-        course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
-        learningPathService.generateLearningPaths(course);
-        course.setLeanringPathsEnabled(true);
-        course = courseRepository.save(course);
     }
 
     private ZonedDateTime now() {
@@ -225,7 +222,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course.setEnrollmentStartDate(past(1));
         course.setEnrollmentEndDate(future(1));
         course = courseRepository.save(course);
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         this.setupEnrollmentRequestMocks();
 
@@ -253,7 +250,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
         final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPath.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -263,7 +260,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
         final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPath.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -273,7 +270,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testAddCompetencyToLearningPathsOnCreateCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         final var createdCompetency = createCompetencyRESTCall();
 
@@ -289,7 +286,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testAddCompetencyToLearningPathsOnImportCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         final var importedCompetency = importCompetencyRESTCall();
 
@@ -305,7 +302,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testRemoveCompetencyFromLearningPathsOnDeleteCompetency() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         deleteCompetencyRESTCall(competencies[0]);
 
@@ -321,7 +318,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testUpdateLearningPathProgress() throws Exception {
-        enableLearningPathsForTestingCourse();
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         // add competency with completed learning unit
         final var createdCompetency = createCompetencyRESTCall();
