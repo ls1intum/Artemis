@@ -70,8 +70,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private ExamUtilService examUtilService;
 
-    private List<Post> existingPostsAndConversationPosts;
-
     private List<Post> existingPosts;
 
     private List<Post> existingCoursePosts;
@@ -125,7 +123,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // initialize test setup and get all existing posts (there are 8 posts with lecture context (4 per lecture), 8 with exercise context (4 per exercise),
         // 1 plagiarism case, 4 with course-wide context and 3 with conversation initialized - initialized): 24 posts in total
-        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
