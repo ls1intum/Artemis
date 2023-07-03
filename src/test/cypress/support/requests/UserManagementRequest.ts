@@ -17,7 +17,7 @@ export class UserManagementRequests {
             password,
             firstName: username,
             lastName: username,
-            email: username + '@local',
+            email: username + '@example.com',
             authorities: [role],
         };
         return cy.request({
