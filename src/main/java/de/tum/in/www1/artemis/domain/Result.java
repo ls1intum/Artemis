@@ -260,6 +260,8 @@ public class Result extends DomainObject implements Comparable<Result> {
         setRatedIfNotAfterDueDate(dueDate, submissionDate);
     }
 
+    // TODO cleanup methods above
+
     public Submission getSubmission() {
         return submission;
     }

@@ -152,6 +152,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
+            setRatedBySubmission(newResult);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -159,6 +160,14 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
+    }
+
+    private void setRatedBySubmission(Result newResult) {
+        switch (newResult.getSubmission().getType()) {
+            case ILLEGAL -> newResult.setRated(false);
+            case TEST, INSTRUCTOR, MANUAL -> newResult.setRated(true);
+            default -> newResult.setRatedIfNotAfterDueDate(newResult.getSubmission(), newResult.getParticipation());
+        }
     }
 
     /**
