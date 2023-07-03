@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
  */
 @Service
 public class TeamUtilService {
+    // TODO: continue here!
 
     @Autowired
     private UserUtilService userUtilService;
