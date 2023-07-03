@@ -28,8 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class DataExportService {
 
-    @Value("${artemis.data-export.days-between-data-exports:14}")
-    private int DAYS_BETWEEN_DATA_EXPORTS;
+    private final int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final UserRepository userRepository;
 
@@ -39,7 +38,9 @@ public class DataExportService {
 
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
-    public DataExportService(UserRepository userRepository, DataExportRepository dataExportRepository, FileService fileService) {
+    public DataExportService(@Value("${artemis.data-export.days-between-data-exports:14}") int daysBetweenDataExports, UserRepository userRepository,
+            DataExportRepository dataExportRepository, FileService fileService) {
+        this.DAYS_BETWEEN_DATA_EXPORTS = daysBetweenDataExports;
         this.userRepository = userRepository;
         this.dataExportRepository = dataExportRepository;
         this.fileService = fileService;

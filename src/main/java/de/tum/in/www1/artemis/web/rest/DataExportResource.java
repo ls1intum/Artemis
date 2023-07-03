@@ -33,8 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("api/")
 public class DataExportResource {
 
-    @Value("${artemis.data-export.days-between-data-exports:14}")
-    private int DAYS_BETWEEN_DATA_EXPORTS;
+    private final int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final DataExportService dataExportService;
 
@@ -42,7 +41,9 @@ public class DataExportResource {
 
     private final UserRepository userRepository;
 
-    public DataExportResource(DataExportService dataExportService, DataExportRepository dataExportRepository, UserRepository userRepository) {
+    public DataExportResource(@Value("${artemis.data-export.days-between-data-exports:14}") int daysBetweenDataExports, DataExportService dataExportService,
+            DataExportRepository dataExportRepository, UserRepository userRepository) {
+        this.DAYS_BETWEEN_DATA_EXPORTS = daysBetweenDataExports;
         this.dataExportService = dataExportService;
         this.dataExportRepository = dataExportRepository;
         this.userRepository = userRepository;

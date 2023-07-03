@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -236,7 +237,7 @@ public class DataExportCreationService {
         try {
             singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
         }
-        catch (Exception e) {
+        catch (ArtemisMailException e) {
             log.warn("Failed to send email about successful data export creation");
         }
         return true;
