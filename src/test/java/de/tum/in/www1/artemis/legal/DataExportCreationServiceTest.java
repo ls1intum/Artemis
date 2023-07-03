@@ -134,15 +134,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 8 times, because the last test includes 8 modeling exercises
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
-        mockApollonConversion();
+        // mock apollon conversion 8 times, because the last test includes 8 modeling exercises, because each test adds modeling exercises
+        for (int i = 0; i < 8; i++) {
+            mockApollonConversion();
+        }
     }
 
     private void mockApollonConversion() throws IOException {
