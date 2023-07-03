@@ -376,8 +376,10 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
 
-        Optional<Channel> exerciseChannelAfter = channelRepository.findById(exerciseChannel.getId());
-        assertThat(exerciseChannelAfter).isEmpty();
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        await().untilAsserted(() -> {
+            assertThat(exerciseChannelAfterDelete).isEmpty();
+        });
     }
 
     @Test

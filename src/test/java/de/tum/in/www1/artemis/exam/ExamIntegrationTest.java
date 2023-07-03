@@ -1383,10 +1383,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamChannel_asInstructor() throws Exception {
-        Channel examChannelBefore = channelRepository.findChannelByExamId(exam1.getId());
+        Channel examChannelBeforeDelete = channelRepository.findChannelByExamId(exam1.getId());
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
-        Optional<Channel> examChannelAfter = channelRepository.findById(examChannelBefore.getId());
-        assertThat(examChannelAfter).isEmpty();
+        Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannelBeforeDelete.getId());
+        await().untilAsserted(() -> {
+            assertThat(examChannelAfterDelete).isEmpty();
+        });
     }
 
     @Test
