@@ -473,8 +473,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
 
-        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         await().untilAsserted(() -> {
+            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
             assertThat(exerciseChannelAfterDelete).isEmpty();
         });
     }

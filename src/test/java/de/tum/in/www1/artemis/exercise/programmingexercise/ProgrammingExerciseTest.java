@@ -251,8 +251,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
 
-        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         await().untilAsserted(() -> {
+            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
             assertThat(exerciseChannelAfterDelete).isEmpty();
         });
     }

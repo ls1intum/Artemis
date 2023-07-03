@@ -166,8 +166,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
-        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         await().untilAsserted(() -> {
+            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
             assertThat(exerciseChannelAfterDelete).isEmpty();
         });
     }

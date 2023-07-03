@@ -331,9 +331,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
         Channel lectureChannelBeforeDelete = channelRepository.findChannelByLectureId(lecture1.getId());
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
-        Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannelBeforeDelete.getId());
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
         await().untilAsserted(() -> {
+            Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannelBeforeDelete.getId());
             assertThat(lectureChannelAfterDelete).isEmpty();
         });
         assertThat(lectureOptional).isEmpty();
