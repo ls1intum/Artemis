@@ -159,7 +159,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (this.isActive) {
                     this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                 } else {
-                    this.alertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
+                    this.alertService.warning('artemisApp.fileUploadExercise.submitDueDateMissed');
                 }
                 this.isSaving = false;
             },
@@ -246,14 +246,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
         if (!this.isLate) {
             if (this.isActive && !this.fileUploadExercise.dueDate) {
-                return 'entity.action.submitNoDeadlineTooltip';
+                return 'entity.action.submitNoDueDateTooltip';
             } else if (this.isActive) {
                 return 'entity.action.submitTooltip';
             } else {
-                return 'entity.action.deadlineMissedTooltip';
+                return 'entity.action.dueDateMissedTooltip';
             }
         }
 
-        return 'entity.action.submitDeadlineMissedTooltip';
+        return 'entity.action.submitDueDateMissedTooltip';
     }
 }

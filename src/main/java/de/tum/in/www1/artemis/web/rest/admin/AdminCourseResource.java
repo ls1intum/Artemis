@@ -113,9 +113,7 @@ public class AdminCourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
-        if (!course.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        course.validateStartAndEndDate();
 
         if (course.isOnlineCourse()) {
             onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
@@ -169,6 +167,6 @@ public class AdminCourseResource {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
         Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
-        channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
+        channelService.registerUsersToChannelAsynchronously(true, course, createdChannel);
     }
 }

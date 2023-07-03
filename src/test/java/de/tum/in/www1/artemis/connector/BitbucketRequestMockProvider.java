@@ -92,6 +92,9 @@ public class BitbucketRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+        if (mockServerShortTimeout != null) {
+            mockServerShortTimeout.reset();
+        }
     }
 
     /**
@@ -262,6 +265,16 @@ public class BitbucketRequestMockProvider {
         }
     }
 
+    public void mockUpdateAnyUserDetails(boolean shouldFail, int requestCount) {
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("latest/admin/users"))).andRespond(withStatus(status));
+    }
+
+    public void mockUpdateAnyUserPassword(boolean shouldFail, int requestCount) {
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("latest/admin/users/credentials"))).andRespond(withStatus(status));
+    }
+
     public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
         mockUpdateUserDetails(username, emailAddress, displayName, true);
     }
@@ -337,6 +350,11 @@ public class BitbucketRequestMockProvider {
         final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/remove-group").queryParam("context", username)
                 .queryParam("itemName", groupName).build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRemoveAnyUserFromAnyGroups() {
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(Matchers.startsWith(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")))
+                .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {

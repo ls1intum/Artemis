@@ -10,8 +10,11 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 
@@ -45,8 +48,16 @@ public class GroupChat extends Conversation {
 
     @Override
     public String getHumanReadableNameForReceiver(User sender) {
-        if (getName() == null || getName().isBlank()) {
-            return getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
+        if (StringUtils.isBlank(getName())) {
+            final String generatedName = getConversationParticipants().stream().map((participant) -> participant.getUser().getName()).collect(Collectors.joining(", "));
+
+            // The name should be human-readable, so we limit it for very long lists and add "…" to hint that the string is not complete.
+            if (generatedName.length() >= Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) {
+                return generatedName.substring(0, Constants.GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT) + "…";
+            }
+            else {
+                return generatedName;
+            }
         }
         else {
             return getName();

@@ -96,6 +96,8 @@
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
             "buildplans": "Build-Pläne",
+            "buildplan": "Build-Plan",
+            "buildPlanEditor": "Build-Plan-Editor",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -352,7 +354,7 @@
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
             "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
             "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
-            "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
+            "resubmitAllConfirmAfterDueDate": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
             "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte wende dich an entsprechende Tutor:innen.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
@@ -382,7 +384,7 @@
                 "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können die Aufgabe ab diesem Datum sehen. Sollte kein Startdatum festgelegt sein können Studierende auch ab diesem Datum die Aufgabe beginnen.",
                 "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
-                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
+                "dueDateTooltip": "Die finale Einreichungsfrist, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
@@ -393,18 +395,18 @@
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Feedbackanfragen erlauben",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
-                "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Abgabefrist anfragen, um Feedback zu erhalten.",
+                "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
                 "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
                 "releaseTestsWithExampleSolution": "Tests veröffentlichen",
-                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Deadline zum Download bereit gestellt werden."
+                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
-                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
             "preview": {
                 "label": "Vorschau",

@@ -73,6 +73,12 @@ public final class Constants {
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
+
     // TODO: the following numbers should be configurable in the yml files
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
@@ -147,6 +153,8 @@ public final class Constants {
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
+
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
@@ -275,6 +283,11 @@ public final class Constants {
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
+
+    /**
+     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     */
+    public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
     private Constants() {
     }

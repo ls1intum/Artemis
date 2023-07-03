@@ -6,7 +6,7 @@
         [emitEditEvents]="true"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
         [showCreationCard]="false"
-        [showLearningGoals]="false"
+        [showCompetencies]="false"
     ></jhi-lecture-unit-management>
     <div class="form-group w-100 d-flex justify-content-start" *ngIf="!isAnyUnitFormOpen()">
         <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>

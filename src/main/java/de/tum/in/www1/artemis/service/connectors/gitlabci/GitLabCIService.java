@@ -72,8 +72,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final BuildPlanRepository buildPlanRepository;
 
     private final GitLabCIBuildPlanService buildPlanService;
@@ -99,13 +97,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
-            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+            GitLabApi gitlab, UrlService urlService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -129,7 +126,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
 
-            project.setCiConfigPath(generateBuildPlanURL(exercise));
+            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise);
+            project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
         }
@@ -323,13 +321,5 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
-    }
-
-    private String generateBuildPlanURL(ProgrammingExercise exercise) {
-        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
-        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
-        return String.format("%s/api/public/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(),
-                exercise.getBuildPlanAccessSecret());
     }
 }

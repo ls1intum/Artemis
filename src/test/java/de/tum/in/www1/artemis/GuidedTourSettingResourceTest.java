@@ -7,19 +7,24 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "gtsettingtest";
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
     }
 
     private Set<GuidedTourSetting> createGuidedTourSettings() {

@@ -353,7 +353,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.retryStarted = false;
 
                     if (this.isLate) {
-                        this.alertService.warning('entity.action.submitDeadlineMissedAlert');
+                        this.alertService.warning('entity.action.submitDueDateMissedAlert');
                     } else {
                         this.alertService.success('entity.action.submitSuccessfulAlert');
                     }
@@ -376,7 +376,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.modelingExercise.studentParticipations = [this.participation];
                     this.result = getLatestSubmissionResult(this.submission);
                     if (this.isLate) {
-                        this.alertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                        this.alertService.warning('artemisApp.modelingEditor.submitDueDateMissed');
                     } else {
                         this.alertService.success('artemisApp.modelingEditor.submitSuccessful');
                     }
@@ -580,14 +580,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     get submitButtonTooltip(): string {
         if (!this.isLate) {
             if (this.isActive && !this.modelingExercise.dueDate) {
-                return 'entity.action.submitNoDeadlineTooltip';
+                return 'entity.action.submitNoDueDateTooltip';
             } else if (this.isActive) {
                 return 'entity.action.submitTooltip';
             } else {
-                return 'entity.action.deadlineMissedTooltip';
+                return 'entity.action.dueDateMissedTooltip';
             }
         }
 
-        return 'entity.action.submitDeadlineMissedTooltip';
+        return 'entity.action.submitDueDateMissedTooltip';
     }
 }

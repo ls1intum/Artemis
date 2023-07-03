@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 export interface AttachmentUnitFormData {
@@ -19,7 +19,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
-    learningGoals?: LearningGoal[];
+    competencies?: Competency[];
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -87,17 +87,25 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
             updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            learningGoals: [undefined as LearningGoal[] | undefined],
+            competencies: [undefined as Competency[] | undefined],
         });
     }
 
-    onFileChange(event: any): void {
-        if (event.target.files.length) {
-            const fileList = event.target.files;
-            this.file = fileList[0];
-            this.fileName = this.file.name;
-            this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
+    onFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            return;
         }
+        this.file = input.files[0];
+        this.fileName = this.file.name;
+        // automatically set the name in case it is not yet specified
+        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+            this.form.patchValue({
+                // without extension
+                name: this.file.name.replace(/\.[^/.]+$/, ''),
+            });
+        }
+        this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
     }
 
     get nameControl() {

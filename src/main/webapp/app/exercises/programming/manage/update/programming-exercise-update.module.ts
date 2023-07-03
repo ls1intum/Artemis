@@ -31,6 +31,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 @NgModule({
     imports: [
@@ -49,6 +50,7 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
         ArtemisTableModule,
         SubmissionPolicyUpdateModule,
         ArtemisModePickerModule,
+        TitleChannelNameModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

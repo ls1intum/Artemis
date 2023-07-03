@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,12 +15,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -32,6 +38,15 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private Attachment attachment;
 
     private Lecture lecture;
@@ -40,13 +55,13 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
-        attachment = ModelFactory.generateAttachment(null);
+        attachment = LectureFactory.generateAttachment(null);
         attachment.setLink("files/temp/example.txt");
 
-        var course = database.addCourseWithOneReleasedTextExercise();
-        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");
@@ -60,6 +75,10 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void createAttachment() throws Exception {
         Attachment actualAttachment = request.postWithMultipartFile("/api/attachments", attachment, "attachment",
                 new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()), Attachment.class, HttpStatus.CREATED);
+        assertThat(actualAttachment.getLink()).isNotNull();
+        MvcResult file = request.getMvc().perform(get(actualAttachment.getLink())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
+                .andReturn();
+        assertThat(file.getResponse().getContentAsByteArray()).isNotEmpty();
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
         assertThat(actualAttachment).isEqualTo(expectedAttachment);
     }

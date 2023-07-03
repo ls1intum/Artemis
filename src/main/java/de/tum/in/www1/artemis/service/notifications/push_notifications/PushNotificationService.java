@@ -44,9 +44,9 @@ import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
  */
 public abstract class PushNotificationService implements InstantNotificationService {
 
-    private static SecureRandom random = new SecureRandom();
+    private static final SecureRandom random = new SecureRandom();
 
-    private static Cipher cipher;
+    private static final Cipher cipher;
 
     static {
         try {

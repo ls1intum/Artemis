@@ -1,5 +1,5 @@
-<div class="card mb-4" id="course-card-{{ course.shortName }}">
-    <div id="course-card-header" class="text-white card-heading" [ngStyle]="hoverEffectForBackground">
+<div class="card mb-4 hover-effect" id="course-{{ course.id }}">
+    <div id="course-card-header" class="text-white card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
@@ -101,6 +101,9 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card p-0">
+                <div *ngIf="!courseWithExercises" class="loading-spinner">
+                    <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                </div>
                 <div class="section-content px-3 py-1" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises && futureExercises.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
@@ -174,12 +177,16 @@
             <div class="col-4 statistics-card align-center">
                 <div class="align-center w-100 h-100">
                     <jhi-course-management-overview-statistics
+                        *ngIf="courseStatistics"
                         class="statistics-chart"
                         [initialStats]="courseStatistics?.activeStudents"
                         [amountOfStudentsInCourse]="!!courseWithUsers && courseWithUsers.numberOfStudents ? courseWithUsers.numberOfStudents : 0"
                         [course]="course"
                     >
                     </jhi-course-management-overview-statistics>
+                    <div *ngIf="!courseStatistics" class="loading-spinner">
+                        <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                    </div>
                 </div>
             </div>
         </div>
@@ -231,11 +238,11 @@
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'competency-management']"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
-            [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
-            id="course-card-open-learning-goals"
+            [ngbTooltip]="'artemisApp.competency.competencyButton' | artemisTranslate"
+            id="course-card-open-competencies"
         >
             <fa-icon [icon]="faFlag"></fa-icon>
-            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+            <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"

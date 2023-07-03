@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -182,6 +185,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    /**
+     * Used for receiving the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
 
     @Override
     public boolean isCompletedFor(User user) {
@@ -487,7 +496,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 continue;
             }
             // NOTE: for the dashboard we only use rated results with completion date
-            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            boolean isAssessmentOver = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(this);
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
@@ -583,8 +592,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+            else {
+                // this means we have more than one submission, we want the one with the last submission date
+                // make sure that submissions without submission date do not lead to null pointer exception in the comparison
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
@@ -727,6 +737,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setNumberOfRatings(Long numberOfRatings) {
         this.numberOfRatingsTransient = numberOfRatings;
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
     }
 
     @Nullable
@@ -963,4 +981,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public abstract ExerciseType getExerciseType();
+
+    /**
+     * Disconnects child entities from the exercise.
+     * <p>
+     * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
+     */
+    public void disconnectRelatedEntities() {
+        Stream.of(competencies, teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases)
+                .filter(Objects::nonNull).forEach(Collection::clear);
+    }
 }

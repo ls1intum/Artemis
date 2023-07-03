@@ -19,7 +19,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @BeforeEach
     void setupTestScenario() {
         super.setupTestScenario();
-        this.database.addUsers(this.testPrefix, 0, 1, 0, 1);
+        userUtilService.addUsers(this.testPrefix, 0, 1, 0, 1);
     }
 
     private static final String TEST_PREFIX = "tutorialgroupschedule";
@@ -53,7 +53,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var standardTimeSession = sessions.get(0);
         var daylightSavingsTimeSession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringDST.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringDST.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(standardTimeSession, mondayBeforeDSTSwitch, persistedTutorialGroupId, persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(daylightSavingsTimeSession, mondayAfterDSTSwitch, persistedTutorialGroupId, persistedSchedule);
@@ -77,7 +77,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var firstAugustMondaySession = sessions.get(0);
         var thirdAugustMondaySession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroup.getId()).orElseThrow();
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, persistedTutorialGroupId, persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, thirdAugustMonday, persistedTutorialGroupId, persistedSchedule);
     }
@@ -86,7 +86,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_sessionFallsOnTutorialGroupFreeDay_shouldCreateCancelledSession() throws Exception {
         // given
-        var freeDay = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, secondAugustMonday, "Holiday");
+        var freeDay = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, secondAugustMonday, "Holiday");
         var newTutorialGroupCoveringHoliday = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, "tutor1");
         var scheduleToCreate = newTutorialGroupCoveringHoliday.getTutorialGroupSchedule();
 
@@ -98,7 +98,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         newTutorialGroupCoveringHoliday = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroupCoveringHoliday, scheduleToCreate);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringHoliday.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringHoliday.getId()).orElseThrow();
 
         var sessions = this.getTutorialGroupSessionsAscending(persistedTutorialGroupId);
         assertThat(sessions).hasSize(2);
@@ -161,7 +161,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var firstAugustMondaySession = sessions.get(0);
         var secondAugustMondaySession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(persistedTutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(persistedTutorialGroup.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, tutorialGroup.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, secondAugustMonday, tutorialGroup.getId(), persistedSchedule);
@@ -262,7 +262,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var thirdAugustMondaySession = sessions.get(1);
         var fourthAugustMondaySession = sessions.get(2);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, tutorialGroup.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, thirdAugustMonday, tutorialGroup.getId(), persistedSchedule);

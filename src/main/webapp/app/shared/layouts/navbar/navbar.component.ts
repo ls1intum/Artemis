@@ -38,6 +38,7 @@ import {
     faList,
     faLock,
     faSignOutAlt,
+    faStamp,
     faTachometerAlt,
     faTasks,
     faThLarge,
@@ -95,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faWrench = faWrench;
     faLock = faLock;
+    faStamp = faStamp;
     faFlag = faFlag;
     faBook = faBook;
     faTasks = faTasks;
@@ -266,7 +268,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        competency_management: 'artemisApp.learningGoal.manageLearningGoals.title',
+        competency_management: 'artemisApp.competency.manageCompetencies.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -326,7 +328,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        privacy_statement: 'artemisApp.privacyStatement.title',
+        privacy_statement: 'artemisApp.legal.privacyStatement.title',
+        imprint: 'artemisApp.legal.imprint.title',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -334,7 +338,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        competencies: 'artemisApp.courseOverview.menu.learningGoals',
+        competencies: 'artemisApp.courseOverview.menu.competencies',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
@@ -457,7 +461,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
             case 'competencies':
-                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.COMPETENCY, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);

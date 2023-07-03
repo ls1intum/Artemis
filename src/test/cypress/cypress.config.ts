@@ -68,7 +68,7 @@ export default defineConfig({
                 return launchOptions;
             });
         },
-        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
+        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.ts'],
         supportFile: 'support/index.ts',
         baseUrl: 'http://localhost:8080',
     },

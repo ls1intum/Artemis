@@ -5,7 +5,6 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,12 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -30,11 +29,18 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 
@@ -93,15 +99,33 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private TextAssessmentService textAssessmentService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
+
     private TextExercise textExercise;
 
     private Course course;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 3, 0, 1);
-        course = database.addCourseWithOneReleasedTextExercise();
-        textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
+        userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
+        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
     }
@@ -109,8 +133,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPrepareSubmissionForAssessment() {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
-        textSubmission = database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
@@ -173,7 +197,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private Result createSampleResultForSubmission(Submission submission) {
         Result result = new Result();
-        result.setAssessor(database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         result.setCompletionDate(now());
         result.setSubmission(submission);
         submission.setResults(Collections.singletonList(result));
@@ -183,8 +207,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
-        textSubmission = database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         StudentParticipation participationWithoutAssessment = request.get(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
@@ -199,8 +223,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForLockedSubmission() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepo.save(result);
@@ -220,11 +244,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteTextExampleAssessment() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        database.addExampleSubmission(exampleSubmission);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
+        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
         request.delete("/api/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
                 HttpStatus.NO_CONTENT);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
@@ -234,11 +258,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteTextExampleAssessment_wrongExerciseId() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        database.addExampleSubmission(exampleSubmission);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
+        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
         long randomId = 4532;
         request.delete("/api/exercises/" + randomId + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
@@ -248,8 +272,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void getTextSubmissionWithResultId() throws Exception {
-        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
-        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -263,8 +288,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
-        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
-        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -275,8 +301,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
-        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
-        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -290,15 +317,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Result textAssessment = textSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
@@ -313,15 +340,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Result textAssessment = textSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
@@ -338,10 +365,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_withTextBlocks() throws Exception {
         // Setup
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
-                new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(),
+                new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission);
 
         Result textAssessment = textSubmission.getLatestResult();
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
@@ -352,7 +379,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
@@ -368,8 +395,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private TextSubmission prepareSubmission() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -440,38 +467,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void setNumberOfAffectedSubmissionsPerBlock_withIdenticalTextBlocks() throws Exception {
-        int submissionCount = 5;
-        int submissionSize = 1;
-        int numberOfBlocksTotally = submissionCount * submissionSize;
-        int[] clusterSizes = new int[] { 5 };
-        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        textClusterRepository.saveAll(clusters);
-        textBlockRepository.saveAll(textBlocks);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
-        var participation = textExercise.getStudentParticipations().stream().findFirst().get();
-        Result result = new Result();
-        result.setParticipation(participation);
-        result.setSubmission(submissionWithoutAssessment);
-
-        textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-
-        assertThat(result).as("saved result found").isNotNull();
-        assertThat(submissionWithoutAssessment.getBlocks()).hasSize(1);
-        assertThat(submissionWithoutAssessment.getBlocks().stream().findFirst()).isPresent().get().hasFieldOrPropertyWithValue("numberOfAffectedSubmissions",
-                numberOfBlocksTotally - 1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
@@ -487,8 +482,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         for (int i = 0; i < submissionCount; i++) {
             StudentParticipation studentParticipation = participations.next();
             // connect it with a student (!= tutor assessing it)
-            User user = database.getUserByLogin(TEST_PREFIX + "student" + (i % 2 + 1));
-            studentParticipation.setInitializationDate(ZonedDateTime.now());
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i % 2 + 1));
+            studentParticipation.setInitializationDate(now());
             studentParticipation.setParticipant(user);
             studentParticipationRepository.save(studentParticipation);
         }
@@ -507,13 +502,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getParticipationForNonTextExercise() throws Exception {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
+                textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                new ArrayList<>());
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", new ArrayList<>());
 
         final Participation participation = request.get("/api/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST,
                 Participation.class);
@@ -524,8 +519,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_assessorHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
@@ -537,13 +533,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now().minusDays(1), now().plusDays(1), now().plusDays(2), "png,pdf",
+                textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                new ArrayList<>());
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", new ArrayList<>());
 
         request.get("/api/text-editor/" + fileUploadSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, Participation.class);
     }
@@ -551,10 +547,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_hasTextBlocks() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         var textBlocks = textExerciseUtilService.generateTextBlocks(1);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        database.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
@@ -566,8 +563,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getDataForTextEditor_asOtherStudent() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
     }
 
@@ -575,7 +572,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getDataForTextEditor_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
-        Exam exam = database.addExamWithExerciseGroup(course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setStartDate(now().minusHours(2));
         exam.setEndDate(now().minusHours(1));
         exam.setVisibleDate(now().minusHours(3));
@@ -584,23 +581,24 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);
 
         examRepository.save(exam);
 
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getDataForTextEditor_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         StudentParticipation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
@@ -612,17 +610,32 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getDataForTextEditor_submissionWithoutResult() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_beforeAssessmentDueDate_noResult() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), now().plusDays(1));
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+
+        StudentParticipation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(participation.getResults()).isEmpty();
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
+    }
+
     private Result getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        database.addExampleSubmission(exampleSubmission);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
+        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
 
         Result result = request.getNullable("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
 
@@ -641,11 +654,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getExampleResultForTutor_wrongExerciseId() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
-        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
-        database.addExampleSubmission(exampleSubmission);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "instructor1");
+        final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        participationUtilService.addExampleSubmission(exampleSubmission);
         long randomId = 23454;
         Result result = request.get("/api/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, Result.class);
 
@@ -672,9 +685,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        database.addSampleFeedbackToResults(textSubmission.getLatestResult());
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        participationUtilService.addSampleFeedbackToResults(textSubmission.getLatestResult());
         request.postWithoutLocation("/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
                 expectedStatus, null);
     }
@@ -813,8 +826,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
 
         // setting up student submission
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         // ending exercise
         exerciseDueDatePassed();
 
@@ -851,8 +864,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
 
         // setting up student submission
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         // ending exercise
         exerciseDueDatePassed();
 
@@ -882,8 +895,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
 
         // setting up student submission
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         // ending exercise
         exerciseDueDatePassed();
 
@@ -913,8 +926,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
 
         // setting up student submission
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         // ending exercise
         exerciseDueDatePassed();
 
@@ -937,9 +950,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmitAssessment_withResultOver100Percent() throws Exception {
-        textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        textExercise = (TextExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(textExercise);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -951,9 +964,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1")
-                .reference(ModelFactory.generateTextBlock(0, 5, "test1").getId()));
+                .reference(TextExerciseFactory.generateTextBlock(0, 5, "test1").getId()));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2")
-                .reference(ModelFactory.generateTextBlock(0, 5, "test2").getId()));
+                .reference(TextExerciseFactory.generateTextBlock(0, 5, "test2").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is over 100% -> 105
@@ -963,7 +976,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(response.getScore()).isEqualTo(105);
 
         feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3")
-                .reference(ModelFactory.generateTextBlock(0, 5, "test3").getId()));
+                .reference(TextExerciseFactory.generateTextBlock(0, 5, "test3").getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
@@ -974,21 +987,21 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private void exerciseDueDatePassed() {
-        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(2));
+        exerciseUtilService.updateExerciseDueDate(textExercise.getId(), now().minusHours(2));
     }
 
     private void assessmentDueDatePassed() {
-        database.updateAssessmentDueDate(textExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), now().minusSeconds(10));
     }
 
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
-        textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
+        textSubmission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? now() : null);
         resultRepo.save(textSubmission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
         var path = "/api/participations/" + textSubmission.getParticipation().getId() + "/results/" + textSubmission.getLatestResult().getId() + "/text-assessment";
         var body = new TextAssessmentDTO(feedbacks);
         if (submit.equals("true")) {
@@ -1003,13 +1016,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAtheneEnabled() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
 
         var blocks = Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
                 new TextBlock().startIndex(36).endIndex(57).automatic());
-        database.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -1068,10 +1081,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @NotNull
     private List<TextSubmission> prepareTextSubmissionsWithFeedbackForAutomaticFeedback() {
-        TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
-        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("This is another Submission.", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
-        database.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
+        TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("This is another Submission.", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
         exerciseDueDatePassed();
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
@@ -1082,20 +1095,20 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         cluster.blocks(asList(textBlockSubmission1, textBlockSubmission2)).distanceMatrix(new double[][] { { 0.1, 0.1 }, { 0.1, 0.1 } });
 
-        textSubmission1 = database.addAndSaveTextBlocksToTextSubmission(
+        textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(
                 Set.of(textBlockSubmission1, new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission1);
 
-        textSubmission2 = database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
+        textSubmission2 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
 
         textClusterRepository.save(cluster);
 
         final Feedback feedback = new Feedback().detailText("Foo Bar.").credits(2d).reference(textBlockSubmission2.getId());
-        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1",
-                Collections.singletonList(feedback));
+        textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
+                TEST_PREFIX + "tutor1", Collections.singletonList(feedback));
 
         // refetch the database objects to avoid lazy exceptions
-        textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).get();
-        textSubmission2 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission2.getId()).get();
+        textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).orElseThrow();
+        textSubmission2 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission2.getId()).orElseThrow();
         return asList(textSubmission1, textSubmission2);
     }
 
@@ -1134,21 +1147,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTrackingTokenHeader() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
-        exerciseDueDatePassed();
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-
-        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters, new HttpHeaders(),
-                new String[] { "X-Athene-Tracking-Authorization" });
-
     }
 
     @Test
@@ -1270,17 +1268,17 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void multipleCorrectionRoundsForExam(AssessmentType assessmentType) throws Exception {
         // Setup exam with 2 correction rounds and a text exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
-        Exam exam = database.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
+        Exam exam = examUtilService.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.addExerciseGroup(exerciseGroup1);
-        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
-        exam.setStartDate(ZonedDateTime.now().minusHours(2));
-        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
         exam = examRepository.save(exam);
 
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-        TextExercise exercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup1);
         exercise.setAssessmentType(assessmentType);
         exercise = exerciseRepo.save(exercise);
         exerciseGroup1.addExercise(exercise);
@@ -1288,21 +1286,21 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // add student submission
         var studentParticipation = new StudentParticipation();
         studentParticipation.setExercise(exercise);
-        studentParticipation.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentParticipation = studentParticipationRepository.save(studentParticipation);
-        var submission = ModelFactory.generateTextSubmission("Text", Language.ENGLISH, true);
+        var submission = ParticipationFactory.generateTextSubmission("Text", Language.ENGLISH, true);
         submission.setParticipation(studentParticipation);
         submission = textSubmissionRepository.save(submission);
 
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
+        assertThat(exam.getEndDate()).isBefore(now());
         var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
         assertThat(optionalFetchedExercise).isPresent();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
 
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // check properties set
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
@@ -1311,7 +1309,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
         });
-        database.changeUser(TEST_PREFIX + "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         // request to manually assess latest submission (correction round: 0)
         params = new LinkedMultiValueMap<>();
@@ -1338,7 +1336,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> {
+        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> {
             feedback.setDetailText("Good work here");
         }).collect(Collectors.toCollection(ArrayList::new));
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -1375,12 +1373,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(1);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         // SECOND ROUND OF CORRECTION
 
-        database.changeUser(TEST_PREFIX + "tutor2");
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
@@ -1410,8 +1408,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         Feedback secondCorrectionFeedback = new Feedback();
         secondCorrectionFeedback.setDetailText("asfd");
@@ -1471,29 +1469,29 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @NotNull
     private List<TextSubmission> prepareTextSubmissionsWithFeedback() {
-        TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("This is first submission's first sentence.", Language.ENGLISH, true);
-        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("This is second submission's first sentence.", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
-        database.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
+        TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is first submission's first sentence.", Language.ENGLISH, true);
+        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("This is second submission's first sentence.", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
 
         final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(42).automatic();
         final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(43).automatic();
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
+        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
 
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D).reference(textBlock2.getId());
-        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-                List.of(feedback1));
-        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2", TEST_PREFIX + "tutor2",
-                List.of(feedback2));
+        textSubmission1 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", List.of(feedback1));
+        textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
+                TEST_PREFIX + "tutor2", List.of(feedback2));
 
         return asList(textSubmission1, textSubmission2);
     }
 
     @NotNull
     private FeedbackConflict prepareFeedbackConflict(TextSubmission textSubmission1, TextSubmission textSubmission2) {
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission1.getLatestResult().getFeedbacks().get(0),
+        FeedbackConflict feedbackConflict = ParticipationFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission1.getLatestResult().getFeedbacks().get(0),
                 textSubmission2.getLatestResult().getFeedbacks().get(0));
         feedbackConflictRepository.save(feedbackConflict);
 
@@ -1503,7 +1501,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
-                .reference(ModelFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
+                .reference(TextExerciseFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
@@ -1513,12 +1511,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testdeleteResult() throws Exception {
-        Course course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
+        Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
-        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));
-        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor2"));
+        exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"));
 
-        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.get(0);
         assertThat(submission.getResults()).hasSize(2);
         Result firstResult = submission.getResults().get(0);
@@ -1533,8 +1531,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFeedbackIdIsSetCorrectly() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -1544,8 +1542,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 TextSubmission.class, params);
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setTextBlocks(Set.of(ModelFactory.generateTextBlock(0, 15, "This is Part 1,"), ModelFactory.generateTextBlock(16, 35, " and this is Part 2."),
-                ModelFactory.generateTextBlock(36, 57, " There is also Part 3.")));
+        textAssessmentDTO.setTextBlocks(Set.of(TextExerciseFactory.generateTextBlock(0, 15, "This is Part 1,"),
+                TextExerciseFactory.generateTextBlock(16, 35, " and this is Part 2."), TextExerciseFactory.generateTextBlock(36, 57, " There is also Part 3.")));
 
         List<Feedback> feedbacks = new ArrayList<>();
         textAssessmentDTO.getTextBlocks()
@@ -1584,7 +1582,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL).detailText("nice submission 3").reference(ModelFactory.generateTextBlock(0, 15, "test3").getId()));
+        feedbacks.add(
+                new Feedback().credits(20.00).type(FeedbackType.MANUAL).detailText("nice submission 3").reference(TextExerciseFactory.generateTextBlock(0, 15, "test3").getId()));
         dto.setFeedbacks(feedbacks);
 
         // These two lines ensure the call count verification near the end of this test can spot the call

@@ -8,6 +8,7 @@ import { ContextInformation, PageType, PostContextFilter, RouteComponents } from
 import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 let pageType: PageType;
 
@@ -86,6 +87,28 @@ export class MockMetisService {
 
     getLinkForLecture(lectureId: string): string {
         return '/courses/' + metisCourse.id + '/lectures/' + lectureId;
+    }
+
+    getLinkForExam(examId: string): string {
+        return '/courses/' + metisCourse.id + '/exams/' + examId;
+    }
+
+    getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
+        const referenceId = channel?.subTypeReferenceId?.toString();
+        if (!referenceId) {
+            return undefined;
+        }
+
+        switch (channel?.subType) {
+            case ChannelSubType.EXERCISE:
+                return this.getLinkForExercise(referenceId);
+            case ChannelSubType.LECTURE:
+                return this.getLinkForLecture(referenceId);
+            case ChannelSubType.EXAM:
+                return this.getLinkForExam(referenceId);
+            default:
+                return undefined;
+        }
     }
 
     getContextInformation(post: Post): ContextInformation {

@@ -10,8 +10,6 @@
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
             "500": "Interner Serverfehler."
         },
-        "exerciseJsonNotValidOrFound": "Die JSON-Datei für die Aufgabendetails ist ungültig oder konnte nicht gefunden werden.",
-        "repositoriesInZipNotValid": "Die Zip-Datei enthält nicht das Vorlagenrepository, das Lösungsrepository und das Testrepository oder diese folgen nicht dem üblichen Namensschema.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
@@ -31,12 +29,12 @@
         "quizAlreadyOpenForPractice": "Das Quiz ist bereits zur Übung geöffnet.",
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
         "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
-        "noPrivacyStatementFile": "Es konnte keine Datenschutzerklärung gefunden werden.",
-        "emptyPrivacyStatement": "Die Datenschutzerklärung darf nicht leer sein.",
+        "noLegalDocumentFile": "Das angeforderte Dokument konnte nicht gefunden werden.",
+        "emptyLegalDocument": "Das Impressum oder die Datenschutzerklärung darf nicht leer sein.",
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
-        "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
+        "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Einreichungsfrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
         "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
@@ -78,7 +76,10 @@
                 "description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang! Es sind maximal {{maxLength}} Zeichen erlaubt."
             },
             "testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
-            "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann."
+            "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann.",
+            "presentations": {
+                "maxNumberOfPresentationsExceeded": "{{name}} hielt bereits die maximale Anzahl von {{presentationsNumber}} Präsentation/en."
+            }
         },
         "idNull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",

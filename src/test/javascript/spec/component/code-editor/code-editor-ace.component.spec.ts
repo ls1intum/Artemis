@@ -16,8 +16,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -28,8 +27,14 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, NgbDropdownMocksModule],
-            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockDirective(NgModel)],
+            imports: [ArtemisTestModule, AceEditorModule],
+            declarations: [
+                CodeEditorAceComponent,
+                TranslatePipeMock,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(CodeEditorHeaderComponent),
+                MockDirective(NgModel),
+            ],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -216,32 +221,10 @@ describe('CodeEditorAceComponent', () => {
         expect(observerDomSpy).toHaveBeenCalledOnce();
     });
 
-    it('should only allow tab sizes between 1 and the maximum size', () => {
-        comp.tabSize = 4;
-        comp.validateTabSize();
-        expect(comp.tabSize).toBe(4);
-
-        comp.tabSize = -1;
-        comp.validateTabSize();
-        expect(comp.tabSize).toBe(1);
-
-        comp.tabSize = MAX_TAB_SIZE + 10;
-        comp.validateTabSize();
-        expect(comp.tabSize).toBe(MAX_TAB_SIZE);
-    });
-
-    it('should only change the displayed tab width if it is valid', () => {
+    it('should change the displayed tab width', () => {
         const editorTabSize = () => comp.editor.getEditor().getSession().getTabSize();
 
-        comp.tabSize = 5;
-        fixture.detectChanges();
-        expect(editorTabSize()).toBe(5);
-
-        // invalid values either too small or too big should be ignored
-        comp.tabSize = -1;
-        fixture.detectChanges();
-        expect(editorTabSize()).toBe(5);
-        comp.tabSize = MAX_TAB_SIZE + 10;
+        comp.updateTabSize(5);
         fixture.detectChanges();
         expect(editorTabSize()).toBe(5);
 
