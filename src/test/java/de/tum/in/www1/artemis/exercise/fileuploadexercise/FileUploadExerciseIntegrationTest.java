@@ -371,6 +371,19 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteFileUploadExerciseWithChannel() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(fileUploadExercise);
+
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+
+        Optional<Channel> exerciseChannelAfter = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfter).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteFileUploadExercise_asStudent() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
