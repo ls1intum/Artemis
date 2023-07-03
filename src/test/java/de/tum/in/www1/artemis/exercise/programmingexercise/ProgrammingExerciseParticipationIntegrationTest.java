@@ -254,6 +254,30 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetLatestResultWithFeedbacksForStudentParticipationWithTemplateAndSolutionParticipationsAsTutor(boolean withTemplateAndSolutionParticipations) throws Exception {
+        final var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
+        final var participation = (ProgrammingExerciseStudentParticipation) result.getParticipation();
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("withTemplateAndSolutionParticipations", String.valueOf(withTemplateAndSolutionParticipations));
+
+        final var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class, parameters);
+        final var requestedExercise = (ProgrammingExercise) requestedResult.getParticipation().getExercise();
+
+        assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
+        if (withTemplateAndSolutionParticipations) {
+            assertThat(requestedExercise.getSolutionParticipation()).isNotNull();
+            assertThat(requestedExercise.getTemplateParticipation()).isNotNull();
+        }
+        else {
+            assertThat(requestedExercise.getSolutionParticipation()).isNull();
+            assertThat(requestedExercise.getTemplateParticipation()).isNull();
+        }
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
