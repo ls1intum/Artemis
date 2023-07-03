@@ -36,6 +36,9 @@ public class Lecture extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    @Column(name = "visible_date")
+    private ZonedDateTime visibleDate;
+
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
@@ -91,6 +94,14 @@ public class Lecture extends DomainObject {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public ZonedDateTime getVisibleDate() {
+        return visibleDate;
+    }
+
+    public void setVisibleDate(ZonedDateTime visibleDate) {
+        this.visibleDate = visibleDate;
     }
 
     public Set<Attachment> getAttachments() {
