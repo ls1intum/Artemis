@@ -1,18 +1,27 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { TableColumn } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
+import { ArtemisTestModule } from '../test.module';
+import { TestBed } from '@angular/core/testing';
 
 describe('LearningPathPagingService', () => {
     let learningPathPagingService: LearningPathPagingService;
-    let httpService: MockHttpService;
+    let httpService: HttpClient;
     let getStub: jest.SpyInstance;
 
     beforeEach(() => {
-        httpService = new MockHttpService();
-        learningPathPagingService = new LearningPathPagingService(httpService);
-        getStub = jest.spyOn(httpService, 'get');
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            providers: [{ provide: HttpClient, useClass: MockHttpService }],
+        })
+            .compileComponents()
+            .then(() => {
+                httpService = TestBed.inject(HttpClient);
+                learningPathPagingService = new LearningPathPagingService(httpService);
+                getStub = jest.spyOn(httpService, 'get');
+            });
     });
 
     afterEach(() => {
