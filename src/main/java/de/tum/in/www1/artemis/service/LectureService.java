@@ -118,7 +118,9 @@ public class LectureService {
      */
     public void delete(Lecture lecture) {
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
-        conversationService.deleteConversation(lectureChannel);
+        if (lectureChannel != null) {
+            conversationService.deleteConversation(lectureChannel);
+        }
         lectureRepository.deleteById(lecture.getId());
     }
 
