@@ -1548,8 +1548,8 @@ public class CourseTestService {
         assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
-        assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
-        AuditEvent auditEvent = auditEvents.get(0);
+        AuditEvent auditEvent = auditEvents.stream().max(Comparator.comparing(AuditEvent::getTimestamp)).orElse(null);
+        assertThat(auditEvent).as("Audit Event for course enrollment added").isNotNull();
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);

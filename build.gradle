@@ -99,16 +99,6 @@ modernizer {
 
 test {
     useJUnitPlatform()
-    systemProperties([
-        // Enables junit5 parallel test execution. Tests are run on one JVM instance.
-        'junit.jupiter.execution.parallel.enabled': 'true',
-
-        // Parallel execution of test classes.
-        'junit.jupiter.execution.parallel.mode.default': 'concurrent',
-
-        // Parallel execution of methods within test classes.
-        'junit.jupiter.execution.parallel.mode.classes.default': 'concurrent',
-    ])
     exclude "**/*IT*", "**/*IntTest*"
     testLogging {
         events "FAILED", "SKIPPED"
