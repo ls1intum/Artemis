@@ -18,8 +18,6 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -39,10 +37,6 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ParticipationRepository participationRepository;
 
-    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -60,15 +54,11 @@ public class ProgrammingExerciseParticipationResource {
     private final ResultService resultService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService submissionService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, ResultService resultService,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
-        this.solutionParticipationRepository = solutionParticipationRepository;
-        this.templateParticipationRepository = templateParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionService = submissionService;
