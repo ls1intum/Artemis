@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_
 import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -159,15 +158,17 @@ public class Feedback extends DomainObject {
     public void setDetailText(@Nullable final String detailText) {
         if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
             this.detailText = detailText;
-            setLongFeedbackText(null);
             setHasLongFeedbackText(false);
+            if (this.longFeedbackText != null) {
+                this.longFeedbackText.clear();
+            }
         }
         else {
             final LongFeedbackText longFeedback = buildLongFeedback(detailText);
 
             this.detailText = trimDetailText(detailText);
-            setLongFeedbackText(Set.of(longFeedback));
             setHasLongFeedbackText(true);
+            setLongFeedback(longFeedback);
         }
     }
 
@@ -179,8 +180,6 @@ public class Feedback extends DomainObject {
     private LongFeedbackText buildLongFeedback(final String detailText) {
         final LongFeedbackText longFeedback = new LongFeedbackText();
         longFeedback.setText(StringUtils.truncate(detailText, LONG_FEEDBACK_MAX_LENGTH));
-        longFeedback.setFeedback(this);
-
         return longFeedback;
     }
 
@@ -202,6 +201,17 @@ public class Feedback extends DomainObject {
         return Optional.ofNullable(getLongFeedbackText()).flatMap(feedbacks -> feedbacks.stream().findAny());
     }
 
+    private void setLongFeedback(final LongFeedbackText longFeedbackText) {
+        if (this.longFeedbackText == null) {
+            this.longFeedbackText = new HashSet<>();
+        }
+        else {
+            this.longFeedbackText.clear();
+        }
+        longFeedbackText.setFeedback(this);
+        this.longFeedbackText.add(longFeedbackText);
+    }
+
     /**
      * Only for JPA, do not use directly. Use {@link #getLongFeedback()} instead.
      *
@@ -217,16 +227,8 @@ public class Feedback extends DomainObject {
      *
      * @param longFeedbackText The long feedback text this feedback is linked to.
      */
-    public void setLongFeedbackText(Set<LongFeedbackText> longFeedbackText) {
-        if (longFeedbackText == null || longFeedbackText.isEmpty()) {
-            this.longFeedbackText = null;
-        }
-        else if (longFeedbackText.size() == 1) {
-            this.longFeedbackText = longFeedbackText;
-        }
-        else {
-            this.longFeedbackText = longFeedbackText.stream().findAny().stream().collect(Collectors.toUnmodifiableSet());
-        }
+    public void setLongFeedbackText(final Set<LongFeedbackText> longFeedbackText) {
+        this.longFeedbackText = longFeedbackText;
     }
 
     public String getReference() {
@@ -446,16 +448,10 @@ public class Feedback extends DomainObject {
 
         feedback.setHasLongFeedbackText(getHasLongFeedbackText());
         if (feedback.getHasLongFeedbackText()) {
-            feedback.setLongFeedbackText(copyLongFeedbacks(feedback));
+            getLongFeedbackText().stream().findAny().map(LongFeedbackText::copy).ifPresent(feedback::setLongFeedback);
         }
 
         return feedback;
-    }
-
-    private Set<LongFeedbackText> copyLongFeedbacks(final Feedback attachedToFeedback) {
-        final var copiedLongFeedback = getLongFeedbackText().stream().map(LongFeedbackText::copy).collect(Collectors.toUnmodifiableSet());
-        copiedLongFeedback.forEach(longFeedback -> longFeedback.setFeedback(attachedToFeedback));
-        return copiedLongFeedback;
     }
 
     /**

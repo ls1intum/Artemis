@@ -17,11 +17,11 @@ public interface LongFeedbackTextRepository extends JpaRepository<LongFeedbackTe
                 LEFT JOIN FETCH feedback.result result
                 LEFT JOIN FETCH result.participation
             WHERE
-                longFeedback.id = :id
+                longFeedback.feedback.id = :feedbackId
             """)
-    Optional<LongFeedbackText> findWithFeedbackAndResultAndParticipationById(final Long id);
+    Optional<LongFeedbackText> findWithFeedbackAndResultAndParticipationByFeedbackId(final Long feedbackId);
 
-    default LongFeedbackText findByIdWithFeedbackAndResultAndParticipationElseThrow(final Long id) {
-        return findWithFeedbackAndResultAndParticipationById(id).orElseThrow(() -> new EntityNotFoundException("long feedback text", id));
+    default LongFeedbackText findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(final Long feedbackId) {
+        return findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId).orElseThrow(() -> new EntityNotFoundException("long feedback text", feedbackId));
     }
 }
