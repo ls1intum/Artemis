@@ -127,9 +127,9 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findByIdWithCompetenciesElseThrow(exerciseId);
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
-        Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
-        if (channel != null) {
-            conversationService.deleteConversation(channel);
+        Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
+        if (exreciseChannel != null) {
+            conversationService.deleteConversation(exreciseChannel);
         }
 
         if (exercise instanceof ModelingExercise modelingExercise) {
