@@ -14,9 +14,7 @@ import java.util.Set;
 
 import javax.validation.*;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +47,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -382,13 +381,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow()
-                .getConversationParticipants().stream()
-                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
-                .getUnreadMessagesCount();
-        await().until(() -> unreadMessages == 0L);
-        assertThat(unreadMessages).isZero();
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow().getConversationParticipants()
+                    .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                    .getUnreadMessagesCount()).isZero();
+        });
     }
 
     @Test
