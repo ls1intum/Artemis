@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for data exports
@@ -171,7 +173,7 @@ public class DataExportResource {
      * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
      * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    private boolean canDownloadSpecificDataExport(long dataExportId) {
+    private boolean canDownloadSpecificDataExport(long dataExportId) throws EntityNotFoundException, AccessForbiddenException {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
         return dataExport.getDataExportState().isDownloadable();
