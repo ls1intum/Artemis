@@ -65,13 +65,15 @@ public class LearningPathService {
             lpToCreate.getCompetencies().addAll(course.getCompetencies());
             var persistedLearningPath = learningPathRepository.save(lpToCreate);
             log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
+            updateLearningPathProgress(persistedLearningPath);
         }
     }
 
     /**
      * Search for all learning paths fitting a {@link PageableSearchDTO search query}. The result is paged.
      *
-     * @param search The search query defining the search term and the size of the returned page
+     * @param search the search query defining the search term and the size of the returned page
+     * @param course the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
     public SearchResultPageDTO<LearningPath> getAllOfCourseOnPageWithSize(final PageableSearchDTO<String> search, final Course course) {
@@ -114,11 +116,22 @@ public class LearningPathService {
         this.updateLearningPathProgress(learningPath);
     }
 
+    /**
+     * Updates progress of the learning path specified by course and user id.
+     *
+     * @param courseId id of the course the learning path is linked to
+     * @param userId   id of the user the learning path is linked to
+     */
     public void updateLearningPathProgress(final long courseId, final long userId) {
         final var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
         learningPath.ifPresent(this::updateLearningPathProgress);
     }
 
+    /**
+     * Updates progress of the given learning path. Competencies of the learning path must be loaded eagerly.
+     *
+     * @param learningPath learning path that is updated
+     */
     private void updateLearningPathProgress(final LearningPath learningPath) {
         final var userId = learningPath.getUser().getId();
         final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
@@ -126,7 +139,8 @@ public class LearningPathService {
 
         // TODO: consider optional competencies
         final var completed = (float) competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
-        learningPath.setProgress(Math.round(completed * 100 / (float) learningPath.getCompetencies().size()));
+        final var numberOfCompetencies = learningPath.getCompetencies().size();
+        learningPath.setProgress(numberOfCompetencies == 0 ? 0 : Math.round(completed * 100 / (float) numberOfCompetencies));
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
     }
