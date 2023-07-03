@@ -153,6 +153,7 @@
                     <th><span jhiTranslate="artemisApp.competency.title">Title</span></th>
                     <th width="300"><span jhiTranslate="artemisApp.competency.description">Description</span></th>
                     <th><span jhiTranslate="artemisApp.competency.taxonomy">Taxonomy</span></th>
+                    <th><span jhiTranslate="artemisApp.competency.softDueDate">Due Date</span></th>
                     <th class="d-none d-lg-table-cell"><span jhiTranslate="artemisApp.competency.masteredStudents">Mastered Students</span></th>
                     <th><span jhiTranslate="artemisApp.competency.optional">Optional</span></th>
                     <th></th>
@@ -172,6 +173,9 @@
                             <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
                             {{ getIconTooltip(competency.taxonomy) | artemisTranslate }}
                         </div>
+                    </td>
+                    <td>
+                        {{ competency.softDueDate | artemisDate }}
                     </td>
                     <td class="d-none d-lg-table-cell">
                         <ngb-progressbar
