@@ -1145,11 +1145,8 @@ public class ExamService {
 
             // Attach the path to the archive to the exam and save it in the database
             if (archivedExamPath.isPresent()) {
-                log.debug("------------------------ STORE EXAM START");
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
-                log.debug("------------------------ SET EXAM ARCHIVE PATH TO " + archivedExamPath.get().getFileName().toString());
                 examRepository.saveAndFlush(exam);
-                log.debug("------------------------ STORE EXAM COMPLETE");
             }
             else {
                 groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
