@@ -122,7 +122,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
     private loadData() {
         this.isLoading = true;
 
-        this.courseSub = this.courseManagementService.find(this.courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.findWithLearningPaths(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
 

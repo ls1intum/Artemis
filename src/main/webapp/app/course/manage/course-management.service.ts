@@ -134,6 +134,16 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
+    /**
+     * finds a course with the given id and eagerly loaded learning pahts
+     * @param courseId the id of the course to be found
+     */
+    findWithLearningPaths(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-learning-paths`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
     // TODO: separate course overview and course management REST API calls in a better way
     /**
      * finds all courses using a GET request
