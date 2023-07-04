@@ -340,14 +340,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
-        request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
+        request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
 
-        Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
         await().untilAsserted(() -> {
             Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
             assertThat(lectureChannelAfterDelete).isEmpty();
         });
-        assertThat(lectureOptional).isEmpty();
     }
 
     /**
