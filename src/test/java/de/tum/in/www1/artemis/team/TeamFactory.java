@@ -61,6 +61,21 @@ public class TeamFactory {
     /**
      * Generate teams
      *
+     * @param exercise        exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix     prefix that will be added in front of every student's login
+     * @param numberOfTeams   amount of teams to generate
+     * @param owner           owner of the teams generally a tutor
+     * @param creatorLogin    login of user that created the teams
+     * @return teams that were generated
+     */
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
+        return generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, creatorLogin, "R");
+    }
+
+    /**
+     * Generate teams
+     *
      * @param exercise           exercise of the teams
      * @param shortNamePrefix    prefix that will be added in front of every team's short name
      * @param loginPrefix        prefix that will be added in front of every student's login
@@ -76,6 +91,28 @@ public class TeamFactory {
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
             teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
+        }
+        return teams;
+    }
+
+    /**
+     * Generate teams
+     *
+     * @param exercise           exercise of the teams
+     * @param shortNamePrefix    prefix that will be added in front of every team's short name
+     * @param loginPrefix        prefix that will be added in front of every student's login
+     * @param numberOfTeams      amount of teams to generate
+     * @param owner              owner of the teams generally a tutor
+     * @param creatorLogin       login of user that created the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @param teamSize           size of each individual team
+     * @return teams that were generated
+     */
+    public static List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner,
+            String creatorLogin, String registrationPrefix, int teamSize) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 1; i <= numberOfTeams; i++) {
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, teamSize, owner, creatorLogin, registrationPrefix + i));
         }
         return teams;
     }
