@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -313,13 +314,7 @@ public class ExerciseUtilService {
     }
 
     public Channel addChannelToExercise(Exercise exercise) {
-        Channel channel = new Channel();
-        channel.setName("test");
-        channel.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+        Channel channel = ConversationFactory.generateChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
         channel.setExercise(exercise);
         return channelRepository.save(channel);
     }

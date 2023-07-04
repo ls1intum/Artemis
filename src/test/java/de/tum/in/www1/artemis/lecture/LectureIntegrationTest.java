@@ -329,11 +329,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
-        Channel lectureChannelBeforeDelete = channelRepository.findChannelByLectureId(lecture1.getId());
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
+
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
         await().untilAsserted(() -> {
-            Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannelBeforeDelete.getId());
+            Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
             assertThat(lectureChannelAfterDelete).isEmpty();
         });
         assertThat(lectureOptional).isEmpty();
