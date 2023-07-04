@@ -110,6 +110,9 @@ def get_client_line_coverage(username, password, build_id, file_name):
             line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
             line_coverage = line_coverage_strong.text.replace("%", "").strip()
         logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+    elif response.status_code != 404:
+        logging.error(f"Error accessing {file_report_url} with status code {response.status_code}")
+        sys.exit(1)
 
     return file_name, file_report_url, line_coverage
 
