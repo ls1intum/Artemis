@@ -12,9 +12,8 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 @Component({
@@ -35,8 +34,6 @@ export class LectureUpdateComponent implements OnInit {
     isShowingWizardMode: boolean;
 
     courses: Course[];
-    startDate: string;
-    endDate: string;
 
     domainCommandsDescription = [new KatexCommand()];
     file: File;
