@@ -355,4 +355,63 @@ describe('ExerciseChatWidgetComponent', () => {
         // then
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });
+
+    it('should call resetScreen and update localStorage for maximizeScreen', () => {
+        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
+
+        component.maximizeScreen();
+
+        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(3);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', component.fullWidth);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', component.fullHeight);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'true');
+    });
+
+    it('should call resetScreen and update localStorage for minimizeScreen', () => {
+        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
+
+        component.minimizeScreen();
+
+        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(6);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', `${component.initialWidth}px`);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', `${component.initialHeight}px`);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'false');
+    });
+
+    it('should call onSend if Enter key is pressed without Shift key', () => {
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
+        jest.spyOn(component, 'onSend');
+
+        jest.spyOn(event, 'preventDefault');
+
+        component.handleKey(event);
+
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(component.onSend).toHaveBeenCalled();
+    });
+
+    it('should remove selected text and move cursor position if Enter key is pressed with Shift key', () => {
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: true });
+        const textAreaElement = document.createElement('textarea');
+        const selectionStart = 6;
+        const selectionEnd = 10;
+        textAreaElement.value = 'Sample text';
+        textAreaElement.selectionStart = selectionStart;
+        textAreaElement.selectionEnd = selectionEnd;
+        jest.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
+
+        component.handleKey(event);
+
+        const expectedValue = 'Samplet';
+        const expectedSelectionStart = selectionStart + 1;
+        const expectedSelectionEnd = selectionStart + 1;
+
+        // Trigger the appropriate input events to simulate user input
+        const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+        textAreaElement.dispatchEvent(inputEvent);
+
+        expect(textAreaElement.value).toBe(expectedValue);
+        expect(textAreaElement.selectionStart).toBe(expectedSelectionStart);
+        expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
+    });
 });

@@ -121,6 +121,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
+        this.closeChat();
     }
 
     animateDots() {

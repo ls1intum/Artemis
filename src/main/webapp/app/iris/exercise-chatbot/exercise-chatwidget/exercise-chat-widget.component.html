@@ -7,7 +7,7 @@
         class="chat-widget"
         #chatWidget
         ngDraggable
-        [handle]="chatBody"
+        [handle]="client"
         ngResizable
         rzHandles="all"
         [rzMinWidth]="250"
@@ -16,7 +16,7 @@
         [rzMaxHeight]="700"
     >
         <!-- client -->
-        <div class="client">
+        <div class="client" #client>
             <div class="chat-header">
                 <h3 class="header-start">
                     <fa-icon size="xs" [icon]="faRobot" style="padding-right: 5px"></fa-icon>
