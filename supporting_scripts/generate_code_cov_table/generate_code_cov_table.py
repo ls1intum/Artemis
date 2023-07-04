@@ -125,18 +125,22 @@ def get_server_line_coverage(username, password, build_id, file_name):
     report_name = f"{package}/{class_name}"
 
     file_report_url = f"{report_url}/{report_name}.html"
-    logging.debug(f"GET {file_report_url}")
     response = requests.get(file_report_url, auth=(username, password))
+    logging.debug(f"GET {file_report_url} -> {response.status_code}")
 
-    soup = BeautifulSoup(response.content, "html.parser")
     line_coverage = None
-    tfoot = soup.find("tfoot")
-    if tfoot:
-        ctr2_tds = tfoot.find_all("td", class_="ctr2")
-        if ctr2_tds and len(ctr2_tds) > 0:
-            line_coverage = ctr2_tds[0].text.replace("%", "").strip()
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
+        tfoot = soup.find("tfoot")
+        if tfoot:
+            ctr2_tds = tfoot.find_all("td", class_="ctr2")
+            if ctr2_tds and len(ctr2_tds) > 0:
+                line_coverage = ctr2_tds[0].text.replace("%", "").strip()
+        logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
+    elif response.status_code != 404:
+        logging.error(f"Error accessing {file_report_url} with status code {response.status_code}")
+        sys.exit(1)
 
-    logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
 
 
