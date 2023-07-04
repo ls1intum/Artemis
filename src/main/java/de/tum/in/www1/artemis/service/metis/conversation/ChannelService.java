@@ -217,10 +217,13 @@ public class ChannelService {
         return usersToRegister;
     }
 
-    @Async
-    public void deleteChannelAsynchronously(Channel channel) {
+    /**
+     * Deletes the channel if it exists
+     *
+     * @param channel the channel to delete
+     */
+    public void deleteChannel(Channel channel) {
         if (channel != null) {
-            SecurityUtils.setAuthorizationObject();
             conversationService.deleteConversation(channel);
         }
     }
