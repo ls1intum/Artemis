@@ -194,14 +194,18 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     onDatesValuesChanged() {
-        if (this.lecture.startDate === undefined || this.lecture.endDate === undefined) {
-            return;
+        const startDate = this.lecture.startDate;
+        const endDate = this.lecture.endDate;
+        const visibleDate = this.lecture.visibleDate;
+
+        // Prevent endDate from being before startDate, if both dates are set
+        if (endDate && startDate?.isAfter(endDate)) {
+            this.lecture.endDate = startDate.clone();
         }
 
-        if (this.lecture.startDate.isSameOrBefore(this.lecture.endDate)) {
-            return;
+        // Prevent visibleDate from being after startDate, if both dates are set
+        if (visibleDate && startDate?.isBefore(visibleDate)) {
+            this.lecture.visibleDate = startDate.clone();
         }
-
-        this.lecture.endDate = this.lecture.startDate;
     }
 }
