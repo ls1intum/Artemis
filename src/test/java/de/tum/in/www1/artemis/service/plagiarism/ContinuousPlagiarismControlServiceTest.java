@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -65,6 +65,6 @@ class ContinuousPlagiarismControlServiceTest {
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
 
         // then
-        assertDoesNotThrow(service::executeChecks);
+        assertThatNoException().isThrownBy(service::executeChecks);
     }
 }
