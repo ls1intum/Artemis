@@ -342,10 +342,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
 
-        await().untilAsserted(() -> {
-            Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
-            assertThat(lectureChannelAfterDelete).isEmpty();
-        });
+        Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
+        assertThat(lectureChannelAfterDelete).isEmpty();
     }
 
     /**

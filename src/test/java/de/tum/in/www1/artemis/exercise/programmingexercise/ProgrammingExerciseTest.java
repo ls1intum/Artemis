@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -251,9 +250,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
 
-        await().untilAsserted(() -> {
-            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
-            assertThat(exerciseChannelAfterDelete).isEmpty();
-        });
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 }

@@ -383,10 +383,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
 
-        await().untilAsserted(() -> {
-            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
-            assertThat(exerciseChannelAfterDelete).isEmpty();
-        });
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 
     @Test

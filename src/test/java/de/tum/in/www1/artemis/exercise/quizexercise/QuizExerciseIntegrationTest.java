@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
-import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -473,10 +472,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
 
-        await().untilAsserted(() -> {
-            Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
-            assertThat(exerciseChannelAfterDelete).isEmpty();
-        });
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
