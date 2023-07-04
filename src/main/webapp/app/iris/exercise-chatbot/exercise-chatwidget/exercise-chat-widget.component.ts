@@ -1,5 +1,5 @@
 import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -53,6 +53,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
     widgetHeight = localStorage.getItem('widgetHeight') || `${this.initialHeight}px`;
     public ButtonType = ButtonType;
+    private navigationSubscription: Subscription;
 
     constructor(
         private dialog: MatDialog,
@@ -62,8 +63,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         @Inject(MAT_DIALOG_DATA) public data: any,
         private httpMessageService: IrisHttpMessageService,
         private overlay: Overlay,
+        private router: Router,
     ) {
         this.stateStore = data.stateStore;
+        this.navigationSubscription = this.router.events.subscribe((event) => {
+            if (event instanceof NavigationStart) {
+                this.dialog.closeAll();
+            }
+        });
     }
 
     // Icons
@@ -121,7 +128,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
-        this.closeChat();
     }
 
     animateDots() {
