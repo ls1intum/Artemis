@@ -570,15 +570,18 @@ public class AuthorizationCheckService {
      *
      * @param lecture the lecture that needs to be checked
      * @param user    the user whose permissions should be checked
-     * @return true, if user is allowed to see this lecture, otherwise false
      */
-    public boolean isAllowedToSeeLecture(@NotNull Lecture lecture, @Nullable User user) {
+    public void checkIsAllowedToSeeLectureElseThrow(@NotNull Lecture lecture, @Nullable User user) {
         user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
-            return true;
+            return;
         }
         Course course = lecture.getCourse();
-        return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents());
+        if (isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents())) {
+            return;
+        }
+
+        throw new AccessForbiddenException();
     }
 
     /**

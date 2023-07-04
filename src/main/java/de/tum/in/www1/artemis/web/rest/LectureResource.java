@@ -208,11 +208,14 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {
             lecture.setChannelName(lectureChannel.getName());
         }
-        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+
         return ResponseEntity.ok(lecture);
     }
 
@@ -268,6 +271,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         lecture = filterLectureContentForUser(lecture, user);
 
@@ -289,6 +293,7 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -306,8 +311,9 @@ public class LectureResource {
     @GetMapping("/lectures/{lectureId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
-        final var title = lectureRepository.getLectureTitle(lectureId);
-        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+        return ResponseEntity.ok(lecture.getTitle());
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
