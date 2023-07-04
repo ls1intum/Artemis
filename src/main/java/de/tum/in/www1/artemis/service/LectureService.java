@@ -73,9 +73,13 @@ public class LectureService {
      * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
+    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
+            if (authCheckService.isOnlyStudentInCourse(lecture.getCourse(), user) && !lecture.isVisibleToStudents()) {
+                continue;
+            }
+
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
         }
         return lecturesWithFilteredAttachments;
