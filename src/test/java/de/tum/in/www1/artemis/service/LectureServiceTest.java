@@ -50,6 +50,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     private Lecture lecture;
 
+    private Lecture hiddenLecture;
+
     private User student;
 
     private User editor;
@@ -66,6 +68,14 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
+        hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
+
+        // Set one lecture only visible in the future for filtering tests
+        ZonedDateTime future = ZonedDateTime.now().plusDays(3);
+        hiddenLecture.setVisibleDate(future);
+        hiddenLecture.setStartDate(future.plusDays(1));
+        hiddenLecture.setEndDate(future.plusWeeks(1));
+        lectureRepository.save(hiddenLecture);
 
         // Add a custom attachment for filtering tests
         testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
@@ -84,6 +94,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
+        // Ensure that the hidden lecture is not filtered out
+        assertThat(testLectures.size()).isEqualTo(2);
     }
 
     @Test
@@ -96,6 +108,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
         // Ensure that the attachment with future release date was filtered
         assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
+        // Ensure that hidden lecture is filtered out for students
+        assertThat(testLectures.size()).isEqualTo(1);
     }
 
     @Test
