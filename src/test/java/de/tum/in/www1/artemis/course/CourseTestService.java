@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
+import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
@@ -211,6 +212,9 @@ public class CourseTestService {
 
     @Autowired
     private TeamUtilService teamUtilService;
+
+    @Autowired
+    private LearningPathUtilService learningPathUtilService;
 
     private static final int numberOfStudents = 8;
 
@@ -3133,5 +3137,27 @@ public class CourseTestService {
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+    }
+
+    // Test
+    public void testFindWithLearningPaths_AsInstructor() throws Exception {
+        String testSuffix = "findwithlearningpaths";
+        adjustUserGroupsToCustomGroups(testSuffix);
+
+        var course = courseUtilService.createCourse();
+        adjustCourseGroups(course, testSuffix);
+        course = courseRepo.save(course);
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+
+        final var result = request.get("/api/courses/" + course.getId() + "/with-learning-paths", HttpStatus.OK, Course.class);
+
+        assertThat(result.getLearningPathsEnabled()).isTrue();
+        assertThat(result.getLearningPaths().size()).as("all learning paths are returned").isEqualTo(8);
+        final var anyLearningPath = result.getLearningPaths().stream().findAny().orElseThrow();
+        assertThat(anyLearningPath.getUser()).isNotNull();
+        final var student = anyLearningPath.getUser();
+        assertThat(student.getLogin()).as("associated student has login").isNotEmpty();
+        assertThat(student.getFirstName()).as("associated student has first name").isNotEmpty();
+        assertThat(student.getLastName()).as("associated student has last name").isNotEmpty();
     }
 }

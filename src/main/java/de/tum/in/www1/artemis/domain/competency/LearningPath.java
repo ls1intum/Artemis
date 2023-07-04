@@ -8,7 +8,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -25,7 +24,6 @@ public class LearningPath extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnore
     private User user;
 
     @ManyToOne
@@ -85,7 +83,7 @@ public class LearningPath extends DomainObject {
 
     public enum LearningPathSearchColumn {
 
-        ID("id"), STUDENT_LOGIN("student.login");
+        ID("id"), USER_LOGIN("user.login"), USER_NAME("user.lastName"), PROGRESS("progress");
 
         private final String mappedColumnName;
 

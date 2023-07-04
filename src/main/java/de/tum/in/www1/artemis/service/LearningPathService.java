@@ -79,7 +79,7 @@ public class LearningPathService {
     public SearchResultPageDTO<LearningPath> getAllOfCourseOnPageWithSize(final PageableSearchDTO<String> search, final Course course) {
         final var pageable = PageUtil.createLearningPathPageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginInCourse(searchTerm, course.getId(), pageable);
+        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
         return new SearchResultPageDTO<>(learningPathPage.getContent(), learningPathPage.getTotalPages());
     }
 

@@ -39,7 +39,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         page: 1,
         pageSize: 50,
         searchTerm: '',
-        sortingOrder: SortingOrder.ASCENDING,
+        sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
     };
     content: SearchResult<LearningPath>;
@@ -111,6 +111,8 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.content = { resultsOnPage: [], numberOfPages: 0 };
+
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
@@ -124,16 +126,15 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
 
         this.courseSub = this.courseManagementService.findWithLearningPaths(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
+            console.log(this.course);
+
+            if (this.course.learningPathsEnabled) {
+                this.performSearch(this.sort, 0);
+                this.performSearch(this.search, 300);
+            }
+
+            this.isLoading = false;
         });
-
-        if (this.course?.learningPathEnabled) {
-            this.content = { resultsOnPage: [], numberOfPages: 0 };
-
-            this.performSearch(this.sort, 0);
-            this.performSearch(this.search, 300);
-        }
-
-        this.isLoading = false;
     }
 
     /**

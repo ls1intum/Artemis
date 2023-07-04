@@ -918,4 +918,10 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testEditCourseRemoveExistingIcon() throws Exception {
         courseTestService.testEditCourseRemoveExistingIcon();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindWithLearningPaths_AsInstructor() throws Exception {
+        courseTestService.testFindWithLearningPaths_AsInstructor();
+    }
 }

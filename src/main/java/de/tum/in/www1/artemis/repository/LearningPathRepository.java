@@ -40,9 +40,9 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     @Query("""
             SELECT lp
             FROM LearningPath lp
-            WHERE (lp.course.id = :courseId) AND (lp.user.login LIKE %:partialLogin%)
+            WHERE (lp.course.id = :courseId) AND (lp.user.login LIKE %:searchTerm% OR lp.user.firstName LIKE %:searchTerm% OR lp.user.lastName LIKE %:searchTerm%)
             """)
-    Page<LearningPath> findByLoginInCourse(@Param("partialLogin") String partialLogin, @Param("courseId") long courseId, Pageable pageable);
+    Page<LearningPath> findByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesById(long learningPathId);
