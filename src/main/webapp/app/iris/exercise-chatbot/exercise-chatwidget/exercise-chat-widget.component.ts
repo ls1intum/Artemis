@@ -40,6 +40,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     unreadMessageIndex: number;
     error = '';
     dots = 1;
+    isInitializing = false;
 
     userAccepted = false;
     isScrolledToBottom = true;
@@ -92,6 +93,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }
         });
         this.animateDots();
+        setTimeout(() => {
+            this.isInitializing = true;
+        }, 50);
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
@@ -99,6 +103,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
+        setTimeout(() => {
+            this.isInitializing = false;
+        }, 50);
     }
 
     scrollToBottom(behavior: ScrollBehavior) {

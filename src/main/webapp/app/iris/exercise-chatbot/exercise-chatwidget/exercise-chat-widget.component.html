@@ -42,7 +42,7 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
-            <div class="p-chat" *ngIf="!userAccepted">
+            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
                 <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
                     <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
