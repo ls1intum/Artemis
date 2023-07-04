@@ -566,6 +566,22 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the passed user is allowed to see the given lecture
+     *
+     * @param lecture the lecture that needs to be checked
+     * @param user    the user whose permissions should be checked
+     * @return true, if user is allowed to see this lecture, otherwise false
+     */
+    public boolean isAllowedToSeeLecture(@NotNull Lecture lecture, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        if (isAdmin(user)) {
+            return true;
+        }
+        Course course = lecture.getCourse();
+        return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents());
+    }
+
+    /**
      * Determines if a user is allowed to see a lecture unit
      *
      * @param lectureUnit the lectureUnit for which to check permission

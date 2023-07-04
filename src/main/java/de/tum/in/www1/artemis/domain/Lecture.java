@@ -174,4 +174,16 @@ public class Lecture extends DomainObject {
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
     }
+
+    /**
+     * check if students are allowed to see this lecture
+     *
+     * @return true, if students are allowed to see this lecture, otherwise false
+     */
+    public boolean isVisibleToStudents() {
+        if (visibleDate == null) {  // no visible date means the lecture is visible to students
+            return true;
+        }
+        return visibleDate.isBefore(ZonedDateTime.now());
+    }
 }
