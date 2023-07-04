@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -64,9 +63,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Exercise exercise;
 

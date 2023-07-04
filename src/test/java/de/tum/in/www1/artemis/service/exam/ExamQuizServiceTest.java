@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -66,9 +65,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     private QuizExercise quizExercise;
 

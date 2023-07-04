@@ -172,7 +172,6 @@ public class QuizExerciseFactory {
         return sa;
     }
 
-    // TODO: should this be used?
     private static Long generateTempId() {
         return ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
     }

@@ -10,6 +10,9 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 
+/**
+ * Factory for creating objects related to Conversations.
+ */
 public class ConversationFactory {
 
     private static int dayCount = 1;
