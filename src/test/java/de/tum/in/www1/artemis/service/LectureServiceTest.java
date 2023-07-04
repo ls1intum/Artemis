@@ -64,8 +64,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
-        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
-        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
+        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
+        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
         // Add a custom attachment for filtering tests
         testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
@@ -81,7 +81,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), editor);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
     }
@@ -90,7 +90,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), student);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).isNotEmpty();
         assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
