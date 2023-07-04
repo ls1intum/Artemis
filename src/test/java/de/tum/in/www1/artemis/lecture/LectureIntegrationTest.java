@@ -401,19 +401,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetLectureTitle();
     }
 
     private void testGetLectureTitle() throws Exception {
-        Lecture lecture = new Lecture();
-        lecture.setTitle("Test Lecture");
-        lectureRepository.save(lecture);
+        lecture1.setTitle("Test Lecture");
+        lectureRepository.save(lecture1);
 
-        final var title = request.get("/api/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
-        assertThat(title).isEqualTo(lecture.getTitle());
+        final var title = request.get("/api/lectures/" + lecture1.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(lecture1.getTitle());
     }
 
     @Test
