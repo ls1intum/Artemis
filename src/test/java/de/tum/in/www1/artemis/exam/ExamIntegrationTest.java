@@ -1380,9 +1380,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
     }
 
-    @RepeatedTest(2000)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExamChannel_asInstructor() throws Exception {
+    void testDeleteExamWithChannel() throws Exception {
         Course course = courseUtilService.createCourse();
         Exam exam = examUtilService.addExam(course);
         Channel examChannel = examUtilService.addExamChannel(exam, "test");
