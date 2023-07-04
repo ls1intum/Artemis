@@ -20,6 +20,7 @@ import { NgModel } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { EventEmitter } from '@angular/core';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;
@@ -52,6 +53,32 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('cannot be selected in readOnly mode', () => {
+        component.readOnly = true;
+        component.didSelect = new EventEmitter();
+        const selectSpy = jest.spyOn(component.didSelect, 'emit');
+        component.select();
+        expect(selectSpy).not.toHaveBeenCalled();
+    });
+
+    it('should autofocus', () => {
+        jest.useFakeTimers();
+        component.readOnly = false;
+        component.textBlockRef = TextBlockRef.new();
+        component.textBlockRef.selectable = true;
+        component.textBlockRef.feedback = {
+            type: FeedbackType.MANUAL,
+        };
+        component.selected = false;
+        component.feedbackEditor = {
+            focus: () => {},
+        } as TextblockFeedbackEditorComponent;
+        const focusSpy = jest.spyOn(component.feedbackEditor!, 'focus');
+        component.select(true);
+        jest.advanceTimersByTime(300);
+        expect(focusSpy).toHaveBeenCalled();
     });
 
     it('should show text block', () => {
