@@ -196,6 +196,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 hasBackdrop: false,
                 scrollStrategy: this.overlay.scrollStrategies.noop(),
                 position: { bottom: '0px', right: '0px' },
+                disableClose: true,
                 data: {
                     stateStore: this.stateStore,
                     widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,

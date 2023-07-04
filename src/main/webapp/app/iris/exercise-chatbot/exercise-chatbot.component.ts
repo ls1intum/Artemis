@@ -64,12 +64,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         this.stateSubscription.unsubscribe();
     }
 
-    @HostListener('document:keydown.escape', ['$event'])
-    onEscapeKeyDown(event: KeyboardEvent): void {
-        event.preventDefault();
-        this.handleButtonClick();
-    }
-
     handleButtonClick() {
         if (this.chatOpen && this.dialogRef) {
             this.stateStore.dispatch(new NumNewMessagesResetAction());
@@ -89,6 +83,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
                 hasBackdrop: false,
                 scrollStrategy: this.overlay.scrollStrategies.noop(),
                 position: { bottom: '0px', right: '0px' },
+                disableClose: true,
                 data: {
                     stateStore: this.stateStore,
                     widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
