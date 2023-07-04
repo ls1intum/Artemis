@@ -99,17 +99,18 @@ def filter_files(file_names):
 def get_client_line_coverage(username, password, build_id, file_name):
     report_url = get_client_tests_cov_report_url(build_id)
     file_report_url = f"{report_url}/{file_name}.html"
-    logging.debug(f"GET {file_report_url}")
     response = requests.get(file_report_url, auth=(username, password))
+    logging.debug(f"GET {file_report_url} -> {response.status_code}")
 
-    soup = BeautifulSoup(response.content, "html.parser")
-    coverage_divs = soup.find_all("div", {"class": "fl pad1y space-right2"})
     line_coverage = None
-    if len(coverage_divs) >= 4:
-        line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
-        line_coverage = line_coverage_strong.text.replace("%", "").strip()
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
+        coverage_divs = soup.find_all("div", {"class": "fl pad1y space-right2"})
+        if len(coverage_divs) >= 4:
+            line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
+            line_coverage = line_coverage_strong.text.replace("%", "").strip()
+        logging.debug(f"Coverage for {file_name} -> line coverage: {line_coverage}")
 
-    logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
 
 
@@ -142,10 +143,10 @@ def coverage_to_table(covs, exclude_urls=False):
 
     for cov in covs:
         filename_only = cov[0].rsplit("/", 1)[1]
-        class_file = filename_only if exclude_urls else f"[{filename_only}]({cov[1]})"
-        line_coverage = "N/A" if cov[2] is None else cov[2]
-        confirmation = "❌" if cov[2] is None else "✅❌"
-        table_data.append(f"| {class_file} | {line_coverage}% | {confirmation} |")
+        class_file = filename_only if exclude_urls or cov[2] is None else f"[{filename_only}]({cov[1]})"
+        line_coverage = "deleted" if cov[2] is None else f"{cov[2]}%"
+        confirmation = "" if cov[2] is None else "✅❌"
+        table_data.append(f"| {class_file} | {line_coverage} | {confirmation} |")
 
     table = "\n".join([header] + table_data)
     return table
