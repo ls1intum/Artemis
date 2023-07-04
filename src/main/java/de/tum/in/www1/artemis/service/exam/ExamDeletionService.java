@@ -96,7 +96,7 @@ public class ExamDeletionService {
         auditEventRepository.add(auditEvent);
 
         Channel examChannel = channelRepository.findChannelByExamId(examId);
-        channelService.deleteChannelAsynchronously(examChannel);
+        channelService.deleteChannel(examChannel);
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);

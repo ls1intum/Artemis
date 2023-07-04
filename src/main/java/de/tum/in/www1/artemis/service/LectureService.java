@@ -117,7 +117,7 @@ public class LectureService {
      */
     public void delete(Lecture lecture) {
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
-        channelService.deleteChannelAsynchronously(lectureChannel);
+        channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
     }
 

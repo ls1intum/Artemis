@@ -128,7 +128,7 @@ public class ExerciseDeletionService {
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        channelService.deleteChannelAsynchronously(exreciseChannel);
+        channelService.deleteChannel(exreciseChannel);
 
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
