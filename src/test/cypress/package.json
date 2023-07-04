@@ -9,9 +9,9 @@
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.4",
         "@types/node": "20.2.5",
-        "cypress": "12.13.0",
+        "cypress": "12.16.0",
         "cypress-file-upload": "5.0.8",
-        "cypress-wait-until": "1.7.2",
+        "cypress-wait-until": "2.0.0",
         "typescript": "4.9.5",
         "uuid": "9.0.0",
         "wait-on": "7.0.1"

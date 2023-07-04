@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.exercise.fileuploadexercise;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,8 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -169,6 +174,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
+
+        MvcResult file = request.getMvc().perform(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG))
+                .andReturn();
+        assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
 
     @Test
@@ -398,9 +407,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
@@ -408,17 +417,15 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void getDataForFileUpload_latestSubmissionOfParticipationNull() throws Exception {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission,
+        fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
-        exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         Participation participation = fileUploadSubmission.getParticipation();
         participation.setResults(null);
         FileUploadSubmission submission = request.get("/api/participations/" + participation.getId() + "/file-upload-editor", HttpStatus.OK, FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
-        assertThat(submission.getLatestResult().getAssessor()).isNull();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
@@ -426,15 +433,14 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void getDataForFileUpload_withoutFinishedAssessment() throws Exception {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
-        fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission,
+        fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
         exerciseUtilService.updateResultCompletionDate(fileUploadSubmission.getLatestResult().getId(), null);
-        exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
-        assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(submission.getLatestResult().getFeedbacks()).isEmpty();
+        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
     @Test
@@ -489,6 +495,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getLatestResult().getFeedbacks()).isEqualTo(feedbacks);
+        assertThat(submission.getLatestResult().getAssessor()).as("students should not see the assessor information").isNull();
     }
 
     @Test

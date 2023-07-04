@@ -123,7 +123,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         teamAssignmentConfig.setMaxTeamSize(10);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise = exerciseRepo.save(exercise);
-        exercise = exerciseRepo.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).get();
+        exercise = exerciseRepo.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).orElseThrow();
         assertThat(exercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
         assertThat(exercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
         assertThat(exercise.getTeamAssignmentConfig().getId()).isNotNull();
@@ -150,7 +150,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Optional<Team> optionalTeam = teamRepo.findById(serverTeam.getId());
         assertThat(optionalTeam).as("Team was saved to database").isPresent();
 
-        Team savedTeam = optionalTeam.get();
+        Team savedTeam = optionalTeam.orElseThrow();
         assertThat(savedTeam.getExercise()).as("Team belongs to correct exercise").isEqualTo(exercise);
     }
 

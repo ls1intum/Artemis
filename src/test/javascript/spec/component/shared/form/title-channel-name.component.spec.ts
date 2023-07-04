@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgForm } from '@angular/forms';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -73,12 +72,49 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelName).toBe('new-0123-@()[]{}-!?.-_-$%&-too');
     }));
 
-    it('init prefix if undefined without influencing channel name', () => {
-        component.channelName = 'test';
-
+    it('init prefix if undefined', () => {
         component.ngOnInit();
 
         expect(component.channelNamePrefix).toBe('');
-        expect(component.channelName).toBe('test');
     });
+
+    it('init channel name based on prefix and title', fakeAsync(() => {
+        component.channelNamePrefix = 'prefix-';
+        component.title = 'test';
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBe('prefix-test');
+    }));
+
+    it('init channel name based on prefix if title is undefined', fakeAsync(() => {
+        component.channelNamePrefix = 'prefix-';
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBe('prefix-');
+    }));
+
+    it('remove consecutive/alternating hyphens and spaces from channel name on init', fakeAsync(() => {
+        component.channelNamePrefix = '-- ----p ---';
+        component.title = '-- -  t--- -- ';
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBe('-p-t-');
+    }));
+
+    it("don't init channel name if not allowed", fakeAsync(() => {
+        component.channelNamePrefix = '-- ---- ---';
+        component.title = '-  --- -- ';
+        component.initChannelName = false;
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.channelName).toBeUndefined();
+    }));
 });
