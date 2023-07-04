@@ -144,7 +144,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     onSend(): void {
-        if (this.newMessageTextContent) {
+        if (this.newMessageTextContent.trim()) {
             const message = this.newUserMessage(this.newMessageTextContent);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message))
