@@ -75,6 +75,16 @@
             <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
         </a>
         <div class="ms-auto">
+            <button
+                *ngIf="course?.isAtLeastInstructor && irisEnabled"
+                type="button"
+                (click)="showIrisSettings()"
+                class="tab-item btn btn-warning btn-md ms-1"
+                ngbTooltip="{{ 'artemisApp.iris.settings.button.course.tooltip' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="faRobot"></fa-icon>
+                <span jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
+            </button>
             <a
                 *ngIf="course.isAtLeastInstructor"
                 id="edit-course"

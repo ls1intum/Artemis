@@ -50,7 +50,7 @@
                     />
                 </div>
 
-                <div *ngIf="exerciseHint.type === HintType.CODE" class="d-flex justify-content-end">
+                <div *ngIf="exerciseHint.type === HintType.CODE && irisSettings?.irisHestiaSettings?.enabled" class="d-flex justify-content-end">
                     <jhi-button
                         id="generateDescriptionButton"
                         (click)="generateDescriptionForCodeHint()"

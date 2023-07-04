@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.connector;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.net.URL;
-import java.util.List;
-import java.util.UUID;
+import java.time.ZonedDateTime;
+import java.util.Collections;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,17 +23,21 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
+import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 
 @Component
-@Profile("iris-gpt3_5")
-public class IrisGPT3_5RequestMockProvider {
+@Profile("iris")
+public class IrisRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
 
-    @Value("${artemis.iris.models.gpt3_5.url}")
+    @Value("${artemis.iris.url}/api/v1/messages")
     private URL apiURL;
 
     @Autowired
@@ -41,7 +45,7 @@ public class IrisGPT3_5RequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public IrisGPT3_5RequestMockProvider(@Qualifier("gpt35RestTemplate") RestTemplate restTemplate) {
+    public IrisRequestMockProvider(@Qualifier("irisRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
@@ -61,15 +65,27 @@ public class IrisGPT3_5RequestMockProvider {
     }
 
     /**
-     * Mocks response call for the GPT 3.5 model.
+     * Mocks response call for the pyris call
      */
     public void mockResponse(String responseMessage) throws JsonProcessingException {
-        var usage = new OpenAIChatResponseDTO.Usage(42, 42, 84);
-        var message = new OpenAIChatResponseDTO.Message("assistant", responseMessage);
-        var choices = List.of(new OpenAIChatResponseDTO.Choice(message, 0, "stop"));
-        var response = new OpenAIChatResponseDTO(UUID.randomUUID().toString(), "chat.completion", System.currentTimeMillis(), "gpt-35-turbo", usage, choices);
+        if (responseMessage == null) {
+            mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+            return;
+        }
+        var irisMessage = new IrisMessage();
+        var irisMessageContent = new IrisMessageContent();
+        irisMessageContent.setTextContent(responseMessage);
+        irisMessage.setContent(Collections.singletonList(irisMessageContent));
+        irisMessage.setSender(IrisMessageSender.LLM);
+        irisMessage.setSentAt(ZonedDateTime.now());
+
+        var response = new IrisMessageResponseDTO(IrisModel.GPT35_TURBO, irisMessage);
         var json = mapper.writeValueAsString(response);
 
         mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+    }
+
+    public void mockError() {
+        mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
     }
 }
