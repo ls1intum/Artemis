@@ -55,7 +55,7 @@ public class AthenaResource {
         }
 
         // The athenaService will manage the processing and database saving
-        athenaService.processResult(athenaResponse.getClustersList(), athenaResponse.getSegmentsList(), exerciseId);
+        // athenaService.processResult(athenaResponse.getClustersList(), athenaResponse.getSegmentsList(), exerciseId);
 
         log.debug("REST call for new Athena results for exercise {} finished", exerciseId);
 

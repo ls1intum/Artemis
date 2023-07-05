@@ -59,9 +59,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private TextClusterRepository textClusterRepository;
-
-    @Autowired
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
@@ -137,7 +134,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteTextExerciseWithSubmissionWithTextBlocksAndClusters() throws Exception {
+    void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
@@ -145,9 +142,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         int submissionCount = 5;
         int submissionSize = 4;
         var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
-        int[] clusterSizes = { 4, 5, 10, 1 };
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        textClusterRepository.saveAll(clusters);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);

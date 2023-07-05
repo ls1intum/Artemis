@@ -120,45 +120,6 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
-    /**
-     * Create n TextClusters and assign TextBlocks to new clusters.
-     *
-     * @param textBlocks   TextBlocks to fake cluster
-     * @param clusterSizes Number of new clusters
-     * @param textExercise TextExercise
-     * @return List of TextClusters with assigned TextBlocks
-     */
-    public List<TextCluster> addTextBlocksToCluster(Set<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
-        if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
-            throw new IllegalArgumentException("The clusterSizes sum has to be equal to the number of textBlocks");
-        }
-
-        List<TextCluster> clusters = createClustersForExercise(clusterSizes, textExercise);
-
-        // Add all textblocks to a cluster
-        int clusterIndex = 0;
-        for (var textBlock : textBlocks) {
-            // as long as cluster is full select another cluster
-            do {
-                clusterIndex = (clusterIndex + 1) % clusterSizes.length;
-            }
-            while (clusterSizes[clusterIndex] == 0);
-
-            clusterSizes[clusterIndex]--;
-            clusters.get(clusterIndex).addBlocks(textBlock);
-        }
-
-        return clusters;
-    }
-
-    private List<TextCluster> createClustersForExercise(int[] clusterSizes, TextExercise textExercise) {
-        List<TextCluster> clusters = new ArrayList<>();
-        for (int i = 0; i < clusterSizes.length; i++) {
-            clusters.add(new TextCluster().exercise(textExercise));
-        }
-        return clusters;
-    }
-
     public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
         if (textBlocks.size() != submissionCount * submissionSize) {
             throw new IllegalArgumentException("number of textBlocks must be eqaul to submissionCount * submissionSize");

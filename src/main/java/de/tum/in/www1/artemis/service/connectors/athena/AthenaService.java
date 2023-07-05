@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -13,14 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.ase.athene.protobuf.Cluster;
-import de.tum.in.ase.athene.protobuf.DistanceMatrixEntry;
-import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
@@ -41,8 +36,6 @@ public class AthenaService {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final TextClusterRepository textClusterRepository;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -52,12 +45,10 @@ public class AthenaService {
     // Contains tasks submitted to Athena and currently processing
     private final List<Long> runningAthenaTasks = new ArrayList<>();
 
-    public AthenaService(TextSubmissionRepository textSubmissionRepository, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
-            TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService,
-            @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaService(TextSubmissionRepository textSubmissionRepository, TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
+            TextAssessmentQueueService textAssessmentQueueService, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textBlockRepository = textBlockRepository;
-        this.textClusterRepository = textClusterRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
@@ -149,6 +140,7 @@ public class AthenaService {
 
         // Find all submissions for Exercise
         // We only support english languages so far, to prevent corruption of the clustering
+        // TODO: change
         List<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
 
         // Athena only works with 10 or more submissions
@@ -169,126 +161,6 @@ public class AthenaService {
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
         }
-    }
-
-    /**
-     * Processes results coming back from the Athena system via callbackUrl (see AthenaResource)
-     *
-     * @param clusters   the list of calculated clusters to save to the database
-     * @param segments   the list of calculated textBlocks to save to the database
-     * @param exerciseId the exercise the automatic feedback suggestions were calculated for
-     */
-    public void processResult(List<Cluster> clusters, List<Segment> segments, Long exerciseId) {
-        log.debug("Start processing incoming Athena results for exercise with id {}", exerciseId);
-
-        // Parse textBlocks (blocks will come as protobuf Segment with their submissionId and need to be parsed)
-        List<TextBlock> textBlocks = parseTextBlocks(segments, exerciseId);
-        // Parse textClusters (clusters will come as protobuf Cluster and need to be parsed)
-        List<TextCluster> textClusters = parseTextClusters(clusters);
-
-        // Save textBlocks in Database
-        final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
-
-        // Save clusters in Database
-        processClusters(textClusters, textBlockMap, exerciseId);
-
-        // Notify athenaService of finished task
-        finishTask(exerciseId);
-
-        log.debug("Finished processing incoming Athena results for exercise with id {}", exerciseId);
-    }
-
-    /**
-     * Parse text blocks of type Athena-Protobuf-Segment to TextBlock linked to their submission
-     *
-     * @param segments   the list of text blocks of type Athena-Protobuf-Segment to parse
-     * @param exerciseId the exerciseId of the exercise the blocks belong to
-     * @return list of TextBlocks
-     */
-    public List<TextBlock> parseTextBlocks(List<Segment> segments, Long exerciseId) {
-        // Create submissionsMap for lookup
-        List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
-        Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(Collectors.toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
-
-        // Map textBlocks to submissions
-        List<TextBlock> textBlocks = new ArrayList<>();
-        for (Segment segment : segments) {
-            // Convert Protobuf-TextBlock (including the submissionId) to TextBlock Entity
-            TextBlock newBlock = new TextBlock();
-            newBlock.setId(segment.getId());
-            newBlock.setText(segment.getText());
-            newBlock.setStartIndex(segment.getStartIndex());
-            newBlock.setEndIndex(segment.getEndIndex());
-            newBlock.automatic();
-
-            // take the corresponding TextSubmission and add the text blocks.
-            // The addBlocks method also sets the submission in the textBlock
-            long submissionId = segment.getSubmissionId();
-            var textSubmission = submissionsMap.get(submissionId);
-            if (textSubmission == null) {
-                continue;
-            }
-            textSubmission.addBlock(newBlock);
-            textBlocks.add(newBlock);
-        }
-
-        return textBlocks;
-    }
-
-    /**
-     * Parse text clusters of type Athena-Protobuf-Cluster to TextCluster
-     *
-     * @param clusters the list of text clusters of type Athena-Protobuf-Cluster to parse
-     * @return list of TextClusters
-     */
-    public List<TextCluster> parseTextClusters(List<Cluster> clusters) {
-        List<TextCluster> textClusters = new ArrayList<>();
-        for (Cluster cluster : clusters) {
-            TextCluster textCluster = new TextCluster();
-            List<TextBlock> blocks = cluster.getSegmentsList().stream().map(s -> new TextBlock().id(s.getId())).collect(Collectors.toCollection(ArrayList::new));
-            textCluster.setBlocks(blocks);
-
-            double[][] distanceMatrix = new double[blocks.size()][blocks.size()];
-            for (DistanceMatrixEntry entry : cluster.getDistanceMatrixList()) {
-                distanceMatrix[entry.getX()][entry.getY()] = entry.getValue();
-            }
-            textCluster.setDistanceMatrix(distanceMatrix);
-            textClusters.add(textCluster);
-        }
-        return textClusters;
-    }
-
-    /**
-     * Process clusters, link them with text blocks and vice versa, and save all in the database
-     *
-     * @param textClusters The list of textClusters to process
-     * @param textBlockMap The map of textBlocks belonging to the clusters
-     * @param exerciseId   The exerciseId of the exercise the blocks belong to
-     */
-    public void processClusters(List<TextCluster> textClusters, Map<String, TextBlock> textBlockMap, Long exerciseId) {
-
-        final List<TextCluster> savedClusters = textClusterRepository.saveAll(textClusters);
-
-        // Find exercise, which the clusters belong to
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
-        if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athena clusters. Exercise with id {} not found", exerciseId);
-            return;
-        }
-        TextExercise textExercise = optionalTextExercise.get();
-
-        // Link clusters with blocks
-        for (TextCluster cluster : savedClusters) {
-            cluster.setExercise(textExercise);
-            List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
-            cluster.setBlocks(updatedBlockReferences);
-            textBlockRepository.saveAll(updatedBlockReferences);
-        }
-
-        // Save clusters in Database
-        textClusterRepository.saveAll(savedClusters);
     }
 
 }

@@ -52,13 +52,10 @@ public class ExerciseDeletionService {
 
     private final TextExerciseService textExerciseService;
 
-    private final TextClusterRepository textClusterRepository;
-
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            TextClusterRepository textClusterRepository) {
+            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -71,7 +68,6 @@ public class ExerciseDeletionService {
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textExerciseService = textExerciseService;
-        this.textClusterRepository = textClusterRepository;
     }
 
     /**
@@ -124,8 +120,7 @@ public class ExerciseDeletionService {
         }
 
         if (exercise instanceof TextExercise) {
-            log.info("Deleting clusters, blocks and cancel scheduled operations of exercise {}", exercise.getId());
-            textClusterRepository.deleteByExercise_Id(exerciseId);
+            log.info("Cancel scheduled operations of exercise {}", exercise.getId());
             textExerciseService.cancelScheduledOperations(exerciseId);
         }
 

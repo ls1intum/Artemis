@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 /**
- * This class allows for an easy implementation of Connectors to Remote Artemis Services (e.g. the Text Clustering System).
+ * This class is a connector to Athena, a remote Artemis service.
  * As parameters, this class required DTO classes to serialize and deserialize POJOs to JSON and back.
  *
  * @param <RequestType>  DTO class, describing the body of the network request.
@@ -39,7 +39,7 @@ class AthenaConnector<RequestType, ResponseType> {
      */
     private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingError {
         long start = System.currentTimeMillis();
-        log.debug("Calling Remote Artemis Service.");
+        log.debug("Calling Athena.");
 
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -95,8 +95,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         var newTextBlocks = new HashSet<TextBlock>();
         for (TextBlock originalTextBlock : originalTextBlocks) {
             TextBlock newTextBlock = new TextBlock();
-            Optional.ofNullable(originalTextBlock.getAddedDistance()).ifPresent(newTextBlock::setAddedDistance);
-            Optional.ofNullable(originalTextBlock.getCluster()).ifPresent(newTextBlock::setCluster);
             newTextBlock.setEndIndex(originalTextBlock.getEndIndex());
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);

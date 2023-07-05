@@ -67,19 +67,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     }
 
     /**
-     * Find all existing Feedback Elements referencing a text block part of a TextCluster.
-     *
-     * @param cluster TextCluster requesting existing Feedbacks for.
-     * @return Map<TextBlockId, Feedback>
-     */
-    default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).toList();
-        final TextExercise exercise = cluster.getExercise();
-        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
-                .collect(Collectors.toMap(Feedback::getReference, feedback -> feedback));
-    }
-
-    /**
      * Transforms static code analysis reports to feedback objects.
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.

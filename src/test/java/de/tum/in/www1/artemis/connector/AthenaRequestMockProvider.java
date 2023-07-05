@@ -68,7 +68,7 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks /submit api from Athena used to submit new exercises for clustering.
+     * Mocks /submit api from Athena used to submit new exercises.
      */
     public void mockSubmitSubmissions() {
         final ObjectNode node = mapper.createObjectNode();
