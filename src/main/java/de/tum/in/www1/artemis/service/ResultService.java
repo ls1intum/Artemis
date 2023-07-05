@@ -59,16 +59,13 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final FeedbackConflictRepository feedbackConflictRepository;
-
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            FeedbackConflictRepository feedbackConflictRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -84,7 +81,6 @@ public class ResultService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
-        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -158,7 +154,6 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
-        feedbackConflictRepository.deleteAllByResultId(resultId);
     }
 
     /**
