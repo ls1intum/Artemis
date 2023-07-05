@@ -32,26 +32,25 @@
                 </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
-                    <div [hidden]="!displayedStarredConversations?.length" class="mb-2">
-                        <jhi-conversation-sidebar-section
-                            [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
-                            [headerKey]="'favorites'"
-                            [conversations]="displayedStarredConversations"
-                            [activeConversation]="activeConversation"
-                            (conversationSelected)="onConversationSelected($event)"
-                            [course]="course"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        >
-                        </jhi-conversation-sidebar-section>
-                    </div>
+                    <jhi-conversation-sidebar-section
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
+                        [headerKey]="'favorites'"
+                        [conversations]="displayedStarredConversations"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        [course]="course"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                    >
+                    </jhi-conversation-sidebar-section>
                     <!-- Channels -->
                     <jhi-conversation-sidebar-section
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.generalChannels' | artemisTranslate"
                         [headerKey]="'channels'"
                         [conversations]="displayedGeneralChannels"
+                        [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
