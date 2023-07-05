@@ -86,13 +86,31 @@
     <div class="table-responsive" *ngIf="filteredLectures">
         <table class="table table-striped">
             <thead>
-                <tr>
-                    <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.title">Title</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.description">Description</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.course">Course</span></th>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                    <th class="d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="global.field.id">ID</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="title">
+                        <span jhiTranslate="artemisApp.lecture.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="description">
+                        <span jhiTranslate="artemisApp.lecture.description">Description</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="startDate">
+                        <span jhiTranslate="artemisApp.lecture.startDate">Start Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="endDate">
+                        <span jhiTranslate="artemisApp.lecture.endDate">End Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="d-md-table-cell" jhiSortBy="course">
+                        <span jhiTranslate="artemisApp.lecture.course">Course</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
