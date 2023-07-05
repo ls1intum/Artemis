@@ -17,9 +17,9 @@
                     </ul>
                 </div>
             </div>
-            <div *ngIf="otherChannels && otherChannels?.length > 0" class="form-group mt-4">
-                <div (click)="isCollapsed = !isCollapsed">
-                    <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+            <div *ngIf="otherChannels && otherChannels.length > 0" class="form-group mt-4">
+                <div (click)="isCollapsed = !isCollapsed" class="other-channels">
+                    <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
                     <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
                 </div>
                 <div [(ngbCollapse)]="isCollapsed">
