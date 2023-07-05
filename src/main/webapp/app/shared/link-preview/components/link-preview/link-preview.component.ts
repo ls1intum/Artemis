@@ -2,8 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { User } from 'app/core/user/user.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-link-preview',
@@ -15,8 +14,8 @@ export class LinkPreviewComponent implements OnInit {
     @Input() showLoadingsProgress: boolean;
     @Input() loaded: boolean;
     @Input() hasError: boolean;
-    @Input() author?: User;
-    @Input() posting?: Post;
+    @Input() posting?: Posting;
+    @Input() isReply?: boolean;
 
     isAuthorOfOriginalPost: boolean;
 
@@ -26,7 +25,7 @@ export class LinkPreviewComponent implements OnInit {
 
     ngOnInit() {
         // determines if the current user is the author of the original post, that the answer belongs to
-        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthor(this.author!);
+        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting!);
     }
 
     /**
@@ -50,23 +49,23 @@ export class LinkPreviewComponent implements OnInit {
                 const start = match.index;
                 const end = start + url.length;
 
-                if (url === urlToSearchFor) {
-                    // Append <!--LinkPreviewRemoved--> after the URL ends, plus 2 more characters
-                    const modifiedUrl = '<!--LinkPreviewRemoved-->';
-                    modifiedContent = modifiedContent.substring(0, end + 2) + ' ' + modifiedUrl + modifiedContent.substring(end + url.length);
+                if (url === urlToSearchFor || url.includes(urlToSearchFor)) {
+                    // wrap the URL in <>
+                    modifiedContent = modifiedContent.substring(0, start) + `<${url}>` + modifiedContent.substring(end);
                 }
             }
 
-            // Update the posting content with modified content
             this.posting.content = modifiedContent;
 
-            // TODO: call based on POST or ANSWER
-            // Call the service to update the posting
-            this.metisService.updatePost(this.posting).subscribe({
-                next: () => {
-                    console.log('Link preview removed successfully');
-                },
-            });
+            if (this.isReply) {
+                this.metisService.updateAnswerPost(this.posting).subscribe({
+                    next: () => {},
+                });
+            } else {
+                this.metisService.updatePost(this.posting).subscribe({
+                    next: () => {},
+                });
+            }
         }
     }
 }

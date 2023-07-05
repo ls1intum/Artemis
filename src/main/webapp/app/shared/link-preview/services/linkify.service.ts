@@ -31,9 +31,8 @@ export class LinkifyService {
             const start = match.index;
             const end = start + url.length;
 
-            // Check if <!--LinkPreviewRemoved--> is present within 30 characters to the right
-            const isRemoved = text.substring(end, end + 30).includes('<!--LinkPreviewRemoved-->');
-
+            // Check if url is wrapped in <> tags
+            const isRemoved = text[start - 1] === '<' && text[end - 1] === '>';
             const linkableItem: Link = {
                 type: 'url',
                 value: url,

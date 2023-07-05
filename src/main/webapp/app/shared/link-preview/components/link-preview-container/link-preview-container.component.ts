@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-link-preview-container',
@@ -12,8 +12,9 @@ import { Post } from 'app/entities/metis/post.model';
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     @Input() data: string | undefined;
     @Input() author?: User;
-    @Input() posting?: Post;
+    @Input() posting?: Posting;
     @Input() isEdited?: boolean;
+    @Input() isReply?: boolean;
 
     linkPreviews: LinkPreview[] = [];
     hasError: boolean;
@@ -24,13 +25,10 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.data = this.data ?? '';
-        // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         this.findPreviews();
     }
 
     ngOnChanges() {
-        console.log(this.isEdited);
-        console.log(this.posting?.updatedDate);
         if (this.isEdited) {
             this.reloadLinkPreviews();
         }
@@ -45,6 +43,7 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
 
     private findPreviews() {
         const links: Link[] = this.linkifyService.find(this.data!);
+        // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         links
             .filter((link) => !link.isLinkPreviewRemoved)
             .slice(0, 5)

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Set;
 
@@ -144,6 +145,8 @@ public class AnswerMessageService extends PostingService {
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
             existingAnswerMessage.setContent(answerMessage.getContent());
         }
+
+        existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
