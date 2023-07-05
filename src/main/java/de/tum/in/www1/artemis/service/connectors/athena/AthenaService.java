@@ -59,13 +59,10 @@ public class AthenaService {
 
         public long courseId;
 
-        public String callbackUrl;
-
         public List<TextSubmission> submissions;
 
-        RequestDTO(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
+        RequestDTO(@NotNull long courseId, @NotNull List<TextSubmission> submissions) {
             this.courseId = courseId;
-            this.callbackUrl = callbackUrl;
             this.submissions = createSubmissionDTOs(submissions);
         }
 
@@ -151,7 +148,7 @@ public class AthenaService {
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + "/api/public/athena-result/" + exercise.getId());
+            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions);
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/submit", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 
