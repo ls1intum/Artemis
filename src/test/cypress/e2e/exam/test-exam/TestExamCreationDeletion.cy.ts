@@ -15,10 +15,10 @@ const examData = {
     workingTime: 5,
     numberOfExercises: 4,
     maxPoints: 40,
-    startText: 'Cypress exam start text',
-    endText: 'Cypress exam end text',
-    confirmationStartText: 'Cypress exam confirmation start text',
-    confirmationEndText: 'Cypress exam confirmation end text',
+    startText: 'Exam start text',
+    endText: 'Exam end text',
+    confirmationStartText: 'Exam confirmation start text',
+    confirmationEndText: 'Exam confirmation end text',
 };
 
 describe('Test Exam creation/deletion', () => {
