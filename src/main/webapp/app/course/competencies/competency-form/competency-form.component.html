@@ -37,6 +37,14 @@
                     </div>
                 </div>
             </div>
+            <div class="form-group">
+                <jhi-date-time-picker
+                    id="softDueDate"
+                    labelName="{{ 'artemisApp.competency.createCompetency.softDueDate' | artemisTranslate }}"
+                    labelTooltip="{{ 'artemisApp.competency.createCompetency.softDueDateHint' | artemisTranslate }}"
+                    formControlName="softDueDate"
+                ></jhi-date-time-picker>
+            </div>
             <div class="form-group" *ngIf="!isInConnectMode">
                 <label for="taxonomy">
                     {{ 'artemisApp.competency.taxonomy' | artemisTranslate }}

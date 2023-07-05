@@ -5,7 +5,7 @@ import { courseManagementRequest, courseMessages } from '../../support/artemis';
 import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { ExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { generateUUID, titleLowercase } from '../../support/utils';
+import { titleLowercase } from '../../support/utils';
 
 describe('Course messages', () => {
     let course: Course;

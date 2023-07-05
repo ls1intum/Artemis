@@ -18,7 +18,7 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
     /*
-     * Base Component for TextSubmissionAssessmentComponent and TextFeedbackConflictsComponent since they share a lot of same functions.
+     * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
      */
 
     exercise?: TextExercise;
