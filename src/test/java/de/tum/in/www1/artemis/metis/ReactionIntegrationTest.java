@@ -149,7 +149,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
 
         Reaction notCreatedReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class,
-                HttpStatus.NOT_FOUND);
+                HttpStatus.FORBIDDEN);
         assertThat(notCreatedReaction).isNull();
         assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size());
     }

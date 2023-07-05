@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -93,14 +92,8 @@ public abstract class PostingService {
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
-            Set<ConversationParticipant> participants;
-            if (Hibernate.isInitialized(postDTO.post().getConversation().getConversationParticipants())
-                    && !postDTO.post().getConversation().getConversationParticipants().isEmpty()) {
-                participants = postDTO.post().getConversation().getConversationParticipants();
-            }
-            else {
-                participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            }
+            Set<ConversationParticipant> participants = this.conversationParticipantRepository
+                    .findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
             participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
                     genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
