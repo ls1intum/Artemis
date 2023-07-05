@@ -1,5 +1,5 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
@@ -10,6 +10,7 @@ import { IrisSessionService } from 'app/iris/session.service';
 import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { SharedService } from 'app/iris/shared.service';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -27,6 +28,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     hasNewMessages = false;
     private exerciseId: number;
     private stateSubscription: Subscription;
+    private chatOpenSubscription: Subscription;
     initialWidth = 330;
     initialHeight = 430;
 
@@ -42,6 +44,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         private readonly stateStore: IrisStateStore,
         private readonly websocketService: IrisWebsocketService,
         private route: ActivatedRoute,
+        private sharedService: SharedService,
     ) {}
 
     ngOnInit() {
@@ -51,6 +54,8 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
             }
         });
+
+        this.chatOpenSubscription = this.sharedService.chatOpen.subscribe((status) => (this.chatOpen = status));
 
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.hasNewMessages = state.numNewMessages > 0;
@@ -67,9 +72,9 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     handleButtonClick() {
         if (this.chatOpen && this.dialogRef) {
             this.stateStore.dispatch(new NumNewMessagesResetAction());
-            this.dialogRef!.close();
+            this.dialog.closeAll();
             //this.runAnimation = false;
-            this.chatOpen = false;
+            this.sharedService.changeChatOpenStatus(false);
         } else {
             this.openChat();
             //this.runAnimation = true;
@@ -77,25 +82,23 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     }
 
     openChat() {
-        if (!this.buttonDisabled) {
-            this.chatOpen = true;
-            this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
-                hasBackdrop: false,
-                scrollStrategy: this.overlay.scrollStrategies.noop(),
-                position: { bottom: '0px', right: '0px' },
-                disableClose: true,
-                data: {
-                    stateStore: this.stateStore,
-                    widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
-                    widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
-                    fullSize: localStorage.getItem('fullSize') === 'true',
-                },
-            });
-            this.dialogRef.afterClosed().subscribe(() => {
-                this.buttonDisabled = false;
-                this.chatOpen = false;
-            });
-        }
-        this.buttonDisabled = true;
+        this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
+            hasBackdrop: false,
+            scrollStrategy: this.overlay.scrollStrategies.noop(),
+            position: { bottom: '0px', right: '0px' },
+            disableClose: true,
+            data: {
+                stateStore: this.stateStore,
+                widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
+                widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
+                fullSize: localStorage.getItem('fullSize') === 'true',
+            },
+        });
+        this.dialogRef.afterOpened().subscribe(() => {
+            this.sharedService.changeChatOpenStatus(true);
+        });
+        this.dialogRef.afterClosed().subscribe(() => {
+            this.sharedService.changeChatOpenStatus(false);
+        });
     }
 }

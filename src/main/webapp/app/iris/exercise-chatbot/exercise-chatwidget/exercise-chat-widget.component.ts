@@ -5,7 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
@@ -14,6 +14,7 @@ import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/ir
 import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
 import { Overlay } from '@angular/cdk/overlay';
+import { SharedService } from 'app/iris/shared.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -26,6 +27,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
+    dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
 
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
@@ -45,7 +47,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     userAccepted = false;
     isScrolledToBottom = true;
     rows = 1;
-    showChatWidget = true;
     initialWidth = 330;
     initialHeight = 430;
     fullWidth = '93vw';
@@ -65,6 +66,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private httpMessageService: IrisHttpMessageService,
         private overlay: Overlay,
         private router: Router,
+        private sharedService: SharedService,
     ) {
         this.stateStore = data.stateStore;
         this.navigationSubscription = this.router.events.subscribe((event) => {
@@ -87,6 +89,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faThumbsDown = faThumbsDown;
 
     ngOnInit() {
+        this.dialog.afterOpened.subscribe(() => {
+            this.sharedService.changeChatOpenStatus(true);
+        });
+        this.dialog.afterAllClosed.subscribe(() => {
+            this.sharedService.changeChatOpenStatus(false);
+        });
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';
@@ -204,7 +212,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                     fullSize: localStorage.getItem('fullSize') === 'true',
                 },
             });
-        }, 50);
+        }, 140);
     }
 
     maximizeScreen() {
