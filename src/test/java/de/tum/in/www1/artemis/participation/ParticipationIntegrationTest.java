@@ -295,7 +295,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void participateInProgrammingExercise_dueDatePassed_asInstructor() throws Exception {
+    void participateInProgrammingExerciseAsInstructor_dueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -311,9 +311,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
                 HttpStatus.CREATED);
+        var participationUsers = participation.getStudents();
         assertThat(participation).isNotNull();
         assertThat(participation.isTestRun()).isFalse();
-        assertThat(participation.getStudent()).contains(user);
+        assertThat(participationUsers).contains(user);
     }
 
     @Test
