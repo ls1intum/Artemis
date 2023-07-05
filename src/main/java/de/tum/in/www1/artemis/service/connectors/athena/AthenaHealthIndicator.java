@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.athene;
+package de.tum.in.www1.artemis.service.connectors.athena;
 
 import java.util.Map;
 
@@ -15,26 +15,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 @Component
-@Profile("athene")
-public class AtheneHealthIndicator implements HealthIndicator {
+@Profile("athena")
+public class AthenaHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    @Value("${artemis.athene.url}")
-    private String atheneUrl;
+    @Value("${artemis.athena.url}")
+    private String athenaUrl;
 
-    public AtheneHealthIndicator(@Qualifier("shortTimeoutAtheneRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     /**
-     * Ping Athene at /queueStatus and check if the service is available.
+     * Ping Athena at /queueStatus and check if the service is available.
      */
     @Override
     public Health health() {
         ConnectorHealth health;
         try {
-            final var status = shortTimeoutRestTemplate.getForObject(atheneUrl + "/queueStatus", JsonNode.class);
+            final var status = shortTimeoutRestTemplate.getForObject(athenaUrl + "/queueStatus", JsonNode.class);
             var isUp = status.get("total").isNumber();
             health = new ConnectorHealth(isUp);
         }
@@ -42,7 +42,7 @@ public class AtheneHealthIndicator implements HealthIndicator {
             health = new ConnectorHealth(emAll);
         }
 
-        health.setAdditionalInfo(Map.of("url", atheneUrl));
+        health.setAdditionalInfo(Map.of("url", athenaUrl));
         return health.asActuatorHealth();
     }
 }

@@ -14,10 +14,10 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("athene")
-public class AtheneAuthorizationInterceptor implements ClientHttpRequestInterceptor {
+@Profile("athena")
+public class AthenaAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Value("${artemis.athene.base64-secret}")
+    @Value("${artemis.athena.base64-secret}")
     private String secret;
 
     @NotNull

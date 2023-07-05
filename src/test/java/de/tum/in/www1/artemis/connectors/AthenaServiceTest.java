@@ -14,21 +14,19 @@ import de.tum.in.ase.athene.protobuf.Cluster;
 import de.tum.in.ase.athene.protobuf.DistanceMatrixEntry;
 import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "atheneservice";
+    private static final String TEST_PREFIX = "athenaservice";
 
     @Autowired
-    private AtheneRequestMockProvider atheneRequestMockProvider;
+    private AthenaRequestMockProvider athenaRequestMockProvider;
 
     @Autowired
     private StudentParticipationRepository participationRepository;
@@ -37,7 +35,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    private AtheneService atheneService;
+    private AthenaService athenaService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -48,7 +46,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     private TextExercise exercise1;
 
     /**
-     * Initializes atheneService and example exercise
+     * Initializes athenaService and example exercise
      */
     @BeforeEach
     void init() {
@@ -56,22 +54,22 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         userUtilService.addUsers(TEST_PREFIX, 10, 1, 0, 1);
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         exercise1 = (TextExercise) course.getExercises().iterator().next();
-        atheneRequestMockProvider.enableMockingOfRequests();
+        athenaRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        atheneRequestMockProvider.reset();
-        atheneService.finishTask(exercise1.getId());
+        athenaRequestMockProvider.reset();
+        athenaService.finishTask(exercise1.getId());
     }
 
     /**
-     * Submits a job to atheneService without any submissions
+     * Submits a job to athenaService without any submissions
      */
     @Test
     void submitJobWithoutSubmissions() {
-        atheneService.submitJob(exercise1);
-        assertThat(!atheneService.isTaskRunning(exercise1.getId())).isTrue();
+        athenaService.submitJob(exercise1);
+        assertThat(!athenaService.isTaskRunning(exercise1.getId())).isTrue();
     }
 
     private List<TextSubmission> generateTextSubmissions(int size) {
@@ -90,31 +88,31 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     /**
-     * Submits a job to atheneService with less than 10 submissions (will use fallback segmentation without athene)
+     * Submits a job to athenaService with less than 10 submissions (will use fallback segmentation without athena)
      */
     @Test
     void submitJobWithLessThan10Submissions() {
         generateTextSubmissions(9);
-        atheneService.submitJob(exercise1);
-        assertThat(atheneService.isTaskRunning(exercise1.getId())).isFalse();
+        athenaService.submitJob(exercise1);
+        assertThat(athenaService.isTaskRunning(exercise1.getId())).isFalse();
     }
 
     /**
-     * Submits a job to atheneService with 10 submissions (will trigger athene)
+     * Submits a job to athenaService with 10 submissions (will trigger athena)
      */
     @Test
     void submitJobWith10Submissions() {
         generateTextSubmissions(10);
 
         // Create mock server
-        atheneRequestMockProvider.mockSubmitSubmissions();
+        athenaRequestMockProvider.mockSubmitSubmissions();
 
-        atheneService.submitJob(exercise1);
-        assertThat(atheneService.isTaskRunning(exercise1.getId())).isTrue();
+        athenaService.submitJob(exercise1);
+        assertThat(athenaService.isTaskRunning(exercise1.getId())).isTrue();
     }
 
     /**
-     * Tests parseTextBlocks of atheneService
+     * Tests parseTextBlocks of athenaService
      */
     @Test
     void parseTextBlocks() {
@@ -122,7 +120,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var textSubmissions = generateTextSubmissions(size);
 
         List<Segment> segments = generateSegments(textSubmissions);
-        List<TextBlock> textBlocks = atheneService.parseTextBlocks(segments, exercise1.getId());
+        List<TextBlock> textBlocks = athenaService.parseTextBlocks(segments, exercise1.getId());
         for (TextBlock textBlock : textBlocks) {
             assertThat(textBlock.getId()).isNotNull();
             assertThat(textBlock.getText()).isNotNull();
@@ -133,13 +131,13 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     /**
-     * Tests parseTextClusters of atheneService
+     * Tests parseTextClusters of athenaService
      */
 
     @Test
     void parseTextClusters() {
         List<Cluster> clusters = generateClusters();
-        List<TextCluster> textClusters = atheneService.parseTextClusters(clusters);
+        List<TextCluster> textClusters = athenaService.parseTextClusters(clusters);
         for (TextCluster textCluster : textClusters) {
             assertThat(textCluster.getBlocks()).isNotNull();
             assertThat(textCluster.getBlocks()).isNotEmpty();
@@ -149,7 +147,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     /**
-     * Generates example AtheneDTO TextBlocks
+     * Generates example AthenaDTO TextBlocks
      *
      * @param textSubmissions How many blocks should be generated
      * @return A list containing the generated TextBlocks

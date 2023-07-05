@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.athene;
+package de.tum.in.www1.artemis.service.connectors.athena;
 
 import javax.validation.constraints.NotNull;
 
@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
  * @param <RequestType>  DTO class, describing the body of the network request.
  * @param <ResponseType> DTO class, describing the body of the network response.
  */
-class AtheneConnector<RequestType, ResponseType> {
+class AthenaConnector<RequestType, ResponseType> {
 
     private final Logger log;
 
@@ -23,7 +23,7 @@ class AtheneConnector<RequestType, ResponseType> {
 
     private final Class<ResponseType> genericResponseType;
 
-    AtheneConnector(Logger log, RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
+    AthenaConnector(Logger log, RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
         this.log = log;
         this.restTemplate = restTemplate;
         this.genericResponseType = genericResponseType;

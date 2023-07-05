@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 @Service
-@Profile("athene")
+@Profile("athena")
 public class TextAssessmentQueueService {
 
     private final TextClusterRepository textClusterRepository;
