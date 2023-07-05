@@ -41,6 +41,13 @@ public class DataExportCommunicationDataService {
         this.reactionRepository = reactionRepository;
     }
 
+    /**
+     * Creates the communication data export for a user containing all posts, answer posts and reactions of the user
+     *
+     * @param userId           the id of the user
+     * @param workingDirectory the working directory
+     * @throws IOException if an error occurs while accessing the file system
+     */
     public void createCommunicationDataExport(long userId, Path workingDirectory) throws IOException {
         var postsPerCourse = postRepository.findPostsByAuthorId(userId).stream().filter(post -> post.getCoursePostingBelongsTo() != null)
                 .collect(Collectors.groupingBy(Post::getCoursePostingBelongsTo));
@@ -53,6 +60,7 @@ public class DataExportCommunicationDataService {
         var reactionsToAnswerPostsPerCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
                 .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .collect(Collectors.groupingBy(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo()));
+        // we need to distinguish these cases because it can happen that only a specific type of communication data exists in a course
         createCommunicationDataExportIfPostsExist(workingDirectory, postsPerCourse, answerPostsPerCourse, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
         createCommunicationDataExportIfAnswerPostsExist(workingDirectory, answerPostsPerCourse, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
         createCommunicationDataExportIfReactionsToPostsExist(workingDirectory, reactionsToPostsPerCourse, reactionsToAnswerPostsPerCourse);
