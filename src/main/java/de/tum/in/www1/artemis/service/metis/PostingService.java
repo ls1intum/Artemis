@@ -94,7 +94,8 @@ public abstract class PostingService {
         }
         else if (postDTO.post().getConversation() != null) {
             Set<ConversationParticipant> participants;
-            if (Hibernate.isInitialized(postDTO.post().getConversation().getConversationParticipants())) {
+            if (Hibernate.isInitialized(postDTO.post().getConversation().getConversationParticipants())
+                    && !postDTO.post().getConversation().getConversationParticipants().isEmpty()) {
                 participants = postDTO.post().getConversation().getConversationParticipants();
             }
             else {
