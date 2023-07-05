@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -43,23 +42,6 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
 
     @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
-
-    // feedback.type = 3 == FeedbackType.AUTOMATIC
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO(
-                textblock.cluster.id,
-                count(DISTINCT textblock.id),
-                SUM(case when feedback.type = 3 then 1 else 0 end)
-            )
-            FROM TextBlock textblock
-            LEFT JOIN Submission submission ON textblock.submission.id = submission.id
-            LEFT JOIN Result result ON result.submission.id = submission.id
-            LEFT JOIN Feedback feedback ON ( feedback.result.id = result.id and feedback.reference = textblock.id )
-            LEFT JOIN Participation participation ON participation.id = submission.participation.id
-            WHERE participation.exercise.id = :#{#exerciseId}
-            GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
-            """)
-    List<TextClusterStatisticsDTO> getClusterStatistics(@Param("exerciseId") Long exerciseId);
 
     @Transactional // ok because of delete
     @Modifying

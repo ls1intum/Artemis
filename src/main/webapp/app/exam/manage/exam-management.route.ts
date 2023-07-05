@@ -789,10 +789,6 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/text-cluster-statistics',
-        loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -800,7 +796,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
-            pageTitle: 'artemisApp.exampleSubmission.home.title',
+            pageTitle: 'artemisApp.exampleSubmission.home.LtiServicetitle',
         },
         canActivate: [UserRouteAccessService],
     },
