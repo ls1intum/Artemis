@@ -125,6 +125,7 @@
                 <jhi-unreferenced-feedback
                     [(feedbacks)]="unreferencedFeedback"
                     (feedbacksChange)="validateFeedback()"
+                    (reviewNoteChange)="saveReviewNote($event)"
                     [readOnly]="readOnly()"
                     [highlightDifferences]="highlightDifferences"
                 ></jhi-unreferenced-feedback>

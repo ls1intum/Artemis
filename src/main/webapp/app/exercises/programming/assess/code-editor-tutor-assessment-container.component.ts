@@ -333,12 +333,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
-        if (this.manualResult) {
-            const poc: ReviewNote = new ReviewNote();
-            this.manualResult.reviewNote = [];
-            poc.note = 'Neuer Text';
-            this.manualResult.reviewNote!.push(poc);
-        }
         this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
@@ -512,6 +506,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+    }
+
+    saveReviewNote(reviewNote: ReviewNote[]) {
+        this.manualResult!.reviewNote = reviewNote;
     }
 
     /**
