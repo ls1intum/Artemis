@@ -14,7 +14,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -55,9 +54,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @EntityGraph(type = LOAD, attributePaths = { "blocks", "results", "participation", "participation.submissions" })
     List<TextSubmission> findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(long exerciseId);
 
-    @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.assessor left join fetch s.blocks where r.id = :#{#resultId}")
-    Optional<TextSubmission> findByResultIdWithAssessorAndBlocks(@Param("resultId") long resultId);
-
     /**
      * Gets all TextSubmissions which are submitted and loads all blocks
      *
@@ -67,15 +63,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
-    /**
-     * Gets all TextSubmissions which are submitted, with matching and loads all blocks
-     *
-     * @param exerciseId the Id of the exercise
-     * @param language   language of the exercise
-     * @return List of Text Submissions
-     */
-    List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(long exerciseId, Language language);
-
     default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(long exerciseId) {
         return findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
     }
@@ -84,16 +71,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
         return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId) // TODO should be EntityNotFoundException
                 .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
-    }
-
-    @NotNull
-    default TextSubmission findByIdWithEagerParticipationExerciseResultAssessorElseThrow(long submissionId) {
-        return findByIdWithEagerParticipationExerciseResultAssessor(submissionId) // TODO should be EntityNotFoundException
-                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given submission.", "textSubmission", "textSubmissionNotFound"));
-    }
-
-    default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(long exerciseId, Language language) {
-        return findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
     }
 
     @NotNull

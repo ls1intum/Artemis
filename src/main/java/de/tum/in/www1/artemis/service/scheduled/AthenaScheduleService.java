@@ -91,7 +91,7 @@ public class AthenaScheduleService {
     private Runnable athenaRunnableForExercise(TextExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
-            athenaService.submitJob(exercise);
+            athenaService.sendSubmissions(exercise);
         };
     }
 

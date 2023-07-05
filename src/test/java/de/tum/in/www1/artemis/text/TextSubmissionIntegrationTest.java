@@ -126,9 +126,6 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> submissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> submissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
     }
 
     @Test
