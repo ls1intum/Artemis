@@ -39,7 +39,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         page: 1,
         pageSize: 50,
         searchTerm: '',
-        sortingOrder: SortingOrder.DESCENDING,
+        sortingOrder: SortingOrder.ASCENDING,
         sortedColumn: TableColumn.ID,
     };
     content: SearchResult<LearningPath>;
@@ -126,7 +126,6 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
 
         this.courseSub = this.courseManagementService.findWithLearningPaths(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
-            console.log(this.course);
 
             if (this.course.learningPathsEnabled) {
                 this.performSearch(this.sort, 0);
