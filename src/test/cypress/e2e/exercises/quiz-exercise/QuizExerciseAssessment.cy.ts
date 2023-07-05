@@ -22,7 +22,7 @@ describe('Quiz Exercise Assessment', () => {
     describe('MC Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 1).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 5).then((quizResponse) => {
                 quizExercise = convertModelAfterMultiPart(quizResponse);
                 courseManagementRequest.setQuizVisible(quizExercise.id!);
                 courseManagementRequest.startQuizNow(quizExercise.id!);
@@ -41,7 +41,7 @@ describe('Quiz Exercise Assessment', () => {
     describe('SA Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 1).then((quizResponse) => {
+            courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 5).then((quizResponse) => {
                 quizExercise = convertModelAfterMultiPart(quizResponse);
                 courseManagementRequest.setQuizVisible(quizExercise.id!);
                 courseManagementRequest.startQuizNow(quizExercise.id!);
