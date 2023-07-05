@@ -36,7 +36,7 @@ public class InstanceMessageReceiveService {
 
     private final ParticipantScoreScheduleService participantScoreScheduleService;
 
-    private final Optional<AtheneScheduleService> atheneScheduleService;
+    private final Optional<AthenaScheduleService> athenaScheduleService;
 
     private final UserScheduleService userScheduleService;
 
@@ -53,13 +53,13 @@ public class InstanceMessageReceiveService {
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
             ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
-            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
+            Optional<AthenaScheduleService> athenaScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
             NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.textExerciseRepository = textExerciseRepository;
-        this.atheneScheduleService = atheneScheduleService;
+        this.athenaScheduleService = athenaScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseScheduleService = modelingExerciseScheduleService;
         this.exerciseRepository = exerciseRepository;
@@ -204,18 +204,18 @@ public class InstanceMessageReceiveService {
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForAtheneIfRequired(textExercise));
+        athenaScheduleService.ifPresent(service -> service.scheduleExerciseForAthenaIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise {}", exerciseId);
-        atheneScheduleService.ifPresent(service -> service.cancelScheduledAthene(exerciseId));
+        athenaScheduleService.ifPresent(service -> service.cancelScheduledAthena(exerciseId));
     }
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
         log.info("Received schedule instant clustering for text exercise {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
+        athenaScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthena(textExercise));
     }
 
     public void processUnlockAllRepositories(Long exerciseId) {

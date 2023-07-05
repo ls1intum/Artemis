@@ -10,38 +10,38 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
-import de.tum.in.www1.artemis.service.connectors.athene.AtheneHealthIndicator;
+import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaHealthIndicator;
 
-class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private AtheneRequestMockProvider atheneRequestMockProvider;
+class AthenaHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private AtheneHealthIndicator atheneHealthIndicator;
+    private AthenaRequestMockProvider athenaRequestMockProvider;
+
+    @Autowired
+    private AthenaHealthIndicator athenaHealthIndicator;
 
     @BeforeEach
     void initTestCase() {
-        atheneRequestMockProvider.enableMockingOfRequests();
+        athenaRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        atheneRequestMockProvider.reset();
+        athenaRequestMockProvider.reset();
     }
 
     @Test
     void healthUp() {
-        atheneRequestMockProvider.mockQueueStatus(true);
-        final Health health = atheneHealthIndicator.health();
+        athenaRequestMockProvider.mockQueueStatus(true);
+        final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
     }
 
     @Test
     void healthDown() {
-        atheneRequestMockProvider.mockQueueStatus(false);
-        final Health health = atheneHealthIndicator.health();
+        athenaRequestMockProvider.mockQueueStatus(false);
+        final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
     }
 }

@@ -34,7 +34,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Load entities from database needed for text assessment, set potential feedback impact count & compute
-     * Feedback suggestions (Athene):
+     * Feedback suggestions (Athena):
      * 1. Create or load the result
      * 2. Set potential Feedback impact
      * 3. Compute Feedback Suggestions
@@ -71,7 +71,7 @@ public class TextAssessmentService extends AssessmentService {
             textSubmission.addResult(result);
             submissionRepository.save(textSubmission);
 
-            // If enabled, we want to compute feedback suggestions using Athene.
+            // If enabled, we want to compute feedback suggestions using Athena.
             if (computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }

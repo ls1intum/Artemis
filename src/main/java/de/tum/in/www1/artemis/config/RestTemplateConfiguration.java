@@ -12,7 +12,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.config.auth.AtheneAuthorizationInterceptor;
+import de.tum.in.www1.artemis.config.auth.AthenaAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
@@ -64,9 +64,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athene")
-    public RestTemplate atheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
+    @Profile("athena")
+    public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
@@ -112,9 +112,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athene")
-    public RestTemplate shortTimeoutAtheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    @Profile("athena")
+    public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean

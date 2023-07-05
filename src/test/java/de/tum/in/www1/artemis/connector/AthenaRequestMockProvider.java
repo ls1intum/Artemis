@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
-@Profile("athene")
-public class AtheneRequestMockProvider {
+@Profile("athena")
+public class AthenaRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
@@ -33,16 +33,16 @@ public class AtheneRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    @Value("${artemis.athene.url}")
-    private String atheneUrl;
+    @Value("${artemis.athena.url}")
+    private String athenaUrl;
 
     @Autowired
     private ObjectMapper mapper;
 
     private AutoCloseable closeable;
 
-    public AtheneRequestMockProvider(@Qualifier("atheneRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutAtheneRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -68,23 +68,23 @@ public class AtheneRequestMockProvider {
     }
 
     /**
-     * Mocks /submit api from Athene used to submit new exercises for clustering.
+     * Mocks /submit api from Athena used to submit new exercises for clustering.
      */
     public void mockSubmitSubmissions() {
         final ObjectNode node = mapper.createObjectNode();
         node.set("detail", mapper.valueToTree("Submission successful"));
         final String json = node.toString();
 
-        mockServer.expect(ExpectedCount.once(), requestTo(atheneUrl + "/submit")).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/submit")).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
     /**
-     * Mocks /queueStatus api from Athene used to retrieve metadata on processed jobs. Currently used as a health check endpoint.
+     * Mocks /queueStatus api from Athena used to retrieve metadata on processed jobs. Currently used as a health check endpoint.
      *
      * @param success Successful response or timeout.
      */
     public void mockQueueStatus(boolean success) {
-        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(atheneUrl + "/queueStatus")).andExpect(method(HttpMethod.GET));
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/queueStatus")).andExpect(method(HttpMethod.GET));
 
         if (success) {
             final ObjectNode node = mapper.createObjectNode();

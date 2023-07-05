@@ -23,14 +23,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("athene & scheduling")
-public class AtheneScheduleService {
+@Profile("athena & scheduling")
+public class AthenaScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(AtheneScheduleService.class);
+    private final Logger log = LoggerFactory.getLogger(AthenaScheduleService.class);
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
@@ -38,19 +38,19 @@ public class AtheneScheduleService {
 
     private final Environment env;
 
-    private final Map<Long, ScheduledFuture<?>> scheduledAtheneTasks = new HashMap<>();
+    private final Map<Long, ScheduledFuture<?>> scheduledAthenaTasks = new HashMap<>();
 
-    private final AtheneService atheneService;
+    private final AthenaService athenaService;
 
     private final TaskScheduler scheduler;
 
-    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AtheneService atheneService) {
+    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AthenaService athenaService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseRepository = textExerciseRepository;
         this.scheduler = scheduler;
         this.env = env;
-        this.atheneService = atheneService;
+        this.athenaService = athenaService;
     }
 
     @PostConstruct
@@ -62,18 +62,18 @@ public class AtheneScheduleService {
             return;
         }
         final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
-        runningTextExercises.forEach(this::scheduleExerciseForAthene);
-        log.info("Scheduled Athene for {} text exercises with future due dates.", runningTextExercises.size());
+        runningTextExercises.forEach(this::scheduleExerciseForAthena);
+        log.info("Scheduled Athena for {} text exercises with future due dates.", runningTextExercises.size());
     }
 
     /**
-     * Schedule an Athene task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     * Schedule an Athena task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
      *
-     * @param exercise exercise to schedule Athene for
+     * @param exercise exercise to schedule Athena for
      */
-    public void scheduleExerciseForAtheneIfRequired(TextExercise exercise) {
+    public void scheduleExerciseForAthenaIfRequired(TextExercise exercise) {
         if (!exercise.isAutomaticAssessmentEnabled()) {
-            cancelScheduledAthene(exercise.getId());
+            cancelScheduledAthena(exercise.getId());
             return;
         }
         // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
@@ -81,59 +81,59 @@ public class AtheneScheduleService {
             return;
         }
 
-        scheduleExerciseForAthene(exercise);
+        scheduleExerciseForAthena(exercise);
     }
 
-    private void scheduleExerciseForAthene(TextExercise exercise) {
+    private void scheduleExerciseForAthena(TextExercise exercise) {
         // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled for Athene more than once.
-        cancelScheduledAthene(exercise.getId());
+        // no exercise should be scheduled for Athena more than once.
+        cancelScheduledAthena(exercise.getId());
 
-        final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, atheneRunnableForExercise(exercise));
+        final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, athenaRunnableForExercise(exercise));
 
-        scheduledAtheneTasks.put(exercise.getId(), future);
-        log.debug("Scheduled Athene for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
+        scheduledAthenaTasks.put(exercise.getId(), future);
+        log.debug("Scheduled Athena for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
     /**
-     * Schedule an Athene task for a text exercise to start immediately.
+     * Schedule an Athena task for a text exercise to start immediately.
      *
-     * @param exercise exercise to schedule Athene for
+     * @param exercise exercise to schedule Athena for
      */
-    public void scheduleExerciseForInstantAthene(TextExercise exercise) {
+    public void scheduleExerciseForInstantAthena(TextExercise exercise) {
         // TODO: sanity checks.
-        scheduler.schedule(atheneRunnableForExercise(exercise), now());
+        scheduler.schedule(athenaRunnableForExercise(exercise), now());
     }
 
     @NotNull
-    private Runnable atheneRunnableForExercise(TextExercise exercise) {
+    private Runnable athenaRunnableForExercise(TextExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
-            atheneService.submitJob(exercise);
+            athenaService.submitJob(exercise);
         };
     }
 
     /**
-     * Cancel possible schedules Athene tasks for a provided exercise.
+     * Cancel possible schedules Athena tasks for a provided exercise.
      *
-     * @param exerciseId id of the exercise for which a potential Athene task is canceled
+     * @param exerciseId id of the exercise for which a potential Athena task is canceled
      */
-    public void cancelScheduledAthene(Long exerciseId) {
-        final ScheduledFuture<?> future = scheduledAtheneTasks.get(exerciseId);
+    public void cancelScheduledAthena(Long exerciseId) {
+        final ScheduledFuture<?> future = scheduledAthenaTasks.get(exerciseId);
         if (future != null) {
             future.cancel(false);
-            scheduledAtheneTasks.remove(exerciseId);
+            scheduledAthenaTasks.remove(exerciseId);
         }
     }
 
     /**
-     * Checks if Athene is currently processing submissions of given exercise.
+     * Checks if Athena is currently processing submissions of given exercise.
      *
      * @param exercise Exercise to check state
-     * @return currently computing Athene?
+     * @return currently computing Athena?
      */
     public boolean currentlyProcessing(TextExercise exercise) {
-        final ScheduledFuture<?> future = scheduledAtheneTasks.get(exercise.getId());
+        final ScheduledFuture<?> future = scheduledAthenaTasks.get(exercise.getId());
         if (future == null) {
             return false;
         }
@@ -143,8 +143,8 @@ public class AtheneScheduleService {
         final boolean cancelled = future.isCancelled();
 
         // Check future for scheduled tasks
-        // Check atheneService for running tasks
-        return !done && !cancelled && delay <= 0 || atheneService.isTaskRunning(exercise.getId());
+        // Check athenaService for running tasks
+        return !done && !cancelled && delay <= 0 || athenaService.isTaskRunning(exercise.getId());
     }
 
 }

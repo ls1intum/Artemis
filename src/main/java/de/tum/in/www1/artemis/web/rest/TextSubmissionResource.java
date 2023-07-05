@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.AthenaScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -54,7 +54,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final Optional<AtheneScheduleService> atheneScheduleService;
+    private final Optional<AthenaScheduleService> athenaScheduleService;
 
     private final ExamSubmissionService examSubmissionService;
 
@@ -63,7 +63,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
+            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AthenaScheduleService> athenaScheduleService,
             ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
@@ -73,7 +73,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userRepository = userRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.atheneScheduleService = atheneScheduleService;
+        this.athenaScheduleService = athenaScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.plagiarismService = plagiarismService;
@@ -202,9 +202,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if tutors can start assessing the students submission
         this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
 
-        // Tutors cannot start assessing submissions if Athene is currently processing automatic feedback
-        if (atheneScheduleService.isPresent() && atheneScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
-            throw new EntityNotFoundException("Athene is currently processing automatic feedback.");
+        // Tutors cannot start assessing submissions if Athena is currently processing automatic feedback
+        if (athenaScheduleService.isPresent() && athenaScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
+            throw new EntityNotFoundException("Athena is currently processing automatic feedback.");
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
