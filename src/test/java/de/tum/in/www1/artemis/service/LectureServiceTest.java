@@ -91,7 +91,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
-        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course.getLectures(), editor);
+        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), editor);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
@@ -102,7 +102,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
-        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course.getLectures(), student);
+        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), student);
         Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).isNotEmpty();

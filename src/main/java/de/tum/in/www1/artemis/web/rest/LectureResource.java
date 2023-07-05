@@ -192,7 +192,7 @@ public class LectureResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
-        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(lectures, user);
+        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
         lectures.forEach(lectureService::filterActiveAttachmentUnits);
         return ResponseEntity.ok().body(lectures);
     }
