@@ -65,7 +65,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
 
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
-        // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
+        // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
         hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
@@ -85,6 +85,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(lecture).isNotNull();
         assertThat(lecture.getLectureUnits()).isNotEmpty();
         assertThat(lecture.getAttachments()).isNotEmpty();
+        assertThat(lecture.getId()).isLessThan(hiddenLecture.getId());
     }
 
     @Test
