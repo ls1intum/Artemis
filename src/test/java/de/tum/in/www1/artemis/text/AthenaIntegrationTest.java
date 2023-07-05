@@ -14,7 +14,7 @@ class AthenaIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private static final String TEST_PREFIX = "athenaintegration";
 
-    @Value("${artemis.athena.base64-secret}")
+    @Value("${artemis.athena.secret}")
     private String athenaApiSecret;
 
     @Autowired

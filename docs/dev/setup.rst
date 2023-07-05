@@ -222,9 +222,8 @@ You can override the following configuration options in this file.
            name: Artemis
            email: artemis@in.tum.de
        athena:
-           url: http://localhost
-           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-           token-validity-in-seconds: 10800
+           url: http://localhost:5000
+           secret: abcdef12345
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -621,9 +620,8 @@ HTTP. We need to extend the configuration in the file
    artemis:
      # ...
      athena:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
+         url: http://localhost:5000
+         secret: abcdef12345
 
 .. _Athena: https://github.com/ls1intum/Athena
 

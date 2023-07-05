@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Profile("athena")
 public class AthenaAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Value("${artemis.athena.base64-secret}")
+    @Value("${artemis.athena.secret}")
     private String secret;
 
     @NotNull
