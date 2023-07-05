@@ -18,6 +18,7 @@
                 <ng-container [ngSwitch]="exercise.type">
                     <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                         <jhi-quiz-submission-exam
+                            #quizexexerciseid
                             *ngSwitchCase="QUIZ"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"

@@ -173,16 +173,25 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             exercise = programmingSubmission.participation?.exercise;
         }
         if (exercise) {
+            console.log('exercise id: ' + exercise.id);
             const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === exercise?.id);
+
+            this.examNavigationBarComponent.changePage(false, exerciseIndex, false);
+            console.log(this.currentPageComponents);
+            this.currentPageComponents.forEach((component) => {
+                console.log('exercise id in submission component' + (component as ExamSubmissionComponent).getExercise().id);
+            });
             const correspondingSubmissionComponent = this.currentPageComponents.find(
                 (submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === exercise?.id,
             );
+            if (!correspondingSubmissionComponent) {
+                console.log('no corresponding submission component found');
+            }
             if (exercise.type === ExerciseType.PROGRAMMING) {
                 correspondingSubmissionComponent!.submission = submission as ProgrammingSubmission;
             } else {
                 correspondingSubmissionComponent!.submissionVersion = submission as SubmissionVersion;
             }
-            this.examNavigationBarComponent.changePage(false, exerciseIndex, false);
         }
         // TODO find the corresponding submission for the timestamp instantiate the component with it and navigate to the respective page
     }
