@@ -1,8 +1,12 @@
 <div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActiveConversation">
     <div>
         <span class="conversation-name">
-            <ng-container *ngIf="getAsChannel(conversation) as channel">
-                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!" [isAnnouncementChannel]="channel.isAnnouncementChannel!"></jhi-channel-icon>
+            <ng-container *ngIf="conversationAsChannel">
+                <jhi-channel-icon
+                    [isPublic]="conversationAsChannel.isPublic!"
+                    [isArchived]="conversationAsChannel.isArchived!"
+                    [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel!"
+                ></jhi-channel-icon>
             </ng-container>
             <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">
                 <jhi-group-chat-icon></jhi-group-chat-icon>
@@ -21,6 +25,9 @@
                 <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
             </button>
             <div ngbDropdownMenu>
+                <a *ngIf="conversationAsChannel?.subTypeReferenceId" class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink">
+                    {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
+                </a>
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
                     {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
                 </button>

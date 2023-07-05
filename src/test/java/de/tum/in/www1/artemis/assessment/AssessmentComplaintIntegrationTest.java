@@ -187,7 +187,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -199,7 +199,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -214,12 +214,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow().getComplaintType()).as("more feedback request is not saved")
                 .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -236,7 +236,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -251,7 +251,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -266,9 +266,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
 
-        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).orElseThrow();
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
@@ -290,14 +290,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
-        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result result = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
         result.setCompletionDate(ZonedDateTime.ofInstant(result.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
@@ -890,9 +890,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
         assertThat(storedComplaint).as("complaint is saved").isPresent();
-        assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
+        assertThat(storedComplaint.orElseThrow().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         // set date to UTC for comparison
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
@@ -965,7 +965,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
-        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
+        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
 

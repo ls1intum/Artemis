@@ -1,4 +1,5 @@
 import { defineConfig } from 'cypress';
+import { cloudPlugin } from 'cypress-cloud/plugin';
 
 export default defineConfig({
     clientCertificates: [
@@ -36,8 +37,8 @@ export default defineConfig({
     fixturesFolder: 'fixtures',
     screenshotsFolder: 'screenshots',
     videosFolder: 'videos',
-    video: false,
-    screenshotOnRunFailure: false,
+    video: true,
+    screenshotOnRunFailure: true,
     viewportWidth: 1920,
     viewportHeight: 1080,
     defaultCommandTimeout: 20000,
@@ -48,7 +49,7 @@ export default defineConfig({
         toConsole: true,
     },
     e2e: {
-        setupNodeEvents(on) {
+        setupNodeEvents(on, config) {
             on('task', {
                 error(message: string) {
                     console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
@@ -67,8 +68,9 @@ export default defineConfig({
                 launchOptions.args.push('--lang=en');
                 return launchOptions;
             });
+            return cloudPlugin(on, config);
         },
-        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
+        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.ts'],
         supportFile: 'support/index.ts',
         baseUrl: 'http://localhost:8080',
     },

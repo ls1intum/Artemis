@@ -113,7 +113,7 @@ public class DataExportResource {
             return false;
         }
         else {
-            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }
 }
