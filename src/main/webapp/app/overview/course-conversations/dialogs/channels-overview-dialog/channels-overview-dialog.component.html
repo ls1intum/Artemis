@@ -18,11 +18,11 @@
                 </div>
             </div>
             <div *ngIf="otherChannels && otherChannels.length > 0" class="form-group mt-4">
-                <div (click)="isCollapsed = !isCollapsed" class="other-channels">
-                    <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+                <div (click)="otherChannelsAreCollapsed = !otherChannelsAreCollapsed" class="other-channels">
+                    <fa-icon [icon]="faChevronRight" [rotate]="!otherChannelsAreCollapsed ? 90 : undefined"></fa-icon>
                     <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
                 </div>
-                <div [(ngbCollapse)]="isCollapsed">
+                <div [(ngbCollapse)]="otherChannelsAreCollapsed">
                     <div class="table-wrapper-scroll-y scrollbar">
                         <ul class="list-group">
                             <li *ngFor="let channel of otherChannels; trackBy: trackIdentity" [id]="'channel-' + channel.id" class="list-group-item">

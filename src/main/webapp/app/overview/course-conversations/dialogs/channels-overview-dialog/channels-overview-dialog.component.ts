@@ -50,7 +50,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     isInitialized = false;
 
     faChevronRight = faChevronRight;
-    isCollapsed = true;
+    otherChannelsAreCollapsed = true;
 
     initialize() {
         super.initialize(['course', 'channelSubType']);
