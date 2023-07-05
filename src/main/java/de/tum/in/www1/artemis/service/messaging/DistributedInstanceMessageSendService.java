@@ -75,12 +75,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Sending schedule instant clustering for text exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.TEXT_EXERCISE_INSTANT_CLUSTERING, exerciseId);
-    }
-
-    @Override
     public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
