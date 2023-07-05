@@ -50,8 +50,6 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     private Lecture lecture;
 
-    private Lecture hiddenLecture;
-
     private User student;
 
     private User editor;
@@ -68,7 +66,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
-        hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
+        Lecture hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
 
         // Set one lecture only visible in the future for filtering tests
         ZonedDateTime future = ZonedDateTime.now().plusDays(3);
