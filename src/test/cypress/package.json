@@ -26,7 +26,7 @@
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
         "cypress:record:mysql": "npx cypress-cloud run --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} (MySQL)\"",
-        "cypress:record:postgresql": "npx cypress-cloud run --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} (PostgreSQL)\"",
+        "cypress:record:postgres": "npx cypress-cloud run --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} (Postgres)\"",
         "update": "npm-upgrade"
     }
 }
