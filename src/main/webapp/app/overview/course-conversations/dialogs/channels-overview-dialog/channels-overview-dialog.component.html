@@ -17,6 +17,21 @@
                     </ul>
                 </div>
             </div>
+            <div *ngIf="otherChannels && otherChannels?.length > 0" class="form-group mt-4">
+                <div (click)="isCollapsed = !isCollapsed">
+                    <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+                    <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
+                </div>
+                <div [(ngbCollapse)]="isCollapsed">
+                    <div class="table-wrapper-scroll-y scrollbar">
+                        <ul class="list-group">
+                            <li *ngFor="let channel of otherChannels; trackBy: trackIdentity" [id]="'channel-' + channel.id" class="list-group-item">
+                                <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer justify-content-between">
             <button *ngIf="createChannelFn && canCreateChannel(course)" type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
