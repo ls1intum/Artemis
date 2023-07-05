@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.legal;
+package de.tum.in.www1.artemis.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
