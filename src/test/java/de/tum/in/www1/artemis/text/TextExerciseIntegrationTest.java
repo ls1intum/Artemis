@@ -824,14 +824,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testTriggerAutomaticAssessment() throws Exception {
-        final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        request.postWithoutLocation("/api/admin/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         textExerciseUtilService.addCourseWithOneReleasedTextExercise();

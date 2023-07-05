@@ -96,10 +96,6 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processTextExerciseScheduleCancel((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_INSTANT_CLUSTERING.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processTextExerciseInstantClustering((message.getMessageObject()));
-        });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processUnlockAllRepositories((message.getMessageObject()));
@@ -210,12 +206,6 @@ public class InstanceMessageReceiveService {
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise {}", exerciseId);
         athenaScheduleService.ifPresent(service -> service.cancelScheduledAthena(exerciseId));
-    }
-
-    public void processTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Received schedule instant clustering for text exercise {}", exerciseId);
-        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        athenaScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthena(textExercise));
     }
 
     public void processUnlockAllRepositories(Long exerciseId) {

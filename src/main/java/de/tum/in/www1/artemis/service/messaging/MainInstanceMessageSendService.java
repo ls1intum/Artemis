@@ -57,11 +57,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendTextExerciseInstantClustering(Long exerciseId) {
-        instanceMessageReceiveService.processTextExerciseInstantClustering(exerciseId);
-    }
-
-    @Override
     public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         instanceMessageReceiveService.processUnlockAllRepositories(exerciseId);
     }

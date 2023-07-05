@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static java.time.Instant.now;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -12,10 +10,8 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -42,13 +38,9 @@ public class AthenaScheduleService {
 
     private final AthenaService athenaService;
 
-    private final TaskScheduler scheduler;
-
-    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AthenaService athenaService) {
+    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, Environment env, AthenaService athenaService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseRepository = textExerciseRepository;
-        this.scheduler = scheduler;
         this.env = env;
         this.athenaService = athenaService;
     }
@@ -93,16 +85,6 @@ public class AthenaScheduleService {
 
         scheduledAthenaTasks.put(exercise.getId(), future);
         log.debug("Scheduled Athena for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
-    }
-
-    /**
-     * Schedule an Athena task for a text exercise to start immediately.
-     *
-     * @param exercise exercise to schedule Athena for
-     */
-    public void scheduleExerciseForInstantAthena(TextExercise exercise) {
-        // TODO: sanity checks.
-        scheduler.schedule(athenaRunnableForExercise(exercise), now());
     }
 
     @NotNull
