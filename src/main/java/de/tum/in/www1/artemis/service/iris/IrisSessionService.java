@@ -10,11 +10,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.IrisSessionExerciseConnector;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSessionExerciseConnectorRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
@@ -34,12 +36,15 @@ public class IrisSessionService {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
+    private final IrisSessionExerciseConnectorRepository irisSessionExerciseConnectorRepository;
+
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisChatSessionRepository irisChatSessionRepository) {
+            IrisChatSessionRepository irisChatSessionRepository, IrisSessionExerciseConnectorRepository irisSessionExerciseConnectorRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
+        this.irisSessionExerciseConnectorRepository = irisSessionExerciseConnectorRepository;
     }
 
     /**
@@ -53,21 +58,25 @@ public class IrisSessionService {
 
     /**
      * Creates a new Iris session for the given exercise and user.
-     * If a session already exists, a BadRequestException is thrown.
+     * If a session already exists, created a new one.
      *
      * @param exercise The exercise the session belongs to
      * @param user     The user the session belongs to
      * @return The created session
      */
     public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (irisChatSessionRepository.findByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()) {
-            throw new BadRequestException("Iris Session already exists for exercise " + exercise.getId() + " and user " + user.getId());
-        }
-
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
-        return irisChatSessionRepository.save(irisSession);
+
+        var savedSession = irisChatSessionRepository.save(irisSession);
+
+        var irisSessionExerciseConnector = new IrisSessionExerciseConnector();
+        irisSessionExerciseConnector.setExercise(exercise);
+        irisSessionExerciseConnector.setSession(savedSession);
+        irisSessionExerciseConnectorRepository.save(irisSessionExerciseConnector);
+
+        return savedSession;
     }
 
     /**

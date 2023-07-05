@@ -62,13 +62,15 @@ public class IrisSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var session = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        var session = irisChatSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         irisSessionService.checkHasAccessToIrisSession(session, user);
         return ResponseEntity.ok(session);
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/session: Retrieve the current iris session for the programming exercise.
+     * POST programming-exercises/{exerciseId}/session: Create a new iris session for an exercise and user.
+     * If there already exists an iris session for the exercise and user, a new one is created.
+     * Note: The old session including messages is not deleted and can still be retrieved
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the exercise
