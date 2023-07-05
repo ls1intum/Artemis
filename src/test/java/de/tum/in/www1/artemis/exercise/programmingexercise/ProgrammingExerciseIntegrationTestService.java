@@ -531,7 +531,7 @@ class ProgrammingExerciseIntegrationTestService {
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAnonymizeStudentCommits(true);
+        repositoryExportOptions.setAnonymizeRepository(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         return repositoryExportOptions;
