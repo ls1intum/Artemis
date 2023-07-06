@@ -4,7 +4,7 @@ import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
 import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { titleLowercase } from '../../support/utils';
+import { generateUUID, titleLowercase } from '../../support/utils';
 
 // Common primitives
 let courseName: string;
