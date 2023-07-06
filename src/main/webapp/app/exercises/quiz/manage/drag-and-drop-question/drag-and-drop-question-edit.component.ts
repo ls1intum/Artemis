@@ -31,7 +31,7 @@ import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { debounceTime, filter } from 'rxjs/operators';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import {
     faAngleDown,
@@ -134,6 +134,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faUpload = faUpload;
 
     readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
+    readonly CachingStrategy = CachingStrategy;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
