@@ -17,6 +17,11 @@
         "uuid": "9.0.0",
         "wait-on": "7.0.1"
     },
+    "overrides": {
+        "semver": "7.5.3",
+        "word-wrap": "1.2.3",
+        "debug": "4.3.4"
+    },
     "scripts": {
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
