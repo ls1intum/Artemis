@@ -48,7 +48,6 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ExamPage } from 'app/entities/exam-page.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 
 describe('ExamParticipationComponent', () => {
