@@ -57,14 +57,18 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exercise.id;
         modalRef.componentInstance.dueDatePassed = hasDueDatePassed(this.exercise);
-        modalRef.result.then(() => {
-            this.submissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
-                .pipe(catchError(() => of(undefined)))
-                .subscribe(() => {
-                    this.onBuildTriggered.emit();
-                });
-        });
+        modalRef.result
+            .then(() => {
+                this.submissionService
+                    .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
+                    .pipe(catchError(() => of(undefined)))
+                    .subscribe(() => {
+                        this.onBuildTriggered.emit();
+                    });
+            })
+            .catch(() => {
+                // Operation canceled, do nothing
+            });
     }
 
     private subscribeBuildRunUpdates() {
