@@ -62,6 +62,7 @@ describe('ExamParticipationComponent', () => {
     let artemisServerDateService: ArtemisServerDateService;
     let websocketService: JhiWebsocketService;
     let artemisDatePipe: ArtemisDatePipe;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -117,6 +118,7 @@ describe('ExamParticipationComponent', () => {
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 websocketService = TestBed.inject(JhiWebsocketService);
                 artemisDatePipe = TestBed.inject(ArtemisDatePipe);
+                translateService = TestBed.inject(TranslateService);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -634,6 +636,29 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('canDeactivate', () => {
+        it('should return true if logout is true', () => {
+            comp.loggedOut = true;
+            expect(comp.canDeactivate()).toBeTrue();
+        });
+
+        it('should call translateService', () => {
+            const translateServiceSpy = jest.spyOn(translateService, 'instant');
+            comp.canDeactivateWarning;
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('unloadNotification', () => {
+        it('should set event return value', () => {
+            jest.spyOn(comp, 'canDeactivate').mockReturnValue(false);
+            jest.spyOn(comp, 'canDeactivateWarning', 'get').mockReturnValue('warning');
+            const event = { returnValue: undefined };
+            comp.unloadNotification(event);
+            expect(event.returnValue).toBe('warning');
+        });
     });
 
     describe('isOver', () => {
