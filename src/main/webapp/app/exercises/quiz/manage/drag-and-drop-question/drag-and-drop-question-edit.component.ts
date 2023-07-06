@@ -257,7 +257,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             if (this.question.backgroundFilePath) {
                 this.removeFile.emit(this.question.backgroundFilePath);
             }
-            const fileList: FileList = event.target.files;
+            const fileList: FileList = event.target.files as FileList;
             const file = fileList[0];
             const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool);
             this.question.backgroundFilePath = fileName;
@@ -275,7 +275,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
-        const backgroundElement = this.clickLayer.nativeElement;
+        const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
         const backgroundOffsetLeft = backgroundElement.getBoundingClientRect().x + window.scrollX;
         const backgroundOffsetTop = backgroundElement.getBoundingClientRect().y + window.scrollY;
         const backgroundWidth = backgroundElement.offsetWidth;
@@ -334,7 +334,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const backgroundElement = this.clickLayer.nativeElement;
+                    const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
                     const backgroundWidth = backgroundElement.offsetWidth;
                     const backgroundHeight = backgroundElement.offsetHeight;
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
@@ -392,7 +392,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundElement = this.clickLayer.nativeElement;
+            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
             const backgroundWidth = backgroundElement.offsetWidth;
             const backgroundHeight = backgroundElement.offsetHeight;
 
@@ -439,8 +439,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
-            const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
+            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
+            const backgroundWidth = backgroundElement.offsetWidth;
+            const backgroundHeight = backgroundElement.offsetHeight;
 
             // Update state
             this.draggingState = DragState.RESIZE_BOTH; // Default is both, will be overwritten later, if needed
@@ -717,7 +718,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!event.target.files.length) {
             return undefined;
         }
-        const fileList: FileList = event.target.files;
+        const fileList: FileList = event.target.files as FileList;
         return fileList[0];
     }
 
