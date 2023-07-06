@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -187,11 +186,12 @@ public class FileService implements DisposableBean {
      */
     public String saveFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName, MultipartFile file) {
         try {
-            File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
+            Path newFile = createFileName(filePath, filename, fileNameAddition, fileExtension, keepFileName);
 
-            file.transferTo(newFile.getAbsoluteFile());
+            // copy contents of uploaded file into newly created file
+            file.transferTo(newFile.toAbsolutePath());
 
-            return newFile.toPath().getFileName().toString();
+            return newFile.getFileName().toString();
         }
         catch (IOException e) {
             log.error("Could not save file {}", filename, e);
@@ -209,22 +209,15 @@ public class FileService implements DisposableBean {
      * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
-    // TODO: this only creates the bare bone Java file with the correct, it does not create the actual file, we should consider to rename it
-    private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
-        try {
-            Files.createDirectories(Paths.get(filePath));
-        }
-        catch (IOException e) {
-            log.error("Could not create directory: {}", filePath);
-            throw e;
-        }
-        String newFilename = filename;
+    private Path createFileName(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
+        Path path = Path.of(filePath, filename);
         if (!keepFileName) {
             // append a timestamp and some randomness to the filename to avoid conflicts
-            newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                    + fileExtension;
+            String newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
+                    + "." + fileExtension;
+            path = Path.of(filePath, newFilename);
         }
-        return Path.of(filePath, newFilename).toFile();
+        return path;
     }
 
     /**
@@ -239,8 +232,7 @@ public class FileService implements DisposableBean {
         if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
             try {
                 Path source = Path.of(actualPathForPublicPathOrThrow(oldFilePath));
-                File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
-                Path target = targetFile.toPath();
+                Path target = generateTargetPath(oldFilePath, targetFolder, false);
                 Files.copy(source, target, REPLACE_EXISTING);
                 String newFilePath = publicPathForActualPathOrThrow(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
@@ -312,8 +304,7 @@ public class FileService implements DisposableBean {
             // rename and move file
             try {
                 Path source = Path.of(actualPathForPublicPathOrThrow(path));
-                File targetFile = generateTargetFile(path, targetFolder, keepFileName);
-                Path target = targetFile.toPath();
+                Path target = generateTargetPath(path, targetFolder, keepFileName);
                 Files.move(source, target, REPLACE_EXISTING);
                 log.debug("Moved File from {} to {}", source, target);
                 return publicPathForActualPathOrThrow(target.toString(), entityId);
@@ -500,7 +491,35 @@ public class FileService implements DisposableBean {
      * @throws IOException if the file can't be generated.
      */
     // TODO: this only creates the bare bone Java file with the correct, it does not generate the actual file, we should consider to rename it
-    public File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
+    public Path generateTargetPath(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
+        String filenameBase = getBaseFilenameForFolder(targetFolder);
+        // extract the file extension
+        String fileExtension = FilenameUtils.getExtension(originalFilename);
+
+        // create folder if necessary
+        File folder = new File(targetFolder);
+        if (!folder.exists()) {
+            if (!folder.mkdirs()) {
+                log.error("Could not create directory: {}", targetFolder);
+                throw new IOException("Could not create directory: " + targetFolder);
+            }
+        }
+
+        // create the file (retry if filename already exists)
+        String filename = originalFilename;
+        if (keepFileName) {
+            if (filename.contains(DEFAULT_FILE_SUBPATH)) {
+                filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
+            }
+        }
+        else {
+            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                    + fileExtension;
+        }
+        return Path.of(targetFolder, filename);
+    }
+
+    private String getBaseFilenameForFolder(String targetFolder) {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
@@ -527,33 +546,7 @@ public class FileService implements DisposableBean {
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath()) && targetFolder.contains("/slide")) {
             filenameBase = "AttachmentUnitSlide_";
         }
-
-        // extract the file extension
-        String fileExtension = FilenameUtils.getExtension(originalFilename);
-
-        // create folder if necessary
-        File folder = new File(targetFolder);
-        if (!folder.exists()) {
-            if (!folder.mkdirs()) {
-                log.error("Could not create directory: {}", targetFolder);
-                throw new IOException("Could not create directory: " + targetFolder);
-            }
-        }
-
-        // create the file (retry if filename already exists)
-        File newFile;
-        String filename = originalFilename;
-        if (keepFileName) {
-            if (filename.contains(DEFAULT_FILE_SUBPATH)) {
-                filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
-            }
-        }
-        else {
-            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                    + fileExtension;
-        }
-        var path = Path.of(targetFolder, filename).toString();
-        return new File(path);
+        return filenameBase;
     }
 
     /**
