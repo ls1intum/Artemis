@@ -753,7 +753,7 @@ public class CourseService {
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
-                courseRepository.save(course);
+                courseRepository.saveAndFlush(course);
             }
             else {
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
