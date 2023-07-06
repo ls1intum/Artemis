@@ -1,11 +1,11 @@
 <div class="col-auto">
-    <ng-container *ngIf="studentParticipation && studentParticipation.results?.length; else noResult">
+    <ng-container *ngIf="shouldShowResult; else noResult">
         <!-- Updating result -->
         <span>
             <jhi-updating-result
                 id="submission-result-graded"
                 [exercise]="exercise"
-                [participation]="studentParticipation"
+                [participation]="studentParticipation!"
                 [class]="updatingResultClass"
                 [showUngradedResults]="showUngradedResults"
                 [showBadge]="showBadge"
