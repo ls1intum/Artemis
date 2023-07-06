@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -301,6 +301,15 @@ describe('Metis Service', () => {
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).toEqual(course);
         expect(updateCoursePostTagsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not update course post tags if communication is not enabled', () => {
+        const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        metisService.setCourse(course);
+        const getCourseReturn = metisService.getCourse();
+        expect(getCourseReturn).toEqual(course);
+        expect(updateCoursePostTagsSpy).not.toHaveBeenCalled();
     });
 
     it('should set course when current course has different id', () => {
