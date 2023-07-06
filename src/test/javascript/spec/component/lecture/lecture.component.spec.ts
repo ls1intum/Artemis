@@ -20,12 +20,15 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortService } from 'app/shared/service/sort.service';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let modalService: NgbModal;
+    let sortService: SortService;
 
     let pastLecture: Lecture;
     let pastLecture2: Lecture;
@@ -86,6 +89,7 @@ describe('Lecture', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
+                MockDirective(SortDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -130,6 +134,7 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
+                sortService = TestBed.inject(SortService);
             });
     });
 

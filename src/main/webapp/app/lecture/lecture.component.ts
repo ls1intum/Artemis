@@ -120,6 +120,10 @@ export class LectureComponent implements OnInit {
         this.applyFilters();
     }
 
+    sortRows() {
+        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
+    }
+
     private loadAll() {
         this.lectureService
             .findAllByCourseId(this.courseId)
@@ -172,9 +176,5 @@ export class LectureComponent implements OnInit {
         }
 
         this.filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
-    }
-
-    sortRows() {
-        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
     }
 }
