@@ -350,7 +350,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId));
+        var databaseBackgroundFilePath = saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId);
+
+        question.setBackgroundFilePath(databaseBackgroundFilePath);
     }
 
     /**

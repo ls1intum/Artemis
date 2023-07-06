@@ -189,8 +189,7 @@ public class FileService implements DisposableBean {
         try {
             File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
 
-            // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
+            file.transferTo(newFile);
 
             return newFile.toPath().getFileName().toString();
         }
@@ -218,25 +217,13 @@ public class FileService implements DisposableBean {
             log.error("Could not create directory: {}", filePath);
             throw e;
         }
-        boolean fileCreated;
-        File newFile;
         String newFilename = filename;
-        do {
-            if (!keepFileName) {
-                // append a timestamp and some randomness to the filename to avoid conflicts
-                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                        + fileExtension;
-            }
-
-            newFile = Path.of(filePath, newFilename).toFile();
-            if (keepFileName && newFile.exists()) {
-                Files.delete(newFile.toPath());
-            }
-            fileCreated = newFile.createNewFile();
+        if (!keepFileName) {
+            // append a timestamp and some randomness to the filename to avoid conflicts
+            newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                    + fileExtension;
         }
-        while (!fileCreated);
-
-        return newFile;
+        return Path.of(filePath, newFilename).toFile();
     }
 
     /**
