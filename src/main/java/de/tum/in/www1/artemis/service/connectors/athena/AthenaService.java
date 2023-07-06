@@ -14,8 +14,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
@@ -29,22 +27,12 @@ public class AthenaService {
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    private final TextBlockRepository textBlockRepository;
-
-    private final TextExerciseRepository textExerciseRepository;
-
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    // Contains tasks submitted to Athena and currently processing
-    private final List<Long> runningAthenaTasks = new ArrayList<>();
-
-    public AthenaService(TextSubmissionRepository textSubmissionRepository, TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaService(TextSubmissionRepository textSubmissionRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
-        this.textBlockRepository = textBlockRepository;
-        this.textExerciseRepository = textExerciseRepository;
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }
 
@@ -63,34 +51,6 @@ public class AthenaService {
     private static class ResponseDTO {
 
         public String data;
-    }
-
-    /**
-     * Register an Athena task for an exercise as running
-     *
-     * @param exerciseId the exerciseId which the Athena task is running for
-     */
-    public void startTask(Long exerciseId) {
-        runningAthenaTasks.add(exerciseId);
-    }
-
-    /**
-     * Delete an Athena task for an exercise from the running tasks
-     *
-     * @param exerciseId the exerciseId which the Athena task finished for
-     */
-    public void finishTask(Long exerciseId) {
-        runningAthenaTasks.remove(exerciseId);
-    }
-
-    /**
-     * Check whether an Athena task is running for the given exerciseId
-     *
-     * @param exerciseId the exerciseId to check for a running Athena task
-     * @return true, if a task for the given exerciseId is running
-     */
-    public boolean isTaskRunning(Long exerciseId) {
-        return runningAthenaTasks.contains(exerciseId);
     }
 
     /**
@@ -122,9 +82,6 @@ public class AthenaService {
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.data);
-
-            // Register submission processing task for exercise as running
-            startTask(exercise.getId());
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
