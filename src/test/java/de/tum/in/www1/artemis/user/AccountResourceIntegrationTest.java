@@ -224,7 +224,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/public/activate", HttpStatus.NOT_FOUND, String.class, params);
     }
 
     @Test

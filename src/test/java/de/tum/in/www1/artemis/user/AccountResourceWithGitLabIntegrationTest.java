@@ -247,7 +247,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         // Activate the user
         gitlabRequestMockProvider.mockActivateUser(user.getLogin(), true);
         String activationKey = registeredUser.get().getActivationKey();
-        request.get("/api/public/activate?key=" + activationKey, HttpStatus.INTERNAL_SERVER_ERROR, Void.class);
+        request.get("/api/public/activate?key=" + activationKey, HttpStatus.NOT_FOUND, Void.class);
         verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyLong());
 
         assertThat(registeredUser.get().getActivationKey()).isNotNull();
