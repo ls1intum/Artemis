@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -378,8 +377,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private String saveDragAndDropImage(String basePath, MultipartFile file, @Nullable Long questionId) throws IOException {
-        File fileLocation = fileService.generateTargetFile(file.getOriginalFilename(), basePath, false);
-        String filePath = fileLocation.toPath().toString();
+        Path fileLocation = fileService.generateTargetPath(file.getOriginalFilename(), basePath, false);
+        String filePath = fileLocation.toString();
         String savedFileName = fileService.saveFile(FilenameUtils.getPath(filePath), FilenameUtils.getName(filePath), null, FilenameUtils.getExtension(filePath), true, file);
         String id = questionId == null ? Constants.FILEPATH_ID_PLACEHOLDER : questionId.toString();
         Path path = Path.of(basePath, id, savedFileName);
