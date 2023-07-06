@@ -251,17 +251,6 @@ public class ParticipationFactory {
         return feedbacks; // total score should be 3P
     }
 
-    public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
-        FeedbackConflict feedbackConflict = new FeedbackConflict();
-        feedbackConflict.setConflict(true);
-        feedbackConflict.setCreatedAt(now());
-        feedbackConflict.setFirstFeedback(firstFeedback);
-        feedbackConflict.setSecondFeedback(secondFeedback);
-        feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
-        feedbackConflict.setDiscard(false);
-        return feedbackConflict;
-    }
-
     public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setInitializationState(initializationState);
