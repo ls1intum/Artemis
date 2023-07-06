@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,6 +20,9 @@ import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 @Service
 @Profile("athena")
 public class AthenaSubmissionSelectionService {
+
+    // pretty short timeout, because this should be fast, and it's not too bad if it fails
+    private static final int REQUEST_TIMEOUT_MS = 1000;
 
     private final Logger log = LoggerFactory.getLogger(AthenaService.class);
 
@@ -45,6 +49,11 @@ public class AthenaSubmissionSelectionService {
     }
 
     public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+        // configure rest template to use the given timeout
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(REQUEST_TIMEOUT_MS);
+        requestFactory.setReadTimeout(REQUEST_TIMEOUT_MS);
+        athenaRestTemplate.setRequestFactory(requestFactory);
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }
 
