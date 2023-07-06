@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -114,7 +113,7 @@ public class PublicAccountResource {
         }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new EntityNotFoundException("Activation key", key);
         }
     }
 
