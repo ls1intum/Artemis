@@ -24,7 +24,7 @@ public class AthenaSubmissionSelectionService {
     // pretty short timeout, because this should be fast, and it's not too bad if it fails
     private static final int REQUEST_TIMEOUT_MS = 1000;
 
-    private final Logger log = LoggerFactory.getLogger(AthenaService.class);
+    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;

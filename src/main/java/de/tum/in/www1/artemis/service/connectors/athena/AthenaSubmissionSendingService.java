@@ -20,9 +20,9 @@ import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
 @Service
 @Profile("athena")
-public class AthenaService {
+public class AthenaSubmissionSendingService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaService.class);
+    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
@@ -31,7 +31,7 @@ public class AthenaService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    public AthenaService(TextSubmissionRepository textSubmissionRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaSubmissionSendingService(TextSubmissionRepository textSubmissionRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }

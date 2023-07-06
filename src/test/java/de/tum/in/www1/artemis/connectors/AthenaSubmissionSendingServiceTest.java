@@ -13,10 +13,10 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "athenaservice";
 
@@ -30,7 +30,7 @@ class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    private AthenaService athenaService;
+    private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -62,7 +62,7 @@ class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
      */
     @Test
     void submitJobWithoutSubmissions() {
-        athenaService.sendSubmissions(exercise1);
+        athenaSubmissionSendingService.sendSubmissions(exercise1);
         // TODO: add assertions
     }
 
@@ -86,7 +86,7 @@ class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Test
     void submitJobWithLessThan10Submissions() {
         generateTextSubmissions(9);
-        athenaService.sendSubmissions(exercise1);
+        athenaSubmissionSendingService.sendSubmissions(exercise1);
         // TODO: add assertions
     }
 
@@ -100,7 +100,7 @@ class AthenaServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         // Create mock server
         athenaRequestMockProvider.mockSubmitSubmissions();
 
-        athenaService.sendSubmissions(exercise1);
+        athenaSubmissionSendingService.sendSubmissions(exercise1);
         // TODO: add assertions
     }
 

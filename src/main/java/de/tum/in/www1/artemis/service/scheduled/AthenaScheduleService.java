@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
@@ -35,13 +35,14 @@ public class AthenaScheduleService {
 
     private final Map<Long, ScheduledFuture<?>> scheduledAthenaTasks = new HashMap<>();
 
-    private final AthenaService athenaService;
+    private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
-    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, Environment env, AthenaService athenaService) {
+    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, Environment env,
+            AthenaSubmissionSendingService athenaSubmissionSendingService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseRepository = textExerciseRepository;
         this.env = env;
-        this.athenaService = athenaService;
+        this.athenaSubmissionSendingService = athenaSubmissionSendingService;
     }
 
     @PostConstruct
@@ -90,7 +91,7 @@ public class AthenaScheduleService {
     private Runnable athenaRunnableForExercise(TextExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
-            athenaService.sendSubmissions(exercise);
+            athenaSubmissionSendingService.sendSubmissions(exercise);
         };
     }
 

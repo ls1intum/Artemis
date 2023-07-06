@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.service.TextBlockService;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -21,7 +21,7 @@ class AthenaIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
     private TextBlockService textBlockService;
 
     @Autowired
-    private AthenaService athenaService;
+    private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     @Autowired
     private UserUtilService userUtilService;
