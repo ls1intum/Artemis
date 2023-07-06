@@ -12,7 +12,23 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faCircleNotch,
+    faClipboard,
+    faComment,
+    faComments,
+    faEye,
+    faFilePdf,
+    faFlag,
+    faGraduationCap,
+    faListAlt,
+    faPersonChalkboard,
+    faSync,
+    faTable,
+    faTimes,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -61,8 +77,22 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     // Icons
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faFlag = faFlag;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faFilePdf = faFilePdf;
+    faComment = faComment;
+    faComments = faComments;
+    faClipboard = faClipboard;
+    faGraduationCap = faGraduationCap;
+    faPersonChalkboard = faPersonChalkboard;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
+
     FeatureToggle = FeatureToggle;
 
     readonly isMessagingEnabled = isMessagingEnabled;
