@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.quiz.PointCounter;
 /**
  * Spring Data JPA repository for the PointCounter entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface PointCounterRepository extends JpaRepository<PointCounter, Long> {
 

@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 /**
  * Spring Data JPA repository for the Feedback entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 

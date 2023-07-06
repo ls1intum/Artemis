@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Lecture entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 

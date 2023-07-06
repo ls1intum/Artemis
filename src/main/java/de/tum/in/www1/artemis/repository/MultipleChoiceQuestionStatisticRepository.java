@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestionStatistic;
 /**
  * Spring Data JPA repository for the MultipleChoiceQuestionStatistic entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface MultipleChoiceQuestionStatisticRepository extends JpaRepository<MultipleChoiceQuestionStatistic, Long> {
 
