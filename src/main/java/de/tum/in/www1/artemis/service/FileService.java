@@ -189,7 +189,7 @@ public class FileService implements DisposableBean {
         try {
             File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
 
-            file.transferTo(newFile);
+            file.transferTo(newFile.getAbsoluteFile());
 
             return newFile.toPath().getFileName().toString();
         }
@@ -539,30 +539,19 @@ public class FileService implements DisposableBean {
         }
 
         // create the file (retry if filename already exists)
-        boolean fileCreated;
         File newFile;
         String filename = originalFilename;
-        do {
-            if (keepFileName) {
-                if (filename.contains(DEFAULT_FILE_SUBPATH)) {
-                    filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
-                }
+        if (keepFileName) {
+            if (filename.contains(DEFAULT_FILE_SUBPATH)) {
+                filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
             }
-            else {
-                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                        + fileExtension;
-            }
-            var path = Path.of(targetFolder, filename).toString();
-
-            newFile = new File(path);
-            if (keepFileName && newFile.exists()) {
-                Files.delete(newFile.toPath());
-            }
-            fileCreated = newFile.createNewFile();
         }
-        while (!fileCreated);
-
-        return newFile;
+        else {
+            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                    + fileExtension;
+        }
+        var path = Path.of(targetFolder, filename).toString();
+        return new File(path);
     }
 
     /**
