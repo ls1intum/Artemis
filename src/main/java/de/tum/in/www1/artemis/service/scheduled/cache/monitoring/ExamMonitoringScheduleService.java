@@ -113,7 +113,7 @@ public class ExamMonitoringScheduleService {
         if (action != null && action.getStudentExamId() != null) {
             Long studentExamId = action.getStudentExamId();
 
-            ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).updateActivity(studentExamId, activity -> {
+            examCache.getTransientWriteCacheFor(examId).updateActivity(studentExamId, activity -> {
                 if (activity == null) {
                     activity = new ExamActivity();
                     activity.setStudentExamId(studentExamId);
@@ -152,7 +152,7 @@ public class ExamMonitoringScheduleService {
      * @return all exam actions of the exam
      */
     public List<ExamAction> getAllExamActions(Long examId) {
-        var examActivities = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities();
+        var examActivities = examCache.getTransientWriteCacheFor(examId).getActivities();
         var examActions = new ArrayList<ExamAction>();
 
         for (var examActivity : examActivities.values()) {
@@ -229,7 +229,7 @@ public class ExamMonitoringScheduleService {
         // TODO: Save actions in future PR in database
         // examActivityService.saveAll(cache.getActivities().values());
         examCache.performCacheWriteIfPresent(examId, cachedMonitoring -> {
-            ((ExamMonitoringCache) cachedMonitoring).getActivities().clear();
+            cachedMonitoring.getActivities().clear();
             return cachedMonitoring;
         });
     }
@@ -251,6 +251,6 @@ public class ExamMonitoringScheduleService {
      * @return ExamActivity performed by the student
      */
     public ExamActivity getExamActivityFromCache(Long examId, Long studentExamId) {
-        return ((ExamMonitoringCache) examCache.getReadCacheFor(examId)).getActivities().getOrDefault(studentExamId, null);
+        return examCache.getReadCacheFor(examId).getActivities().getOrDefault(studentExamId, null);
     }
 }

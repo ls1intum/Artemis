@@ -7,7 +7,6 @@
             },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
-            "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
@@ -180,6 +179,7 @@
             "showNoSubmissions": "Nur ohne Einreichungen anzeigen",
             "showNoPracticeMode": "Nur bewertete Abgaben anzeigen",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
+            "showingOfResults": "Zeigt {{ filtered }} von {{ total }} ({{ percent }}%) Bewertungen",
             "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",
@@ -204,6 +204,9 @@
                 "title": {
                     "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "channelName": {
+                    "empty": "Der Kanalname wurde nicht ausgefüllt!"
                 },
                 "shortName": {
                     "undefined": "Der Kurzname wurde nicht ausgefüllt!",

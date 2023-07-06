@@ -32,7 +32,6 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
-import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
@@ -53,6 +52,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -86,6 +86,7 @@ const ENTITY_STATES = [...examManagementState];
         FeatureToggleModule,
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
+        TitleChannelNameModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -105,7 +106,6 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamSummaryComponent,
         ExamChecklistComponent,
         ExamChecklistExerciseGroupTableComponent,
-        ExamChecklistCheckComponent,
         ExamStatusComponent,
         ProgrammingExerciseGroupCellComponent,
         FileUploadExerciseGroupCellComponent,

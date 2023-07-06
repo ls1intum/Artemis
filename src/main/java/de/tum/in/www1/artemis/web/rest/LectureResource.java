@@ -18,9 +18,11 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -29,6 +31,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -62,8 +66,15 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final ConversationService conversationService;
+
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
+            ConversationService conversationService, ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -71,12 +82,15 @@ public class LectureResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.channelService = channelService;
+        this.conversationService = conversationService;
+        this.channelRepository = channelRepository;
     }
 
     /**
      * POST /lectures : Create a new lecture.
      *
-     * @param lecture the lecture to create
+     * @param lecture the lecture to create with a unique channel name
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -89,14 +103,17 @@ public class LectureResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        Lecture savedLecture = lectureRepository.save(lecture);
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, lecture.getChannelName());
+        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
      * PUT /lectures : Updates an existing lecture.
      *
-     * @param lecture the lecture to update
+     * @param lecture the lecture to update and the updated channel name
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
@@ -114,6 +131,8 @@ public class LectureResource {
 
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
+
+        channelService.updateLectureChannel(lecture, lecture.getChannelName());
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);
@@ -154,7 +173,6 @@ public class LectureResource {
         else {
             lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
-
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -189,7 +207,11 @@ public class LectureResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
+        if (lectureChannel != null) {
+            lecture.setChannelName(lectureChannel.getName());
+        }
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
         return ResponseEntity.ok(lecture);
     }
@@ -221,8 +243,13 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
-        final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
+
+        String channelName = generateChannelNameFromTitle(savedLecture.getTitle());
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, channelName);
+
+        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -251,7 +278,7 @@ public class LectureResource {
      * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
      *
      * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/details-with-slides")
     @EnforceAtLeastStudent
@@ -342,9 +369,25 @@ public class LectureResource {
         }
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
+        conversationService.deregisterAllClientsFromChannel(lecture);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    /**
+     * Generates the channel name based on the lecture title and the "lecture-" prefix.
+     * It replaces alternating/consecutive occurrences of spaces and hyphens and limits length of the name to 30 characters.
+     *
+     * @param title title of the lecture
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(String title) {
+        String channelName = "lecture-" + title;
+        channelName = channelName.replaceAll("[-\\s]+", "-");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
     }
 }

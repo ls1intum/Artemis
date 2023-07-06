@@ -11,9 +11,11 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -176,4 +178,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.locked = :#{#locked}
+            WHERE p.id = :#{#participationId}
+            """)
+    void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
 }

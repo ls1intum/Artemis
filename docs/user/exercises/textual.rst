@@ -73,7 +73,7 @@ The following screenshot illustrates the second section of the form. It consists
 
 The following screenshot illustrates the last section of the form:
 
-- **Linked Competencies**: In case instructors created competencies, they can link them to the exercise here. See :ref:`Learning Analytics <learning-analytics>` for more information.
+- **Linked Competencies**: In case instructors created competencies, they can link them to the exercise here. See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 - **Assessment Instructions**: Assessment instructions (comparable to grading rubrics) simplify the grading process. They include predefined feedback and points. Reviewers can drag and drop a suitable instruction to the text element to apply it during the assessment. The **Credits** specify the score of the instruction. The **Scale** describes the performance level of the instruction (e.g., excellent, good, average, poor). The **Description** may include additional notes about when to apply this instruction. **Feedback** is an explanatory text for the students to understand their performance level better. The **Limit** specifies how many times the score of this instruction may be included in the final score.
 
     .. figure:: text/create-text-exercise-form-3.png
@@ -165,16 +165,17 @@ When the due date is over you can assess the submissions. Text exercise
               :align: center
 
 - If automatic assessment suggestions were enabled for the exercise, you would get available suggestions from the service `Athena <https://github.com/ls1intum/Athena>`_. More details about this service can be found in the following research papers:
-:cite:t:`bernius2022machine`
-:cite:t:`bernius2021machine`
-:cite:t:`bernius2021computer`
-:cite:t:`bernius2020towards`
-:cite:t:`bernius2020segmenting`
-:cite:t:`bernius2019automatic`
 
-.. note::
+  .. note::
     .. bibliography::
        :list: bullet
+
+       bernius2022machine
+       bernius2021machine
+       bernius2021computer
+       bernius2020towards
+       bernius2020segmenting
+       bernius2019automatic
 
 Once you're done assessing the solution, you can either:
 

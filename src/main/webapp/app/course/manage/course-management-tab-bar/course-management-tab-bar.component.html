@@ -35,7 +35,7 @@
             routerLinkActive="active"
         >
             <fa-icon [icon]="faFlag"></fa-icon>
-            <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Competency</span>
+            <span jhiTranslate="artemisApp.competency.competencyButton">Competency</span>
         </a>
         <a
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
@@ -49,7 +49,12 @@
             <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
         </a>
         <div class="btn-group tab-item">
-            <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1 my-0" routerLinkActive="active">
+            <a
+                [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
+                id="assessment-dashboard"
+                class="tab-item btn btn-info btn-md ms-1 my-0"
+                routerLinkActive="active"
+            >
                 <fa-icon [icon]="faUserCheck"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
             </a>

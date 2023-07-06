@@ -99,7 +99,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
@@ -263,14 +263,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // TODO: write another test with participations with submissions and make sure those are actually triggered
 
         // due to the async function call on the server, we need to wait here until the server has saved the changes
-        await().until(() -> !programmingExerciseRepository.findById(exercise.getId()).get().getTestCasesChanged());
+        await().until(() -> !programmingExerciseRepository.findById(exercise.getId()).orElseThrow().getTestCasesChanged());
         var optionalUpdatedProgrammingExercise = programmingExerciseRepository.findById(exercise.getId());
         assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise,
-                Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
-        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }
 
     @Test

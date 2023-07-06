@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,9 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
@@ -39,7 +42,13 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
 
+    @Autowired
+    private LectureRepository lectureRepository;
+
     private static final String TEST_PREFIX = "chtest";
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -101,9 +110,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
         // creator is automatically added as channel moderator
-        assertThat(participants.stream().findFirst().get().getIsModerator()).isTrue();
+        assertThat(participants.stream().findFirst().orElseThrow().getIsModerator()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
+
+        // cannot create channels with duplicate names
+        expectCreateBadRequest(channelDTO);
 
         // cleanup
         conversationRepository.deleteById(chat.getId());
@@ -233,8 +245,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         var tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
-        var channelFromDatabase = channelRepository.findById(channel.getId()).get();
+                userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of());
+        var channelFromDatabase = channelRepository.findById(channel.getId()).orElseThrow();
 
         tutorialGroup.setTutorialGroupChannel(channelFromDatabase);
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
@@ -297,6 +309,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void updateChannel_asUserWithChannelModerationRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX + "1");
+        var channelForDuplicateCheck = createChannel(isPublicChannel, TEST_PREFIX + "duplicate");
         var updateDTO = new ChannelDTO();
         updateDTO.setName(TEST_PREFIX + "2");
         updateDTO.setDescription("new description");
@@ -311,6 +324,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // channel moderators can also update the channel
         updateDTO.setName(TEST_PREFIX + "3");
@@ -321,6 +337,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -740,6 +759,57 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(publicChannelWhereNotMember.getId());
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         conversationRepository.deleteById(privateChannelWhereNotMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getExerciseChannel_asCourseStudent_shouldGetExerciseChannel() throws Exception {
+        Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
+        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        channel.setExercise(exercise);
+        channelRepository.save(channel);
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+
+        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+
+        // switch to student1
+        userUtilService.changeUser(testPrefix + "student1");
+
+        Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+        assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
+        assertThat(exerciseChannel.getExercise().getId()).isEqualTo(exercise.getId());
+
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLectureChannel_asCourseStudent_shouldGetLectureChannel() throws Exception {
+        Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        lecture = lectureRepository.save(lecture);
+        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        channel.setLecture(lecture);
+        channelRepository.save(channel);
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+
+        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+
+        userUtilService.changeUser(testPrefix + "student1");
+
+        Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+        assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
+        assertThat(lectureChannel.getLecture().getId()).isEqualTo(lecture.getId());
+
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        lectureRepository.deleteById(lecture.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

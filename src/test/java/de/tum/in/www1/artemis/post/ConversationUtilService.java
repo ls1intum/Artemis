@@ -150,7 +150,7 @@ public class ConversationUtilService {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
 
         var posts = new ArrayList<Post>();
         for (int i = 0; i < numberOfPosts; i++) {
@@ -339,6 +339,17 @@ public class ConversationUtilService {
 
         conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
         return conversationRepository.save(conversation);
+    }
+
+    public Channel createChannel(Course course, String channelName) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName(channelName);
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setDescription("Test channel");
+        return conversationRepository.save(channel);
     }
 
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {

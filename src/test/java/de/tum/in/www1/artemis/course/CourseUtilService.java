@@ -147,6 +147,11 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    public Course createCourseWithMessagingEnabled() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        return courseRepo.save(course);
+    }
+
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -379,7 +384,7 @@ public class CourseUtilService {
         quizExercise = exerciseRepo.save(quizExercise);
 
         // Get user and setup participations
-        User user = (userRepo.findOneByLogin(userPrefix + "student1")).get();
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).orElseThrow();
         StudentParticipation participationModeling = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
         StudentParticipation participationText = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participationFileUpload = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
@@ -774,6 +779,18 @@ public class CourseUtilService {
 
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
+    }
+
+    public void enableMessagingForCourse(Course course) {
+        CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
+        if (currentConfig == CourseInformationSharingConfiguration.DISABLED) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+            courseRepo.save(course);
+        }
+        else if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepo.save(course);
+        }
     }
 
     public Course createCourseWithTextExerciseAndTutor(String login) {

@@ -83,7 +83,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setupTestScenario() throws Exception {
         this.testPrefix = getTestPrefix();
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createCourseWithMessagingEnabled();
         courseRepository.save(course);
         exampleCourseId = course.getId();
     }
@@ -97,13 +97,14 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
         PostContextFilter postContextFilter = new PostContextFilter(exampleCourseId);
         postContextFilter.setConversationId(conversationId);
+        var requestingUser = userRepository.getUser();
 
-        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).stream().toList().size();
+        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         assertThat(createdPost.getConversation().getId()).isEqualTo(conversationId);
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberBefore + 1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;
     }
 
@@ -133,7 +134,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        verify(messagingTemplate).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 
@@ -231,27 +232,27 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void revokeChannelModeratorRole(Long channelId, String userLoginWithoutPrefix) {
-        var user = userRepository.findOneByLogin(testPrefix + userLoginWithoutPrefix).get();
-        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        var user = userRepository.findOneByLogin(testPrefix + userLoginWithoutPrefix).orElseThrow();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).orElseThrow();
         participant.setIsModerator(false);
         conversationParticipantRepository.save(participant);
     }
 
     void grantChannelModeratorRole(Long channelId, String userLoginWithoutPrefix) {
-        var user = userRepository.findOneByLogin(testPrefix + userLoginWithoutPrefix).get();
-        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        var user = userRepository.findOneByLogin(testPrefix + userLoginWithoutPrefix).orElseThrow();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).orElseThrow();
         participant.setIsModerator(true);
         conversationParticipantRepository.save(participant);
     }
 
     void archiveChannel(Long channelId) {
-        var dbChannel = channelRepository.findById(channelId).get();
+        var dbChannel = channelRepository.findById(channelId).orElseThrow();
         dbChannel.setIsArchived(true);
         channelRepository.save(dbChannel);
     }
 
     void unArchiveChannel(Long channelId) {
-        var dbChannel = channelRepository.findById(channelId).get();
+        var dbChannel = channelRepository.findById(channelId).orElseThrow();
         dbChannel.setIsArchived(false);
         channelRepository.save(dbChannel);
     }
@@ -269,11 +270,11 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void addUserAsChannelModerators(ChannelDTO channel, String loginWithoutPrefix) {
-        var newModerator = userRepository.findOneByLogin(testPrefix + loginWithoutPrefix).get();
+        var newModerator = userRepository.findOneByLogin(testPrefix + loginWithoutPrefix).orElseThrow();
         var moderatorParticipant = new ConversationParticipant();
         moderatorParticipant.setIsModerator(true);
         moderatorParticipant.setUser(newModerator);
-        moderatorParticipant.setConversation(this.channelRepository.findById(channel.getId()).get());
+        moderatorParticipant.setConversation(this.channelRepository.findById(channel.getId()).orElseThrow());
         conversationParticipantRepository.save(moderatorParticipant);
     }
 

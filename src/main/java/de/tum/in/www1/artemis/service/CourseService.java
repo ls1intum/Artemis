@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -752,7 +753,7 @@ public class CourseService {
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
-                courseRepository.save(course);
+                courseRepository.saveAndFlush(course);
             }
             else {
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);

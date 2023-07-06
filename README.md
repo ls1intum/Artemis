@@ -39,11 +39,12 @@
 13. **[Integrated Markdown Editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
 14. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
 15. **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
-16. **[Tutorial Groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-17. **[Scalable](https://docs.artemis.cit.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-18. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
-19. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-20. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
+16. **[Adaptive Learning](https://docs.artemis.cit.tum.de/user/adaptive-learning/)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives.
+17. **[Tutorial Groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+18. **[Scalable](https://docs.artemis.cit.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+19. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+20. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
+21. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
@@ -68,7 +69,7 @@ The Artemis development team prioritizes the following issues in the future. We 
 * [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
 * [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
-* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/development-process/#review)
+* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/#review)
 
 ### Documentation
 
@@ -186,10 +187,8 @@ Please note that the actual database model is more complex. The UML class diagra
 There is a growing community of university instructors who are using Artemis.
 
 #### Communication
-    
-[![Matrix Chat](https://img.shields.io/matrix/artemis-platform:matrix.org?label=matrix:%20%23artemis:in.tum.de)](https://matrix.to/#/#artemis:in.tum.de)
 
-We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
+We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@tum.de).
 
 #### Universities / Schools with Artemis in Use
 
@@ -197,7 +196,7 @@ The following universities are actively using Artemis or are currently evaluatin
 
 * **Technical University of Munich**  
   https://artemis.cit.tum.de  
-  Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)  
+  Main contact person: [Stephan Krusche](mailto:krusche@tum.de)  
   
 * **LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien**  
   https://artemis.codeability.uibk.ac.at  
@@ -227,11 +226,20 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  
   
 * **Maria-Theresia-Gymnasium München**  
-  
+  Main contact person: [Valentin Herrmann](mailto:valentin.herrmann@tum.de)
 
 ##### Interested universities
 
-* HU Berlin
-* Westsächsische Hochschule Zwickau  
-  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum/)
-* Technische Universität Chemnitz
+* **HU Berlin**  
+   Main contact person: [Lars Grunske](https://www.informatik.hu-berlin.de/de/Members/lars-grunske)
+* **Westsächsische Hochschule Zwickau**  
+   Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum)
+* **Technische Universität Chemnitz**  
+* **Universität zu Köln**  
+   Main contact person: [Andreas Vogelsang](https://cs.uni-koeln.de/sse/team/prof-dr-andreas-vogelsang)
+* **Universität Ulm**  
+   Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Imperial College London**  
+   Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
+* **University of South Australia**  
+   Main contact person: [Srecko Joksimovic](https://people.unisa.edu.au/srecko.joksimovic)
