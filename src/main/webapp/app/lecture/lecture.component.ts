@@ -175,6 +175,6 @@ export class LectureComponent implements OnInit {
             this.filteredLectures = filteredLectures;
         }
 
-        this.filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
+        this.sortRows();
     }
 }
