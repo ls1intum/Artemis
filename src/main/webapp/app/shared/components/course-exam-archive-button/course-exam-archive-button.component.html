@@ -84,14 +84,14 @@
         type="button"
         [attr.data-mode]="archiveMode"
         id="archiveButton"
-        class="btn btn-warning mb-1"
+        class="btn btn-warning"
         (click)="openModal(archiveWarningPopup)"
     >
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
         <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary me-1 mb-1" (click)="downloadArchive()">
+    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary" (click)="downloadArchive()">
         <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>

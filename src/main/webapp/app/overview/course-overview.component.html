@@ -23,6 +23,18 @@
                     <fa-icon [icon]="faChartBar"></fa-icon>
                     <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
                 </a>
+                <a
+                    *ngIf="hasTutorialGroups()"
+                    [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
+                    jhiOrionFilter
+                    [showInOrionWindow]="false"
+                    class="tutorial-groups"
+                    routerLink="tutorial-groups"
+                    routerLinkActive="active"
+                >
+                    <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                    <span jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
+                </a>
                 <a *ngIf="isCommunicationEnabled(course)" jhiOrionFilter [showInOrionWindow]="false" class="discussion" routerLink="discussion" routerLinkActive="active">
                     <fa-icon [icon]="faComment"></fa-icon>
                     <span jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</span>
@@ -39,18 +51,6 @@
                     <fa-icon [icon]="faComments"></fa-icon>
                     <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
                 </a>
-                <a
-                    *ngIf="hasTutorialGroups()"
-                    [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
-                    jhiOrionFilter
-                    [showInOrionWindow]="false"
-                    class="tutorial-groups"
-                    routerLink="tutorial-groups"
-                    routerLinkActive="active"
-                >
-                    <fa-icon [icon]="faPersonChalkboard"></fa-icon>
-                    <span jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
-                </a>
             </div>
             <div class="controls">
                 <ng-container #controlsViewContainer></ng-container>
@@ -60,83 +60,6 @@
                 </button>
             </div>
         </div>
-
-        <!--        <div class="tab-bar tab-bar-overview" id="tab-bar">-->
-        <!--            <div class="col-12 no-indent">-->
-        <!--                <div>-->
-        <!--                    <div-->
-        <!--                        id="exam-tab"-->
-        <!--                        *ngIf="course.exams && hasVisibleExams()"-->
-        <!--                        jhiOrionFilter-->
-        <!--                        [showInOrionWindow]="false"-->
-        <!--                        class="tab-item exams"-->
-        <!--                        routerLink="exams"-->
-        <!--                        routerLinkActive="active"-->
-        <!--                    >-->
-        <!--                        <fa-icon [icon]="faGraduationCap"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>-->
-        <!--                    </div>-->
-        <!--                    <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">-->
-        <!--                        <fa-icon [icon]="faListAlt"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>-->
-        <!--                    </div>-->
-        <!--                    <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">-->
-        <!--                        <fa-icon [icon]="faFilePdf"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>-->
-        <!--                    </div>-->
-        <!--                    <div *ngIf="hasCompetencies()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item competencies" routerLink="competencies" routerLinkActive="active">-->
-        <!--                        <fa-icon [icon]="faFlag"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>-->
-        <!--                    </div>-->
-        <!--                    <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">-->
-        <!--                        <fa-icon [icon]="faChartBar"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>-->
-        <!--                    </div>-->
-        <!--                    <div-->
-        <!--                        *ngIf="isCommunicationEnabled(course)"-->
-        <!--                        jhiOrionFilter-->
-        <!--                        [showInOrionWindow]="false"-->
-        <!--                        class="tab-item discussion"-->
-        <!--                        routerLink="discussion"-->
-        <!--                        routerLinkActive="active"-->
-        <!--                    >-->
-        <!--                        <fa-icon [icon]="faComment"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</span>-->
-        <!--                    </div>-->
-        <!--                    <div-->
-        <!--                        *ngIf="isMessagingEnabled(course)"-->
-        <!--                        jhiOrionFilter-->
-        <!--                        [showInOrionWindow]="false"-->
-        <!--                        class="tab-item discussion"-->
-        <!--                        [ngClass]="{ newMessage: !messagesRouteLoaded && hasUnreadMessages }"-->
-        <!--                        routerLink="messages"-->
-        <!--                        routerLinkActive="active"-->
-        <!--                    >-->
-        <!--                        <fa-icon [icon]="faComments"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.messages" class="d-inline-block me-1">Messages</span>-->
-        <!--                    </div>-->
-        <!--                    <div-->
-        <!--                        *ngIf="hasTutorialGroups()"-->
-        <!--                        [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"-->
-        <!--                        jhiOrionFilter-->
-        <!--                        [showInOrionWindow]="false"-->
-        <!--                        class="tab-item tutorial-groups"-->
-        <!--                        routerLink="tutorial-groups"-->
-        <!--                        routerLinkActive="active"-->
-        <!--                    >-->
-        <!--                        <fa-icon [icon]="faPersonChalkboard"></fa-icon>-->
-        <!--                        <span jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--                <div class="controls">-->
-        <!--                    <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">-->
-        <!--                        <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>-->
-        <!--                        <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>-->
-        <!--                    </button>-->
-        <!--                    <ng-container #controlsViewContainer></ng-container>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
         <div class="course-body-container">
             <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
             <div class="refresh-overlay" [class.active]="refreshingCourse">

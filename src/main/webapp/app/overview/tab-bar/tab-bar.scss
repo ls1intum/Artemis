@@ -4,6 +4,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
 
     border-bottom: 1px solid var(--overview-border-color);
 
@@ -41,6 +42,10 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+
+        button.active {
+            box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
+        }
     }
 }
 
