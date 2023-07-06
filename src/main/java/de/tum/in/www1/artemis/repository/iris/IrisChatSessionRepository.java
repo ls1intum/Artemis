@@ -24,16 +24,6 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
             """)
     Optional<List<IrisChatSession>> findByExerciseIdAndUserId(Long exerciseId, Long userId);
 
-    @Query("""
-                SELECT s
-                FROM IrisChatSession s
-                WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
-                ORDER BY s.creationDate DESC
-                LIMIT 1
-            """)
-    Optional<IrisChatSession> findNewestByExerciseIdAndUserId(Long exerciseId, Long userId);
-
     @NotNull
     default List<IrisChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         return findByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Session"));
@@ -45,6 +35,22 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
     }
 
     default IrisChatSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        return findNewestByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Session"));
+        var result = findNewestByExerciseIdAndUserIdHelper(exerciseId, userId);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("Iris Session");
+        }
+        if (result.get().size() == 0) {
+            throw new EntityNotFoundException("Iris Session");
+        }
+        return result.get().get(0);
     }
+
+    @Query("""
+                SELECT s
+                FROM IrisChatSession s
+                WHERE s.exercise.id = :exerciseId
+                AND s.user.id = :userId
+                ORDER BY s.creationDate DESC
+            """)
+    Optional<List<IrisChatSession>> findNewestByExerciseIdAndUserIdHelper(Long exerciseId, Long userId);
 }
