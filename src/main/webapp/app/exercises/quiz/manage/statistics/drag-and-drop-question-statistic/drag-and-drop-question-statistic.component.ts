@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -28,8 +27,6 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     declare question: DragAndDropQuestion;
-
-    readonly CachingStrategy = CachingStrategy;
 
     // Icons
     faSync = faSync;

@@ -77,12 +77,7 @@
         </div>
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
-                <jhi-secured-image
-                    *ngIf="question.backgroundFilePath"
-                    [src]="question.backgroundFilePath"
-                    (endLoadingProcess)="changeLoading($event)"
-                    [cachingStrategy]="CachingStrategy.NONE"
-                ></jhi-secured-image>
+                <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
                 <div class="click-layer">
                     <div *ngIf="!showResult">
                         <div
