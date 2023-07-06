@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -12,7 +13,6 @@ import java.util.Set;
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,14 +119,13 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      * Tests if the method/runnable prepareEmailSummaries correctly selects exercises that are suited for weekly summaries
      */
     @Test
-    @Disabled // we have to fix the TODO inside the test without using SpyBean
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
         var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        // TODO: make sure only exerciseReleasedYesterdayAndNotYetDue is returned by exerciseRepository.findAllExercisesForSummary() without using @SpyBean.
-        // Refer to the TODO in automaticCleanupBuildPlans() in ProgrammingExerciseTestService for more information.
+        await().untilAsserted(() -> assertThat(exerciseRepository.findAllExercisesForSummary(ZonedDateTime.now(), ZonedDateTime.now().minusDays(2)))
+                .containsOnly(exerciseReleasedYesterdayAndNotYetDue));
 
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
