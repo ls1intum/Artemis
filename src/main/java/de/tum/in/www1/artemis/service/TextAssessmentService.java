@@ -48,7 +48,7 @@ public class TextAssessmentService extends AssessmentService {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
 
-        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
+        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isFeedbackSuggestionsEnabled();
 
         if (result != null) {
             // Load Feedback already created for this assessment

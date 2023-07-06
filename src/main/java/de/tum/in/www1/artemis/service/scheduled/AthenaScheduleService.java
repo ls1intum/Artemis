@@ -64,7 +64,7 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(TextExercise exercise) {
-        if (!exercise.isAutomaticAssessmentEnabled()) {
+        if (!exercise.isFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
             return;
         }

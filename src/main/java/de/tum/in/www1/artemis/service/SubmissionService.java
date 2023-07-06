@@ -165,7 +165,7 @@ public class SubmissionService {
         return submissions;
     }
 
-    private List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+    protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.

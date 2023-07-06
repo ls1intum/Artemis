@@ -7,14 +7,15 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AthenaSubmissionSelectionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "textassessmentqueueservice";
 
     @Autowired
-    private TextAssessmentQueueService textAssessmentQueueService;
+    private AthenaSubmissionSelectionService athenaSubmissionSelectionService;
 
     @Autowired
     private TextSubmissionService textSubmissionService;

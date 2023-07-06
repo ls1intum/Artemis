@@ -36,7 +36,7 @@ public class TextExercise extends Exercise {
         this.exampleSolution = exampleSolution;
     }
 
-    public boolean isAutomaticAssessmentEnabled() {
+    public boolean isFeedbackSuggestionsEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }
 
