@@ -983,26 +983,15 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
-        it('should delete a question', () => {
-            const mcQuestion = createValidMCQuestion().question;
-            const dndQuestion = createValidDnDQuestion().question;
-            comp.quizExercise = { ...quizExercise, quizQuestions: [mcQuestion, dndQuestion] } as QuizExercise;
-            comp.deleteQuestion(dndQuestion);
-            expect(comp.quizExercise.quizQuestions).toEqual([mcQuestion]);
-        });
-
         describe('saving', () => {
             let quizExerciseServiceCreateStub: jest.SpyInstance;
             let quizExerciseServiceUpdateStub: jest.SpyInstance;
-            let quizExerciseServiceImportStub: jest.SpyInstance;
-            let exerciseSanitizeSpy: jest.SpyInstance;
+            let exerciseStub: jest.SpyInstance;
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
-                if (comp.courseId) {
-                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent();
-                    jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
-                }
+                comp.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
+                jest.spyOn(comp.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
                 comp.save();
             };
 
@@ -1016,17 +1005,13 @@ describe('QuizExercise Management Detail Component', () => {
             };
 
             beforeEach(() => {
-                comp.course = course;
-                comp.courseId = course.id!;
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 quizExerciseServiceCreateStub = jest.spyOn(quizExerciseService, 'create');
                 quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceUpdateStub = jest.spyOn(quizExerciseService, 'update');
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
-                quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
+                exerciseStub = jest.spyOn(Exercise, 'sanitize');
             });
 
             afterEach(() => {
@@ -1036,56 +1021,47 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call create if valid and quiz exercise no id', () => {
                 comp.quizExercise.id = undefined;
                 saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
             });
 
             it('should call not update if testruns exist in exam mode', () => {
                 comp.quizExercise.testRunParticipationsExist = true;
                 comp.isExamMode = true;
                 saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).not.toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseStub).not.toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalledWith(comp.quizExercise, {});
             });
 
             it('should update if valid and quiz exercise has id', () => {
                 saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
+                expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
-            });
-
-            it('should import if valid and quiz exercise has id and flag', () => {
-                comp.isImport = true;
-                saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
-                expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise, new Map<string, Blob>());
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledOnce();
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise, {});
             });
 
             it('should not save if not valid', () => {
                 comp.quizIsValid = false;
                 comp.pendingChangesCache = true;
                 comp.save();
-                expect(exerciseSanitizeSpy).not.toHaveBeenCalled();
+                expect(exerciseStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
             });
 
             it('should call update with notification text if there is one', () => {
                 comp.notificationText = 'test';
                 saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
-                expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), { notificationText: 'test' });
-                expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise, { notificationText: 'test' });
+            });
+
+            it('should call alert service if response has no body on update', () => {
+                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
+                saveAndExpectAlertService();
             });
 
             it('should call alert service if response has no body on create', () => {
@@ -1094,31 +1070,14 @@ describe('QuizExercise Management Detail Component', () => {
                 saveAndExpectAlertService();
             });
 
-            it('should call alert service if response has no body on update', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on import', () => {
-                comp.isImport = true;
-                quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if create fails', () => {
-                comp.quizExercise.id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
-                saveAndExpectAlertService();
-            });
-
             it('should call alert service if update fails', () => {
                 quizExerciseServiceUpdateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
 
-            it('should call alert service if import fails', () => {
-                comp.isImport = true;
-                quizExerciseServiceImportStub.mockReturnValue(throwError(() => ({ status: 404 })));
+            it('should call alert service if response is 404', () => {
+                comp.quizExercise.id = undefined;
+                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
         });

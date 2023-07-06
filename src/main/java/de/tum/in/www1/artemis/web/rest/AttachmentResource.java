@@ -83,7 +83,7 @@ public class AttachmentResource {
         attachment.setLink(pathString);
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(result.getLink()));
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -114,7 +114,7 @@ public class AttachmentResource {
         }
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(result.getLink()));
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -169,7 +169,7 @@ public class AttachmentResource {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
             try {
-                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPathOrThrow(attachment.getLink()));
+                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
             }
             catch (RuntimeException exception) {
                 // this catch is required for deleting wrongly formatted attachment database entries

@@ -2,8 +2,8 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
 
 // Common primitives
@@ -14,7 +14,7 @@ describe('Quiz Exercise Participation', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
     });
@@ -28,7 +28,7 @@ describe('Quiz Exercise Participation', () => {
         beforeEach('Create quiz exercise', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
-                quizExercise = convertModelAfterMultiPart(quizResponse);
+                quizExercise = quizResponse.body;
             });
         });
 
@@ -60,7 +60,7 @@ describe('Quiz Exercise Participation', () => {
         before('Create SA quiz', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
-                quizExercise = convertModelAfterMultiPart(quizResponse);
+                quizExercise = quizResponse.body;
                 courseManagementRequest.setQuizVisible(quizExercise.id!);
                 courseManagementRequest.startQuizNow(quizExercise.id!);
             });

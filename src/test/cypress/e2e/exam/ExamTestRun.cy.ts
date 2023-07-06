@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/exercise/programming/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
@@ -24,7 +24,7 @@ describe('Exam test run', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))

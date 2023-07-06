@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../support/constants';
 import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
@@ -59,7 +59,7 @@ describe('Course management', () => {
 
         beforeEach(() => {
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
-                course = convertModelAfterMultiPart(response);
+                course = convertCourseAfterMultiPart(response);
             });
         });
 
@@ -277,7 +277,7 @@ describe('Course management', () => {
                     courseManagementRequest
                         .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
                         .then((response) => {
-                            course = convertModelAfterMultiPart(response);
+                            course = convertCourseAfterMultiPart(response);
                             courseId = course.id!;
                             cy.intercept(PUT, BASE_API + 'courses/' + courseId).as('updateCourseQuery');
                         });
@@ -298,7 +298,7 @@ describe('Course management', () => {
 
         it('Deletes not existing course icon', () => {
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
-                course = convertModelAfterMultiPart(response);
+                course = convertCourseAfterMultiPart(response);
                 courseId = course.id!;
             });
             navigationBar.openCourseManagement();
