@@ -98,10 +98,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         if (this.messages.length === 0) {
             this.isFirstMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
-        } else if (this.messages[0].id === 0) {
+        } else if (this.messages[0].id === firstMessage.id) {
             this.isFirstMessage = true;
         }
-        console.log(this.isFirstMessage);
     }
 
     onSend(): void {
