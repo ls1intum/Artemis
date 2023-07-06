@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.service.dataexport;
 
 import static de.tum.in.www1.artemis.service.dataexport.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
-import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -36,12 +34,9 @@ public class DataExportCreationService {
 
     private final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
 
-    @Value("${artemis.data-export-path:./data-exports}")
-    private Path dataExportsPath;
+    private final Path dataExportsPath;
 
     private final ZipFileService zipFileService;
-
-    private final ExerciseRepository exerciseRepository;
 
     private final FileService fileService;
 
@@ -59,12 +54,11 @@ public class DataExportCreationService {
 
     private final DataExportCommunicationDataService dataExportCommunicationDataService;
 
-    public DataExportCreationService(ZipFileService zipFileService, ExerciseRepository exerciseRepository, FileService fileService,
+    public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
             SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
             DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
             DataExportCommunicationDataService dataExportCommunicationDataService) {
         this.zipFileService = zipFileService;
-        this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
@@ -73,6 +67,7 @@ public class DataExportCreationService {
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
+        this.dataExportsPath = dataExportsPath;
     }
 
     /**
@@ -86,36 +81,13 @@ public class DataExportCreationService {
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
         var workingDirectory = prepareDataExport(dataExport);
-        createExercisesExport(workingDirectory, userId);
+        dataExportExerciseCreationService.createExercisesExport(workingDirectory, userId);
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
         fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
         return finishDataExportCreation(dataExport, dataExportPath);
-    }
-
-    private void createExercisesExport(Path workingDirectory, long userId) throws IOException {
-        // retrieve all exercises as we cannot retrieve the exercises by course because a user might have participated in a course they are no longer a member of (they have
-        // unenrolled)
-        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(userId);
-        var exerciseParticipationsPerCourse = allExerciseParticipations.stream().collect(Collectors.groupingBy(Exercise::getCourseViaExerciseGroupOrCourseMember));
-        for (var entry : exerciseParticipationsPerCourse.entrySet()) {
-            var course = entry.getKey();
-            Path courseDir = retrieveCourseDirPath(workingDirectory, course);
-            var exercises = entry.getValue();
-            if (!exercises.isEmpty()) {
-                Files.createDirectory(courseDir);
-            }
-            for (var exercise : exercises) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, courseDir, userId);
-                }
-                else {
-                    dataExportExerciseCreationService.createNonProgrammingExerciseExport(exercise, courseDir, userId);
-                }
-            }
-        }
     }
 
     /**

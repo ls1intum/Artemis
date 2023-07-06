@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.dataexport;
 
 import static de.tum.in.www1.artemis.service.dataexport.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
+import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -43,8 +45,7 @@ public class DataExportExerciseCreationService {
 
     static final String CSV_FILE_EXTENSION = ".csv";
 
-    @Value("${artemis.repo-download-clone-path}")
-    private Path repoClonePath;
+    private final Path repoClonePath;
 
     private final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
@@ -61,15 +62,50 @@ public class DataExportExerciseCreationService {
 
     private final ComplaintRepository complaintRepository;
 
-    public DataExportExerciseCreationService(FileService fileService, ProgrammingExerciseExportService programmingExerciseExportService,
-            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, PlagiarismCaseRepository plagiarismCaseRepository,
-            Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
+            ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
+            PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
+            ExerciseRepository exerciseRepository) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.apollonConversionService = apollonConversionService;
         this.complaintRepository = complaintRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.repoClonePath = repoClonePath;
+    }
+
+    /**
+     * Creates the export for all exercises the user participated in
+     *
+     * @param workingDirectory the directory the export should be created in
+     * @param userId           the id of the user that requested the export
+     * @throws IOException if an error occurs while accessing the file system
+     */
+    public void createExercisesExport(Path workingDirectory, long userId) throws IOException {
+        // retrieve all exercises as we cannot retrieve the exercises by course because a user might have participated in a course they are no longer a member of (they have
+        // unenrolled)
+        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(userId);
+        var exerciseParticipationsPerCourse = allExerciseParticipations.stream().collect(Collectors.groupingBy(Exercise::getCourseViaExerciseGroupOrCourseMember));
+        for (var entry : exerciseParticipationsPerCourse.entrySet()) {
+            var course = entry.getKey();
+            Path courseDir = retrieveCourseDirPath(workingDirectory, course);
+            var exercises = entry.getValue();
+            if (!exercises.isEmpty()) {
+                Files.createDirectory(courseDir);
+            }
+            for (var exercise : exercises) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    createProgrammingExerciseExport(programmingExercise, courseDir, userId);
+                }
+                else {
+                    createNonProgrammingExerciseExport(exercise, courseDir, userId);
+                }
+            }
+        }
     }
 
     /**
