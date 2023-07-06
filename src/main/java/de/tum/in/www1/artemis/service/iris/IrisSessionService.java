@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,13 +11,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.IrisSessionExerciseConnector;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionExerciseConnectorRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
@@ -36,15 +35,12 @@ public class IrisSessionService {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    private final IrisSessionExerciseConnectorRepository irisSessionExerciseConnectorRepository;
-
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisChatSessionRepository irisChatSessionRepository, IrisSessionExerciseConnectorRepository irisSessionExerciseConnectorRepository) {
+            IrisChatSessionRepository irisChatSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
-        this.irisSessionExerciseConnectorRepository = irisSessionExerciseConnectorRepository;
     }
 
     /**
@@ -68,15 +64,9 @@ public class IrisSessionService {
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
+        irisSession.setCreationDate(ZonedDateTime.now());
 
-        var savedSession = irisChatSessionRepository.save(irisSession);
-
-        var irisSessionExerciseConnector = new IrisSessionExerciseConnector();
-        irisSessionExerciseConnector.setExercise(exercise);
-        irisSessionExerciseConnector.setSession(savedSession);
-        irisSessionExerciseConnectorRepository.save(irisSessionExerciseConnector);
-
-        return savedSession;
+        return irisChatSessionRepository.save(irisSession);
     }
 
     /**

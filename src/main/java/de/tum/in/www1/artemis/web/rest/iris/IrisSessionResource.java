@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -49,12 +50,12 @@ public class IrisSessionResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/session: Retrieve the current iris session for the programming exercise.
+     * GET programming-exercises/{exerciseId}/sessions/current: Retrieve the current iris session for the programming exercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/sessions")
+    @GetMapping("programming-exercises/{exerciseId}/sessions/current")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -65,6 +66,25 @@ public class IrisSessionResource {
         var session = irisChatSessionRepository.findNewestByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         irisSessionService.checkHasAccessToIrisSession(session, user);
         return ResponseEntity.ok(session);
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
+     */
+    @GetMapping("programming-exercises/{exerciseId}/sessions")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<IrisSession>> getAllSessions(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+
+        var sessions = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
+        return ResponseEntity.ok((List<IrisSession>) (List<?>) sessions);
     }
 
     /**

@@ -3,16 +3,10 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20230705141500" author="kotzian">
-        <createTable tableName="iris_session_exercise_connector">
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_iris_session_exercise_connector"/>
+        <addColumn tableName="iris_session">
+            <column name="creation_date" type="datetime">
+                <constraints nullable="false" />
             </column>
-            <column name="session_id" type="bigint"/>
-            <column name="exercise_id" type="bigint"/>
-            <column name="creation_date" type="datetime"/>
-        </createTable>
-
-        <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="iris_session_exercise_connector" constraintName="fk_iris_session_exercise_connector_session_id" referencedColumnNames="id" referencedTableName="iris_session"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_session_exercise_connector" constraintName="fk_iris_session_exercise_connector_exercise_id" referencedColumnNames="id" referencedTableName="exercise"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

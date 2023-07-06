@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -15,21 +16,26 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession, Long> {
 
-    Optional<IrisChatSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
+    @Query("""
+                SELECT s
+                FROM IrisChatSession s
+                WHERE s.exercise.id = :exerciseId
+                AND s.user.id = :userId
+            """)
+    Optional<List<IrisChatSession>> findByExerciseIdAndUserId(Long exerciseId, Long userId);
 
     @Query("""
-            SELECT DISTINCT s
-            FROM IrisChatSession s, IrisSessionExerciseConnector c
-            WHERE s.exercise.id = :exerciseId
-            AND s.user.id = :userId
-            AND s.id = c.session.id
-            ORDER BY c.creationDate DESC
-            LIMIT 1
+                SELECT s
+                FROM IrisChatSession s
+                WHERE s.exercise.id = :exerciseId
+                AND s.user.id = :userId
+                ORDER BY s.creationDate DESC
+                LIMIT 1
             """)
     Optional<IrisChatSession> findNewestByExerciseIdAndUserId(Long exerciseId, Long userId);
 
     @NotNull
-    default IrisChatSession findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+    default List<IrisChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         return findByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Session"));
     }
 
@@ -38,7 +44,6 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
     }
 
-    @NotNull
     default IrisChatSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         return findNewestByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Session"));
     }
