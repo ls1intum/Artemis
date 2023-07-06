@@ -54,7 +54,10 @@ export class SubmissionResultStatusComponent implements OnChanges {
 
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 const initializationStatesForResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
-                this.shouldShowResult = !!this.studentParticipation?.initializationState && initializationStatesForResult.includes(this.studentParticipation.initializationState);
+                this.shouldShowResult =
+                    (!!this.studentParticipation?.results?.length || !afterDueDate) &&
+                    !!this.studentParticipation?.initializationState &&
+                    initializationStatesForResult.includes(this.studentParticipation.initializationState);
             } else {
                 this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
             }
