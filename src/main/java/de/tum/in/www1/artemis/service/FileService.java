@@ -209,6 +209,7 @@ public class FileService implements DisposableBean {
      * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
+    // TODO: this only creates the bare bone Java file with the correct, it does not create the actual file, we should consider to rename it
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
         try {
             Files.createDirectories(Paths.get(filePath));
@@ -498,6 +499,7 @@ public class FileService implements DisposableBean {
      * @return the newly created file
      * @throws IOException if the file can't be generated.
      */
+    // TODO: this only creates the bare bone Java file with the correct, it does not generate the actual file, we should consider to rename it
     public File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
