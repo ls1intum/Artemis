@@ -402,31 +402,25 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
-    it('should navigate to conflicting submission', () => {
-        const routerSpy = jest.spyOn(router, 'navigate');
-        component['setPropertiesFromServerResponse'](participation);
+    it('should always let instructors override', () => {
+        component.exercise!.isAtLeastInstructor = true;
+        expect(component.canOverride).toBeTrue();
+    });
+
+    it('should not allow tutors to override after the assessment due date', () => {
+        component.exercise!.isAtLeastInstructor = false;
+        component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
+        component.complaint = undefined;
+        expect(component.canOverride).toBeFalse();
+    });
+
+    it('should recalculate text block refs correctly', () => {
+        jest.useFakeTimers();
+        component.recalculateTextBlockRefs();
         fixture.detectChanges();
-        const feedback = getLatestSubmissionResult(submission)!.feedbacks!;
-        const url = [
-            '/course-management',
-            component.courseId,
-            'exams',
-            component.examId,
-            'exercise-groups',
-            component.exerciseGroupId,
-            'text-exercises',
-            component.exerciseId,
-            'participations',
-            submission.participation!.id,
-            'submissions',
-            component.submission!.id,
-            'text-feedback-conflict',
-            feedback[0].id,
-        ];
+        jest.advanceTimersByTime(300);
 
-        component.navigateToConflictingSubmissions(1);
-
-        expect(routerSpy).toHaveBeenCalledOnce();
-        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
+        expect(component.textBlockRefs).toHaveLength(2);
+        expect(component.unusedTextBlockRefs).toHaveLength(0);
     });
 });
