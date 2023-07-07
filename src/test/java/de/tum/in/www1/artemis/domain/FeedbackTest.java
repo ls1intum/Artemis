@@ -14,7 +14,7 @@ class FeedbackTest {
         feedback.setDetailTextTruncated(getText(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 100));
 
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
@@ -33,7 +33,7 @@ class FeedbackTest {
         feedback.setDetailText("abc");
 
         assertThat(feedback.getDetailText()).isEqualTo("abc");
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
@@ -43,7 +43,7 @@ class FeedbackTest {
         feedback.setDetailText(null);
 
         assertThat(feedback.getDetailText()).isNull();
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 

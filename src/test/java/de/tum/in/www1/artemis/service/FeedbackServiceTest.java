@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
-public class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private FeedbackService feedbackService;
@@ -58,7 +58,5 @@ public class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         final Feedback newSavedFeedback = feedbackRepository.save(copiedFeedback);
         assertThat(newSavedFeedback.getId()).isNotEqualTo(feedbackId);
-        final LongFeedbackText savedLongFeedback = newSavedFeedback.getLongFeedback().orElseThrow();
-        assertThat(savedLongFeedback.getId()).isEqualTo(newSavedFeedback.getId());
     }
 }

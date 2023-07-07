@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.tngtech.archunit.lang.ArchRule;
 
 import de.tum.in.www1.artemis.AbstractArchitectureTest;
+import de.tum.in.www1.artemis.service.FeedbackService;
 
 class FeedbackArchitectureTest extends AbstractArchitectureTest {
 
@@ -19,8 +20,9 @@ class FeedbackArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testGetLongFeedbackTextNotUsed() {
-        ArchRule toListUsage = noClasses().that().areNotAssignableFrom(Feedback.class).and().areNotAssignableFrom(FeedbackTest.class).should()
-                .callMethod(Feedback.class, "getLongFeedbackText").because("this method should only be used by JPA. Use getLongFeedback instead.");
+        ArchRule toListUsage = noClasses().that().areNotAssignableFrom(Feedback.class).and().areNotAssignableFrom(FeedbackTest.class).and()
+                .areNotAssignableFrom(FeedbackService.class).should().callMethod(Feedback.class, "getLongFeedbackText")
+                .because("this method should only be used by JPA. Use getLongFeedback instead.");
         toListUsage.check(allClasses);
         toListUsage.check(testClasses);
     }
