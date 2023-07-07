@@ -22,6 +22,7 @@ public class FeedbackService {
     /**
      * Creates a deep copy of the feedback including attached {@link LongFeedbackText}.
      *
+     * @param originalFeedback The feedback that should be copied.
      * @return A copy of the feedback with an empty ID.
      */
     public Feedback copyFeedback(final Feedback originalFeedback) {
