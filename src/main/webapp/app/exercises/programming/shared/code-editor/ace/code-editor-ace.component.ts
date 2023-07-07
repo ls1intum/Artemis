@@ -16,7 +16,7 @@ import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription, fromEvent, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -95,6 +95,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileFeedbacks: Feedback[];
     lineCounter: any[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
+
     editorSession: any;
     markerIds: number[] = [];
     gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
@@ -104,7 +105,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly faPlusSquare = faPlusSquare;
     readonly faCircleNotch = faCircleNotch;
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
+    constructor(
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private fileService: CodeEditorFileService,
+        protected localStorageService: LocalStorageService,
+        private changeDetectorRef: ChangeDetectorRef,
+    ) {}
 
     /**
      * @function ngAfterViewInit
@@ -181,6 +187,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
+        // reset old feedback line widgets
+        this.lineCounter = [];
+        this.changeDetectorRef.detectChanges(); // Manually triggers change detection => otherwise it might be too smart and not update the DOM
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
@@ -279,6 +288,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
+        }
+        // remove all line widgets so that no old ones are displayed when the editor is opened again
+        if (this.editorSession && this.editorSession.widgetManager) {
+            this.editorSession.widgetManager.removeAllLineWidgets();
         }
     }
 
