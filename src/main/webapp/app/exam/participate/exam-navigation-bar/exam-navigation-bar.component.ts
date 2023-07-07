@@ -14,6 +14,8 @@ import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -27,7 +29,13 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
+    @Output() onPageChanged = new EventEmitter<{
+        overViewChange: boolean;
+        exercise?: Exercise;
+        forceSave: boolean;
+        submission?: ProgrammingSubmission | SubmissionVersion;
+        initial?: boolean;
+    }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -112,7 +120,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
      */
-    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission, initial?: boolean): void {
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -120,7 +128,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission, initial: initial });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;

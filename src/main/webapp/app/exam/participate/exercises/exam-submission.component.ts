@@ -24,10 +24,12 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
      * In case the submission has not been edited it is an empty submission.
      */
     abstract updateViewFromSubmission(): void;
+    abstract updateViewFromSubmissionVersion(): void;
 
     abstract getSubmission(): Submission | undefined;
     abstract getExercise(): Exercise;
     @Input() readonly = false;
-    @Input() submissionVersion: SubmissionVersion;
-    @Input() submission: Submission;
+    submissionVersion: SubmissionVersion;
+    submission: Submission;
+    @Input() examTimeline = false;
 }

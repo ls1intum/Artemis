@@ -25,8 +25,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: ModelingSubmission;
-    @Input()
-    examTimeline = false;
 
     @Input()
     exercise: ModelingExercise;
@@ -45,6 +43,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         if (this.examTimeline) {
+            console.log('updateViewFromSubmissionVersion ngOninit');
             this.updateViewFromSubmissionVersion();
         } else {
             // show submission answers in UI
@@ -124,15 +123,20 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.explanationText = explanation;
     }
 
-    private updateViewFromSubmissionVersion() {
+    updateViewFromSubmissionVersion() {
+        console.log('updateViewFromSubmissionVersion');
+        console.log(this.submissionVersion);
+
         if (this.submissionVersion) {
             if (this.submissionVersion.content) {
+                let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
+                model = model.replace('Model:', '{"model":');
+                model += '}';
+                console.log(model);
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = JSON.parse(this.submissionVersion.content);
+                this.umlModel = JSON.parse(model);
             }
-            //TODO include explanation in submission version??
-            // Updates explanation text with the latest submission
-            this.explanationText = this.studentSubmission.explanationText ?? '';
+            this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
         }
     }
 }

@@ -48,8 +48,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     ngOnInit(): void {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
+        if (this.examTimeline) {
+            this.updateViewFromSubmissionVersion();
+        } else {
+            // show submission answers in UI
+            this.updateViewFromSubmission();
+        }
     }
 
     getExercise(): Exercise {
@@ -103,5 +107,13 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     onTextEditorInput(event: Event) {
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+    }
+    updateViewFromSubmissionVersion() {
+        if (this.submissionVersion) {
+            if (this.submissionVersion.content) {
+                // Updates the Apollon editor model state (view) with the latest modeling submission
+                this.answer = this.submissionVersion.content;
+            }
+        }
     }
 }

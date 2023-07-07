@@ -254,4 +254,10 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             this.studentSubmission.submittedAnswers!.push(shortAnswerSubmittedAnswer);
         }, this);
     }
+
+    updateViewFromSubmissionVersion(): void {
+        const quizSubmission = JSON.parse(this.submissionVersion.content);
+        this.studentSubmission.submittedAnswers = JSON.parse(quizSubmission);
+        this.updateViewFromSubmission();
+    }
 }

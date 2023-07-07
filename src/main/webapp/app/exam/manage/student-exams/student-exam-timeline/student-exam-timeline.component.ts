@@ -46,6 +46,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     submissionTimeStamps: dayjs.Dayjs[] = [];
     submissionVersions: SubmissionVersion[] = [];
     programmingSubmissions: ProgrammingSubmission[] = [];
+    currentExercise: Exercise | undefined;
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
     readonly SubmissionVersion = SubmissionVersion;
@@ -86,7 +87,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     private setupRangeSlider() {
-        this.value = this.submissionTimeStamps[0]?.toDate().getTime();
+        this.value = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
         const newOptions: Options = Object.assign({}, this.options);
         newOptions.stepsArray = this.submissionTimeStamps.map((date) => {
             return {
@@ -96,7 +97,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.options = newOptions;
     }
 
-    private isSubmissionVersion(object: SubmissionVersion | Submission | null) {
+    private isSubmissionVersion(object: SubmissionVersion | Submission | undefined) {
         if (object === null) {
             return false;
         }
@@ -126,22 +127,49 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false);
+        this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, undefined, true);
+
+        //TODO set correct submission version on init
     }
 
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: {
+        overViewChange: boolean;
+        exercise?: Exercise;
+        forceSave: boolean;
+        submission?: ProgrammingSubmission | SubmissionVersion;
+        initial?: boolean;
+    }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
-        this.initializeExercise(exerciseChange.exercise!);
+        this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission, exerciseChange.initial);
     }
 
-    initializeExercise(exercise: Exercise) {
+    initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined, initial?: boolean) {
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
         this.activateActiveComponent();
+        //const activeComponent = this.activeExamPage as ExamSubmissionComponent;
+        const activeComponent = this.activePageComponent;
+        // if we show the page for the first time we need to find the submission version that was submitted first during the exam
+        // if (initial) {
+        //     const submissionVersions = this.submissionVersions.filter((submissionVersion) => submissionVersion.submission!.id === exercise.studentParticipations![0].submissions![0].id)!;
+        //     if (submissionVersions.length === 1) {
+        //         submission = submissionVersions[0];
+        //     } else {
+        //         submission = submissionVersions.reduce((previous, current) => (previous.createdDate!.isAfter(current.createdDate!) ? previous : current));
+        //     }
+        // }
+        if (activeComponent) {
+            if (this.currentExercise?.type === ExerciseType.PROGRAMMING) {
+                activeComponent!.submission = submission as ProgrammingSubmission;
+            } else {
+                activeComponent!.submissionVersion = submission as SubmissionVersion;
+                activeComponent?.updateViewFromSubmissionVersion();
+            }
+        }
     }
 
     private activateActiveComponent() {
@@ -156,7 +184,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise?.id);
     }
 
-    get activePageComponent(): ExamPageComponent | undefined {
+    get activePageComponent(): ExamSubmissionComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
     }
@@ -164,41 +192,35 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     onInputChange(changeContext: ChangeContext) {
         console.log('change');
         const submission = this.findCorrespondingSubmissionForTimestamp(changeContext.value);
-        let exercise: Exercise | undefined;
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
-            exercise = submissionVersion.submission.participation?.exercise;
+            this.currentExercise = submissionVersion.submission.participation?.exercise;
         } else {
             const programmingSubmission = submission as ProgrammingSubmission;
-            exercise = programmingSubmission.participation?.exercise;
+            this.currentExercise = programmingSubmission.participation?.exercise;
         }
-        if (exercise) {
-            console.log('exercise id: ' + exercise.id);
-            const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === exercise?.id);
+        const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.currentExercise?.id);
 
-            this.examNavigationBarComponent.changePage(false, exerciseIndex, false);
-            console.log(this.currentPageComponents);
-            this.currentPageComponents.forEach((component) => {
-                console.log('exercise id in submission component' + (component as ExamSubmissionComponent).getExercise().id);
-            });
-            const correspondingSubmissionComponent = this.currentPageComponents.find(
-                (submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === exercise?.id,
-            );
-            if (!correspondingSubmissionComponent) {
-                console.log('no corresponding submission component found');
-            }
-            if (exercise.type === ExerciseType.PROGRAMMING) {
-                correspondingSubmissionComponent!.submission = submission as ProgrammingSubmission;
-            } else {
-                correspondingSubmissionComponent!.submissionVersion = submission as SubmissionVersion;
-            }
-        }
+        this.examNavigationBarComponent.changePage(false, exerciseIndex, false, submission);
+        // this.currentPageComponents.changes.subscribe(() => {
+        //     console.log("Item elements are now in the DOM!", this.currentPageComponents.length);
+        //
+        // });
+        // console.log(this.currentPageComponents);
+        // this.currentPageComponents.forEach((component) => {
+        //     console.log('exercise id in submission component' + (component as ExamSubmissionComponent).getExercise().id);
+        // });
+        // if (!correspondingSubmissionComponent) {
+        //     console.log('no corresponding submission component found');
+        // }
+
         // TODO find the corresponding submission for the timestamp instantiate the component with it and navigate to the respective page
     }
 
-    private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | null {
+    private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | undefined {
         console.log('find submission for timestamp' + timestamp);
         for (let i = 0; i < this.submissionVersions.length; i++) {
+            console.log(timestamp);
             const comparisonObject = dayjs(timestamp);
             const submissionVersion = this.submissionVersions[i];
             if (submissionVersion.createdDate.isSame(comparisonObject)) {
@@ -212,6 +234,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 return programmingSubmission;
             }
         }
-        return null;
+        return undefined;
     }
 }
