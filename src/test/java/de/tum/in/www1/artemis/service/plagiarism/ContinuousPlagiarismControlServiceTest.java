@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -82,7 +83,7 @@ class ContinuousPlagiarismControlServiceTest {
         when(exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
 
-        // then: no exception thrown
-        service.executeChecks();
+        // then
+        assertThatNoException().isThrownBy(service::executeChecks);
     }
 }

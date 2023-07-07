@@ -80,6 +80,7 @@ public class PlagiarismChecksConfig extends DomainObject {
      */
     public static PlagiarismChecksConfig createDefault() {
         var config = new PlagiarismChecksConfig();
+        config.setContinuousPlagiarismControlEnabled(false);
         config.setSimilarityThreshold(0.5f);
         config.setMinimumScore(0);
         config.setMinimumSize(0);

@@ -17,6 +17,7 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -24,6 +25,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
 class PlagiarismChecksServiceTest {
+
+    private final PlagiarismChecksConfig plagiarismChecksConfig = PlagiarismChecksConfig.createDefault();
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService = mock();
 
@@ -42,6 +45,7 @@ class PlagiarismChecksServiceTest {
     void shouldExecuteChecksForTextExercise() throws ExitException {
         // given
         var textExercise = new TextExercise();
+        textExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
         var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(emptySet());
         when(textPlagiarismDetectionService.checkPlagiarism(eq(textExercise), anyFloat(), anyInt(), anyInt())).thenReturn(textPlagiarismResult);
@@ -57,6 +61,7 @@ class PlagiarismChecksServiceTest {
     void shouldExecuteChecksForModelingExercise() {
         // given
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
         var modelingPlagiarismResult = new ModelingPlagiarismResult();
         modelingPlagiarismResult.setComparisons(emptySet());
         when(modelingPlagiarismDetectionService.checkPlagiarism(eq(modelingExercise), anyDouble(), anyInt(), anyInt())).thenReturn(modelingPlagiarismResult);
@@ -73,6 +78,7 @@ class PlagiarismChecksServiceTest {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
+        programmingExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
         var programmingPlagiarismResult = new TextPlagiarismResult();
         programmingPlagiarismResult.setComparisons(emptySet());
         when(programmingPlagiarismDetectionService.checkPlagiarism(eq(1L), anyFloat(), anyInt())).thenReturn(programmingPlagiarismResult);
@@ -92,6 +98,7 @@ class PlagiarismChecksServiceTest {
     void shouldThrowExceptionOnUnsupportedProgrammingLanguage() {
         // given
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
         var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false, false, false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
@@ -103,6 +110,7 @@ class PlagiarismChecksServiceTest {
     void shouldExecuteChecksWithJplagReportForProgrammingExercise() throws ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         // given
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
         programmingExercise.setId(1L);
         var zipFile = new File("");
         when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(eq(1L), anyFloat(), anyInt())).thenReturn(zipFile);

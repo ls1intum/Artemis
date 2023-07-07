@@ -60,11 +60,22 @@ public abstract class ExerciseImportService {
                 newExercise.setTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
             }
         }
-        var plagiarismChecksConfig = new PlagiarismChecksConfig();
-        plagiarismChecksConfig.setSimilarityThreshold(importedExercise.getPlagiarismChecksConfig().getSimilarityThreshold());
-        plagiarismChecksConfig.setMinimumSize(importedExercise.getPlagiarismChecksConfig().getMinimumSize());
-        plagiarismChecksConfig.setMinimumScore(importedExercise.getPlagiarismChecksConfig().getMinimumScore());
-        newExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
+
+        if (importedExercise.getPlagiarismChecksConfig() != null) {
+            var plagiarismChecksConfig = new PlagiarismChecksConfig();
+
+            var importedPlagiarismChecksConfig = importedExercise.getPlagiarismChecksConfig();
+            plagiarismChecksConfig.setContinuousPlagiarismControlEnabled(importedPlagiarismChecksConfig.isContinuousPlagiarismControlEnabled());
+            plagiarismChecksConfig.setSimilarityThreshold(importedPlagiarismChecksConfig.getSimilarityThreshold());
+            plagiarismChecksConfig.setMinimumSize(importedPlagiarismChecksConfig.getMinimumSize());
+            plagiarismChecksConfig.setMinimumScore(importedPlagiarismChecksConfig.getMinimumScore());
+
+            newExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
+        }
+        else {
+            newExercise.setPlagiarismChecksConfig(null);
+        }
+
     }
 
     /**
