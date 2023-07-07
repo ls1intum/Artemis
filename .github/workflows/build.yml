@@ -138,7 +138,7 @@ jobs:
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
         push: true
         cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-to: type=gha,mode=min
 
     # TODO: Push to Docker Hub (develop + tag)
 
