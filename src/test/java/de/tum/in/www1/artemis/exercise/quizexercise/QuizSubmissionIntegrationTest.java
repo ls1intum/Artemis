@@ -273,7 +273,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(2);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
+            }
+            else if (pointCounter.getPoints() == 1.0) {
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 0 rated submission -> 0.83 points").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
@@ -791,7 +794,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         double expectedScore = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
-            case PROPORTIONAL_WITHOUT_PENALTY -> 41.7;
+            case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
     }
