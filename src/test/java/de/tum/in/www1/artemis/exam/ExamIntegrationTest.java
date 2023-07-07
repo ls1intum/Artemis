@@ -329,6 +329,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         userUtilService.addStudents(TEST_PREFIX, 5, 10);
         jiraRequestMockProvider.enableMockingOfRequests();
 
+        // todo
         var exam = ExamFactory.generateExam(course1);
         var savedExam = examRepository.save(exam);
         examUtilService.addExamChannel(savedExam, "test exam");
@@ -1749,6 +1750,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateOrderOfExerciseGroups() throws Exception {
+        // todo
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         exerciseGroup1.setTitle("first");
         ExerciseGroup exerciseGroup2 = new ExerciseGroup();
@@ -2038,6 +2040,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, GradingScale bonusToGradingScale) {
+        // todo
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
@@ -2100,6 +2103,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     }
 
+    // TODO!
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -2487,6 +2491,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         User user = userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         // Set student exam without working time and save into database
+        // todo
         StudentExam studentExam = new StudentExam();
         studentExam.setUser(user);
         studentExam.setTestRun(false);
@@ -2770,6 +2775,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(expectedFilenames).contains(Path.of(filename));
     }
 
+    // Todo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(ints = { 0, 1, 2 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -3160,6 +3166,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
+        // todo
         Exam testExam = ExamFactory.generateTestExam(course1);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testExam = examRepository.save(testExam);

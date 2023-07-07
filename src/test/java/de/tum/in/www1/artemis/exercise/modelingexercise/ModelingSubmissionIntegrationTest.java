@@ -264,6 +264,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_isTeamMode() throws Exception {
+        // todo
         useCaseExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(useCaseExercise);
         Team team = new Team();

@@ -854,6 +854,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
+        // TODO
         User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").orElseThrow();
         User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").orElseThrow();
         String suffix = "instructorExam";
@@ -996,6 +997,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
+        // TODO
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues

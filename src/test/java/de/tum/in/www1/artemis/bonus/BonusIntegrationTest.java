@@ -75,6 +75,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
      */
     @BeforeEach
     void init() {
+        // todo
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         course = courseUtilService.addEmptyCourse();
         course.setMaxPoints(200);
@@ -139,7 +140,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
-
+        // todo
         Exam newExam = examUtilService.addExamWithExerciseGroup(course, true);
         var newExamGradingScale = new GradingScale();
         newExamGradingScale.setGradeType(GradeType.BONUS);
