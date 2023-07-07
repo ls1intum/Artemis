@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableFrom;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import org.junit.jupiter.api.Test;
 
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 
 import de.tum.in.www1.artemis.AbstractArchitectureTest;
@@ -13,17 +17,20 @@ class FeedbackArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testSetLongFeedbackTextNotUsed() {
-        ArchRule toListUsage = noClasses().should().callMethod(Feedback.class, "setLongFeedbackText").because("this method should only be used by JPA. Use setDetailText instead.");
-        toListUsage.check(allClasses);
-        toListUsage.check(testClasses);
+        final ArchRule setLongFeedbackTextUsage = noClasses().should().callMethod(Feedback.class, "setLongFeedbackText")
+                .because("this method should only be used by JPA. Use setDetailText instead.");
+        setLongFeedbackTextUsage.check(allClasses);
     }
 
     @Test
     void testGetLongFeedbackTextNotUsed() {
-        ArchRule toListUsage = noClasses().that().areNotAssignableFrom(Feedback.class).and().areNotAssignableFrom(FeedbackTest.class).and()
-                .areNotAssignableFrom(FeedbackService.class).should().callMethod(Feedback.class, "getLongFeedbackText")
+        final ArchRule getLongFeedbackTextUsage = noClasses().should().callMethod(Feedback.class, "getLongFeedbackText")
                 .because("this method should only be used by JPA. Use getLongFeedback instead.");
-        toListUsage.check(allClasses);
-        toListUsage.check(testClasses);
+
+        // internal usage for the Feedback and its tests okay, the service needs it for Hibernate lazy initialisation checks
+        final JavaClasses classesToCheck = allClasses
+                .that(are(not(assignableFrom(Feedback.class).or(assignableFrom(FeedbackTest.class)).or(assignableFrom(FeedbackService.class)))));
+
+        getLongFeedbackTextUsage.check(classesToCheck);
     }
 }
