@@ -38,6 +38,7 @@ import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerc
 import { LectureManagementPage } from './lecture/LectureManagementPage';
 import { LectureCreationPage } from './lecture/LectureCreationPage';
 import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
+import { CourseExercisePage } from './course/CourseExercisePage';
 import { CourseCreationPage } from './course/CourseCreationPage';
 import { ExamParticipation } from './exam/ExamParticipation';
 import { StudentAssessmentPage } from './assessment/StudentAssessmentPage';
@@ -57,6 +58,7 @@ export class ArtemisPageobjects {
         managementExercises: new CourseManagementExercisesPage(),
         list: new CoursesPage(),
         overview: new CourseOverviewPage(),
+        exercise: new CourseExercisePage(),
         communication: new CourseCommunicationPage(),
         messages: new CourseMessagesPage(),
     };

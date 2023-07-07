@@ -2,7 +2,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { CourseWideContext } from '../../support/constants';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
@@ -17,12 +17,12 @@ describe('Course communication', () => {
         cy.login(admin);
 
         let uid = generateUUID();
-        const courseName = 'Course ' + uid;
-        const courseShortName = 'course' + uid;
+        let courseName = 'Cypress course' + uid;
+        let courseShortName = 'cypress' + uid;
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
             .then((response) => {
-                course = convertModelAfterMultiPart(response);
+                course = convertCourseAfterMultiPart(response);
                 courseManagementRequest.addInstructorToCourse(course, instructor);
                 courseManagementRequest.addStudentToCourse(course, studentOne);
                 courseManagementRequest.addStudentToCourse(course, studentTwo);
@@ -30,12 +30,12 @@ describe('Course communication', () => {
             });
 
         uid = generateUUID();
-        const courseWithMessagingName = 'Course ' + uid;
-        const courseWithMessagingShortName = 'course' + uid;
+        courseName = 'Cypress course' + uid;
+        courseShortName = 'cypress' + uid;
         courseManagementRequest
-            .createCourse(false, courseWithMessagingName, courseWithMessagingShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
+            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
             .then((response) => {
-                courseWithMessaging = convertModelAfterMultiPart(response);
+                courseWithMessaging = convertCourseAfterMultiPart(response);
                 courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
                 courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
                 courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
@@ -618,8 +618,13 @@ describe('Course communication', () => {
         });
     });
 
-    after('Delete Courses', () => {
-        courseManagementRequest.deleteCourse(course, admin);
-        courseManagementRequest.deleteCourse(courseWithMessaging, admin);
+    after('Delete Course', () => {
+        cy.login(admin);
+        if (course.id) {
+            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
+        }
+        if (courseWithMessaging.id) {
+            courseManagementRequest.deleteCourse(courseWithMessaging.id).its('status').should('eq', 200);
+        }
     });
 });
