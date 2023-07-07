@@ -352,6 +352,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         newCompetency.setOptional(true);
         request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
+
+        Competency savedCompetency = competencyRepository.findByIdElseThrow(newCompetency.getId());
+        assertThat(savedCompetency.isOptional()).isTrue();
     }
 
     @Test
