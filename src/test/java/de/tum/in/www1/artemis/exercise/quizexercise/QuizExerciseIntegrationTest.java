@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -92,6 +93,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -312,6 +316,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteQuizExerciseWithChannel() throws Exception {
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(quizExercise);
+
+        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
