@@ -514,12 +514,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.editorSession.lineWidgets) {
                 const displayedWidget = this.editorSession.lineWidgets.find((w: any) => w && w.row === lineWidget.row);
                 if (!displayedWidget) {
-                    lineWidget.el.className = 'inline-feedback';
                     this.editorSession.widgetManager.addLineWidget(lineWidget);
                     lineWidget.el.querySelector('textarea')?.focus();
                 }
             } else {
-                lineWidget.el.className = 'inline-feedback';
                 this.editorSession.widgetManager.addLineWidget(lineWidget);
                 lineWidget.el.querySelector('textarea')?.focus();
             }
