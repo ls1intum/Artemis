@@ -135,10 +135,10 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         if (!long) {
             switch (locale) {
                 case 'de':
-                    format = 'DD.MM.YY';
+                    format = 'DD.MM.YYYY';
                     break;
                 default:
-                    format = 'YY-MM-DD';
+                    format = 'YYYY-MM-DD';
             }
         }
         return format;
