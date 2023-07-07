@@ -73,7 +73,7 @@ public class AthenaSubmissionSelectionService {
             return Optional.empty();
         }
 
-        log.debug("Start Athena Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Submission Selection Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         log.info("Calling Remote Service to calculate next proposed submissions for {} submissions.", submissions.size());
 

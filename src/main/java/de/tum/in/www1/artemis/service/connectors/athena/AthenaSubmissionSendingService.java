@@ -44,7 +44,7 @@ public class AthenaSubmissionSendingService {
 
         RequestDTO(@NotNull TextExercise exercise, @NotNull List<TextSubmission> submissions) {
             this.exercise = TextExerciseDTO.of(exercise);
-            this.submissions = submissions.stream().map(submission -> TextSubmissionDTO.of(submission, exercise.getId())).toList();
+            this.submissions = submissions.stream().map(submission -> TextSubmissionDTO.of(exercise.getId(), submission)).toList();
         }
     }
 
@@ -70,7 +70,7 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(TextExercise exercise, int maxRetries) {
-        log.debug("Start Athena Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Submission Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all text submissions for exercise (later we will support others)
         List<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exercise.getId());

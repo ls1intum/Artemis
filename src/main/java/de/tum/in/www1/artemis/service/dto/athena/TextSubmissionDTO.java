@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 
 public record TextSubmissionDTO(long id, long exerciseId, String text, String language) {
 
-    public static TextSubmissionDTO of(@NotNull TextSubmission submission, long exerciseId) {
+    public static TextSubmissionDTO of(long exerciseId, @NotNull TextSubmission submission) {
         String language = null;
         if (submission.getLanguage() != null) {
             language = submission.getLanguage().toString();

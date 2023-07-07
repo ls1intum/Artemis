@@ -343,21 +343,6 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * This function sets the described parameters and then returns the current instance with the updated references.
-     *
-     * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
-     * @param submissionId                          - Submission reference where the suggested feedback was generated from
-     * @param suggestedFeedbackParticipationId      - respective participation reference
-     * @return updated Feedback
-     */
-    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionId, Long suggestedFeedbackParticipationId) {
-        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
-        this.suggestedFeedbackOriginSubmissionReference = submissionId;
-        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationId;
-        return this;
-    }
-
-    /**
      * Checks whether the feedback was created by static code analysis
      *
      * @return true if it is static code analysis feedback else false
