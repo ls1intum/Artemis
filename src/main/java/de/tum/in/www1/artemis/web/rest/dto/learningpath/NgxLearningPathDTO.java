@@ -5,18 +5,16 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Represents simplified
+ * Represents simplified learning path optimized for Ngx representation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> clusters) {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof NgxLearningPathDTO)) {
+        if (!(obj instanceof NgxLearningPathDTO other)) {
             return false;
         }
-
-        final NgxLearningPathDTO other = (NgxLearningPathDTO) obj;
         return nodes.equals(other.nodes) && edges.equals(other.edges) && clusters.equals(other.clusters);
     }
 
@@ -29,11 +27,9 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof Node)) {
+            if (!(obj instanceof Node other)) {
                 return false;
             }
-
-            final Node other = (Node) obj;
             return id.equals(other.id) && type.equals(other.type) && linkedResource == other.linkedResource && label.equals(other.label);
         }
 
@@ -47,11 +43,9 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof Edge)) {
+            if (!(obj instanceof Edge other)) {
                 return false;
             }
-
-            final Edge other = (Edge) obj;
             return id.equals(other.id) && source.equals(other.source) && target.equals(other.target);
         }
 
@@ -65,10 +59,9 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof Cluster)) {
+            if (!(obj instanceof Cluster other)) {
                 return false;
             }
-            final Cluster other = (Cluster) obj;
             return id.equals(other.id) && label.equals(other.label) && childNodeIds.equals(other.childNodeIds);
         }
 
