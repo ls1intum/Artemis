@@ -1,22 +1,28 @@
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
-describe('Modeling Exercise Participation', () => {
-    let course: Course;
-    let modelingExercise: ModelingExercise;
+// Common primitives
+let course: Course;
+let modelingExercise: ModelingExercise;
 
-    before('Create course', () => {
+describe('Modeling Exercise Participation Spec', () => {
+    before('Log in as admin and create a course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
+    });
+
+    after('Delete the test course', () => {
+        cy.login(admin);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 
     it('Student can start and submit their model', () => {
@@ -27,9 +33,5 @@ describe('Modeling Exercise Participation', () => {
         modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2, false, 730, 500);
         modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3, false, 1000, 100);
         modelingExerciseEditor.submit();
-    });
-
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
     });
 });

@@ -36,8 +36,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
-import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -374,6 +373,30 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertBuildError(participation.getId(), userLogin);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateGradleFeedback() throws Exception {
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of(), List.of("test1"), logs, null, new ArrayList<>());
+
+        var longErrorMessage = new TestCaseDetailMessageDTO("abc\nmultiline\nfeedback");
+        var testCase = new TestCaseDTO("test1", "Class", 0d, new ArrayList<>(), List.of(longErrorMessage), new ArrayList<>());
+        notification.getResults().get(0).testCases().set(0, testCase);
+
+        postResult(notification, HttpStatus.OK);
+
+        var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
+        // Jenkins Setup -> Gradle Feedback is not duplicated and should be kept like this
+        assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+    }
+
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
         // Assert that result is linked to the participation
@@ -425,10 +448,15 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
             List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
+        return createJenkinsNewResultNotification(projectKey, loginName, programmingLanguage, successfulTests, List.of(), logs, buildRunDate, commits);
+    }
+
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
+            List<String> failedTests, List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        return ProgrammingExerciseFactory.generateTestResultDTO(fullName, repoName, buildRunDate, programmingLanguage, false, successfulTests, List.of(), logs, commits, null);
+        return ProgrammingExerciseFactory.generateTestResultDTO(fullName, repoName, buildRunDate, programmingLanguage, false, successfulTests, failedTests, logs, commits, null);
     }
 
 }

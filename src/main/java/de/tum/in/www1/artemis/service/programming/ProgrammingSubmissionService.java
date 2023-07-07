@@ -74,9 +74,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
+            FeedbackService feedbackService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
@@ -523,7 +524,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
             Result existingResult = optionalExistingResult.get();
-            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);
