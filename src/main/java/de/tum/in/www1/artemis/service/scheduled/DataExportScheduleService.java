@@ -56,7 +56,9 @@ public class DataExportScheduleService {
      * Created will be all data exports that are in the state REQUESTED OR IN_CREATION
      * Deleted will be all data exports that have a creation date older than seven days
      */
-    @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
+    // TODO change this again when the testing is done
+    // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
+    @Scheduled(cron = "0 */2 * * * *")
     public void createDataExportsAndDeleteOldOnes() {
         if (profileService.isDev()) {
             // do not execute this in a development environment
