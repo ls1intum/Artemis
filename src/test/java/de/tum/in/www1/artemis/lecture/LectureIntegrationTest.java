@@ -334,6 +334,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(lectureOptional).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteLectureWithChannel() throws Exception {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+
+        request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
+
+        Optional<Channel> lectureChannelAfterDelete = channelRepository.findById(lectureChannel.getId());
+        assertThat(lectureChannelAfterDelete).isEmpty();
+    }
+
     /**
      * Hibernates sometimes adds null to the list of lecture units to keep the order after a lecture unit has been deleted.
      * This should not happen any more as we have refactored the way lecture units are deleted, nevertheless we want to

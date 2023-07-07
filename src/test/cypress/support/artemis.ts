@@ -19,6 +19,7 @@ export const courseList = pageObjects.course.list;
 export const courseOverview = pageObjects.course.overview;
 export const courseManagement = pageObjects.course.management;
 export const courseManagementExercises = pageObjects.course.managementExercises;
+export const courseExercise = pageObjects.course.exercise;
 export const courseCommunication = pageObjects.course.communication;
 export const courseMessages = pageObjects.course.messages;
 export const courseAssessment = pageObjects.assessment.course;

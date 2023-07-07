@@ -70,7 +70,7 @@ export default defineConfig({
             });
             return cloudPlugin(on, config);
         },
-        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.ts'],
+        specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
         supportFile: 'support/index.ts',
         baseUrl: 'http://localhost:8080',
     },

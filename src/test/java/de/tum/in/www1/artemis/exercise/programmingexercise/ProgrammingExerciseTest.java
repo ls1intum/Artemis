@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,19 +16,18 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 
@@ -57,6 +54,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
     private ExerciseUtilService exerciseUtilService;
 
     private Long programmingExerciseId;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @BeforeEach
     void init() {
@@ -239,5 +239,18 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
             List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
             assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteProgrammingExerciseChannel() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
+
+        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
+
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 }

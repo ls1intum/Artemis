@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -324,17 +325,9 @@ public class ExamUtilService {
     }
 
     public Channel addExamChannel(Exam exam, String channelName) {
-        Channel channel = new Channel();
-        channel.setCourse(exam.getCourse());
-        channel.setName(channelName);
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+        Channel channel = ConversationFactory.generateChannel(exam.getCourse(), channelName);
         channel.setExam(exam);
-        channel = conversationRepository.save(channel);
-        exam.setChannelName(channelName);
-        return channel;
+        return conversationRepository.save(channel);
     }
 
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
