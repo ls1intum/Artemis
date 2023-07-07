@@ -32,26 +32,25 @@
                 </div>
                 <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
-                    <div [hidden]="!displayedStarredConversations?.length" class="mb-2">
-                        <jhi-conversation-sidebar-section
-                            [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
-                            [headerKey]="'favorites'"
-                            [conversations]="displayedStarredConversations"
-                            [activeConversation]="activeConversation"
-                            (conversationSelected)="onConversationSelected($event)"
-                            [course]="course"
-                            (settingsChanged)="onSettingsChanged()"
-                            (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                            (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        >
-                        </jhi-conversation-sidebar-section>
-                    </div>
+                    <jhi-conversation-sidebar-section
+                        [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.favorites' | artemisTranslate"
+                        [headerKey]="'favorites'"
+                        [conversations]="displayedStarredConversations"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                        [course]="course"
+                        (settingsChanged)="onSettingsChanged()"
+                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
+                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
+                    >
+                    </jhi-conversation-sidebar-section>
                     <!-- Channels -->
                     <jhi-conversation-sidebar-section
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.generalChannels' | artemisTranslate"
                         [headerKey]="'channels'"
-                        [conversations]="filterChannelsOfType(channelSubType.GENERAL)"
+                        [conversations]="displayedGeneralChannels"
+                        [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
@@ -80,7 +79,7 @@
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.exerciseChannels' | artemisTranslate"
                         [headerKey]="'exerciseChannels'"
-                        [conversations]="filterChannelsOfType(channelSubType.EXERCISE)"
+                        [conversations]="displayedExerciseChannels"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
@@ -106,7 +105,7 @@
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.lectureChannels' | artemisTranslate"
                         [headerKey]="'lectureChannels'"
-                        [conversations]="filterChannelsOfType(channelSubType.LECTURE)"
+                        [conversations]="displayedLectureChannels"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
@@ -132,7 +131,7 @@
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.examChannels' | artemisTranslate"
                         [headerKey]="'examChannels'"
-                        [conversations]="filterChannelsOfType(channelSubType.EXAM)"
+                        [conversations]="displayedExamChannels"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
@@ -159,6 +158,7 @@
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                         [headerKey]="'groupChats'"
                         [conversations]="displayedGroupChats"
+                        [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
@@ -180,6 +180,7 @@
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                         [headerKey]="'directMessages'"
                         [conversations]="displayedOneToOneChats"
+                        [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsChanged)="onSettingsChanged()"
