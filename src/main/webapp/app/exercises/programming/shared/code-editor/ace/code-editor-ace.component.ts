@@ -608,6 +608,4 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     updateTabSize(event: number) {
         this.tabSize = event;
     }
-
-    protected readonly JSON = JSON;
 }
