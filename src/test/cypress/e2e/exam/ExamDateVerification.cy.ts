@@ -1,20 +1,20 @@
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { generateUUID } from '../../support/utils';
-import { courseManagementRequest, courseOverview, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
+import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
 
 describe('Exam date verification', () => {
     let course: Course;
     let examTitle: string;
 
-    before('Create course', () => {
+    before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
     });
@@ -118,15 +118,23 @@ describe('Exam date verification', () => {
                         if (examEnd.isAfter(dayjs())) {
                             cy.wait(examEnd.diff(dayjs()));
                         }
-                        examParticipation.checkExamFinishedTitle(exam.title!);
+                        cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
                     });
                 });
             });
         });
+
+        afterEach(() => {
+            cy.login(admin);
+            courseManagementRequest.deleteExam(exam);
+        });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+    after(() => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });

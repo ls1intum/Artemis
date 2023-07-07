@@ -335,9 +335,9 @@
                     "title": "Combine changes into one commit",
                     "tooltip": "Squashes all commits of a student into a single commit for easier review"
                 },
-                "anonymizeStudentCommits": {
-                    "title": "Anonymize all of the student's commits",
-                    "tooltip": "Hide student names in commit messages for unbiased evaluation"
+                "anonymizeRepository": {
+                    "title": "Anonymize repository",
+                    "tooltip": "Hide student names in commit messages and directory name for unbiased evaluation"
                 },
                 "normalizeCodeStyle": {
                     "title": "Normalize code style",

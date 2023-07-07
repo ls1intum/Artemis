@@ -1,4 +1,4 @@
-<div class="sidebar-section mb-2" [hidden]="searchTerm && searchTerm.length > 0 && !this.allConversations?.length">
+<div class="sidebar-section mb-2" [hidden]="hide()">
     <!-- Todo: Do not hide when popover is open-->
     <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
