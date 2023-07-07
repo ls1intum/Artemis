@@ -183,6 +183,31 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     }
 
     @Test
+    void staticCodeAnalysisReportNotTruncatedFurther() {
+        final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
+
+        final var scaIssue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        scaIssue.setCategory("scaCategory");
+        scaIssue.setMessage(longText);
+        scaIssue.setStartColumn(0);
+        scaIssue.setEndColumn(123);
+        scaIssue.setFilePath("some/long/file/Path.java");
+
+        final StaticCodeAnalysisReportDTO scaReport = new StaticCodeAnalysisReportDTO();
+        scaReport.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
+        scaReport.setIssues(List.of(scaIssue));
+
+        final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
+        assertThat(scaFeedbacks).hasSize(1);
+
+        final Feedback scaFeedback = scaFeedbacks.get(0);
+        assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
+        assertThat(scaFeedback.getLongFeedback()).isEmpty();
+        assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
+                .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRemoveCIDirectoriesFromPath() {
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
@@ -228,30 +253,5 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
             assertThat(issueJSON.get("filePath")).isEqualTo("notAvailable");
         }
-    }
-
-    @Test
-    void staticCodeAnalysisReportNotTruncatedFurther() {
-        final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
-
-        final var scaIssue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        scaIssue.setCategory("scaCategory");
-        scaIssue.setMessage(longText);
-        scaIssue.setStartColumn(0);
-        scaIssue.setEndColumn(123);
-        scaIssue.setFilePath("some/long/file/Path.java");
-
-        final StaticCodeAnalysisReportDTO scaReport = new StaticCodeAnalysisReportDTO();
-        scaReport.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
-        scaReport.setIssues(List.of(scaIssue));
-
-        final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
-        assertThat(scaFeedbacks).hasSize(1);
-
-        final Feedback scaFeedback = scaFeedbacks.get(0);
-        assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
-        assertThat(scaFeedback.getLongFeedbackText()).isNull();
-        assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
-                .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
     }
 }

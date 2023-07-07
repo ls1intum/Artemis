@@ -40,7 +40,7 @@ public class LongFeedbackTextResource {
     public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {} (result: {})", feedbackId, resultId);
 
-        final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
+        final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
         checkCanAccessResultElseThrow(resultId, longFeedbackText);
 
         return ResponseEntity.ok(longFeedbackText);
