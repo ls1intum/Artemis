@@ -95,6 +95,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private ExamUtilService examUtilService;
 
     @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
@@ -130,12 +133,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private final PointCounter pc50 = pc(5, 0);
 
     private final PointCounter pc60 = pc(6, 0);
-
-    @Autowired
-    private ChannelRepository channelRepository;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
     void init() {
