@@ -1,5 +1,5 @@
 import { SimpleChange } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
@@ -20,7 +20,7 @@ describe('ModelingAssessmentComponent', () => {
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
 
-    const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
+    const generateMockModel = (elementId: string, elementId2: string, relationshipId: string): UMLModel => {
         return {
             version: '2.0.0',
             type: 'ClassDiagram',
@@ -267,16 +267,15 @@ describe('ModelingAssessmentComponent', () => {
         expect(relationship!.highlight).toBe('blue');
     });
 
-    it('should update model', async () => {
+    it('should update model', fakeAsync(() => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
-        await addDelay(0).then(() => {
-            comp.ngOnChanges(changes);
-            expect(apollonSpy).toHaveBeenCalledWith(newModel);
-        });
-    });
+        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set').mockImplementation((model) => model);
+        tick();
+        comp.ngOnChanges(changes);
+        expect(apollonSpy).toHaveBeenCalledWith(newModel);
+    }));
 
     it('should update highlighted elements', async () => {
         const highlightedElements = new Map();

@@ -79,11 +79,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.model && changes.model.currentValue && this.apollonEditor) {
-            this.apollonEditor!.model = changes.model.currentValue;
+        if (changes.model?.currentValue && this.apollonEditor) {
+            this.apollonEditor.model = changes.model.currentValue;
             this.handleFeedback();
         }
-        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
+        if (changes.feedbacks?.currentValue && this.umlModel) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
             this.applyStateConfiguration();
