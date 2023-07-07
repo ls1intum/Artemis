@@ -39,7 +39,7 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ReviewNote } from 'app/entities/review-note.model';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -508,9 +508,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
-    onUpdateReviewNote(reviewNote: ReviewNote[]) {
-        this.manualResult!.reviewNote = reviewNote;
+    onUpdateAssessmentNote(assessmentNote: AssessmentNote[]) {
+        this.manualResult!.assessmentNote = assessmentNote;
         this.validateFeedback();
+    }
+
+    hasAssessmentNote(): boolean {
+        if (this.manualResult) {
+            if (this.manualResult.assessmentNote) {
+                return this.manualResult.assessmentNote.length == 1;
+            }
+        }
+        return false;
     }
 
     /**

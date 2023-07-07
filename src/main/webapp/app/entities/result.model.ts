@@ -5,7 +5,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ReviewNote } from 'app/entities/review-note.model';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 export class Result implements BaseEntity {
     public id?: number;
@@ -21,7 +21,7 @@ export class Result implements BaseEntity {
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
-    public reviewNote?: ReviewNote[];
+    public assessmentNote?: AssessmentNote[];
     public testCaseCount?: number;
     public passedTestCaseCount?: number;
     public codeIssueCount?: number;

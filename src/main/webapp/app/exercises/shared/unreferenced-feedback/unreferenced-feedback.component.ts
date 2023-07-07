@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { ReviewNote } from 'app/entities/review-note.model';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
@@ -14,7 +14,7 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    reviewNote: ReviewNote[] = [new ReviewNote()];
+    assessmentNote: AssessmentNote[] = [new AssessmentNote()];
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -30,7 +30,7 @@ export class UnreferencedFeedbackComponent {
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
 
-    @Output() reviewNoteChange = new EventEmitter<ReviewNote[]>();
+    @Output() assessmentNoteChange = new EventEmitter<AssessmentNote[]>();
 
     constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
@@ -107,8 +107,8 @@ export class UnreferencedFeedbackComponent {
         }
     }
 
-    onReviewNoteInput(event: any) {
-        this.reviewNote[0].note = event.target.value;
-        this.reviewNoteChange.emit(this.reviewNote);
+    onAssessmentNoteInput(event: any) {
+        this.assessmentNote[0].note = event.target.value;
+        this.assessmentNoteChange.emit(this.assessmentNote);
     }
 }

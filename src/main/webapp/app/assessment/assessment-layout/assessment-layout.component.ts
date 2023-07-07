@@ -37,6 +37,7 @@ export class AssessmentLayoutComponent {
 
     @Input() result?: Result;
     @Input() assessmentsAreValid: boolean;
+    @Input() hasAssessmentNote: boolean;
     @Input() complaint?: Complaint;
     @Input() exercise?: Exercise;
     @Input() submission?: Submission;

@@ -28,6 +28,7 @@
         [canOverride]="canOverride"
         [result]="manualResult"
         [assessmentsAreValid]="assessmentsAreValid"
+        [hasAssessmentNote]="hasAssessmentNote()"
         [complaint]="complaint"
         [exercise]="exercise"
         [submission]="submission"
@@ -125,7 +126,7 @@
                 <jhi-unreferenced-feedback
                     [(feedbacks)]="unreferencedFeedback"
                     (feedbacksChange)="validateFeedback()"
-                    (reviewNoteChange)="onUpdateReviewNote($event)"
+                    (assessmentNoteChange)="onUpdateAssessmentNote($event)"
                     [readOnly]="readOnly()"
                     [highlightDifferences]="highlightDifferences"
                 ></jhi-unreferenced-feedback>

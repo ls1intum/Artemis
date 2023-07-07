@@ -102,7 +102,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     // OneToMany is needed, otherwise the lazy loading does not work
     // it will be ensured programmatically that only ever one note exists for every result object
     @JoinColumn(name = "result_id", nullable = false)
-    private List<ReviewNote> reviewNote = new ArrayList<>();
+    private List<AssessmentNote> assessmentNote = new ArrayList<>();
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
@@ -450,20 +450,20 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
-    public void setReviewNote(List<ReviewNote> reviewNote) {
-        this.reviewNote.clear();
-        this.reviewNote.add(reviewNote.get(0));
+    public void setAssessmentNote(List<AssessmentNote> assessmentNote) {
+        this.assessmentNote.clear();
+        this.assessmentNote.add(assessmentNote.get(0));
     }
 
-    public Optional<ReviewNote> getReviewNoteIfPresent() {
-        if (Hibernate.isInitialized(reviewNote)) {
-            return reviewNote.stream().findFirst();
+    public Optional<AssessmentNote> getAssessmentNoteIfPresent() {
+        if (Hibernate.isInitialized(assessmentNote)) {
+            return assessmentNote.stream().findFirst();
         }
         return Optional.empty();
     }
 
-    public List<ReviewNote> getReviewNote() {
-        return this.reviewNote;
+    public List<AssessmentNote> getAssessmentNote() {
+        return this.assessmentNote;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

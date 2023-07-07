@@ -10,9 +10,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
-@Table(name = "review_note")
+@Table(name = "assessment_note")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ReviewNote extends DomainObject {
+public class AssessmentNote extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "creator_id", referencedColumnName = "id")

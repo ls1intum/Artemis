@@ -43,6 +43,7 @@ export class AssessmentHeaderComponent {
     @Input() complaintHandled = false;
     @Input() complaintType?: ComplaintType;
     @Input() assessmentsAreValid: boolean;
+    @Input() hasAssessmentNote: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
     @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
 
@@ -91,7 +92,14 @@ export class AssessmentHeaderComponent {
         if (this.result?.completionDate) {
             return true;
         } else {
-            return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+            const prerequisitesForSavingAreMet = !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+            if (prerequisitesForSavingAreMet) {
+                if (this.hasAssessmentNote) {
+                    return false;
+                } else {
+                    return !this.assessmentsAreValid || prerequisitesForSavingAreMet;
+                }
+            }
         }
     }
 
