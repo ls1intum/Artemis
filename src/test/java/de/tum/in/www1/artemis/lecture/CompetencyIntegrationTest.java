@@ -332,7 +332,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("competencyUpdateToOptionalProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
@@ -351,7 +351,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         exerciseRepository.save(exercise);
 
         newCompetency.setOptional(true);
-        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, HttpStatus.OK);
+        request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
     }
 
     @Test
