@@ -115,7 +115,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
-        String newFilePath = storeFile(fileUploadSubmission, file, exercise);
+        String newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -139,12 +139,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         return fileUploadSubmission;
     }
 
-    private String storeFile(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise) throws EmptyFileException, IOException {
+    private String storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
+            throws EmptyFileException, IOException {
         if (file.isEmpty()) {
             throw new EmptyFileException(file.getOriginalFilename());
         }
-
-        final var oldFilePath = fileUploadSubmission.getFilePath();
 
         final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // We need to set id for newly created submissions
@@ -161,11 +160,13 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
-        if (oldFilePath != null) {
+        Optional<FileUploadSubmission> lastSubmission = participation.findLatestSubmission();
+        if (lastSubmission.isPresent() && lastSubmission.get().getFilePath() != null) {
+            FileUploadSubmission submission = lastSubmission.get();
             // check if we already had a file associated with this submission
-            if (!oldFilePath.equals(newFilePath)) { // different name
+            if (!submission.getFilePath().equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
-                fileUploadSubmission.onDelete();
+                submission.onDelete();
             }
             else { // same name
                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
