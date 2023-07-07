@@ -13,14 +13,14 @@
                 <constraints nullable="false" />
             </column>
             <column name="feedback_id" type="bigint">
-                <constraints foreignKeyName="fk_long_feedback_to_feedback" referencedTableName="feedback" referencedColumnNames="id" nullable="false"/>
+                <constraints foreignKeyName="fk_long_feedback_to_feedback" referencedTableName="feedback" referencedColumnNames="id" nullable="false" unique="true"/>
             </column>
         </createTable>
 
         <sql>
             INSERT INTO long_feedback_text (feedback_text, feedback_id)
             SELECT feedback_text, id
-            FROM long_feedback_text
+            FROM long_feedback_text_old
         </sql>
 
         <dropTable tableName="long_feedback_text_old" cascadeConstraints="false"/>
