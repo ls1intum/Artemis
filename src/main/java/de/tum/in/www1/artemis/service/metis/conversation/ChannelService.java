@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -222,7 +223,7 @@ public class ChannelService {
      *
      * @param channel the channel to delete
      */
-    public void deleteChannel(Channel channel) {
+    public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             conversationService.deleteConversation(channel);
         }
