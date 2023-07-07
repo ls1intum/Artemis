@@ -19,6 +19,11 @@ services:
             CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
             CYPRESS_editorGroupName: "artemis-e2etest-editors"
             CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+            SORRY_CYPRESS_KEY: "${bamboo_sorry_cypress_record_secret}"
+            SORRY_CYPRESS_URL: "${bamboo_sorry_cypress_url}"
+            SORRY_CYPRESS_BUILD_ID: "${bamboo_buildNumber}"
+            SORRY_CYPRESS_BRANCH_NAME: "${bamboo_planRepository_branchName}"
+            SORRY_CYPRESS_PROJECT_ID: "artemis-mysql"
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
         volumes:
             - ..:/app/artemis
