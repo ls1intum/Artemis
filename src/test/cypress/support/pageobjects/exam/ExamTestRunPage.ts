@@ -40,10 +40,6 @@ export class ExamTestRunPage {
         return cy.get(`#testrun-${testRunId}`);
     }
 
-    getTestRunRibbon() {
-        return cy.get('#testRunRibbon');
-    }
-
     openTestRunPage(course: Course, exam: Exam) {
         cy.visit('/course-management/' + course.id + '/exams/' + exam.id + '/test-runs');
     }

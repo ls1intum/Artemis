@@ -100,9 +100,9 @@
         <ng-container *ngIf="isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits.title">Anonymize all of the student's commits</strong>
-                    <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeStudentCommits.tooltip"></jhi-help-icon>
+                    <input class="form-check-input" type="checkbox" name="anonymizeRepository" [(ngModel)]="this.repositoryExportOptions.anonymizeRepository" checked />
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title">Anonymize repository</strong>
+                    <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip"></jhi-help-icon>
                 </label>
             </div>
         </ng-container>
