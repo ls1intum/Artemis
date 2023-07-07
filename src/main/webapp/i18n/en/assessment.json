@@ -41,6 +41,7 @@
             },
             "detail": {
                 "feedback": "Feedback",
+                "reviewNote": "Hidden Assessment Notes only for Tutors",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:",

@@ -508,8 +508,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
-    saveReviewNote(reviewNote: ReviewNote[]) {
+    onUpdateReviewNote(reviewNote: ReviewNote[]) {
         this.manualResult!.reviewNote = reviewNote;
+        this.validateFeedback();
     }
 
     /**
