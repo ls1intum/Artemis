@@ -53,7 +53,7 @@ public class Feedback extends DomainObject {
 
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore // important, data should only be requested explicitly
-    private Set<LongFeedbackText> longFeedbackText;
+    private Set<LongFeedbackText> longFeedbackText = new HashSet<>();
 
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
@@ -138,7 +138,7 @@ public class Feedback extends DomainObject {
      */
     public void setDetailTextTruncated(@Nullable final String detailText) {
         this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
-        this.longFeedbackText = null;
+        this.longFeedbackText.clear();
         this.hasLongFeedbackText = false;
     }
 
@@ -159,9 +159,7 @@ public class Feedback extends DomainObject {
         if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
             this.detailText = detailText;
             setHasLongFeedbackText(false);
-            if (this.longFeedbackText != null) {
-                this.longFeedbackText.clear();
-            }
+            this.longFeedbackText.clear();
         }
         else {
             final LongFeedbackText longFeedback = buildLongFeedback(detailText);
@@ -198,16 +196,11 @@ public class Feedback extends DomainObject {
 
     @JsonIgnore
     public Optional<LongFeedbackText> getLongFeedback() {
-        return Optional.ofNullable(getLongFeedbackText()).flatMap(feedbacks -> feedbacks.stream().findAny());
+        return getLongFeedbackText().stream().findAny();
     }
 
     private void setLongFeedback(final LongFeedbackText longFeedbackText) {
-        if (this.longFeedbackText == null) {
-            this.longFeedbackText = new HashSet<>();
-        }
-        else {
-            this.longFeedbackText.clear();
-        }
+        this.longFeedbackText.clear();
         longFeedbackText.setFeedback(this);
         this.longFeedbackText.add(longFeedbackText);
     }
@@ -227,6 +220,7 @@ public class Feedback extends DomainObject {
      *
      * @param longFeedbackText The long feedback text this feedback is linked to.
      */
+    @SuppressWarnings("unused")
     public void setLongFeedbackText(final Set<LongFeedbackText> longFeedbackText) {
         this.longFeedbackText = longFeedbackText;
     }
