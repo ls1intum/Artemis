@@ -861,22 +861,27 @@ public class QuizExerciseUtilService {
 
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        return setQuizQuestionsTitleAndGroup(createMultipleChoiceQuestion(), title, quizGroup);
+        MultipleChoiceQuestion quizQuestion = createMultipleChoiceQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
     }
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        return setQuizQuestionsTitleAndGroup(createDragAndDropQuestion(), title, quizGroup);
+        DragAndDropQuestion quizQuestion = createDragAndDropQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
     }
 
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        return setQuizQuestionsTitleAndGroup(createShortAnswerQuestion(), title, quizGroup);
+        ShortAnswerQuestion quizQuestion = createShortAnswerQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
     }
 
-    private <Q extends QuizQuestion> Q setQuizQuestionsTitleAndGroup(Q quizQuestion, String title, QuizGroup quizGroup) {
+    private <Q extends QuizQuestion> void setQuizQuestionsTitleAndGroup(Q quizQuestion, String title, QuizGroup quizGroup) {
         quizQuestion.setTitle(title);
         quizQuestion.setQuizGroup(quizGroup);
-        return quizQuestion;
     }
 }
