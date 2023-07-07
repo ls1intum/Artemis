@@ -71,12 +71,6 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
-    - name: Upload Code Coverage
-      uses: codecov/codecov-action@v3
-      with:
-        files: build/reports/jacoco/test/jacocoTestReport.xml
-        name: artemis-server
-        flags: server
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
@@ -233,12 +227,6 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
-        - name: Upload Code Coverage
-          uses: codecov/codecov-action@v3
-          with:
-            files: build/test-results/clover.xml
-            name: artemis-client
-            flags: client
 
   client-tests-selected:
       runs-on: ubuntu-latest

@@ -53,7 +53,6 @@ import {
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -70,26 +69,33 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
     @Input() reEvaluationInProgress: boolean;
-    @Input() filePool = new Map<string, { path?: string; file: File }>();
 
-    @Output() questionUpdated = new EventEmitter<void>();
-    @Output() questionDeleted = new EventEmitter<void>();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
-    @Output() questionMoveUp = new EventEmitter<void>();
-    @Output() questionMoveDown = new EventEmitter<void>();
-    @Output() addNewFile = new EventEmitter<{ fileName: string; path?: string; file: File }>();
-    @Output() removeFile = new EventEmitter<string>();
+    @Output() questionMoveUp = new EventEmitter();
+    @Output() questionMoveDown = new EventEmitter();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
 
     backupQuestion: DragAndDropQuestion;
-    filePreviewPaths: Map<string, string> = new Map<string, string>();
+
+    dragItemPicture?: string;
+    backgroundFile?: File;
+    backgroundFileName: string;
+    backgroundFilePath: string;
+    dragItemFile?: File;
+    dragItemFileName: string;
+
     dropAllowed = false;
-    showPreview = false;
+
+    showPreview: boolean;
+    isUploadingBackgroundFile: boolean;
+    isUploadingDragItemFile: boolean;
 
     /** Status boolean for collapse status **/
-    isQuestionCollapsed = false;
+    isQuestionCollapsed: boolean;
 
     /**
      * Keep track of what the current drag action is doing
@@ -141,7 +147,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         private modalService: NgbModal,
         private fileUploaderService: FileUploaderService,
         private changeDetector: ChangeDetectorRef,
-        private fileService: FileService,
     ) {}
 
     /**
@@ -150,6 +155,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     ngOnInit(): void {
         // create deep copy as backup
         this.backupQuestion = cloneDeep(this.question);
+
+        /** Assign status booleans and strings **/
+        this.showPreview = false;
+        this.isUploadingBackgroundFile = false;
+        this.backgroundFileName = '';
+        this.backgroundFilePath = '';
+        this.isUploadingDragItemFile = false;
+        this.dragItemFileName = '';
+        this.isQuestionCollapsed = false;
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
@@ -170,36 +184,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (changes.question && changes.question.currentValue) {
             this.backupQuestion = cloneDeep(this.question);
         }
-
-        if (!this.filePool || this.filePool.size == 0) {
-            return;
-        }
-
-        this.filePool.forEach((value, fileName) => {
-            if (value.path && !this.filePreviewPaths.has(fileName)) {
-                console.log('add file to preview with path: ', fileName, value.path);
-                this.filePreviewPaths.set(fileName, value.path);
-            }
-        });
     }
 
     ngAfterViewInit(): void {
-        if (this.question.backgroundFilePath && !this.filePreviewPaths.has(this.question.backgroundFilePath)) {
-            this.filePreviewPaths.set(this.question.backgroundFilePath, this.question.backgroundFilePath);
+        if (this.question.backgroundFilePath) {
+            this.backgroundFilePath = this.question.backgroundFilePath;
             // Trigger image render with the question background file path in order to adjust the click layer.
             setTimeout(() => {
-                this.changeDetector.markForCheck();
                 this.changeDetector.detectChanges();
             }, 0);
-        }
-
-        if (this.question.dragItems) {
-            for (const dragItem in this.question.dragItems) {
-                const path = this.question.dragItems[dragItem].pictureFilePath;
-                if (path && !this.filePreviewPaths.has(path)) {
-                    this.filePreviewPaths.set(path, path);
-                }
-            }
         }
 
         this.backgroundImage.endLoadingProcess
@@ -254,17 +247,40 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     setBackgroundFile(event: any): void {
         if (event.target.files.length) {
-            if (this.question.backgroundFilePath) {
-                this.removeFile.emit(this.question.backgroundFilePath);
-            }
             const fileList: FileList = event.target.files;
-            const file = fileList[0];
-            const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool);
-            this.question.backgroundFilePath = fileName;
-            this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
-            this.addNewFile.emit({ fileName, file });
-            this.changeDetector.detectChanges();
+            this.backgroundFile = fileList[0];
+            this.backgroundFileName = this.backgroundFile.name;
         }
+    }
+
+    /**
+     * Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
+     */
+    uploadBackground(): void {
+        const file = this.backgroundFile!;
+
+        this.isUploadingBackgroundFile = true;
+        this.fileUploaderService.uploadFile(file, file.name).then(
+            (result) => {
+                this.question.backgroundFilePath = result.path;
+                this.isUploadingBackgroundFile = false;
+                this.backgroundFile = undefined;
+                this.backgroundFileName = '';
+                this.backgroundFilePath = result.path!;
+
+                // Trigger image reload.
+                this.changeDetector.detectChanges();
+
+                // Update save button state (enable it when the background image changes)
+                this.questionUpdated.emit();
+            },
+            (error) => {
+                console.error('Error during file upload in uploadBackground()', error.message);
+                this.isUploadingBackgroundFile = false;
+                this.backgroundFile = undefined;
+                this.backgroundFileName = '';
+            },
+        );
     }
 
     /**
@@ -493,26 +509,67 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
+     * Sets drag item file.
+     * @param event {object} Event object which contains the uploaded file
+     */
+    setDragItemFile(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
+            this.dragItemFile = fileList[0];
+            this.dragItemFileName = this.dragItemFile.name;
+        }
+    }
+
+    /**
      * Add a Picture Drag Item with the selected file as its picture to the question
      */
-    createImageDragItem(event: any): void {
-        const dragItemFile = this.getFileFromEvent(event);
-        if (!dragItemFile) {
-            return;
-        }
-        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
-        this.addNewFile.emit({ fileName, file: dragItemFile });
-        this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
+    uploadDragItem(): void {
+        const file = this.dragItemFile!;
 
-        const dragItem = new DragItem();
-        dragItem.pictureFilePath = fileName;
-        // Add drag item to question
-        if (!this.question.dragItems) {
-            this.question.dragItems = [];
-        }
-        this.question.dragItems.push(dragItem);
+        this.isUploadingDragItemFile = true;
+        this.fileUploaderService.uploadFile(file, file.name).then(
+            (result) => {
+                // Add drag item to question
+                if (!this.question.dragItems) {
+                    this.question.dragItems = [];
+                }
+                const dragItem = new DragItem();
+                dragItem.pictureFilePath = result.path;
+                this.question.dragItems.push(dragItem);
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = undefined;
+                this.dragItemFileName = '';
+            },
+            (error) => {
+                console.error('Error during file upload in uploadDragItem()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = undefined;
+                this.dragItemFileName = '';
+            },
+        );
+    }
 
-        this.questionUpdated.emit();
+    /**
+     * Upload a Picture for Drag Item Change with the selected file as its picture
+     */
+    uploadPictureForDragItemChange(): void {
+        const file = this.dragItemFile!;
+
+        this.isUploadingDragItemFile = true;
+        this.fileUploaderService.uploadFile(file, file.name).then(
+            (result) => {
+                this.dragItemPicture = result.path;
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = undefined;
+            },
+            (error) => {
+                console.error('Error during file upload in uploadPictureForDragItemChange()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = undefined;
+            },
+        );
     }
 
     /**
@@ -521,10 +578,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     deleteDragItem(dragItemToDelete: DragItem): void {
         this.question.dragItems = this.question.dragItems!.filter((dragItem) => dragItem !== dragItemToDelete);
-        if (dragItemToDelete.pictureFilePath) {
-            this.removeFile.emit(dragItemToDelete.pictureFilePath);
-            this.filePreviewPaths.delete(dragItemToDelete.pictureFilePath);
-        }
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
 
@@ -686,39 +739,34 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
     changeToTextDragItem(dragItem: DragItem): void {
-        this.removeFile.emit(dragItem.pictureFilePath!);
-        this.filePreviewPaths.delete(dragItem.pictureFilePath!);
         dragItem.pictureFilePath = undefined;
         dragItem.text = 'Text';
-        this.questionUpdated.emit();
     }
 
     /**
      * Change Text-Drag-Item to Picture-Drag-Item with PictureFile: this.dragItemFile
      * @param dragItem {dragItem} the dragItem, which will be changed
-     * @param event file upload event
      */
-    changeToPictureDragItem(dragItem: DragItem, event: any): void {
-        const dragItemFile = this.getFileFromEvent(event);
-        if (!dragItemFile) {
-            return;
-        }
+    changeToPictureDragItem(dragItem: DragItem): void {
+        const file = this.dragItemFile!;
 
-        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
-
-        this.addNewFile.emit({ fileName, file: dragItemFile });
-        this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
-        dragItem.text = undefined;
-        dragItem.pictureFilePath = fileName;
-        this.questionUpdated.emit();
-    }
-
-    private getFileFromEvent(event: any): File | undefined {
-        if (!event.target.files.length) {
-            return undefined;
-        }
-        const fileList: FileList = event.target.files;
-        return fileList[0];
+        this.isUploadingDragItemFile = true;
+        this.fileUploaderService.uploadFile(file, file.name).then(
+            (response) => {
+                this.dragItemPicture = response.path;
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                if (this.dragItemPicture) {
+                    dragItem.text = undefined;
+                    dragItem.pictureFilePath = this.dragItemPicture;
+                }
+            },
+            (error) => {
+                console.error('Error during file upload in changeToPictureDragItem()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = undefined;
+            },
+        );
     }
 
     /**
@@ -757,8 +805,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Resets background-picture
      */
     resetBackground(): void {
-        this.removeFile.emit(this.question.backgroundFilePath!);
         this.question.backgroundFilePath = this.backupQuestion.backgroundFilePath;
+        this.backgroundFile = undefined;
+        this.isUploadingBackgroundFile = false;
     }
 
     /**
@@ -787,10 +836,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Remove current DragItem at given index and insert the backup at the same position
         this.question.dragItems!.splice(dragItemIndex, 1);
         this.question.dragItems!.splice(dragItemIndex, 0, backupDragItem);
-        if (dragItem.pictureFilePath) {
-            this.removeFile.emit(dragItem.pictureFilePath);
-            this.filePreviewPaths.delete(dragItem.pictureFilePath);
-        }
     }
 
     /**
