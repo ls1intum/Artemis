@@ -39,6 +39,11 @@ html {
     color: $link-color;
 }
 
+.btn-check:checked + .btn,
+btn:hover {
+    color: white !important;
+}
+
 .btn-outline-primary:not(.list-group-item):hover {
     color: black;
 }

@@ -55,11 +55,9 @@
                         <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
                         <div class="btn-group" role="group">
                             <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                            <label class="btn btn-outline-secondary" for="public">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
-                            }}</label>
+                            <label class="btn btn-outline-primary" for="public">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate }}</label>
                             <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                            <label class="btn btn-outline-secondary" for="private">{{
+                            <label class="btn btn-outline-primary" for="private">{{
                                 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
                             }}</label>
                         </div>
