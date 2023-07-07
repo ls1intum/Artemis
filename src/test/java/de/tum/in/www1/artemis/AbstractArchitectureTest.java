@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 
 import org.junit.jupiter.api.BeforeAll;
 
@@ -30,8 +29,9 @@ public abstract class AbstractArchitectureTest extends AbstractSpringIntegration
     }
 
     private static void ensureClassSetsNonEmpty() {
-        assertAll("The class set checked for architecture violations should not be empty.", () -> assertThat(testClasses).isNotEmpty(),
-                () -> assertThat(productionClasses).isNotEmpty(), () -> assertThat(allClasses).isNotEmpty());
+        assertThat(testClasses).isNotEmpty();
+        assertThat(productionClasses).isNotEmpty();
+        assertThat(allClasses).isNotEmpty();
     }
 
     private static void ensureAllClassesFound() {
