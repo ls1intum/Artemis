@@ -51,4 +51,12 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     default LearningPath findWithEagerCompetenciesByIdElseThrow(long learningPathId) {
         return findWithEagerCompetenciesById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnits", "competencies.exercises" })
+    Optional<LearningPath> findWithEagerCompetenciesAndLearningUnitsById(long learningPathId);
+
+    @NotNull
+    default LearningPath findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(long learningPathId) {
+        return findWithEagerCompetenciesAndLearningUnitsById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
+    }
 }

@@ -193,33 +193,37 @@ public class LearningPathService {
             Set<NgxLearningPathDTO.Cluster> clusters) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
-        final var startNodeId = competency.getId() + "-start";
-        final var endNodeId = competency.getId() + "-end";
+        final var startNodeId = getCompetencyStartNodeId(competency.getId());
+        final var endNodeId = getCompetencyEndNodeId(competency.getId());
         currentCluster.add(new NgxLearningPathDTO.Node(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId(), ""));
         currentCluster.add(new NgxLearningPathDTO.Node(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId(), ""));
 
         final var prefix = competency.getId() + "-";
         // generate nodes and edges for lecture units
         competency.getLectureUnits().forEach(lectureUnit -> {
-            currentCluster.add(new NgxLearningPathDTO.Node(prefix + lectureUnit.getId(), NgxLearningPathDTO.NodeType.LECTURE_UNIT, lectureUnit.getId(), lectureUnit.getName()));
-            edges.add(new NgxLearningPathDTO.Edge(prefix + lectureUnit.getId() + "-in", startNodeId, prefix + lectureUnit.getId()));
-            edges.add(new NgxLearningPathDTO.Edge(prefix + lectureUnit.getId() + "-out", prefix + lectureUnit.getId(), endNodeId));
+            currentCluster.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
+                    lectureUnit.getId(), lectureUnit.getName()));
+            edges.add(new NgxLearningPathDTO.Edge(getLectureUnitInEdgeId(competency.getId(), lectureUnit.getId()), startNodeId,
+                    getLectureUnitNodeId(competency.getId(), lectureUnit.getId())));
+            edges.add(new NgxLearningPathDTO.Edge(getLectureUnitOutEdgeId(competency.getId(), lectureUnit.getId()), getLectureUnitNodeId(competency.getId(), lectureUnit.getId()),
+                    endNodeId));
         });
         // generate nodes and edges for exercises
         competency.getExercises().forEach(exercise -> {
-            currentCluster.add(new NgxLearningPathDTO.Node(prefix + exercise.getId(), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(), exercise.getTitle()));
-            edges.add(new NgxLearningPathDTO.Edge(prefix + exercise.getId() + "-in", startNodeId, prefix + exercise.getId()));
-            edges.add(new NgxLearningPathDTO.Edge(prefix + exercise.getId() + "-out", prefix + exercise.getId(), endNodeId));
+            currentCluster.add(new NgxLearningPathDTO.Node(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
+                    exercise.getTitle()));
+            edges.add(new NgxLearningPathDTO.Edge(getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId, getExerciseNodeId(competency.getId(), exercise.getId())));
+            edges.add(new NgxLearningPathDTO.Edge(getExerciseOutEdgeId(competency.getId(), exercise.getId()), getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
         });
         // if no linked learning units exist directly link start to end
         if (currentCluster.size() == 2) {
-            edges.add(new NgxLearningPathDTO.Edge(prefix, startNodeId, endNodeId));
+            edges.add(new NgxLearningPathDTO.Edge(getDirectEdgeId(competency.getId()), startNodeId, endNodeId));
         }
         // generate cluster for competency
         var childNodeIds = currentCluster.stream().map(NgxLearningPathDTO.Node::id).collect(Collectors.toSet());
         childNodeIds.add(startNodeId);
         childNodeIds.add(endNodeId);
-        clusters.add(new NgxLearningPathDTO.Cluster("" + competency.getId(), competency.getTitle(), childNodeIds));
+        clusters.add(new NgxLearningPathDTO.Cluster(String.valueOf(competency.getId()), competency.getTitle(), childNodeIds));
 
         nodes.addAll(currentCluster);
     }
@@ -257,28 +261,29 @@ public class LearningPathService {
         final var competenciesInMatchRelation = relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
                 .flatMap(relation -> Stream.of(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId())).collect(Collectors.toSet());
         if (!competenciesInMatchRelation.isEmpty()) {
-            UnionFind matchClusters = new UnionFind<Long>(competenciesInMatchRelation);
+            UnionFind<Long> matchClusters = new UnionFind<>(competenciesInMatchRelation);
             relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
                     .forEach(relation -> matchClusters.union(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId()));
 
+            // generate map between competencies and cluster node
             AtomicInteger matchClusterId = new AtomicInteger();
             relations.stream().filter(relation -> relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
                     .flatMapToLong(relation -> LongStream.of(relation.getHeadCompetency().getId(), relation.getTailCompetency().getId())).distinct().forEach(competencyId -> {
                         var parentId = matchClusters.find(competencyId);
-                        var clusterId = competencyToMatchCluster.computeIfAbsent((Long) parentId, (key) -> matchClusterId.getAndIncrement());
+                        var clusterId = competencyToMatchCluster.computeIfAbsent(parentId, (key) -> matchClusterId.getAndIncrement());
                         competencyToMatchCluster.put(competencyId, clusterId);
                     });
 
             // generate match cluster start and end nodes
             for (int i = 0; i < matchClusters.numberOfSets(); i++) {
-                nodes.add(new NgxLearningPathDTO.Node("matching-" + i + "-start", NgxLearningPathDTO.NodeType.COMPETENCY_START, -1, ""));
-                nodes.add(new NgxLearningPathDTO.Node("matching-" + i + "-end", NgxLearningPathDTO.NodeType.COMPETENCY_END, -1, ""));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_START, -1, ""));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_END, -1, ""));
             }
 
             // generate edges between match cluster nodes and corresponding competencies
-            competencyToMatchCluster.entrySet().stream().forEach(entry -> {
-                edges.add(new NgxLearningPathDTO.Edge(entry.getKey() + "-in", "matching-" + entry.getValue() + "-start", entry.getKey() + "-start"));
-                edges.add(new NgxLearningPathDTO.Edge(entry.getKey() + "-out", entry.getKey() + "-end", "matching-" + entry.getValue() + "-end"));
+            competencyToMatchCluster.forEach((competency, cluster) -> {
+                edges.add(new NgxLearningPathDTO.Edge(getInEdgeId(competency), getMatchingClusterStartNodeId(cluster), getCompetencyStartNodeId(competency)));
+                edges.add(new NgxLearningPathDTO.Edge(getOutEdgeId(competency), getCompetencyEndNodeId(competency), getMatchingClusterEndNodeId(cluster)));
             });
         }
 
@@ -299,15 +304,73 @@ public class LearningPathService {
     private void generateNgxRepresentationForRelation(CompetencyRelation relation, Map<Long, Integer> competencyToMatchCluster, Set<String> createdRelations,
             Set<NgxLearningPathDTO.Edge> edges) {
         final var sourceId = relation.getHeadCompetency().getId();
-        final String sourceNodeId = competencyToMatchCluster.containsKey(sourceId) ? "matching-" + competencyToMatchCluster.get(sourceId) + "-end" : sourceId + "-end";
+        final String sourceNodeId = competencyToMatchCluster.containsKey(sourceId) ? getMatchingClusterEndNodeId(competencyToMatchCluster.get(sourceId))
+                : getCompetencyEndNodeId(sourceId);
         final var targetId = relation.getTailCompetency().getId();
-        final String targetNodeId = competencyToMatchCluster.containsKey(targetId) ? "matching-" + competencyToMatchCluster.get(targetId) + "-start" : sourceId + "-start";
-        final String relationEdgeId = "relation-" + sourceNodeId + "-" + targetNodeId;
+        final String targetNodeId = competencyToMatchCluster.containsKey(targetId) ? getMatchingClusterStartNodeId(competencyToMatchCluster.get(targetId))
+                : getCompetencyStartNodeId(targetId);
+        final String relationEdgeId = getRelationEdgeId(sourceNodeId, targetNodeId);
         // skip if relation has already been created (possible for edges linked to matching cluster start/end nodes)
         if (!createdRelations.contains(relationEdgeId)) {
             final var edge = new NgxLearningPathDTO.Edge(relationEdgeId, sourceNodeId, targetNodeId);
             edges.add(edge);
             createdRelations.add(relationEdgeId);
         }
+    }
+
+    public static String getCompetencyStartNodeId(long competencyId) {
+        return competencyId + "-start";
+    }
+
+    public static String getCompetencyEndNodeId(long competencyId) {
+        return competencyId + "-end";
+    }
+
+    public static String getLectureUnitNodeId(long competencyId, long lectureUnitId) {
+        return competencyId + "-lu-" + lectureUnitId;
+    }
+
+    public static String getExerciseNodeId(long competencyId, long exerciseId) {
+        return competencyId + "-ex-" + exerciseId;
+    }
+
+    public static String getMatchingClusterStartNodeId(long matchingClusterId) {
+        return "matching-" + matchingClusterId + "-start";
+    }
+
+    public static String getMatchingClusterEndNodeId(long matchingClusterId) {
+        return "matching-" + matchingClusterId + "-end";
+    }
+
+    public static String getLectureUnitInEdgeId(long competencyId, long lectureUnitId) {
+        return competencyId + "-lu-" + getInEdgeId(lectureUnitId);
+    }
+
+    public static String getLectureUnitOutEdgeId(long competencyId, long lectureUnitId) {
+        return competencyId + "-lu-" + getOutEdgeId(lectureUnitId);
+    }
+
+    public static String getExerciseInEdgeId(long competencyId, long exercise) {
+        return competencyId + "-ex-" + getInEdgeId(exercise);
+    }
+
+    public static String getExerciseOutEdgeId(long competencyId, long exercise) {
+        return competencyId + "-ex-" + getOutEdgeId(exercise);
+    }
+
+    public static String getInEdgeId(long id) {
+        return id + "-in";
+    }
+
+    public static String getOutEdgeId(long id) {
+        return id + "-out";
+    }
+
+    public static String getRelationEdgeId(String sourceNodeId, String targetNodeId) {
+        return "relation-" + sourceNodeId + "-" + targetNodeId;
+    }
+
+    public static String getDirectEdgeId(long competencyId) {
+        return competencyId + "-direct";
     }
 }

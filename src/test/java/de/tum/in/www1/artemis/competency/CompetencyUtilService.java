@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.*;
 
 /**
  * Service responsible for initializing the database with specific testdata related to competencies for use in integration tests.
@@ -15,6 +18,15 @@ public class CompetencyUtilService {
 
     @Autowired
     private CompetencyRepository competencyRepo;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private CompetencyRelationRepository competencyRelationRepository;
 
     /**
      * Creates competency and links it to the course. The title of the competency will hold the specified suffix.
@@ -42,7 +54,7 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Creates multiple competencies and links them to the course
+     * Creates multiple competencies and links them to the course.
      *
      * @param course               course the competencies will be linked to
      * @param numberOfCompetencies number of competencies to create
@@ -54,5 +66,35 @@ public class CompetencyUtilService {
             competencies[i] = createCompetency(course, "" + i);
         }
         return competencies;
+    }
+
+    /**
+     * Link lecture unit to competency.
+     *
+     * @param competency  the competency to link the learning unit to
+     * @param lectureUnit the lecture unit that will be linked to the competency
+     */
+    public void linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
+        lectureUnit.getCompetencies().add(competency);
+        lectureUnitRepository.save(lectureUnit);
+    }
+
+    /**
+     * Link exercise to competency.
+     *
+     * @param competency the competency to link the learning unit to
+     * @param exercise   the exercise that will be linked to the competency
+     */
+    public void linkExerciseToCompetency(Competency competency, Exercise exercise) {
+        exercise.getCompetencies().add(competency);
+        exerciseRepository.save(exercise);
+    }
+
+    public void addRelation(Competency tail, CompetencyRelation.RelationType type, Competency head) {
+        CompetencyRelation relation = new CompetencyRelation();
+        relation.setTailCompetency(tail);
+        relation.setHeadCompetency(head);
+        relation.setType(type);
+        competencyRelationRepository.save(relation);
     }
 }

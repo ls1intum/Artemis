@@ -1,10 +1,16 @@
 package de.tum.in.www1.artemis.competency;
 
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.service.LearningPathService;
 
 /**
@@ -19,6 +25,12 @@ public class LearningPathUtilService {
     @Autowired
     LearningPathService learningPathService;
 
+    @Autowired
+    LearningPathRepository learningPathRepository;
+
+    @Autowired
+    CompetencyRepository competencyRepository;
+
     /**
      * Enable and generate learning paths for course.
      *
@@ -32,4 +44,16 @@ public class LearningPathUtilService {
         return courseRepository.save(course);
     }
 
+    public LearningPath createLearningPathInCourse(Course course) {
+        final var competencies = competencyRepository.findAllForCourse(course.getId());
+        LearningPath learningPath = createLearningPath(competencies);
+        learningPath.setCourse(course);
+        return learningPathRepository.save(learningPath);
+    }
+
+    public LearningPath createLearningPath(Set<Competency> competencies) {
+        LearningPath lp = new LearningPath();
+        lp.setCompetencies(competencies);
+        return learningPathRepository.save(lp);
+    }
 }
