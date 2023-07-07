@@ -62,6 +62,11 @@ Ace Editor
         }
     }
 
+    .card-body > .inline-feedback {
+        /* The ACE Line Widget will copy this node to another place where it will be visible */
+        display: none;
+    }
+
     .diff-newLine {
         position: absolute;
         background: var(--code-editor-diff-newline-background);
