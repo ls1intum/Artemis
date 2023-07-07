@@ -1,5 +1,5 @@
-#archiveButton[data-mode='Course'] {
-    margin-bottom: 11px !important;
+button {
+    margin: 0 !important; // override bootstrap
 }
 
 #archiveButton[data-mode='Exam'] {
