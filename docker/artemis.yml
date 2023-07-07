@@ -5,7 +5,6 @@
 services:
     artemis-app:
         container_name: artemis-app
-        platform: linux/amd64
         # look in the docs for more information about how to build your Artemis code with Docker
         # https://docs.artemis.cit.tum.de/dev/setup/#
         image: ghcr.io/ls1intum/artemis
