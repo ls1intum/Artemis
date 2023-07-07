@@ -94,7 +94,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     lineCounter: any[] = [];
-    private elementArray: Element[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
     markerIds: number[] = [];
@@ -202,7 +201,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Get amount of lines of code in order to render for each line a corresponding inline feedback component
             if (this.isTutorAssessment) {
                 const lines = this.editor.getEditor().getSession().getLength();
-                this.lineCounter = new Array(lines);
+                this.lineCounter = new Array(lines).fill(0).map((x, i) => i);
                 if (!this.feedbacks) {
                     this.feedbacks = [];
                 }
@@ -419,7 +418,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /**
      * Displays the inline feedback of a line of code using lineWidgets. We first go through all feedbacks of the selected file
-     * and create a lineWidget for each feedback. The elementArray contains all inline feedback components which have been added as lineWidget.
+     * and create a lineWidget for each feedback.
      */
     displayFeedbacks() {
         this.fileFeedbacks.forEach((feedback) => {
@@ -455,14 +454,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component will be added to.
      */
     addLineWidgetWithFeedback(line: number) {
-        // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
-        let inlineFeedback: Element | undefined = this.elementArray.find((element) => element.id === 'test-' + line);
-        if (!inlineFeedback) {
-            inlineFeedback = document.querySelector(`#test-${line}`) ?? undefined;
-            if (inlineFeedback) {
-                this.elementArray.push(inlineFeedback);
-            }
-        }
+        // Get feedback element from the DOM
+        const inlineFeedback = document.querySelector(`#test-${line}`);
         if (inlineFeedback) {
             const lineWidget = {
                 row: line,
@@ -567,4 +560,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     updateTabSize(event: number) {
         this.tabSize = event;
     }
+
+    protected readonly JSON = JSON;
 }

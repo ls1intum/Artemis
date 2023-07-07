@@ -5,11 +5,14 @@
         <div class="btn-inline-comment">
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
-        <div *ngFor="let line of lineCounter; let i = index" id="test-{{ i }}" class="inline-feedback-d-none">
+        <div *ngFor="let line of lineCounter" id="test-{{ line }}" class="inline-feedback-d-none">
+            <!--            <p>-->
+            <!--                attributes: {{ JSON.stringify({ selectedFile, line, fileFeedbackPerLine, readOnlyManualFeedback, highlightDifferences, course }) }}-->
+            <!--            </p>-->
             <jhi-code-editor-tutor-assessment-inline-feedback
                 [selectedFile]="selectedFile"
-                [codeLine]="i"
-                [feedback]="fileFeedbackPerLine[i]"
+                [codeLine]="line"
+                [feedback]="fileFeedbackPerLine[line]"
                 [readOnly]="readOnlyManualFeedback"
                 [highlightDifferences]="highlightDifferences"
                 [course]="course"
