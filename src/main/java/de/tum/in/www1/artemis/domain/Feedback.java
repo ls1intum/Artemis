@@ -416,39 +416,6 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * Copies an automatic feedback to be used for the manual result of a programming exercise
-     *
-     * @return Copy of the automatic feedback without its original ID
-     */
-    public Feedback copyFeedback() {
-        final Feedback feedback = new Feedback();
-
-        feedback.setDetailText(getDetailText());
-        feedback.setType(getType());
-        // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
-        feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
-        feedback.setText(getText());
-
-        if (isPositive() == null) {
-            feedback.setPositiveViaCredits();
-        }
-        else {
-            feedback.setPositive(isPositive());
-        }
-
-        feedback.setReference(getReference());
-        feedback.setVisibility(getVisibility());
-        feedback.setGradingInstruction(getGradingInstruction());
-
-        feedback.setHasLongFeedbackText(getHasLongFeedbackText());
-        if (feedback.getHasLongFeedbackText()) {
-            getLongFeedbackText().stream().findAny().map(LongFeedbackText::copy).ifPresent(feedback::setLongFeedback);
-        }
-
-        return feedback;
-    }
-
-    /**
      * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
      *
      * @param inputScore          totalScore which is summed up.

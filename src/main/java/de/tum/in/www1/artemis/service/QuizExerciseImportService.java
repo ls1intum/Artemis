@@ -32,8 +32,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private final ChannelService channelService;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;

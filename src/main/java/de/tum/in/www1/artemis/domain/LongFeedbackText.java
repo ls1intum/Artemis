@@ -17,7 +17,7 @@ public class LongFeedbackText extends DomainObject {
     @Size(max = Constants.LONG_FEEDBACK_MAX_LENGTH)
     private String text;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id", nullable = false)
     private Feedback feedback;
 
@@ -35,12 +35,6 @@ public class LongFeedbackText extends DomainObject {
 
     public void setFeedback(Feedback feedback) {
         this.feedback = feedback;
-    }
-
-    public LongFeedbackText copy() {
-        final LongFeedbackText longFeedbackText = new LongFeedbackText();
-        longFeedbackText.setText(getText());
-        return longFeedbackText;
     }
 
     @Override

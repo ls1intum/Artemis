@@ -13,6 +13,13 @@ public interface LongFeedbackTextRepository extends JpaRepository<LongFeedbackTe
     @Query("""
             SELECT longFeedback
             FROM LongFeedbackText longFeedback
+            WHERE longFeedback.feedback.id = :feedbackId
+            """)
+    Optional<LongFeedbackText> findByFeedbackId(long feedbackId);
+
+    @Query("""
+            SELECT longFeedback
+            FROM LongFeedbackText longFeedback
                 LEFT JOIN FETCH longFeedback.feedback feedback
                 LEFT JOIN FETCH feedback.result result
                 LEFT JOIN FETCH result.participation

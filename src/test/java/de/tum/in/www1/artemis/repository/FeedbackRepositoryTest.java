@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
@@ -176,28 +175,6 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
         assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isNull();
-    }
-
-    @Test
-    void copyFeedbackWithLongFeedback() {
-        final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10);
-
-        final Feedback feedback = new Feedback();
-        feedback.setHasLongFeedbackText(true);
-        feedback.setDetailText(longText);
-        feedback.setCredits(1.0);
-
-        final Feedback savedFeedback = feedbackRepository.save(feedback);
-
-        final Feedback copiedFeedback = savedFeedback.copyFeedback();
-        assertThat(copiedFeedback.getLongFeedback()).isNotEmpty();
-        final LongFeedbackText longFeedback = copiedFeedback.getLongFeedback().orElseThrow();
-        assertThat(longFeedback.getText()).isEqualTo(longText);
-
-        final Feedback newSavedFeedback = feedbackRepository.save(copiedFeedback);
-        assertThat(newSavedFeedback.getId()).isNotEqualTo(savedFeedback.getId());
-        final LongFeedbackText savedLongFeedback = newSavedFeedback.getLongFeedback().orElseThrow();
-        assertThat(savedLongFeedback.getId()).isEqualTo(newSavedFeedback.getId());
     }
 
     @Test
