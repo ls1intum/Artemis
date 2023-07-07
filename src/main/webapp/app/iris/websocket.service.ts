@@ -2,8 +2,8 @@ import { Subscription } from 'rxjs';
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
-import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { ActiveConversationMessageLoadedAction, MessageStoreAction, StudentMessageSentAction, isSessionReceivedAction } from 'app/iris/state-store.model';
+import { IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
@@ -57,8 +57,12 @@ export class IrisWebsocketService implements OnDestroy {
 
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisServerMessage) => {
-            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisMessage) => {
+            if (newMessage instanceof IrisServerMessage) {
+                this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
+            } else {
+                this.stateStore.dispatch(new StudentMessageSentAction(newMessage));
+            }
         });
     }
 }
