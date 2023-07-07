@@ -370,7 +370,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported(language);
     }
 
-    @RepeatedTest(1000)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithProgrammingExercise() throws Exception {
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
