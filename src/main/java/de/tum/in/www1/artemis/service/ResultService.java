@@ -59,16 +59,13 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final FeedbackConflictRepository feedbackConflictRepository;
-
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            FeedbackConflictRepository feedbackConflictRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -84,7 +81,6 @@ public class ResultService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
-        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -158,7 +154,6 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
-        feedbackConflictRepository.deleteAllByResultId(resultId);
     }
 
     /**
@@ -206,7 +201,7 @@ public class ResultService {
      * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
-    public List<Feedback> getFeedbacksForResult(Result result) {
+    public List<Feedback> filterFeedbackForClient(Result result) {
         this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
         return result.getFeedbacks().stream() //
@@ -262,7 +257,7 @@ public class ResultService {
             result.filterSensitiveFeedbacks(isBeforeDueDateOrAutomaticAndBeforeLatestDueDate);
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-            boolean beforeAssessmentDueDate = exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isBefore(exercise.getAssessmentDueDate());
+            boolean beforeAssessmentDueDate = !ExerciseDateService.isAfterAssessmentDueDate(exercise);
 
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {

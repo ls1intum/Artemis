@@ -78,7 +78,7 @@ public class LectureUtilService {
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
-                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().get();
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
                 VideoUnit videoUnit = createVideoUnit();
                 TextUnit textUnit = createTextUnit();
                 AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
@@ -99,7 +99,7 @@ public class LectureUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }

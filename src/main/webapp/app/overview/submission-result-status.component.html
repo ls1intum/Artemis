@@ -24,7 +24,7 @@
             <span class="text-body-secondary" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
             <span class="text-body-secondary" *ngIf="exerciseMissedDueDate">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDate' | artemisTranslate }}</span>
             <span class="text-body-secondary" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
-            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
+            <span class="text-body-secondary" *ngIf="!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate
             }}</span>
             <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
@@ -40,7 +40,7 @@
             <span class="text-body-secondary" *ngIf="uninitialized">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate }}</span>
             <span class="text-body-secondary" *ngIf="exerciseMissedDueDate">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort' | artemisTranslate }}</span>
             <span class="text-body-secondary" *ngIf="notSubmitted">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate }}</span>
-            <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED">{{
+            <span class="text-body-secondary" *ngIf="!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate
             }}</span>
             <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
