@@ -172,6 +172,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         if (activeComponent) {
             if (this.currentExercise?.type === ExerciseType.PROGRAMMING) {
                 activeComponent!.submission = submission as ProgrammingSubmission;
+            } else if (this.currentExercise?.type === ExerciseType.FILE_UPLOAD) {
+                activeComponent!.submission = submission as FileUploadSubmission;
+                activeComponent?.updateViewFromSubmission();
             } else {
                 activeComponent!.submissionVersion = submission as SubmissionVersion;
                 activeComponent?.updateViewFromSubmissionVersion();
@@ -202,6 +205,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
             this.currentExercise = submissionVersion.submission.participation?.exercise;
+        } else if (this.isFileUploadSubmission(submission)) {
+            const fileUploadSubmission = submission as FileUploadSubmission;
+            this.currentExercise = fileUploadSubmission.participation?.exercise;
         } else {
             const programmingSubmission = submission as ProgrammingSubmission;
             this.currentExercise = programmingSubmission.participation?.exercise;
