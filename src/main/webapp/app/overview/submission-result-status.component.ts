@@ -47,20 +47,25 @@ export class SubmissionResultStatusComponent implements OnChanges {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitialized = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
-            this.shouldShowResult = !!this.studentParticipation?.results?.length;
         } else {
             this.uninitialized = !afterDueDate && !this.studentParticipation;
             this.notSubmitted = afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
+        }
 
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                const initializationStatesForResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
-                this.shouldShowResult =
-                    (!!this.studentParticipation?.results?.length || !afterDueDate) &&
-                    !!this.studentParticipation?.initializationState &&
-                    initializationStatesForResult.includes(this.studentParticipation.initializationState);
-            } else {
-                this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
-            }
+        this.setShouldShowResult(afterDueDate);
+    }
+
+    private setShouldShowResult(afterDueDate: boolean) {
+        if (this.exercise.type === ExerciseType.QUIZ) {
+            this.shouldShowResult = !!this.studentParticipation?.results?.length;
+        } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const initializationStatesForResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
+            this.shouldShowResult =
+                (!!this.studentParticipation?.results?.length || !afterDueDate) &&
+                !!this.studentParticipation?.initializationState &&
+                initializationStatesForResult.includes(this.studentParticipation.initializationState);
+        } else {
+            this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
         }
     }
 }

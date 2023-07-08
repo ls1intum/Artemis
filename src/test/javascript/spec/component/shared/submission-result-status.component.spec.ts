@@ -100,7 +100,7 @@ describe('SubmissionResultStatusComponent', () => {
             [{ type: ExerciseType.MODELING }, { initializationState: InitializationState.FINISHED }, true],
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.UNINITIALIZED }, false],
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.INITIALIZED }, true],
-            [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.INITIALIZED }, true],
+            [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.INACTIVE }, true],
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.FINISHED }, true],
             [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') }, { initializationState: InitializationState.INITIALIZED }, false],
             [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') }, { initializationState: InitializationState.INITIALIZED, results: [{}] }, true],
