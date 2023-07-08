@@ -69,6 +69,7 @@ public class LearningPathResource {
      * GET /courses/:courseId/learning-paths : Gets all the learning paths of a course. The result is pageable.
      *
      * @param courseId the id of the course for which the learning paths should be fetched
+     * @param search   the pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
     @GetMapping("/courses/{courseId}/learning-paths")
