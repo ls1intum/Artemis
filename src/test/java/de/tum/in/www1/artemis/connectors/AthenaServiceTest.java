@@ -15,9 +15,12 @@ import de.tum.in.ase.athene.protobuf.DistanceMatrixEntry;
 import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
