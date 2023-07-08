@@ -68,7 +68,7 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationIfConversationMessage(user, post);
+            mayInteractWithConversationIfConversationMessageElseThrow(user, post);
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -83,7 +83,7 @@ public class ReactionService {
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationIfConversationMessage(user, answerPost.getPost());
+            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost());
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -113,7 +113,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
-            mayInteractWithConversationIfConversationMessage(user, updatedPost);
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost);
 
             if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // decrease voteCount of post needed for sorting
@@ -125,7 +125,7 @@ public class ReactionService {
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
-            mayInteractWithConversationIfConversationMessage(user, updatedAnswerPost.getPost());
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost());
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -137,7 +137,7 @@ public class ReactionService {
         reactionRepository.deleteById(reactionId);
     }
 
-    private void mayInteractWithConversationIfConversationMessage(User user, Post post) {
+    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post) {
         if (post.getConversation() != null) {
             conversationService.isMemberElseThrow(post.getConversation().getId(), user.getId());
         }
