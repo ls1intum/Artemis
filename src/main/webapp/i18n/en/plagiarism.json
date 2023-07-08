@@ -117,7 +117,7 @@
                 "confirm": "Confirm case",
                 "discard": "Discard case"
             },
-            "continuousPlagiarismControlTooltip": "Continuous Plagiarism Control triggers plagiarism checks automatically each night."
+            "continuousPlagiarismControlTooltip": "Continuous Plagiarism Control triggers plagiarism check automatically each night."
         }
     }
 }
