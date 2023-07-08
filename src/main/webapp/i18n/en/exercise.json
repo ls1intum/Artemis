@@ -51,7 +51,7 @@
             "actions": "Actions",
             "notStarted": "You have not started this exercise yet.",
             "continuousPlagiarismControl": "Continuous Plagiarism Control",
-            "continuousPlagiarismControlEnabled": "Enabled [preview]",
+            "continuousPlagiarismControlEnabled": "Enabled",
             "plagiarismChecks": "Plagiarism Checks",
             "problemStatement": "Problem Statement",
             "emptyProblemStatement": "(No problem statement)",
