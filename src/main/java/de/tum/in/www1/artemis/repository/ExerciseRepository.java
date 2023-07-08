@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Exercise entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
@@ -177,159 +176,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 """)
     Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
 
-    /**
-     * calculates the average score and the participation rate of students for each given individual course exercise
-     * by using the last result (rated or not)
-     *
-     * @param exerciseIds - exercise ids to count the statistics for
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
-     */
-    @Query("""
-            SELECT
-                e.id,
-                AVG(r.score),
-                Count(Distinct p.student.id),
-                (SELECT count(distinct u.id)
-                    FROM User u
-                    WHERE
-                    e.course.studentGroupName member of u.groups
-                    AND e.course.teachingAssistantGroupName not member of u.groups
-                    AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                    AND e.course.instructorGroupName not member of u.groups
-                )
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-            WHERE e.id IN :exerciseIds
-                AND e.course.studentGroupName member of p.student.groups
-                AND e.course.teachingAssistantGroupName not member of p.student.groups
-                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
-                AND e.course.instructorGroupName not member of p.student.groups
-                AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                AND s.id = (
-                    SELECT max(s2.id)
-                    FROM Submission s2 JOIN s2.results r2
-                    WHERE s2.participation.id = s.participation.id
-                        AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
-                    )
-            GROUP BY e.id
-                """)
-    List<Object[]> calculateStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
-
-    /**
-     * calculates the average score and the participation rate of students for each given individual course exercise
-     * by using the last result (rated or not). This query gets the last result from the participation scores table
-     *
-     * @param exerciseIds - exercise ids to count the statistics for
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
-     */
-    @Query("""
-            SELECT
-                e.id,
-                AVG(sc.lastScore),
-                Count(Distinct p.student.id),
-                (   SELECT count(distinct u.id)
-                    FROM User u
-                    WHERE
-                        e.course.studentGroupName member of u.groups
-                        AND e.course.teachingAssistantGroupName not member of u.groups
-                        AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                        AND e.course.instructorGroupName not member of u.groups
-                )
-            FROM Exercise e JOIN e.studentParticipations p, StudentScore sc
-            WHERE e.id IN :exerciseIds
-                AND sc.exercise = e AND sc.user = p.student
-                AND e.course.studentGroupName member of p.student.groups
-                AND e.course.teachingAssistantGroupName not member of p.student.groups
-                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
-                AND e.course.instructorGroupName not member of p.student.groups
-            GROUP BY e.id
-            """)
-    List<Object[]> calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
-
-    /**
-     * calculates the average score and the participation rate of students for each given team course exercise
-     * by using the last result (rated or not)
-     *
-     * @param exerciseIds - exercise ids to count the statistics for
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
-     */
-    @Query("""
-            SELECT
-                e.id,
-                AVG(r.score),
-                Count(Distinct p.team.id),
-                (   SELECT count(distinct t.id)
-                    FROM Team t JOIN t.students st2
-                    WHERE st2.id IN (
-                        SELECT DISTINCT u.id
-                        FROM User u
-                        WHERE e.course.studentGroupName member of u.groups
-                            AND e.course.teachingAssistantGroupName not member of u.groups
-                            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                            AND e.course.instructorGroupName not member of u.groups
-                            AND t.exercise.id IN :exerciseIds
-                    )
-                )
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
-            WHERE e.id IN :exerciseIds
-                AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                AND
-                st.id IN (
-                    SELECT DISTINCT u.id
-                    FROM User u
-                    WHERE e.course.studentGroupName member of u.groups
-                        AND e.course.teachingAssistantGroupName not member of u.groups
-                        AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
-                        AND e.course.instructorGroupName not member of u.groups
-                    )
-                AND
-                s.id = (
-                    SELECT max(s2.id)
-                    FROM Submission s2 JOIN s2.results r2
-                    WHERE s2.participation.id = s.participation.id
-                        AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
-                )
-            GROUP BY e.id
-            """)
-    List<Object[]> calculateStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
-
-    /**
-     * calculates the average score and the participation rate of students for each given team course exercise
-     * by using the last result (rated or not). This query gets the last result from the participation scores table
-     *
-     * @param exerciseIds - exercise ids to count the statistics for
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
-     */
-    @Query("""
-            SELECT
-                e.id,
-                AVG(ts.lastScore),
-                Count(Distinct p.team.id),
-                (   SELECT count(distinct t.id)
-                    FROM Team t JOIN t.students st2
-                    WHERE st2.id IN (
-                        SELECT DISTINCT u.id
-                        FROM User u
-                        WHERE e.course.studentGroupName member of u.groups
-                            AND e.course.teachingAssistantGroupName not member of u.groups
-                            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
-                            AND e.course.instructorGroupName not member of u.groups
-                    )
-                )
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.team.students st, TeamScore ts
-            WHERE e.id IN :exerciseIds
-                AND ts.exercise = e AND ts.team = p.team
-                AND st.id IN (
-                    SELECT DISTINCT u.id
-                    FROM User u
-                    WHERE e.course.studentGroupName member of u.groups
-                        AND e.course.teachingAssistantGroupName not member of u.groups
-                        AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
-                        AND e.course.instructorGroupName not member of u.groups
-                    )
-            GROUP BY e.id
-            """)
-    List<Object[]> calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
-
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
@@ -438,19 +284,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
 
-    /**
-     * Fetches exercise ids of exercises of a course
-     *
-     * @param courseId the id of the course the exercises are part of
-     * @return a list of ids of exercises
-     */
-    @Query("""
-            SELECT e.id
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-            """)
-    List<Long> getExerciseIdsByCourseId(@Param("courseId") Long courseId);
-
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
@@ -459,11 +292,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @NotNull
     default Exercise findByIdWithCompetenciesElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findByIdWithCompetencies(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-    }
-
-    @NotNull
-    default Exercise findByIdWithCompetenciesBidirectionalElseThrow(Long exerciseId) throws EntityNotFoundException {
-        return findByIdWithCompetenciesBidirectional(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**

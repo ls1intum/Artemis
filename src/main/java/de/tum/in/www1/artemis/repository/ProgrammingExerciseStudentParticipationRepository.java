@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Participation entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
@@ -45,29 +44,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
-
-    /**
-     * Will return the participation with the provided participationId. The participation will come with all its manual results, submissions, feedbacks and assessors
-     *
-     * @param participationId the participation id
-     * @return a participation with all its manual results.
-     */
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks
-                LEFT JOIN FETCH pr.submission
-                LEFT JOIN FETCH pr.assessor
-            WHERE p.id = :participationId
-                AND pr.id IN (
-                    SELECT prr.id
-                    FROM p.results prr
-                    WHERE prr.assessmentType = 'MANUAL'
-                        OR prr.assessmentType = 'SEMI_AUTOMATIC')
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
-            @Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
@@ -155,14 +131,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
-
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.individualDueDate IS NOT NULL
-            """)
-    List<ProgrammingExerciseStudentParticipation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     ProgrammingExerciseStudentParticipation findWithResultsById(Long participationId);
