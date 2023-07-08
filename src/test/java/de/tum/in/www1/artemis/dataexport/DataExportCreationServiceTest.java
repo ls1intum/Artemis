@@ -167,9 +167,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
-        Predicate<Path> art15ReadmeMd = path -> "README.md".equals(path.getFileName().toString());
+        Predicate<Path> readmeMd = path -> "README.md".equals(path.getFileName().toString());
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
-        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(art15ReadmeMd).isDirectoryContaining(courseDir);
+        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir);
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))

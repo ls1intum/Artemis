@@ -89,13 +89,13 @@ public class DataExportCreationService {
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
-        addArt15ReadmeFile(workingDirectory);
+        addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
         fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
         return finishDataExportCreation(dataExport, dataExportPath);
     }
 
-    private void addArt15ReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
+    private void addReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
         var readmeInDataExportPath = workingDirectory.resolve("README.md");
         var readmeTemplatePath = Path.of("templates", "dataexport", "README.md");
         Files.copy(resourceLoaderService.getResourceFilePath(readmeTemplatePath), readmeInDataExportPath);
