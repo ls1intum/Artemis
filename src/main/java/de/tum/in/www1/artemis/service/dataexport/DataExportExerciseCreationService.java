@@ -7,7 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,7 +81,7 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates the export for all exercises the user participated in
+     * Creates the export for all exercises the user participated in.
      *
      * @param workingDirectory the directory the export should be created in
      * @param userId           the id of the user that requested the export
@@ -109,7 +111,7 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates an export for a given programming exercise (includes submission information, the repository from the VCS and potential plagiarism cases)
+     * Creates an export for a given programming exercise. Includes submission information, the repository from the VCS and potential plagiarism cases.
      *
      * @param programmingExercise the programming exercise for which the export should be created
      * @param courseDir           the directory that is used for the course the exercise belongs to
@@ -125,12 +127,11 @@ public class DataExportExerciseCreationService {
         createSubmissionsResultsExport(programmingExercise, exerciseDir);
         RepositoryExportOptionsDTO repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setExportAllParticipants(false);
-        repositoryExportOptions.setAnonymizeStudentCommits(false);
+        repositoryExportOptions.setAnonymizeRepository(false);
         repositoryExportOptions.setFilterLateSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(false);
         repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(false);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setHideStudentNameInZippedFolder(false);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         var listOfProgrammingExerciseParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
@@ -147,7 +148,7 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates an export for a text, modeling, file upload or quiz exercise (includes submission information and potential plagiarism cases)
+     * Creates an export for a text, modeling, file upload or quiz exercise. Includes submission information and potential plagiarism cases.
      *
      * @param exercise  the exercise for which the export should be created
      * @param courseDir the directory that is used for the course the exercise belongs to

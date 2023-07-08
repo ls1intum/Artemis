@@ -22,10 +22,6 @@ export class ModelingEditor {
         getExercise(exerciseID).find(MODELING_EDITOR_CANVAS).trigger('pointerup');
     }
 
-    getModelingCanvas() {
-        return cy.get('#modeling-editor-canvas');
-    }
-
     addComponentToExampleSolutionModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
         cy.get('#modeling-editor-sidebar').children().eq(componentNumber).drag(MODELING_EDITOR_CANVAS, { scrollBehavior, timeout: 1000 });
         cy.get(MODELING_EDITOR_CANVAS).trigger('mouseup').trigger('pointerup');
