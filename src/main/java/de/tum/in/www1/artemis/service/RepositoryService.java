@@ -232,7 +232,7 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath().replaceAll("\\.+", ".").replaceAll("%+", ""));
+        Optional<File> existingFile = gitService.getFileByName(repository, fileService.removeIllegalCharacters(fileMove.currentFilePath()));
         if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
