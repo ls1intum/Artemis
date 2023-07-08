@@ -233,4 +233,14 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
+
+    it('should sort rows', () => {
+        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+        lectureComponent.filteredLectures = [currentLecture];
+        lectureComponent.predicate = 'testPredicate';
+        lectureComponent.ascending = true;
+        lectureComponent.sortRows();
+        expect(sortSpy).toHaveBeenCalledWith(lectureComponent.filteredLectures, lectureComponent.predicate, lectureComponent.ascending);
+        expect(sortSpy).toHaveBeenCalledOnce();
+    });
 });
