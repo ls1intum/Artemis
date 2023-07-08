@@ -116,7 +116,8 @@
                 "exportCsv": "CSV exportieren",
                 "confirm": "Fall bestätigen",
                 "discard": "Fall verwerfen"
-            }
+            },
+            "continuousPlagiarismControlTooltip": "Kontinuierliche Plagiatskontrolle löst jede Nacht automatisch Plagiatskontrolle aus."
         }
     }
 }
