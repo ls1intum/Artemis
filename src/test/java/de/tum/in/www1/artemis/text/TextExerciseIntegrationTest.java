@@ -43,8 +43,10 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
+import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
@@ -149,6 +151,20 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteTextExerciseWithChannel() throws Exception {
+        Course course = courseUtilService.createCourse();
+        ZonedDateTime now = ZonedDateTime.now();
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+
+        Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
+        assertThat(exerciseChannelAfterDelete).isEmpty();
     }
 
     @Test
