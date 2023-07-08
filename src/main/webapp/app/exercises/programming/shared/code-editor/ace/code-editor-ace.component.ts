@@ -210,7 +210,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         // Remove open inline feedback widgets for new feedback
         this.linesWithNewFeedback = [];
-        // this.changeDetectorRef.detectChanges(); // Manually trigger change detection => otherwise Angular might be too smart and not update the DOM
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
