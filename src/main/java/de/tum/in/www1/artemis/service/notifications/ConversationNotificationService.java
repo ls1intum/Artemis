@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
