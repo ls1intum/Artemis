@@ -111,6 +111,7 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
+        // TODO handle timeout
         if (state.error != null && state.error.fatal) {
             return {
                 messages: [...state.messages],
@@ -172,6 +173,9 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
+            if (state.messages.some((msg) => msg.id === castedAction.message.id)) {
+                return state;
+            }
             return {
                 ...state,
                 messages: [...state.messages, castedAction.message],

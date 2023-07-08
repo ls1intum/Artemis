@@ -155,7 +155,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     isSendMessageFailedError(): boolean {
-        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED; // TODO or timeout
     }
 
     triggerShake() {
