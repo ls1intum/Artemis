@@ -38,9 +38,9 @@ public class TextSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService, AuthorizationCheckService authCheckService,
             SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
         this.submissionVersionService = submissionVersionService;

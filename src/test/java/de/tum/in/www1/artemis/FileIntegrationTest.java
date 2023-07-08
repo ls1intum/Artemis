@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -13,27 +14,36 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "fileintegration";
+
+    @Autowired
+    private CourseRepository courseRepo;
 
     @Autowired
     private AttachmentRepository attachmentRepo;
@@ -42,23 +52,46 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private AttachmentUnitRepository attachmentUnitRepo;
 
     @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
     private LectureRepository lectureRepo;
 
     @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveTempFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+
+        String responseFile = request.get(responsePath, HttpStatus.OK, String.class);
+        assertThat(responseFile).isEqualTo("some data");
     }
 
     @Test
@@ -72,6 +105,176 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(pythonReadme).isNotEmpty();
 
         request.get("/api/files/templates/randomnonexistingfile", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseIcon() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String iconPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getCourseIconFilePath(), course.getId());
+
+        course.setCourseIcon(iconPath);
+        courseRepo.save(course);
+
+        String receivedIcon = request.get(iconPath, HttpStatus.OK, String.class);
+        assertThat(receivedIcon).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetDragAndDropBackgroundFile() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
+        quizExerciseRepository.save(quizExercise);
+
+        MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String backgroundPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragAndDropBackgroundFilePath(), dragAndDropQuestion.getId());
+
+        dragAndDropQuestion.setBackgroundFilePath(backgroundPath);
+        courseRepo.save(course);
+        quizQuestionRepository.save(dragAndDropQuestion);
+
+        String receivedPath = request.get(backgroundPath, HttpStatus.OK, String.class);
+        assertThat(receivedPath).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetDragItemFile() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
+        quizExerciseRepository.save(quizExercise);
+
+        DragItem dragItem = dragAndDropQuestion.getDragItems().get(0);
+        MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilePath(), dragItem.getId());
+
+        dragItem.setPictureFilePath(dragItemPath);
+        courseRepo.save(course);
+        quizQuestionRepository.save(dragAndDropQuestion);
+
+        String receivedPath = request.get(dragItemPath, HttpStatus.OK, String.class);
+        assertThat(receivedPath).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFileUploadSubmission() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
+        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFileUploadSubmissionAsTutor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
+
+        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data");
+    }
+
+    private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
+                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+
+        fileUploadSubmission.setFilePath(filePath);
+        return fileUploadSubmission;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachment() throws Exception {
+        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
+        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetUnreleasedLectureAttachmentAsTutor() throws Exception {
+        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachment_unsupportedFileType() throws Exception {
+        // this should return Unsupported file type
+        createLectureWithAttachment("attachment.abc", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachment_mimeType() throws Exception {
+        Attachment attachment = createLectureWithAttachment("attachment.svg", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
+        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+    }
+
+    private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setDescription("Test");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+
+        Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
+
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
+        if (expectedStatus != HttpStatus.CREATED) {
+            return null;
+        }
+        String responsePath = response.get("path").asText();
+        // move file from temp folder to correct folder
+        var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
+
+        attachment.setLink(attachmentPath);
+        lecture.addAttachments(attachment);
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+        return attachment;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAttachmentUnit() throws Exception {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+
+        MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
+        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(attachmentUnit));
+
+        String attachmentPath = attachmentUnit.getAttachment().getLink();
+        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
     }
 
     @Test
@@ -93,6 +296,16 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         attachmentUnitRepo.save(attachmentUnit);
 
         request.get(attachmentPath, HttpStatus.OK, String.class);
+    }
+
+    private AttachmentUnit createLectureWithAttachmentUnit() {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
+        lecture.addLectureUnit(attachmentUnit);
+
+        lectureRepo.save(lecture);
+        return attachmentUnit;
     }
 
     @Test
@@ -123,6 +336,35 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
         // upload file
         request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void uploadFileAsStudentForbidden() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
+    void uploadFileAsTutor() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        assertThat(responsePath).contains("temp");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void uploadFileUnsupportedFileExtension() throws Exception {
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "something.exotic", "application/json", "some data".getBytes());
+        // upload file
+        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -208,9 +450,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private Lecture createLectureWithLectureUnits() throws Exception {
-        String userLogin = userRepository.getUser().getLogin();
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        return createLectureWithLectureUnits(HttpStatus.CREATED);
+    }
 
+    private Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
         lecture.setTitle("Test title");
@@ -219,20 +462,22 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lectureRepo.save(lecture);
 
         // create pdf file 1
+        AttachmentUnit unit1;
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
             doc1.addPage(new PDPage());
             doc1.addPage(new PDPage());
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            uploadAttachmentUnit(lecture.getId(), file1);
+            unit1 = uploadAttachmentUnit(file1, expectedStatus);
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        uploadAttachmentUnit(lecture.getId(), file2);
+        AttachmentUnit unit2 = uploadAttachmentUnit(file2, expectedStatus);
 
         // create pdf file 3
+        AttachmentUnit unit3;
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
             // Add first page with extra cropBox to make it distinguishable in the later tests
             PDPage page = new PDPage();
@@ -241,25 +486,34 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            uploadAttachmentUnit(lecture.getId(), file3);
+            unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
-        userUtilService.changeUser(userLogin);
+        lecture = lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2, unit3));
 
-        return lectureRepo.findByIdWithLectureUnitsElseThrow(lecture.getId());
+        return lecture;
     }
 
-    private void uploadAttachmentUnit(Long lectureId, MockMultipartFile file) throws Exception {
-        var attachmentUnit = new AttachmentUnit();
-        var attachment = LectureFactory.generateAttachment(null);
-        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
-        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
 
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/attachment-units").file(file).file(attachmentUnitPart).file(attachmentPart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-        var result = request.getMvc().perform(builder).andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(false);
 
-        mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
+        if (expectedStatus != HttpStatus.CREATED) {
+            return null;
+        }
+
+        String responsePath = response.get("path").asText();
+
+        // move file from temp folder to correct folder
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
+
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, attachmentUnit.getId(), true);
+        attachmentUnit.getAttachment().setLink(attachmentPath);
+        attachmentRepo.save(attachmentUnit.getAttachment());
+
+        return attachmentUnit;
     }
 
 }

@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
-
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,13 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 /**
  * Spring Data JPA repository for the Feedback entity.
@@ -27,17 +18,6 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 @SuppressWarnings("unused")
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
-
-    String DEFAULT_FILEPATH = "notAvailable";
-
-    String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
-
-    Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
-            List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
-
-    Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
-
-    Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
 
     List<Feedback> findByResult(Result result);
 
@@ -64,6 +44,19 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             }
         }
         return updatedFeedbackList;
+    }
+
+    /**
+     * Find all existing Feedback Elements referencing a text block part of a TextCluster.
+     *
+     * @param cluster TextCluster requesting existing Feedbacks for.
+     * @return Map<TextBlockId, Feedback>
+     */
+    default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
+        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).toList();
+        final TextExercise exercise = cluster.getExercise();
+        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
+                .collect(Collectors.toMap(Feedback::getReference, feedback -> feedback));
     }
 
     /**
@@ -160,90 +153,5 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).toList();
         return findFeedbackByGradingInstructionIds(gradingInstructionsIds);
-    }
-
-    /**
-     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
-     * the programming language, or just reformatting it to only show the most important details.
-     *
-     * @param programmingLanguage The programming language for which the feedback was generated
-     * @param projectType         The project type for which the feedback was generated
-     * @param message             The raw error message in the feedback
-     * @return A filtered and better formatted error message
-     */
-    private static String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
-        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
-        final String exceptionPrefix = "Exception message: ";
-        // Overwrite timeout exception messages for Junit4, Junit5 and other
-        List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
-                "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
-        // Defining two pattern groups, (1) the exception name and (2) the exception text
-        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
-        Matcher matcher = findTimeoutPattern.matcher(message);
-        if (matcher.find()) {
-            String exceptionText = matcher.group(2);
-            return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
-        }
-        // Defining one pattern group, (1) the exception text
-        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
-        matcher = findGeneralTimeoutPattern.matcher(message);
-        if (matcher.find()) {
-            // overwrite Ares: TimeoutException
-            String generalTimeOutExceptionText = matcher.group(1);
-            return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
-        }
-
-        // Filter out unneeded Exception classnames
-        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
-
-            // the feedback from gradle test result is duplicated therefore it's cut in half
-            if (projectType != null && projectType.isGradle()) {
-                long numberOfLines = messageWithoutStackTrace.lines().count();
-                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
-            }
-            return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
-        }
-
-        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
-            Optional<String> firstExceptionMessage = message.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
-            if (firstExceptionMessage.isPresent()) {
-                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + message;
-            }
-        }
-
-        return message;
-    }
-
-    /**
-     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, ProjectType, String)} on results from JVM languages.
-     *
-     * @param jvmExceptionsToFilter Exceptions at the start of lines that should be filtered out in the processing step
-     * @return A regex that can be used to process result messages
-     */
-    private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
-        // Replace all "." with "\\." and join with regex alternative symbol "|"
-        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
-        // Match any of the exceptions at the start of the line and with ": " after it
-        String pattern = String.format("^(?:%s): \n*", assertionRegex);
-
-        return Pattern.compile(pattern, Pattern.MULTILINE);
-    }
-
-    /**
-     * Removes CI specific path segments. Uses the assignment directory to decide where to cut the path.
-     *
-     * @param sourcePath Path to be shortened
-     * @return Shortened path if it contains an assignment directory, otherwise the full path
-     */
-    private String removeCIDirectoriesFromPath(String sourcePath) {
-        if (sourcePath == null || sourcePath.isEmpty()) {
-            return DEFAULT_FILEPATH;
-        }
-        int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
-        if (workingDirectoryStart == -1) {
-            return sourcePath;
-        }
-        return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
     }
 }

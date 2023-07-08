@@ -57,10 +57,12 @@ public class SubmissionService {
 
     protected final ComplaintRepository complaintRepository;
 
+    protected final FeedbackService feedbackService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -73,6 +75,7 @@ public class SubmissionService {
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -320,7 +323,7 @@ public class SubmissionService {
      */
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
         feedbacks.forEach(feedback -> {
-            Feedback newFeedback = feedback.copyFeedback();
+            Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);
         });
         resultRepository.save(result);
