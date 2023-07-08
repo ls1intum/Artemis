@@ -37,7 +37,7 @@ public class ContinuousPlagiarismControlService {
     /**
      * Daily triggers plagiarism checks as a part of continuous plagiarism control.
      */
-    @Scheduled(cron = "0 0 4 * * *") // execute this every night at 4:00:00 am
+    @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 4 * * *}")
     public void executeChecks() {
         log.info("Starting continuous plagiarism control...");
 
