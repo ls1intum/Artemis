@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -21,12 +20,17 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
                 FROM IrisChatSession s
                 WHERE s.exercise.id = :exerciseId
                 AND s.user.id = :userId
+                ORDER BY s.creationDate DESC
             """)
-    Optional<List<IrisChatSession>> findByExerciseIdAndUserId(Long exerciseId, Long userId);
+    List<IrisChatSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
 
     @NotNull
     default List<IrisChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        return findByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Session"));
+        var result = findByExerciseIdAndUserId(exerciseId, userId);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("Iris Session");
+        }
+        return result;
     }
 
     @NotNull
@@ -35,22 +39,10 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
     }
 
     default IrisChatSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        var result = findNewestByExerciseIdAndUserIdHelper(exerciseId, userId);
+        var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Session");
         }
-        if (result.get().size() == 0) {
-            throw new EntityNotFoundException("Iris Session");
-        }
-        return result.get().get(0);
+        return result.get(0);
     }
-
-    @Query("""
-                SELECT s
-                FROM IrisChatSession s
-                WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
-                ORDER BY s.creationDate DESC
-            """)
-    Optional<List<IrisChatSession>> findNewestByExerciseIdAndUserIdHelper(Long exerciseId, Long userId);
 }

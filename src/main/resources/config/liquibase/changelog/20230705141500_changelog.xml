@@ -8,5 +8,10 @@
                 <constraints nullable="false" />
             </column>
         </addColumn>
+        <sql>
+            UPDATE
+                iris_session
+            SET creation_date = '2023-07-05 14:15:00'
+        </sql>
     </changeSet>
 </databaseChangeLog>
