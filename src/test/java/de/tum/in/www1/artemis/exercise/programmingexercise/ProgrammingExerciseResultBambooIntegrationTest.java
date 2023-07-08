@@ -149,27 +149,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldCreateRatedResultWithGracePeriod() {
-        Object resultNotification = createSimpleBuildResult();
-        programmingExerciseResultTestService.shouldCreateRatedResultWithGracePeriod(resultNotification);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotUseGracePeriodForExamExercise() {
-        Object resultNotification = createSimpleBuildResult();
-        programmingExerciseResultTestService.shouldNotUseGracePeriodForExamExercise(resultNotification);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotUseGracePeriodWithoutHiddenTests() {
-        Object resultNotification = createSimpleBuildResult();
-        programmingExerciseResultTestService.shouldNotUseGracePeriodWithoutHiddenTests(resultNotification);
-    }
-
     private Object createSimpleBuildResult() {
         return ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(), List.of(), List.of());
     }

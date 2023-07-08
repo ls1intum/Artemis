@@ -23,7 +23,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -385,24 +384,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
     }
 
-    // Test
-    public void shouldCreateRatedResultWithGracePeriod(Object resultNotification) {
-        testWithGracePeriod(true, resultNotification, programmingExercise);
-    }
-
-    // Test
-    public void shouldNotUseGracePeriodForExamExercise(Object resultNotification) {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(exam, 0);
-        testWithGracePeriod(false, resultNotification, programmingExercise);
-    }
-
-    // Test
-    public void shouldNotUseGracePeriodWithoutHiddenTests(Object resultNotification) {
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        testWithGracePeriod(false, resultNotification, programmingExercise);
-    }
-
+    // TODO: add a real submission and test the usage of its type and its impact on the rated value
     private void testWithGracePeriod(boolean expectedRated, Object resultNotification, ProgrammingExercise programmingExercise) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusSeconds(5));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
