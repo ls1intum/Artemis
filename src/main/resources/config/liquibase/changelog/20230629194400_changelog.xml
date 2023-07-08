@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="b-fein" id="20230629194400">
+        <renameTable oldTableName="long_feedback_text" newTableName="long_feedback_text_old"/>
+
+        <createTable tableName="long_feedback_text">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="long_feedback_text_pk"/>
+            </column>
+            <column name="feedback_text" type="longtext">
+                <constraints nullable="false" />
+            </column>
+            <column name="feedback_id" type="bigint">
+                <constraints foreignKeyName="fk_long_feedback_to_feedback" referencedTableName="feedback" referencedColumnNames="id" nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <sql>
+            INSERT INTO long_feedback_text (feedback_text, feedback_id)
+            SELECT feedback_text, id
+            FROM long_feedback_text_old
+        </sql>
+
+        <dropTable tableName="long_feedback_text_old" cascadeConstraints="false"/>
+    </changeSet>
+</databaseChangeLog>

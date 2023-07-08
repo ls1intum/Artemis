@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -41,7 +39,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
@@ -168,53 +165,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRemoveCIDirectoriesFromPath() {
-        // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
-        String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
-
-        var resultNotification1 = ProgrammingExerciseFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-                ProgrammingLanguage.JAVA);
-        for (var reports : resultNotification1.getBuild().jobs().iterator().next().staticCodeAnalysisReports()) {
-            for (var issue : reports.getIssues()) {
-                issue.setFilePath(pathWithoutWorkingDir);
-            }
-        }
-        var staticCodeAnalysisFeedback1 = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
-
-        for (var feedback : staticCodeAnalysisFeedback1) {
-            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
-        }
-
-        // 2. Test that null or empty paths default to FeedbackRepository.DEFAULT_FILEPATH
-        var resultNotification2 = ProgrammingExerciseFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-                ProgrammingLanguage.JAVA);
-        var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();
-        for (int i = 0; i < reports2.size(); i++) {
-            var report = reports2.get(i);
-            // Set null or empty String to test both
-            if (i % 2 == 0) {
-                for (var issue : report.getIssues()) {
-                    issue.setFilePath("");
-                }
-            }
-            else {
-                for (var issue : report.getIssues()) {
-                    issue.setFilePath(null);
-                }
-            }
-        }
-        final var staticCodeAnalysisFeedback2 = feedbackRepository
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
-
-        for (var feedback : staticCodeAnalysisFeedback2) {
-            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(issueJSON.get("filePath")).isEqualTo("notAvailable");
-        }
     }
 
     @Test
