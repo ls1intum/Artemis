@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.nio.file.Path;
 import java.util.*;
 
 import javax.persistence.*;
 
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
 /**
@@ -32,10 +28,10 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
-    private final transient Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
+    private transient FileService fileService = new FileService();
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private String prevBackgroundFilePath;
 
     @Column(name = "background_file_path")
     @JsonView(QuizView.Before.class)
@@ -137,23 +133,41 @@ public class DragAndDropQuestion extends QuizQuestion {
             return false;
         }
 
-        // A drag item can either be a text or a picture, but not both or none
-        for (DragItem dragItem : dragItems) {
-            if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
-                return false;
-            }
-        }
-
         // check if at least one correct mapping exists
         return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
 
-        // TODO: (?) Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
+        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
 
-    /**
-     * This method is called after the entity is saved for the first time. We replace the placeholder in the backgroundFilePath with the id of the entity because we don't know it
-     * before creation.
+    /*
+     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding question is deleted or it is
+     * replaced by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding question might not exist
+     * yet. 2. user saves the question -> now we move the temporary file which is addressed in backgroundFilePath to a permanent location and update the value in backgroundFilePath
+     * accordingly. => This happens in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4.
+     * user saves changes (with the new backgroundFilePath pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a
+     * permanent location and update the value in backgroundFilePath accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When question is deleted,
+     * the file in the permanent location is deleted => This happens in @PostRemove
      */
+
+    /**
+     * Initialisation of the DragAndDropQuestion on Server start
+     */
+    @PostLoad
+    public void onLoad() {
+        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
+        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        }
+        // save current path as old path (needed to know old path in onUpdate() and onDelete())
+        prevBackgroundFilePath = backgroundFilePath;
+    }
+
+    @PrePersist
+    public void beforeCreate() {
+        // move file if necessary (id at this point will be null, so placeholder will be inserted)
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+    }
+
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
@@ -162,21 +176,16 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
     }
 
-    /**
-     * This method is called when deleting the entity. It makes sure that the corresponding file is deleted as well.
-     */
+    @PreUpdate
+    public void onUpdate() {
+        // move file and delete old file if necessary
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+    }
+
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        try {
-            if (backgroundFilePath != null) {
-                fileService.deleteFiles(List.of(Path.of(fileService.actualPathForPublicPathOrThrow(backgroundFilePath))));
-            }
-        }
-        catch (FilePathParsingException e) {
-            // if the file path is invalid, we don't need to delete it
-            log.warn("Could not delete file with path {}. Assume already deleted, entity can be removed.", backgroundFilePath, e);
-        }
+        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, FilePathService.getDragAndDropBackgroundFilePath(), getId());
     }
 
     /**
@@ -202,6 +211,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return the dragItem with the given ID, or null if the dragItem is not contained in this question
      */
     public DragItem findDragItemById(Long dragItemId) {
+
         if (dragItemId != null) {
             // iterate through all dragItems of this quiz
             for (DragItem dragItem : dragItems) {
@@ -221,6 +231,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return the dropLocation with the given ID, or null if the dropLocation is not contained in this question
      */
     public DropLocation findDropLocationById(Long dropLocationId) {
+
         if (dropLocationId != null) {
             // iterate through all dropLocations of this quiz
             for (DropLocation dropLocation : dropLocations) {
@@ -240,7 +251,6 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            backgroundFilePath = dndOriginalQuestion.getBackgroundFilePath();
             // undo unallowed dragItemChanges
             undoUnallowedDragItemChanges(dndOriginalQuestion);
             // undo unallowed dragItemChanges
@@ -254,6 +264,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      */
     private void undoUnallowedDragItemChanges(DragAndDropQuestion originalQuestion) {
+
         // find added DragItems, which are not allowed to be added
         Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
         // check every dragItem of the question
@@ -262,7 +273,6 @@ public class DragAndDropQuestion extends QuizQuestion {
             if (originalQuestion.getDragItems().contains(dragItem)) {
                 // find original dragItem
                 DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
-
                 // correct invalid = null to invalid = false
                 if (dragItem.isInvalid() == null) {
                     dragItem.setInvalid(false);
@@ -285,6 +295,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      */
     private void undoUnallowedDropLocationChanges(DragAndDropQuestion originalQuestion) {
+
         // find added DropLocations, which are not allowed to be added
         Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
         // check every dropLocation of the question
@@ -336,7 +347,9 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
      */
     private boolean checkDragItemsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
+
         boolean updateNecessary = false;
+
         // check every dragItem of the question
         for (DragItem dragItem : this.getDragItems()) {
             // check if the dragItem were already in the originalQuizExercise
@@ -367,7 +380,9 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return a boolean which is true if the dropLocation-changes make an update necessary and false if not
      */
     private boolean checkDropLocationsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
+
         boolean updateNecessary = false;
+
         // check every dropLocation of the question
         for (DropLocation dropLocation : this.getDropLocations()) {
             // check if the dropLocation were already in the originalQuizExercise
