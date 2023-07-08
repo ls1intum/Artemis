@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.exercise.fileuploadexercise;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,10 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -168,16 +163,12 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
             }
         }
 
-        String publicFilePath = fileService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
+        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
-
-        MvcResult file = request.getMvc().perform(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG))
-                .andReturn();
-        assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
 
     @Test

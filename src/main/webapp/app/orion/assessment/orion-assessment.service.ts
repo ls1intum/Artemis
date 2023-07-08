@@ -72,9 +72,8 @@ export class OrionAssessmentService {
             excludePracticeSubmissions: false,
             addParticipantName: false,
             combineStudentCommits: true,
-            anonymizeStudentCommits: true,
+            anonymizeRepository: true,
             normalizeCodeStyle: false,
-            hideStudentNameInZippedFolder: true,
         };
         this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission) => {
             this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((response) => {

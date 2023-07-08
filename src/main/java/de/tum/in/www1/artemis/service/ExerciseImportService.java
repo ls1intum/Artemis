@@ -18,12 +18,16 @@ public abstract class ExerciseImportService {
 
     protected final ResultRepository resultRepository;
 
+    private final FeedbackService feedbackService;
+
     private final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
-    public ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+    protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            FeedbackService feedbackService) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
+        this.feedbackService = feedbackService;
     }
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -119,7 +123,7 @@ public abstract class ExerciseImportService {
     private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<Feedback> newFeedbacks = new ArrayList<>();
         for (final var originalFeedback : originalFeedbacks) {
-            final Feedback newFeedback = originalFeedback.copyFeedback();
+            final Feedback newFeedback = feedbackService.copyFeedback(originalFeedback);
             newFeedback.setResult(newResult);
 
             // Original GradingInstructions should be replaced with copied GradingInstructions before save.
