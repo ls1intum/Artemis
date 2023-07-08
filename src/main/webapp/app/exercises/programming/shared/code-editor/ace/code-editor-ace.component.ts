@@ -551,6 +551,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         } else {
             this.feedbacks.push(feedback);
             this.fileFeedbackPerLine[line] = feedback;
+            // the feedback isn't new anymore
+            this.linesWithNewFeedback = this.linesWithNewFeedback.filter((l) => l !== line);
         }
         this.onUpdateFeedback.emit(this.feedbacks);
         this.adjustLineWidgetHeight(line);

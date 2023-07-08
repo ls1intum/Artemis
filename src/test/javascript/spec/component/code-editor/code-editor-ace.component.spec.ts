@@ -256,6 +256,18 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.linesWithNewFeedback).toEqual([16]);
     });
 
+    it('should not show an updated feedback as new', () => {
+        comp.feedbacks = [];
+        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
+        const adjustLineWidgetHeightStub = jest.spyOn(comp, 'adjustLineWidgetHeight');
+        adjustLineWidgetHeightStub.mockImplementation(() => {});
+        comp.addLineWidgetWithFeedback(16);
+        comp.addLineWidgetWithFeedback(17);
+        comp.updateFeedback({ reference: 'line:16' });
+        expect(comp.linesWithNewFeedback).toEqual([17]);
+    });
+
     it('should not show new feedback that is cancelled anymore', () => {
         const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
         getInlineFeedbackNodeSpy.mockReturnValue(undefined);
