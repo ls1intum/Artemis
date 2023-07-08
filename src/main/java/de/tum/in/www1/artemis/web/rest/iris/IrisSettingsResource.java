@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
@@ -9,7 +8,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
@@ -45,7 +44,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
      */
     @GetMapping("iris/global-iris-settings")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<IrisSettings> getGlobalSettings() {
         var irisSettings = irisSettingsService.getGlobalSettings();
         return ResponseEntity.ok(irisSettings);
@@ -58,7 +57,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
      */
     @GetMapping("courses/{courseId}/raw-iris-settings")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<IrisSettings> getRawCourseSettings(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
@@ -73,7 +72,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
     @GetMapping("programming-exercises/{exerciseId}/raw-iris-settings")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<IrisSettings> getRawProgrammingExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -90,7 +89,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
      */
     @GetMapping("courses/{courseId}/iris-settings")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<IrisSettings> getCourseSettings(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -109,7 +108,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
     @GetMapping("programming-exercises/{exerciseId}/iris-settings")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<IrisSettings> getProgrammingExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -142,7 +141,7 @@ public class IrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the course could not be found.
      */
     @PutMapping("courses/{courseId}/raw-iris-settings")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<IrisSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisSettings settings) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
@@ -159,7 +158,7 @@ public class IrisSettingsResource {
      *         found.
      */
     @PutMapping("programming-exercises/{exerciseId}/raw-iris-settings")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<IrisSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisSettings settings) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
