@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -15,11 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
