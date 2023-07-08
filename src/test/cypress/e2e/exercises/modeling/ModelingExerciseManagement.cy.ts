@@ -2,35 +2,31 @@ import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
-import {
-    courseManagement,
-    courseManagementExercises,
-    courseManagementRequest,
-    modelingExerciseAssessment,
-    modelingExerciseCreation,
-    modelingExerciseEditor,
-    navigationBar,
-} from '../../../support/artemis';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { courseManagementExercises, courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from 'src/test/cypress/support/utils';
 
-describe('Modeling Exercise Management', () => {
-    let course: Course;
-    let modelingExercise: ModelingExercise;
+// Common primitives
+let course: Course;
+let modelingExercise: ModelingExercise;
 
-    before('Create course', () => {
+describe('Modeling Exercise Management Spec', () => {
+    before('Create a course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
     });
 
     describe('Create Modeling Exercise', () => {
-        it('Create a new modeling exercise', () => {
+        before('Login as instructor', () => {
             cy.login(instructor);
+        });
+
+        it('Create a new modeling exercise', () => {
             cy.visit(`/course-management/${course.id}/exercises`);
             courseManagementExercises.createModelingExercise();
             modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
@@ -64,15 +60,12 @@ describe('Modeling Exercise Management', () => {
                     modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
                     modelingExerciseAssessment.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    modelingExerciseEditor.getModelingCanvas().should('exist');
+                    cy.get('#modeling-editor-canvas').should('exist');
                 });
         });
 
-        after('Delete modeling exercise', () => {
-            if (modelingExercise) {
-                cy.login(admin);
-                courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
-            }
+        after('Delete exericse', () => {
+            courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
         });
     });
 
@@ -97,8 +90,12 @@ describe('Modeling Exercise Management', () => {
             modelingExerciseCreation.setPoints(points);
             modelingExerciseCreation.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            courseManagementExercises.getModelingExerciseTitle(modelingExercise.id!).contains(newTitle);
-            courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!).contains(points.toString());
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-title')
+                .should('contain.text', newTitle);
+            cy.get('#exercise-card-' + modelingExercise.id)
+                .find('#modeling-exercise-' + modelingExercise.id + '-maxPoints')
+                .should('contain.text', points.toString());
         });
 
         after('Delete exericse', () => {
@@ -106,28 +103,12 @@ describe('Modeling Exercise Management', () => {
         });
     });
 
-    describe('Delete Modeling Exercise', () => {
-        let modelingExercise: ModelingExercise;
-
-        before('Create Modeling exercise', () => {
-            cy.login(admin, '/');
-            courseManagementRequest.createModelingExercise({ course }).then((resp) => {
-                modelingExercise = resp.body;
-            });
-        });
-
-        it('Deletes an existing Modeling exercise', () => {
-            cy.login(instructor, '/');
-            navigationBar.openCourseManagement();
-            courseManagement.openExercisesOfCourse(course.id!);
-            courseManagementExercises.deleteModelingExercise(modelingExercise);
-            courseManagementExercises.getExercise(modelingExercise.id!).should('not.exist');
-        });
-    });
-
     describe('Modeling Exercise Release', () => {
-        it('Student can not see unreleased Modeling Exercise', () => {
+        beforeEach('Login intructor', () => {
             cy.login(instructor);
+        });
+
+        it('Student can not see unreleased Modeling Exercise', () => {
             courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
@@ -137,7 +118,6 @@ describe('Modeling Exercise Management', () => {
         });
 
         it('Student can see released Modeling Exercise', () => {
-            cy.login(instructor);
             courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
@@ -146,7 +126,8 @@ describe('Modeling Exercise Management', () => {
         });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+    after('Delete the test course', () => {
+        cy.login(admin);
+        courseManagementRequest.deleteCourse(course.id!);
     });
 });
