@@ -77,6 +77,7 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
+        conversation.setConversationParticipants(conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()));
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
