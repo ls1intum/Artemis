@@ -1,10 +1,14 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { BASE_API, PUT } from '../../support/constants';
 import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { convertBooleanToYesNo, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
 import { admin, studentOne } from '../../support/users';
+
+// Selectors
+const modalDeleteButton = '#delete';
 
 // Common primitives
 const courseData = {
@@ -54,21 +58,20 @@ describe('Course management', () => {
         let course: Course;
 
         beforeEach(() => {
-            cy.login(admin, '/');
             courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
-                course = convertModelAfterMultiPart(response);
+                course = convertCourseAfterMultiPart(response);
             });
         });
 
         it('Adds a student manually to the course', () => {
             const username = studentOne.username;
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
+            courseManagement.openCourse(courseData.shortName);
             courseManagement.addStudentToCourse(studentOne);
-            courseManagement.getRegisteredStudents().contains(username).should('be.visible');
+            cy.get('#registered-students').contains(username).should('be.visible');
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.getCourseStudentGroupName().contains(`artemis-${course.shortName}-students (1)`);
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (1)`);
         });
 
         it('Removes a student manually from the course', () => {
@@ -76,25 +79,27 @@ describe('Course management', () => {
             courseManagementRequest.addStudentToCourse(course, studentOne);
             navigationBar.openCourseManagement();
             courseManagement.openStudentOverviewOfCourse(course.id!);
-            courseManagement.getRegisteredStudents().contains(username).should('be.visible');
-            courseManagement.removeFirstUser();
-            courseManagement.getRegisteredStudents().contains(username).should('not.exist');
+            cy.get('#registered-students').contains(username).should('be.visible');
+            cy.get('#registered-students button[jhideletebutton]').should('be.visible').click();
+            cy.get('.modal #delete').click();
+            cy.get('#registered-students').contains(username).should('not.exist');
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.getCourseStudentGroupName().contains(`artemis-${course.shortName}-students (0)`);
+            courseManagement.openCourse(courseData.shortName);
+            courseManagement.getCourseStudentGroupName().contains(`artemis-${courseData.shortName}-students (0)`);
         });
 
         after(() => {
-            courseManagementRequest.deleteCourse(course, admin);
+            if (course) {
+                courseManagementRequest.deleteCourse(course.id!).its('status').should('eq', 200);
+            }
         });
     });
 
     describe('Course creation', () => {
-        let course: Course;
-        let course2: Course;
+        let courseId: number;
+        let courseId2: number;
 
         beforeEach(() => {
-            cy.login(admin, '/');
             const uid = generateUUID();
             courseData.title = 'Cypress course' + uid;
             courseData.shortName = 'cypress' + uid;
@@ -122,7 +127,7 @@ describe('Course management', () => {
             courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
-                course = courseBody;
+                courseId = courseBody.id!;
                 expect(courseBody.title).to.eq(courseData.title);
                 expect(courseBody.shortName).to.eq(courseData.shortName);
                 expect(courseBody.description).to.eq(courseData.description);
@@ -177,7 +182,7 @@ describe('Course management', () => {
                 courseCreation.setInstructorGroup(courseData.instructorGroupName);
                 courseCreation.submit().then((request: Interception) => {
                     const courseBody = request.response!.body;
-                    course2 = courseBody;
+                    courseId2 = courseBody.id!;
                     expect(courseBody.title).to.eq(courseData.title);
                     expect(courseBody.shortName).to.eq(courseData.shortName);
                     expect(courseBody.testCourse).to.eq(courseData.testCourse);
@@ -197,38 +202,40 @@ describe('Course management', () => {
             });
         }
 
-        after('Delete courses', () => {
-            courseManagementRequest.deleteCourse(course, admin);
-            courseManagementRequest.deleteCourse(course2, admin);
+        after(() => {
+            if (courseId) {
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+            }
+            if (courseId2) {
+                courseManagementRequest.deleteCourse(courseId2).its('status').should('eq', 200);
+            }
         });
     });
 
     describe('Course edit', () => {
-        let course: Course;
+        let courseId: number;
         const uid = generateUUID();
         editedCourseData.title = 'Cypress course' + uid;
         editedCourseData.shortName = 'cypress' + uid;
 
         beforeEach(() => {
-            cy.login(admin, '/');
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
-                course = convertModelAfterMultiPart(response);
-            });
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
         });
 
         it('Edits a existing course', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
+            courseManagement.openCourse(courseData.shortName);
             courseManagement.openCourseEdit();
 
             courseCreation.setTitle(editedCourseData.title);
             courseCreation.setTestCourse(editedCourseData.testCourse);
 
             courseCreation.update().then((request: Interception) => {
-                course = request.response!.body;
-                expect(course.title).to.eq(editedCourseData.title);
-                expect(course.shortName).to.eq(courseData.shortName);
-                expect(course.testCourse).to.eq(editedCourseData.testCourse);
+                const courseBody = request.response!.body;
+                courseId = courseBody.id!;
+                expect(courseBody.title).to.eq(editedCourseData.title);
+                expect(courseBody.shortName).to.eq(courseData.shortName);
+                expect(courseBody.testCourse).to.eq(editedCourseData.testCourse);
             });
             courseManagement.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
             courseManagement.getCourseTitle().contains(editedCourseData.title);
@@ -236,68 +243,79 @@ describe('Course management', () => {
             courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
         });
 
-        after('Delete course', () => {
-            courseManagementRequest.deleteCourse(course, admin);
+        after(() => {
+            if (courseId) {
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 
     describe('Course deletion', () => {
-        let course: Course;
-
-        before(() => {
-            cy.login(admin);
-            courseManagementRequest.createCourse().then((response) => {
-                course = convertModelAfterMultiPart(response);
-            });
+        beforeEach(() => {
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing course', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.deleteCourse(course);
-            courseManagement.getCourse(course.id!).should('not.exist');
+            courseManagement.openCourse(courseData.shortName);
+            cy.get('#delete-course').click();
+            cy.get(modalDeleteButton).should('be.disabled');
+            cy.get('#confirm-exercise-name').type(courseData.title);
+            cy.get(modalDeleteButton).should('not.be.disabled').click();
+            courseManagement.getCourseCard(courseData.shortName).should('not.exist');
         });
     });
 
     describe('Course icon deletion', () => {
         let course: Course;
+        let courseId: number;
 
-        before('Creates course with icon', () => {
-            cy.login(admin, '/');
+        it('Deletes an existing course icon', () => {
             cy.fixture('course/icon.png', 'base64')
                 .then(Cypress.Blob.base64StringToBlob)
                 .then((blob) => {
                     courseManagementRequest
                         .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
                         .then((response) => {
-                            course = convertModelAfterMultiPart(response);
+                            course = convertCourseAfterMultiPart(response);
+                            courseId = course.id!;
+                            cy.intercept(PUT, BASE_API + 'courses/' + courseId).as('updateCourseQuery');
                         });
                 });
-        });
-
-        it('Deletes an existing course icon', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.clickEditCourse();
-            courseManagement.removeIconFromCourse();
-            courseManagement.updateCourse(course).then(() => {
-                courseManagement.clickEditCourse();
-                courseManagement.checkCourseHasNoIcon();
+            courseManagement.openCourse(courseData.shortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+            cy.get('#save-entity').click();
+            cy.wait('@updateCourseQuery').then(() => {
+                cy.get('#edit-course').click();
+                cy.get('#delete-course-icon').should('not.exist');
+                cy.get('.no-image').should('exist');
             });
         });
 
         it('Deletes not existing course icon', () => {
-            courseManagementRequest.createCourse().then((response) => {
-                course = convertModelAfterMultiPart(response);
+            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
+                course = convertCourseAfterMultiPart(response);
+                courseId = course.id!;
             });
             navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.clickEditCourse();
-            courseManagement.checkCourseHasNoIcon();
+            courseManagement.openCourse(courseData.shortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
         });
 
-        after('Delete course', () => {
-            courseManagementRequest.deleteCourse(course, admin);
+        afterEach(() => {
+            if (courseId) {
+                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 });
+
+function convertBooleanToYesNo(boolean: boolean) {
+    return boolean ? 'Yes' : 'No';
+}
