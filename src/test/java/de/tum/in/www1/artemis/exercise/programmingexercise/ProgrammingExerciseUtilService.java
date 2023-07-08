@@ -501,7 +501,7 @@ public class ProgrammingExerciseUtilService {
             codeHint.setProgrammingExerciseTask(task);
 
             programmingExercise.getExerciseHints().add(codeHint);
-            codeHintRepository.save(codeHint);
+            codeHint = codeHintRepository.save(codeHint);
             for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
                 solutionEntry.setCodeHint(codeHint);
                 solutionEntryRepository.save(solutionEntry);
