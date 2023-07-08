@@ -200,7 +200,7 @@ data-exports/
 /src/main/webapp/i18n/*.json
 
 ######################
-# Artemis configs
+# Artemis resources
 ######################
 /src/main/resources/config/application-local*.yml
 !/src/main/resources/config/application-localvc.yml
