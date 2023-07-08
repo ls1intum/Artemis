@@ -25,7 +25,7 @@ import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
 let exam: Exam;
 let course: Course;
 
-// This is a workaround for uncaught athena errors. When opening a text submission athene throws an uncaught exception, which fails the test
+// This is a workaround for uncaught athena errors. When opening a text submission athena throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
     return false;
 });
