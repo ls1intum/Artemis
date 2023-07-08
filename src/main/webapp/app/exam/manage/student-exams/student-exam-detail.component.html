@@ -33,7 +33,7 @@
                     </li>
                 </ol>
             </div>
-            <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary mb-auto pl-5" [routerLink]="'./timeline'">
+            <a *ngIf="course?.isAtLeastInstructor && studentExam.submitted" class="btn btn-primary mb-auto pl-5" [routerLink]="'./timeline'">
                 <span jhiTranslate="artemisApp.studentExams.examTimeline">Timeline</span>
             </a>
         </div>

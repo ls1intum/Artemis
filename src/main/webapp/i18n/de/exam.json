@@ -300,7 +300,7 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "examSessions": "Sitzungen",
-            "examTimeline": "Klausur Verlauf",
+            "examTimeline": "Klausurverlauf",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",
@@ -757,6 +757,9 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "timeline": {
+            "title": "Klausurverlauf von {{ username }}"
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",

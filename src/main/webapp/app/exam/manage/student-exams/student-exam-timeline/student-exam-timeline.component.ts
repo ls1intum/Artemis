@@ -4,7 +4,6 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamPage } from 'app/entities/exam-page.model';
-import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -15,6 +14,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChangeContext, Options } from 'ngx-slider-v2';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -46,6 +46,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     submissionTimeStamps: dayjs.Dayjs[] = [];
     submissionVersions: SubmissionVersion[] = [];
     programmingSubmissions: ProgrammingSubmission[] = [];
+    fileUploadSubmissions: FileUploadSubmission[] = [];
     currentExercise: Exercise | undefined;
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
@@ -73,6 +74,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                     console.log('submitted version at ' + submissionVersion.createdDate);
                     this.submissionVersions.push(submissionVersion);
                     this.submissionTimeStamps.push(submissionVersion.createdDate);
+                } else if (this.isFileUploadSubmission(result)) {
+                    const fileUploadSubmission = result as FileUploadSubmission;
+                    this.fileUploadSubmissions.push(fileUploadSubmission);
+                    this.submissionTimeStamps.push(fileUploadSubmission.submissionDate!);
                 } else {
                     const programmingSubmission = result as ProgrammingSubmission;
                     console.log('programming submission at ' + programmingSubmission.submissionDate!);
@@ -98,7 +103,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     private isSubmissionVersion(object: SubmissionVersion | Submission | undefined) {
-        if (object === null) {
+        if (!object) {
             return false;
         }
         const submissionVersion = object as SubmissionVersion;
@@ -108,15 +113,17 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     private retrieveSubmissionDataAndTimeStamps() {
         const submissionObservables: Observable<SubmissionVersion[] | Submission[]>[] = [];
         this.studentExam.exercises?.forEach((exercise) => {
-            if (exercise.type !== this.PROGRAMMING) {
+            if (exercise.type === this.PROGRAMMING) {
+                submissionObservables.push(this.submissionService.findAllSubmissionsOfParticipation(exercise.studentParticipations![0].id!).pipe(map(({ body }) => body!)));
+            } else if (exercise.type === this.FILEUPLOAD) {
+                submissionObservables.push(this.submissionService.findAllSubmissionsOfParticipation(exercise.studentParticipations![0].id!).pipe(map(({ body }) => body!)));
+            } else {
                 submissionObservables.push(
                     this.submissionService.findAllSubmissionVersionsOfSubmission(exercise.studentParticipations![0].submissions![0].id!).pipe(
                         mergeMap((versions) => versions),
                         toArray(),
                     ),
                 );
-            } else {
-                submissionObservables.push(this.submissionService.findAllSubmissionsOfParticipation(exercise.studentParticipations![0].id!).pipe(map(({ body }) => body!)));
             }
         });
         return merge(...submissionObservables);
@@ -143,10 +150,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
-        this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission, exerciseChange.initial);
+        this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
     }
 
-    initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined, initial?: boolean) {
+    initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined) {
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
@@ -235,5 +242,13 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             }
         }
         return undefined;
+    }
+
+    private isFileUploadSubmission(object: FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined) {
+        if (!object) {
+            return false;
+        }
+        const fileUploadSubmission = object as FileUploadSubmission;
+        return !!fileUploadSubmission.id && fileUploadSubmission.submissionDate && fileUploadSubmission.filePath;
     }
 }

@@ -53,6 +53,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+
     constructor(private quizService: ArtemisQuizService, changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
         smoothscroll.polyfill();
@@ -76,7 +77,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     initQuiz() {
         // randomize order
-        this.quizService.randomizeOrder(this.exercise);
+        if (!this.examTimeline) {
+            this.quizService.randomizeOrder(this.exercise);
+        }
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();

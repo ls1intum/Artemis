@@ -1,6 +1,4 @@
-<p>
-    {{ 'Klausurverlauf von ' + studentExam?.user?.login }}
-</p>
+<h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 <div *ngIf="studentExam">
     <jhi-exam-navigation-bar
         #examNavigationBar
@@ -30,6 +28,7 @@
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
+                            [examTimeline]="true"
                         ></jhi-file-upload-submission-exam>
                         <jhi-text-editor-exam
                             *ngSwitchCase="TEXT"
