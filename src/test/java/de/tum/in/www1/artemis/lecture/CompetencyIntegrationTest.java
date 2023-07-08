@@ -9,13 +9,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -327,17 +325,10 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.FORBIDDEN, Competency.class);
     }
 
-    private static Stream<Arguments> competencyUpdateToOptionalProvider() {
-        return Stream.of(Arguments.of(IncludedInOverallScore.NOT_INCLUDED), Arguments.of(IncludedInOverallScore.INCLUDED_AS_BONUS),
-                Arguments.of(IncludedInOverallScore.INCLUDED_COMPLETELY));
-    }
-
-    @ParameterizedTest
-    @MethodSource("competencyUpdateToOptionalProvider")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(IncludedInOverallScore.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
-        Course course = courseRepository.findByIdElseThrow(competency.getId());
-
         Competency newCompetency = new Competency();
         newCompetency.setTitle("Title");
         newCompetency.setDescription("Description");
@@ -351,7 +342,10 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         exerciseRepository.save(exercise);
 
         newCompetency.setOptional(true);
-        request.put("/api/courses/" + competency.getId() + "/competencies", newCompetency, HttpStatus.OK);
+        request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
+
+        Competency savedCompetency = competencyRepository.findByIdElseThrow(newCompetency.getId());
+        assertThat(savedCompetency.isOptional()).isTrue();
     }
 
     @Test

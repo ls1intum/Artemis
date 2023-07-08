@@ -9,6 +9,18 @@ import { blobToBase64String } from 'app/utils/blob-util';
 
 const logoutSubject = new Subject<void>();
 
+/**
+ * Decides if an image (represented as Base64 string) should be stored in the cache.
+ * Do not save too big images since space is limited.
+ */
+const shouldCacheDecider = (result: any) => {
+    if (typeof result === 'string') {
+        return result.length < 10_000;
+    }
+    // This should not happen since this service only works with strings.
+    return false;
+};
+
 export interface ICacheableImageService {
     loadCachedLocalStorage(url: string): Observable<any>;
     loadCachedSessionStorage(url: string): Observable<any>;
@@ -53,6 +65,7 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
         storageStrategy: LocalStorageStrategy,
         cacheBusterObserver: logoutSubject.asObservable(),
         maxCacheCount: 30,
+        shouldCacheDecider,
     })
     public loadCachedLocalStorage(url: string): Observable<any> {
         return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());
@@ -68,6 +81,7 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
         storageStrategy: SessionStorageStrategy,
         cacheBusterObserver: logoutSubject.asObservable(),
         maxCacheCount: 100,
+        shouldCacheDecider,
     })
     public loadCachedSessionStorage(url: string): Observable<any> {
         return this.httpClient.get(url, { responseType: 'blob' }).pipe(this.mapBlobToUrlString());

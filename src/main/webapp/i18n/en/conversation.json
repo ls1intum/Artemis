@@ -193,6 +193,7 @@
                     "lecture": "All Lecture Channels in course {{ courseTitle }}",
                     "exam": "All Exam Channels in course {{ courseTitle }}"
                 },
+                "otherChannels": "Other Channels",
                 "createChannelButton": "Create a new channel",
                 "channelItem": {
                     "joined:": "Joined",

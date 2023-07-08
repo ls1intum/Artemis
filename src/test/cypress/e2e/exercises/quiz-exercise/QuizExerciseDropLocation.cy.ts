@@ -1,16 +1,15 @@
 import { Course } from 'app/entities/course.model';
 import { admin } from '../../../support/users';
 import { courseManagementRequest, quizExerciseDragAndDropQuiz } from '../../../support/artemis';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 let course: Course;
 
-// TODO: fix this test. Fails only on CI. Locally it works and manual testing also works.
-describe.skip('Quiz Exercise Drop Location Spec', () => {
+describe('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
         });
     });
 
@@ -58,6 +57,9 @@ describe.skip('Quiz Exercise Drop Location Spec', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });

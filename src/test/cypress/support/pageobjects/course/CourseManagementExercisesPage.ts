@@ -1,58 +1,15 @@
-import { Exercise } from 'app/entities/exercise.model';
-import { BASE_API, DELETE } from '../../constants';
-
 /**
  * A class which encapsulates UI selectors and actions for the course management exercises page.
  */
 export class CourseManagementExercisesPage {
-    getExercise(exerciseID: number) {
-        return cy.get(`#exercise-card-${exerciseID}`);
+    readonly exerciseCardSelector = '#exercise-card-';
+
+    getExerciseRowRootElement(exerciseId: number) {
+        return cy.get(this.exerciseCardSelector + exerciseId);
     }
 
-    clickDeleteExercise(exerciseID: number) {
-        this.getExercise(exerciseID).find('#delete-exercise').click();
-    }
-
-    clickExampleSubmissionsButton() {
-        cy.get('#example-submissions-button').click();
-    }
-
-    getExerciseTitle() {
-        return cy.get('#exercise-detail-title');
-    }
-
-    deleteTextExercise(exercise: Exercise) {
-        this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
-        cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-        cy.get('#delete').click();
-        cy.wait('@deleteTextExercise');
-    }
-
-    deleteModelingExercise(exercise: Exercise) {
-        this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
-        cy.intercept(DELETE, BASE_API + 'modeling-exercises/*').as('deleteModelingExercise');
-        cy.get('#delete').click();
-        cy.wait('@deleteModelingExercise');
-    }
-
-    deleteQuizExercise(exercise: Exercise) {
-        this.getExercise(exercise.id!).find(`#delete-quiz-${exercise.id}`).click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
-        cy.intercept(DELETE, BASE_API + 'quiz-exercises/*').as('deleteQuizExercise');
-        cy.get('#delete').click();
-        cy.wait('@deleteQuizExercise');
-    }
-
-    deleteProgrammingExercise(exercise: Exercise) {
-        this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#additional-check-0').check();
-        cy.get('#additional-check-1').check();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
-        cy.intercept(DELETE, BASE_API + 'programming-exercises/*').as('deleteProgrammingExercise');
-        cy.get('#delete').click();
-        cy.wait('@deleteProgrammingExercise');
+    clickDeleteExercise(exerciseId: number) {
+        this.getExerciseRowRootElement(exerciseId).find('#delete-exercise').click();
     }
 
     createProgrammingExercise() {
@@ -95,15 +52,9 @@ export class CourseManagementExercisesPage {
         cy.get(`#instructor-quiz-start-${quizID}`).click();
     }
 
-    shouldContainExerciseWithName(exerciseID: number) {
-        this.getExercise(exerciseID).scrollIntoView().should('be.visible');
-    }
-
-    getModelingExerciseTitle(exerciseID: number) {
-        return cy.get(`#exercise-card-${exerciseID}`).find(`#modeling-exercise-${exerciseID}-title`);
-    }
-
-    getModelingExerciseMaxPoints(exerciseID: number) {
-        return cy.get(`#exercise-card-${exerciseID}`).find(`#modeling-exercise-${exerciseID}-maxPoints`);
+    shouldContainExerciseWithName(exerciseId: string) {
+        cy.get(this.exerciseCardSelector + exerciseId)
+            .scrollIntoView()
+            .should('be.visible');
     }
 }
