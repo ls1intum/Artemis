@@ -18,6 +18,7 @@ import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -259,8 +260,12 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmissionVersion(): void {
-        const quizSubmission = JSON.parse(this.submissionVersion.content);
-        this.studentSubmission.submittedAnswers = JSON.parse(quizSubmission);
+        this.studentSubmission.submittedAnswers = JSON.parse(this.submissionVersion.content);
         this.updateViewFromSubmission();
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
     }
 }

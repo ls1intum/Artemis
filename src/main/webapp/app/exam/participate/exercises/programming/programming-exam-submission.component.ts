@@ -16,6 +16,7 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -133,5 +134,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateViewFromSubmissionVersion(): void {
         // do nothing - submission versions are not supported for programming exercises
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        // do nothing - submission versions are not supported for programming exercises
+    }
+    updateExamTimelineView(): void {
+        this.changeDetectorReference.detectChanges();
     }
 }

@@ -16,7 +16,6 @@
                 <ng-container [ngSwitch]="exercise.type">
                     <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                         <jhi-quiz-submission-exam
-                            #quizexexerciseid
                             *ngSwitchCase="QUIZ"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
@@ -37,13 +36,13 @@
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-text-editor-exam>
-                        <jhi-modeling-submission-exam
-                            *ngSwitchCase="MODELING"
-                            [exercise]="exercise"
-                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-modeling-submission-exam>
+                        <!--                        <jhi-modeling-submission-exam-->
+                        <!--                            *ngSwitchCase="MODELING"-->
+                        <!--                            [exercise]="exercise"-->
+                        <!--                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"-->
+                        <!--                            [readonly]="true"-->
+                        <!--                            [examTimeline]="true"-->
+                        <!--                        ></jhi-modeling-submission-exam>-->
                         <jhi-programming-submission-exam
                             *ngSwitchCase="PROGRAMMING"
                             [exercise]="exercise"
@@ -58,4 +57,4 @@
         </ng-container>
     </ng-container>
 </div>
-<ngx-slider [(value)]="value" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>
+<ngx-slider #slider [(value)]="value" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>

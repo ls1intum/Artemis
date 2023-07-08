@@ -43,6 +43,11 @@
                 {{ submittedFileExtension | uppercase }}
             </span>
         </div>
+        <div *ngIf="!submittedFileName && examTimeline">
+            <h6>
+                {{ 'artemisApp.timeline.fileUploadNotSubmitted' | artemisTranslate }}
+            </h6>
+        </div>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

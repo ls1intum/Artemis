@@ -11,6 +11,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -47,12 +48,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     ngOnInit(): void {
-        if (this.examTimeline) {
-            this.updateViewFromSubmissionVersion();
-        } else {
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     getExercise(): Exercise {
@@ -114,5 +111,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
                 this.answer = this.submissionVersion.content;
             }
         }
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
     }
 }

@@ -112,7 +112,7 @@ public class SubmissionResource {
 
     /**
      * GET /test-run-submissions : get test run submission for an exercise.
-     *
+     * <p>
      * Only returns the users test run submission for a specific exercise
      *
      * @param exerciseId exerciseID for which all submissions should be returned
@@ -148,7 +148,7 @@ public class SubmissionResource {
 
     /**
      * Get /exercises/:exerciseId/submissions-with-complaints
-     *
+     * <p>
      * Get all submissions associated to an exercise which have complaints in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
@@ -169,7 +169,7 @@ public class SubmissionResource {
 
     /**
      * Get /exercises/:exerciseId//more-feedback-requests-with-complaints
-     *
+     * <p>
      * Get all more feedback requests associated to an exercise which have more feedback requests in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
@@ -231,6 +231,5 @@ public class SubmissionResource {
         var submission = submissionRepository.findById(submissionId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
         return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
-
     }
 }

@@ -22,7 +22,7 @@
                 <textarea
                     #textEditor
                     id="text-editor"
-                    [ngClass]="examTimeline ? ' text-editor-textarea text-editor-textarea-timeline ' : 'text-editor-textarea'"
+                    class="text-editor-textarea"
                     [maxLength]="maxCharacterCount"
                     [(ngModel)]="answer"
                     [readonly]="readonly || !studentSubmission"

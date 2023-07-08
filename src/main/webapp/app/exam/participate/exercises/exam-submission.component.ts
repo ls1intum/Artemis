@@ -29,7 +29,8 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract getSubmission(): Submission | undefined;
     abstract getExercise(): Exercise;
     @Input() readonly = false;
-    submissionVersion: SubmissionVersion;
-    submission: Submission;
+    @Input() submissionVersion: SubmissionVersion;
+    @Input() submission: Submission;
+    abstract setSubmissionVersion(submissionVersion: SubmissionVersion): void;
     @Input() examTimeline = false;
 }

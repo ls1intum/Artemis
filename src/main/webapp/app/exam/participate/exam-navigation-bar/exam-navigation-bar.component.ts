@@ -16,6 +16,7 @@ import { ExamSession } from 'app/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -120,7 +121,13 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
      */
-    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission, initial?: boolean): void {
+    changePage(
+        overviewPage: boolean,
+        exerciseIndex: number,
+        forceSave?: boolean,
+        submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission,
+        initial?: boolean,
+    ): void {
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {

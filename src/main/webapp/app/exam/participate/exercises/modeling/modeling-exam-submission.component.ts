@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -36,19 +36,15 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // Icons
     farListAlt = faListAlt;
+    private initialSubmissionVersion = true;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
     }
 
     ngOnInit(): void {
-        if (this.examTimeline) {
-            console.log('updateViewFromSubmissionVersion ngOninit');
-            this.updateViewFromSubmissionVersion();
-        } else {
-            // show submission answers in UI
-            this.updateViewFromSubmission();
-        }
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     /**
@@ -123,6 +119,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.explanationText = explanation;
     }
 
+    setSubmissionVersion(submission: SubmissionVersion): void {
+        this.submissionVersion = submission;
+        this.updateViewFromSubmissionVersion();
+    }
+
     updateViewFromSubmissionVersion() {
         console.log('updateViewFromSubmissionVersion');
         console.log(this.submissionVersion);
@@ -135,7 +136,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
                 // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.umlModel = JSON.parse(model);
                 this.modelingEditor.umlModel = this.umlModel;
-                this.changeDetectorReference.detectChanges();
+                if (this.initialSubmissionVersion) {
+                    this.initialSubmissionVersion = false;
+                } else {
+                    this.changeDetectorReference.detectChanges();
+                }
             }
             this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
         }
