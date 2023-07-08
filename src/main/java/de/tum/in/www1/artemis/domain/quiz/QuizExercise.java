@@ -590,7 +590,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     public void validateDates() {
         super.validateDates();
         quizBatches.forEach(quizBatch -> {
-            if (quizBatch.getStartTime() != null && getReleaseDate() != null && quizBatch.getStartTime().isBefore(getReleaseDate())) {
+            if (quizBatch.getStartTime() != null && quizBatch.getStartTime().isBefore(getReleaseDate())) {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });

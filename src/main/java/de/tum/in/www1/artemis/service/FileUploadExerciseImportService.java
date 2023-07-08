@@ -26,8 +26,8 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     private final ChannelService channelService;
 
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
     }
