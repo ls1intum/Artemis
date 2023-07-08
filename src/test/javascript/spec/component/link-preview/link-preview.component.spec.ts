@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
-import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -10,6 +9,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { Post } from 'app/entities/metis/post.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('LinkPreviewComponent', () => {
     let component: LinkPreviewComponent;
@@ -30,7 +31,7 @@ describe('LinkPreviewComponent', () => {
         fixture = TestBed.createComponent(LinkPreviewComponent);
         metisService = TestBed.inject(MetisService);
         component = fixture.componentInstance;
-        component.posting = new Posting(); // Set up a dummy Posting object if required
+        component.posting = new Post(); // Set up a dummy Posting object if required
         fixture.detectChanges();
     });
 
@@ -121,7 +122,7 @@ describe('LinkPreviewComponent', () => {
         };
 
         component.isReply = false;
-        component.posting = new Posting();
+        component.posting = new Post();
         component.posting.content = 'This is a sample post with a link: https://example.com';
 
         const metisServiceSpy = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
@@ -141,7 +142,7 @@ describe('LinkPreviewComponent', () => {
         };
 
         component.isReply = true;
-        component.posting = new Posting();
+        component.posting = new AnswerPost();
         component.posting.content = 'This is a sample answer post with a link: https://example.com';
 
         const metisServiceSpy = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
