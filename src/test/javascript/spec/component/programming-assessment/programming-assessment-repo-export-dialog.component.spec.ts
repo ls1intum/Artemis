@@ -105,7 +105,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
-        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBeTrue();
+        expect(comp.repositoryExportOptions.anonymizeRepository).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));

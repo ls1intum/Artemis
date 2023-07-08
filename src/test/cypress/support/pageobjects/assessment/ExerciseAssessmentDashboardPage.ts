@@ -24,8 +24,4 @@ export class ExerciseAssessmentDashboardPage {
     getComplaintText() {
         return cy.get('#complaintTextArea');
     }
-
-    getLockedMessage() {
-        return cy.get('#assessmentLockedCurrentUser');
-    }
 }

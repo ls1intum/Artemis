@@ -1,5 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -43,8 +45,12 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     channelModificationPerformed = false;
     isLoading = false;
     channels: ChannelDTO[] = [];
+    otherChannels: ChannelDTO[] = [];
 
     isInitialized = false;
+
+    faChevronRight = faChevronRight;
+    otherChannelsAreCollapsed = true;
 
     initialize() {
         super.initialize(['course', 'channelSubType']);
@@ -142,6 +148,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
                     this.channels = channels?.filter((channel) => channel.subType === this.channelSubType) ?? [];
+                    this.otherChannels = channels?.filter((channel) => channel.subType !== this.channelSubType) ?? [];
                     this.noOfChannels = this.channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
