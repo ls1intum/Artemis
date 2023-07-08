@@ -1382,6 +1382,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithChannel() throws Exception {
+        Course course = courseUtilService.createCourse();
+        Exam exam = examUtilService.addExam(course);
+        Channel examChannel = examUtilService.addExamChannel(exam, "test");
+
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
+        assertThat(examChannelAfterDelete).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
