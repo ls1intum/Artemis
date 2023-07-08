@@ -29,7 +29,7 @@ public class ApollonHealthIndicator implements HealthIndicator {
     }
 
     /**
-     * Ping Athena at /queueStatus and check if the service is available.
+     * Ping Apollon at /queueStatus and check if the service is available.
      */
     @Override
     public Health health() {
