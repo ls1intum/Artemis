@@ -2,18 +2,26 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { ExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { titleLowercase } from '../../support/utils';
+import { generateUUID, titleLowercase } from '../../support/utils';
+
+// Common primitives
+let courseName: string;
+let courseShortName: string;
 
 describe('Course messages', () => {
     let course: Course;
+    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+        const uid = generateUUID();
+        courseName = 'Cypress course' + uid;
+        courseShortName = 'cypress' + uid;
+        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
+            course = convertCourseAfterMultiPart(response);
+            courseId = course.id!;
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
@@ -411,7 +419,10 @@ describe('Course messages', () => {
         });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+    after('Delete Course', () => {
+        cy.login(admin);
+        if (courseId) {
+            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+        }
     });
 });

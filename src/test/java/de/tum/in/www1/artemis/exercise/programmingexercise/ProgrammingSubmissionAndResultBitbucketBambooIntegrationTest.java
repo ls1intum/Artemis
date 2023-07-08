@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -51,6 +53,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO.BambooTestJobDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -902,6 +905,32 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Check that the result belongs to the participation
         Participation updatedParticipation = participationRepository.findByIdWithResultsAndSubmissionsResults(participation.getId()).orElseThrow();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateGradleFeedback() throws Exception {
+        doReturn(ZonedDateTime.now()).when(versionControlService).getPushDate(any(), any(), any());
+
+        String userLogin = TEST_PREFIX + "student1";
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        var notification = createBambooBuildResultNotificationDTO(participation.getBuildPlanId());
+
+        String longErrorMessage = "abc\nmultiline\nfeedback\nabc\nmultiline\nfeedback";
+        BambooTestJobDTO testCase = new BambooTestJobDTO("test1", "test1", "Class", List.of(longErrorMessage));
+        ((List<BambooTestJobDTO>) notification.getBuildJobs().get(0).getFailedTests()).set(0, testCase);
+
+        postResult(notification, HttpStatus.OK, false);
+
+        var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
+        // Bamboo Setup -> Gradle Feedback is duplicated and should be cut in half
+        assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
