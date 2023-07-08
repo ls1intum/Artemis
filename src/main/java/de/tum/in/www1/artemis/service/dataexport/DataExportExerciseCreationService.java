@@ -127,12 +127,11 @@ public class DataExportExerciseCreationService {
         createSubmissionsResultsExport(programmingExercise, exerciseDir);
         RepositoryExportOptionsDTO repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setExportAllParticipants(false);
-        repositoryExportOptions.setAnonymizeStudentCommits(false);
+        repositoryExportOptions.setAnonymizeRepository(false);
         repositoryExportOptions.setFilterLateSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(false);
         repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(false);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setHideStudentNameInZippedFolder(false);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         var listOfProgrammingExerciseParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
