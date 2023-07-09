@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -24,6 +20,7 @@ import de.tum.in.www1.artemis.service.TextExerciseImportService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
 
 @Service
@@ -141,30 +138,42 @@ public class ExamImportService {
      * Checks the programming exercises of the given exercise groups for the uniqueness of the projectKey chosen by the user.
      * If a non-unique project key is discovered, the short name is resettet, so that the user can input a new one
      *
-     * @param exerciseGroupList the list of all exercises (not only programming) to be checked
+     * @param exerciseGroups the list of all exercises (not only programming) to be checked
      * @throws ExamConfigurationException in case one or more programming exercise project keys are not unique
      */
-    private void preCheckProgrammingExercisesForShortNameUniqueness(List<ExerciseGroup> exerciseGroupList, String targetCourseShortName) {
+    private void preCheckProgrammingExercisesForShortNameUniqueness(List<ExerciseGroup> exerciseGroups, String targetCourseShortName) {
+        List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
+                .toList();
+        List<String> shortNames = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise)
+                .map(BaseExercise::getShortName).toList();
+        if (titles.size() != titles.stream().distinct().count()) {
+            // TODO: improve error message
+            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same title", "Exam", "invalidExam");
+        }
+        if (shortNames.size() != shortNames.stream().distinct().count()) {
+            // TODO: improve error message
+            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same short name", "Exam", "invalidExam");
+        }
+
         // Flag to determine, if a programming exercise with an invalid shortName was found
         AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
         // Iterate over all exercises
-        exerciseGroupList.forEach(exerciseGroup -> {
-            exerciseGroup.getExercises().forEach(exercise -> {
-                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
-                    // Method to check, if the project already exists.
-                    boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, targetCourseShortName);
-                    if (invalidShortName) {
-                        // If the project already exists and thus the short name isn't valid, it is removed
-                        exercise.setShortName("");
-                        exercise.setTitle("");
-                        numberOfInvalidProgrammingExercises.getAndIncrement();
-                    }
+        exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                // Method to check, if the project already exists.
+                boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI(programmingExercise, targetCourseShortName);
+                if (invalidShortName) {
+                    // If the project already exists and thus the short name isn't valid, it is removed
+                    // TODO: why do set those values to empty?
+                    exercise.setShortName("");
+                    exercise.setTitle("");
+                    numberOfInvalidProgrammingExercises.getAndIncrement();
                 }
-            });
+            }
         });
         if (numberOfInvalidProgrammingExercises.get() > 0) {
             // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
-            throw new ExamConfigurationException(exerciseGroupList, numberOfInvalidProgrammingExercises.get());
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get());
         }
     }
 
