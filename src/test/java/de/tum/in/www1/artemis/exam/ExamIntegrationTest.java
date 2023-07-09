@@ -1302,7 +1302,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
 
-        QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(quizExercise);
 
@@ -2207,7 +2207,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 if (exercise instanceof QuizExercise quizExercise) {
                     var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
                     for (var quizQuestion : quizQuestions) {
-                        var submittedAnswer = quizExerciseUtilService.generateSubmittedAnswerFor(quizQuestion, true);
+                        var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
                         quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());

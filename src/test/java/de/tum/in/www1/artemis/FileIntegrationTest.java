@@ -158,7 +158,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilePath(), dragItem.getId());
 
         dragItem.setPictureFilePath(dragItemPath);
-        // courseRepo.save(course);
         quizQuestionRepository.save(dragAndDropQuestion);
 
         String receivedPath = request.get(dragItemPath, HttpStatus.OK, String.class);
