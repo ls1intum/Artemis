@@ -113,7 +113,7 @@ public class ParticipantScoreService {
         Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
-        Course course = exercises.stream().findAny().get().getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercises.stream().findAny().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
 
         // For every student we want to calculate the score
         Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));

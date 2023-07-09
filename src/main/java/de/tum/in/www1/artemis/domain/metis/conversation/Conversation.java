@@ -100,4 +100,10 @@ public abstract class Conversation extends DomainObject {
     public void setPosts(Set<Post> posts) {
         this.posts = posts;
     }
+
+    /**
+     * @param sender the sender of the message
+     * @return returns a human-readable name for this conversation, which can be used in notifications or emails.
+     */
+    public abstract String getHumanReadableNameForReceiver(User sender);
 }

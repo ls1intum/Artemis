@@ -28,8 +28,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     private final ChannelService channelService;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
     }
