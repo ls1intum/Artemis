@@ -8,4 +8,9 @@ import { faRobot } from '@fortawesome/free-solid-svg-icons';
 })
 export class AboutIrisComponent {
     faRobot = faRobot;
+    // How many bullet points each heading has
+    bulletPoints = { '1': 2, '2': 5, '3': 3, '4': 4 };
+
+    objectKeys = Object.keys;
+    array = Array;
 }
