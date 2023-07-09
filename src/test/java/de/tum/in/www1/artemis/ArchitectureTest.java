@@ -11,24 +11,9 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 
-import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 
-class ArchitectureTest {
-
-    private static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
-
-    private static JavaClasses testClasses;
-
-    private static JavaClasses allClasses;
-
-    @BeforeAll
-    static void loadClasses() {
-        testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-        allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-    }
+class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJUnit4() {

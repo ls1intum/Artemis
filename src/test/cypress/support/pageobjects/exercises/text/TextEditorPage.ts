@@ -30,7 +30,7 @@ export class TextEditorPage {
 
     submit() {
         cy.intercept(PUT, BASE_API + 'exercises/*/text-submissions').as('textSubmission');
-        cy.get('#submit button').click();
+        cy.get('#submit').click();
         return cy.wait('@textSubmission');
     }
 

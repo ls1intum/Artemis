@@ -15,6 +15,9 @@
             "onlyYou": "Nur du",
             "archived": "Archiviert",
             "sendMessage": "Senden",
+            "goToExercise": "Zur Aufgabe gehen",
+            "goToLecture": "Zur Vorlesung gehen",
+            "goToExam": "Zur Klausur gehen",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",
@@ -191,6 +194,7 @@
                     "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}",
                     "exam": "Alle Klausurkanäle im Kurs {{ courseTitle }}"
                 },
+                "otherChannels": "Andere Kanäle",
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",

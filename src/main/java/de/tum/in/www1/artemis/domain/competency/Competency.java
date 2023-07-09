@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.competency;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +28,9 @@ public class Competency extends DomainObject {
 
     @Column(name = "description")
     private String description;
+
+    @Column(name = "soft_due_date")
+    private ZonedDateTime softDueDate;
 
     @Column(name = "mastery_threshold")
     private Integer masteryThreshold;
@@ -84,6 +88,14 @@ public class Competency extends DomainObject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public ZonedDateTime getSoftDueDate() {
+        return softDueDate;
+    }
+
+    public void setSoftDueDate(ZonedDateTime dueDate) {
+        this.softDueDate = dueDate;
     }
 
     public int getMasteryThreshold() {
