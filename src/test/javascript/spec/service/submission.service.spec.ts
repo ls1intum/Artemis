@@ -191,4 +191,18 @@ describe('Submission Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+    it('should get submission versions for submission', fakeAsync(() => {
+        const submissionId = 1;
+        const submissionVersion = {
+            id: 1,
+            submission: submission,
+            content: 'text',
+            createdDate: dayjs(),
+        };
+        const expected = [submissionVersion];
+        service.findAllSubmissionVersionsOfSubmission(submissionId).subscribe((resp) => expect(resp).toEqual(expected));
+        const req = httpMock.expectOne({ url: `api/submissions/${submissionId}/versions`, method: 'GET' });
+        req.flush(expected);
+        tick();
+    }));
 });

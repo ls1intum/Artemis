@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.participation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -52,6 +52,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private SubmissionVersionRepository submissionVersionRepository;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -188,6 +191,43 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSubmissionVersionsBySubmissionId_isNotInstructorInCourse_forbidden() throws Exception {
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSubmissionVersionsBySubmissionIdForTextExercise_returnsCorrectContent() throws Exception {
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+        submission = submissionRepository.save(submission);
+        SubmissionVersion submissionVersion1 = ParticipationFactory.generateSubmissionVersion("test1", submission, student);
+        submissionVersion1 = submissionVersionRepository.save(submissionVersion1);
+        SubmissionVersion submissionVersion2 = ParticipationFactory.generateSubmissionVersion("test2", submission, student);
+        submissionVersion2 = submissionVersionRepository.save(submissionVersion2);
+        participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        List<SubmissionVersion> versions = request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersion.class);
+        assertThat(versions).containsExactly(submissionVersion1, submissionVersion2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSubmissionVersionsBySubmissionId_submissionNotFound() throws Exception {
+        long randomSubmissionId = 12345L;
+        request.getList("/api/submissions/" + randomSubmissionId + "/versions", HttpStatus.NOT_FOUND, Submission.class);
     }
 
 }

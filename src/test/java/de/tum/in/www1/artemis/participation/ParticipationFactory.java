@@ -302,4 +302,12 @@ public class ParticipationFactory {
         result.setScore(score);
         return result;
     }
+
+    public static SubmissionVersion generateSubmissionVersion(String content, Submission submission, User user) {
+        SubmissionVersion submissionVersion = new SubmissionVersion();
+        submissionVersion.setContent(content);
+        submissionVersion.setSubmission(submission);
+        submissionVersion.setAuthor(user);
+        return submissionVersion;
+    }
 }

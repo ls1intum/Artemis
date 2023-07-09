@@ -228,8 +228,8 @@ public class SubmissionResource {
     @GetMapping("/submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
     public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
-        var submission = submissionRepository.findById(submissionId).orElseThrow();
+        var submission = submissionRepository.findByIdElseThrow(submissionId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
-        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
+        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submission.getId());
     }
 }

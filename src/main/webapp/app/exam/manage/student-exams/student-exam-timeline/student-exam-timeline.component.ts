@@ -118,6 +118,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExamSubmissionComponent;
         activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
+        activeProgrammingComponent.codeEditorContainer.aceEditor.fileSession = {};
         activeProgrammingComponent?.updateExamTimelineView();
     }
 
@@ -140,7 +141,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return submissionVersion.id && submissionVersion.createdDate && submissionVersion.content && submissionVersion.submission;
     }
 
-    private retrieveSubmissionDataAndTimeStamps() {
+    retrieveSubmissionDataAndTimeStamps() {
         const submissionObservables: Observable<SubmissionVersion[] | Submission[]>[] = [];
         this.studentExam.exercises?.forEach((exercise) => {
             if (exercise.type === this.PROGRAMMING) {
@@ -156,7 +157,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 );
             }
         });
-        return merge(...submissionObservables);
+        const returnObservable = merge(...submissionObservables);
+        return returnObservable;
     }
 
     private sortTimeStamps() {
@@ -218,7 +220,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 activeComponent?.updateViewFromSubmission();
             } else {
                 activeComponent!.submissionVersion = submission as SubmissionVersion;
-                activeComponent?.updateViewFromSubmissionVersion();
+                activeComponent?.setSubmissionVersion(submission as SubmissionVersion);
             }
         }
     }
@@ -296,7 +298,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: Exercise) {
-        // this works because the submissions timestamps are sorted ascending
         const comparisonObject = dayjs(this.value);
         console.log('find submission for exercise closest to current timestamp');
         console.log(comparisonObject);
