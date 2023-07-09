@@ -44,3 +44,10 @@ CODE_OF_CONDUCT.md
 LICENSE
 README.md
 SECURITY.md
+
+######################
+# Artemis resources
+######################
+/src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts

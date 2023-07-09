@@ -226,35 +226,35 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testActualPathForPublicPath() {
-        String actualPath = fileService.actualPathForPublicPathOrThrow("asdasdfiles/drag-and-drop/backgrounds");
+        String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
 
-        actualPath = fileService.actualPathForPublicPathOrThrow("asdasdfiles/drag-and-drop/drag-items");
+        actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
 
-        actualPath = fileService.actualPathForPublicPathOrThrow("asdasdfiles/course/icons");
+        actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
 
-        actualPath = fileService.actualPathForPublicPathOrThrow("asdasdfiles/attachments/lecture");
+        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
 
-        actualPath = fileService.actualPathForPublicPathOrThrow("asdasdfiles/attachments/attachment-unit");
+        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
     }
 
     @Test
     void testActualPathForPublicFileUploadExercisePath_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-upload-exercises"))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPath("asdasdfiles/file-upload-exercises"))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-asd-exercises"))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises"))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
     void testPublicPathForActualTempFilePath() {
         Path actualPath = Path.of(FilePathService.getTempFilePath(), "test");
-        String publicPath = fileService.publicPathForActualPathOrThrow(actualPath.toString(), 1L);
+        String publicPath = fileService.publicPathForActualPath(actualPath.toString(), 1L);
         assertThat(publicPath).isEqualTo(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName());
     }
 
@@ -262,12 +262,11 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testPublicPathForActualPath_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             Path actualFileUploadPath = Path.of(FilePathService.getFileUploadExercisesFilePath());
-            fileService.publicPathForActualPathOrThrow(actualFileUploadPath.toString(), 1L);
+            fileService.publicPathForActualPath(actualFileUploadPath.toString(), 1L);
 
         }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> fileService.publicPathForActualPathOrThrow(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 
