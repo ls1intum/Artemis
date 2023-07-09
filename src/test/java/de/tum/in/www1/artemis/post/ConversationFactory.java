@@ -7,6 +7,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 
@@ -39,5 +40,19 @@ public class ConversationFactory {
 
         dayCount = (dayCount % 25) + 1;
         return post;
+
+    public static Channel generateChannel(Course course) {
+        return generateChannel(course, "test");
+    }
+
+    public static Channel generateChannel(Course course, String channelName) {
+        Channel channel = new Channel();
+        channel.setCourse(course);
+        channel.setName(channelName);
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setDescription("Test channel");
+        return channel;
     }
 }
