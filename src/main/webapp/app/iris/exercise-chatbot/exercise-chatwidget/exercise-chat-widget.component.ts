@@ -5,7 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
@@ -27,7 +27,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
-    dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
 
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
@@ -89,12 +88,23 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faThumbsDown = faThumbsDown;
 
     ngOnInit() {
-        this.dialog.afterOpened.subscribe(() => {
+        /*this.dialog.afterOpened.subscribe(() => {
             this.sharedService.changeChatOpenStatus(true);
+
         });
         this.dialog.afterAllClosed.subscribe(() => {
             this.sharedService.changeChatOpenStatus(false);
+        });*/
+        /*this.dialog.afterOpened.subscribe(() => {
+            console.log('cağiriyor muuu');
+            this.data.chatOpen = true;
+            this.data.closed = false;
         });
+        this.dialog.afterAllClosed.subscribe(() => {
+            console.log('kapanıyor mumumumum');
+            this.data.chatOpen = false;
+            this.data.closed = true;
+        });*/
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';

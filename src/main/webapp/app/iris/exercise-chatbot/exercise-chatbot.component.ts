@@ -24,6 +24,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;
+    closed = true;
     runAnimation = false;
     hasNewMessages = false;
     private exerciseId: number;
@@ -55,8 +56,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.chatOpenSubscription = this.sharedService.chatOpen.subscribe((status) => (this.chatOpen = status));
-
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.hasNewMessages = state.numNewMessages > 0;
         });
@@ -69,14 +68,18 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         this.stateSubscription.unsubscribe();
     }
 
-    handleButtonClick() {
+    public handleButtonClick() {
         if (this.chatOpen && this.dialogRef) {
             this.stateStore.dispatch(new NumNewMessagesResetAction());
             this.dialog.closeAll();
             //this.runAnimation = false;
-            this.sharedService.changeChatOpenStatus(false);
+            //this.sharedService.changeChatOpenStatus(false);
+            this.chatOpen = false;
+            this.closed = true;
         } else {
+            this.chatOpen = true;
             this.openChat();
+            this.closed = false;
             //this.runAnimation = true;
         }
     }
@@ -93,12 +96,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
                 widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
                 fullSize: localStorage.getItem('fullSize') === 'true',
             },
-        });
-        this.dialogRef.afterOpened().subscribe(() => {
-            this.sharedService.changeChatOpenStatus(true);
-        });
-        this.dialogRef.afterClosed().subscribe(() => {
-            this.sharedService.changeChatOpenStatus(false);
         });
     }
 }
