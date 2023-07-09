@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,6 +33,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     highlightDifferences: boolean;
     @Input()
     course?: Course;
+    @ViewChild('detailText') textareaRef: ElementRef;
 
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
@@ -95,12 +96,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Checks if component is in view mode
+     * Checks if component is in view mode and focuses feedback text area
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
         this.viewOnly = false;
         this.onEditFeedback.emit(line);
+        setTimeout(() => (this.textareaRef.nativeElement as HTMLTextAreaElement).focus());
     }
 
     /**

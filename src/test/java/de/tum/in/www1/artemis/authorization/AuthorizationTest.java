@@ -6,7 +6,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -16,18 +15,15 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractArchitectureTest;
 import de.tum.in.www1.artemis.security.annotations.*;
 
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */
-class AuthorizationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AuthorizationTest extends AbstractArchitectureTest {
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -42,13 +38,6 @@ class AuthorizationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     private static final String REST_ADMIN_PACKAGE = REST_BASE_PACKAGE + ".admin";
 
     private static final String REST_OPEN_PACKAGE = REST_BASE_PACKAGE + ".open";
-
-    private static JavaClasses productionClasses;
-
-    @BeforeAll
-    static void loadClasses() {
-        productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-    }
 
     @Test
     void testEndpoints() throws InvocationTargetException, IllegalAccessException {

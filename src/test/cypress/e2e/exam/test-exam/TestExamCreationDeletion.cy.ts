@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
 import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../../support/artemis';
@@ -25,10 +25,10 @@ describe('Test Exam creation/deletion', () => {
     let course: Course;
     let examId: number;
 
-    before('Create course', () => {
+    before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
         });
     });
 
@@ -38,7 +38,7 @@ describe('Test Exam creation/deletion', () => {
 
     it('Creates a test exam', function () {
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.id!);
+        courseManagement.openExamsOfCourse(course.shortName!);
 
         examManagement.createNewExam();
         examCreation.setTitle(examData.title);
@@ -73,7 +73,7 @@ describe('Test Exam creation/deletion', () => {
             expect(examBody.confirmationEndText).to.eq(examData.confirmationEndText);
             cy.url().should('contain', `/exams/${examId}`);
         });
-        examManagement.getExamTitle().contains(examData.title);
+        cy.get('#exam-detail-title').should('contain.text', examData.title);
     });
 
     describe('Test exam deletion', () => {
@@ -87,7 +87,7 @@ describe('Test Exam creation/deletion', () => {
 
         it('Deletes an existing test exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.id!);
+            courseManagement.openExamsOfCourse(course.shortName!);
             examManagement.getExamSelector(examData.title).should('exist');
             examManagement.openExam(examId);
             examDetails.deleteExam(examData.title);
@@ -95,7 +95,9 @@ describe('Test Exam creation/deletion', () => {
         });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+    after(() => {
+        if (course) {
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });

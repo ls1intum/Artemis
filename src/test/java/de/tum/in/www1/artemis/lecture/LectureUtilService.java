@@ -11,7 +11,10 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
@@ -59,6 +62,9 @@ public class LectureUtilService {
     @Autowired
     private CourseUtilService courseUtilService;
 
+    @Autowired
+    private ConversationRepository conversationRepository;
+
     public Lecture createCourseWithLecture(boolean saveLecture) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -104,6 +110,12 @@ public class LectureUtilService {
             l.addLectureUnit(lectureUnit);
         }
         return lectureRepo.save(l);
+    }
+
+    public Channel addLectureChannel(Lecture lecture) {
+        Channel channel = ConversationFactory.generateChannel(lecture.getCourse());
+        channel.setLecture(lecture);
+        return conversationRepository.save(channel);
     }
 
     public ExerciseUnit createExerciseUnit(Exercise exercise) {

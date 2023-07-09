@@ -43,21 +43,7 @@
                 "dismissFeedback": "Soll das Feedback gelöscht werden?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!"
             },
-            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabschnitts.",
-            "conflict": {
-                "assessor": "Bewertet von: Dir",
-                "otherAssessor": "Bewertet von: {{otherUser}}",
-                "conflictingAssessments": "{{number}} Konflikte",
-                "discard": "Konflikt verwerfen",
-                "notFound": "Wir haben für das ausgewählte Feedback keine Konflikte gefunden, bitte gehe zurück.",
-                "overrideAssessment": "Linke Bewertung überschreiben",
-                "solveFeedbackConflictSuccessful": "Konflikt erfolgreich gelöst.",
-                "type": {
-                    "INCONSISTENT_COMMENT": "INKONSISTENTER KOMMENTAR",
-                    "INCONSISTENT_SCORE": "INKONSISTENTE PUNKTZAHL",
-                    "INCONSISTENT_FEEDBACK": "INKONSISTENTES FEEDBACK"
-                }
-            }
+            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabschnitts."
         }
     }
 }
