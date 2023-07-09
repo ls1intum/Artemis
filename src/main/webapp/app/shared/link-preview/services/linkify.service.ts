@@ -22,7 +22,7 @@ export class LinkifyService {
 
         // Regular expression pattern to match URLs
         // eslint-disable-next-line no-useless-escape
-        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*?(?=\s|[\]\)]|$)/g;
+        const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
 
         // Find all URL matches in the text (in the content of the post)
         let match;
@@ -32,7 +32,7 @@ export class LinkifyService {
             const end = start + url.length;
 
             // Check if url is wrapped in <> tags
-            const isRemoved = text[start - 1] === '<' && text[end - 1] === '>';
+            const isRemoved = text[start - 1] === '<' && text[end] === '>';
             const linkableItem: Link = {
                 type: 'url',
                 value: url,
@@ -43,7 +43,9 @@ export class LinkifyService {
                 isLinkPreviewRemoved: isRemoved,
             };
 
-            linkableItems.push(linkableItem);
+            if (!isRemoved) {
+                linkableItems.push(linkableItem);
+            }
         }
 
         return linkableItems;

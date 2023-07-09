@@ -31,17 +31,7 @@ describe('LinkifyService', () => {
 
     it('should mark isLinkPreviewRemoved to true when links are wrapped with <>', () => {
         const text = 'Check out this link: <https://example.com>';
-        const expectedLinks: Link[] = [
-            {
-                type: 'url',
-                value: 'https://example.com>',
-                href: 'https://example.com>',
-                isLink: true,
-                end: 42,
-                start: 22,
-                isLinkPreviewRemoved: true,
-            },
-        ];
+        const expectedLinks: Link[] = []; // should be empty because link preview is removed
 
         const links = service.find(text);
         expect(links).toEqual(expectedLinks);
