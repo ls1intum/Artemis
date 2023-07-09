@@ -157,7 +157,7 @@ private String getToolName() {
     // Java Files API gets blocked by Jenkins sandbox
 
     return sh(
-        script: """find testsuite -name "*.tests" -type d -printf "%f" | cut --delimiter=. -f 1""",
+        script: """find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##'""",
         returnStdout: true
     ).trim()
 }
