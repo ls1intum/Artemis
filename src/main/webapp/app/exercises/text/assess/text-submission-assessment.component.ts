@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
@@ -34,6 +35,8 @@ import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -82,6 +85,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseDashboardLink: string[];
     isExamMode = false;
 
+    // An observable that can be used to cancel the request for feedback suggestions
+    // if it is not done when the first manual feedback is entered
+    private feedbackSuggestionsObservable: Observable<void>;
+
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
     }
@@ -106,6 +113,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
+        private athenaService: AthenaService,
     ) {
         super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -196,6 +204,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = this.computeTotalScore(this.assessments);
         this.isLoading = false;
 
+        this.loadFeedbackSuggestions();
+
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
@@ -225,6 +235,26 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private checkPermissions(result?: Result): void {
         this.isAssessor = result?.assessor?.id === this.userId;
+    }
+
+    /**
+     * Start loading feedback suggestions from Athena
+     * (only if this is a fresh submission, i.e. no assessments exist yet)
+     */
+    private loadFeedbackSuggestions(): void {
+        if (this.assessments.length > 0) {
+            return;
+        }
+        this.feedbackSuggestionsObservable = this.athenaService.getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!).pipe(
+            map((resp: HttpResponse<TextBlockRef[]>) => {
+                const feedbackSuggestions = resp.body!;
+                this.textBlockRefs = [...this.textBlockRefs, ...feedbackSuggestions];
+                // update text blocks and feedbacks and resolve text block conflicts
+                this.prepareTextBlocksAndFeedbacks();
+            }),
+        );
+        // actually consume data
+        this.feedbackSuggestionsObservable.subscribe();
     }
 
     /**
