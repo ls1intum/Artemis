@@ -139,7 +139,6 @@ export class OnlineEditorPage {
      * @returns the element containing the result score percentage.
      */
     getResultScore() {
-        cy.reloadUntilFound('#result-score');
         return cy.get('#result-score');
     }
 

@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Message (Post) entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ConversationMessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 

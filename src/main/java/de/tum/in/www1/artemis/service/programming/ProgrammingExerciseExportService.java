@@ -225,7 +225,7 @@ public class ProgrammingExerciseExportService {
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
-            exportOptions.setHideStudentNameInZippedFolder(false);
+            exportOptions.setAnonymizeRepository(false);
 
             // Export student repositories and add them to list
             var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
@@ -639,10 +639,10 @@ public class ProgrammingExerciseExportService {
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeStudentCommits());
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeRepository());
             }
 
-            if (repositoryExportOptions.isAnonymizeStudentCommits()) {
+            if (repositoryExportOptions.isAnonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
@@ -659,7 +659,7 @@ public class ProgrammingExerciseExportService {
             }
 
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
-            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
+            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository());
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
