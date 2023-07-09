@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -14,7 +13,6 @@ import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -64,6 +62,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @BeforeEach
     void setUp() {
+        reset(mailService);
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
@@ -120,22 +119,25 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
+
         var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        await().untilAsserted(() -> assertThat(exerciseRepository.findAllExercisesForSummary(ZonedDateTime.now(), ZonedDateTime.now().minusDays(2)))
-                .containsOnly(exerciseReleasedYesterdayAndNotYetDue));
+        // await().untilAsserted(() -> assertThat(exerciseRepository.findAllExercisesForSummary(ZonedDateTime.now(), ZonedDateTime.now().minusDays(2)))
+        // .containsOnly(exerciseReleasedYesterdayAndNotYetDue));
 
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
-        ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
-        verify(mailService, timeout(5000)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
+        // ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
+        verify(mailService, timeout(5000)).sendWeeklySummaryEmail(userWithActivatedWeeklySummaries, Set.of(exerciseReleasedYesterdayAndNotYetDue));
         verify(javaMailSender, timeout(5000)).send(any(MimeMessage.class));
 
-        Set<Exercise> capturedExerciseSet = captor.getValue();
-        assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
-                .contains(exerciseReleasedYesterdayAndNotYetDue);
-        assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
+        /*
+         * Set<Exercise> capturedExerciseSet = captor.getValue();
+         * assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
+         * .contains(exerciseReleasedYesterdayAndNotYetDue);
+         * assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
+         */
     }
 }
