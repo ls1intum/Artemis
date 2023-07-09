@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Course entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -112,15 +111,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 AND (c.enrollmentEndDate >= :now)
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
-
-    /**
-     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
-     *
-     * @param courseId the id of the course to find
-     * @return Found course with lectures, their attachments and exams
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithLecturesAndExamsById(long courseId);
 
     @Query("""
             SELECT DISTINCT c
@@ -216,19 +206,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
-
-    /**
-     * Returns the student group name of a single course
-     *
-     * @param courseId the course id of the course to get the name for
-     * @return the student group name
-     */
-    @Query("""
-            SELECT c.studentGroupName
-            FROM Course c
-            WHERE c.id = :courseId
-            """)
-    String findStudentGroupName(@Param("courseId") long courseId);
 
     /**
      * Get active students in the timeframe from startDate to endDate for the exerciseIds
