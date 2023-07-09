@@ -14,10 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LspServerStatus {
 
-    public LspServerStatus(String url) {
-        this.url = url;
-    }
-
     private String url;
 
     private boolean healthy;
@@ -39,6 +35,10 @@ public class LspServerStatus {
     private double cpuUsage;
 
     private Date timestamp;
+
+    public LspServerStatus(String url) {
+        this.url = url;
+    }
 
     public float getLoadAvg1() {
         return loadAvg1;

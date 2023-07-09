@@ -20,7 +20,6 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC, PROFILE_LSP } from 'app/app.constants';
-import { CodeEditorMonacoService } from 'app/exercises/programming/shared/code-editor/service/code-editor-monaco.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

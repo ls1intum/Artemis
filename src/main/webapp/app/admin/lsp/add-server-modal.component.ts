@@ -10,7 +10,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
             <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="onClose()"></button>
         </div>
         <div class="modal-body">
-            <div class="p-3 d-flex justify-content-center text-center">
+            <div class="d-flex justify-content-center p-3 text-center">
                 <span jhiTranslate="artemisApp.lsp.modals.addServerNote"></span>
             </div>
             <span>{{ text | artemisTranslate }}</span>

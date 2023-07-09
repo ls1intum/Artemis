@@ -57,19 +57,19 @@ public class MonacoEditorService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
-    private final String lspInitEndpoint = "/init-lsp";
+    private static final String lspInitEndpoint = "/init-lsp";
 
-    private final String terminalInitEndpoint = "/init-terminal";
+    private static final String terminalInitEndpoint = "/init-terminal";
 
-    private final String forwardUpdatesEndpoint = "/update-files";
+    private static final String forwardUpdatesEndpoint = "/update-files";
 
-    private final String forwardRenameEndpoint = "/rename-file";
+    private static final String forwardRenameEndpoint = "/rename-file";
 
-    private final String forwardRemovalEndpoint = "/remove-file";
+    private static final String forwardRemovalEndpoint = "/remove-file";
 
-    private final String lspHealthEndpoint = "/health";
+    private static final String lspHealthEndpoint = "/health";
 
     public MonacoEditorService(@Value("${artemis.monaco.lsp-servers:#{null}}") List<String> integrationServerUrls, ParticipationRepository participationRepository) {
         this.client = HttpClientBuilder.create().build();
