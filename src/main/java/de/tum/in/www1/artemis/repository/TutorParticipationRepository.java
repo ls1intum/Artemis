@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 /**
  * Spring Data JPA repository for the TutorParticipation entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface TutorParticipationRepository extends JpaRepository<TutorParticipation, Long> {
 

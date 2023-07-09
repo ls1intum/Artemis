@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 
 /**
  * REST controller for managing Files.
@@ -104,6 +105,43 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
+    }
+
+    /**
+     * POST /fileUpload : Upload a new file.
+     *
+     * @param file         The file to save
+     * @param keepFileName specifies if original file name should be kept
+     * @return The path of the file
+     * @throws URISyntaxException if response path can't be converted into URI
+     * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
+     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
+     */
+    @Deprecated
+    @PostMapping("fileUpload")
+    @EnforceAtLeastTutor
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
+        log.debug("REST request to upload file : {}", file.getOriginalFilename());
+        String responsePath = fileService.handleSaveFile(file, keepFileName, false);
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+
+    }
+
+    /**
+     * GET /files/temp/:filename : Get the temporary file with the given filename
+     *
+     * @param filename The filename of the file to get
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/temp/{filename:.+}")
+    @EnforceAtLeastTutor
+    public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return responseEntityForFilePath(FilePathService.getTempFilePath(), filename);
     }
 
     /**
