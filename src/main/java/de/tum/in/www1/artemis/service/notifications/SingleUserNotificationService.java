@@ -389,7 +389,7 @@ public class SingleUserNotificationService {
     private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject, User author) {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
-        // If the notification is about a reply and the author is also the recipient, we skip send. Do not the sender of the message about their own message!
+        // If the notification is about a reply and the author is also the recipient, we skip send. Do not notify the sender of the message about their own message!
         boolean skipSend = type == CONVERSATION_NEW_REPLY_MESSAGE && Objects.equals(notification.getRecipient().getId(), author.getId());
 
         // checks if this notification type has email support
