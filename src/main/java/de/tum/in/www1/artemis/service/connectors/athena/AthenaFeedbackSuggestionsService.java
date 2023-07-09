@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -66,7 +67,12 @@ public class AthenaFeedbackSuggestionsService {
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
             log.info("Remote Service responded to feedback suggestions request: {}", response.data);
-            return response.data.stream().map((feedbackDTO) -> feedbackDTO.toTextBlockRef(submission)).toList();
+            return response.data.stream().map((feedbackDTO) -> {
+                var ref = feedbackDTO.toTextBlockRef(submission);
+                ref.getBlock().automatic();
+                ref.getFeedback().setType(FeedbackType.AUTOMATIC);
+                return ref;
+            }).toList();
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
