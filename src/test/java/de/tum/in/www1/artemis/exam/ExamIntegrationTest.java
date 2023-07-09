@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFa
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -109,6 +110,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private ExamService examService;
@@ -1298,7 +1302,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
 
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup);
         quizExercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(quizExercise);
 
@@ -2203,7 +2207,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 if (exercise instanceof QuizExercise quizExercise) {
                     var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
                     for (var quizQuestion : quizQuestions) {
-                        var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
+                        var submittedAnswer = quizExerciseUtilService.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
                         quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());

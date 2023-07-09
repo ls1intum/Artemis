@@ -5,11 +5,12 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 /**
  * Factory for creating objects related to Conversations.
@@ -40,6 +41,7 @@ public class ConversationFactory {
 
         dayCount = (dayCount % 25) + 1;
         return post;
+    }
 
     public static Channel generateChannel(Course course) {
         return generateChannel(course, "test");

@@ -340,7 +340,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         String username = TEST_PREFIX + "student1";
         final Principal principal = () -> username;
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         quizUtilService.prepareBatchForSubmitting(quizExercise, authentication, SecurityUtils.makeAuthorizationObject(username));
@@ -549,7 +549,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         userUtilService.addStudents(TEST_PREFIX, 2, 14);
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
+            QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
             participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
@@ -578,7 +578,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // add more submissions and recalculate
         for (int i = numberOfParticipants; i <= 14; i++) {
-            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
+            QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
             participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
@@ -628,7 +628,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
-                QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
+                QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
                 participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
                 participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
                 assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
@@ -636,12 +636,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
 
         // submission with everything selected
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
+        QuizSubmission quizSubmission = quizExerciseUtilService.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         // submission with nothing selected
-        quizSubmission = QuizExerciseFactory.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
+        quizSubmission = quizExerciseUtilService.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student5");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
@@ -739,7 +739,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
-                QuizSubmission quizSubmissionPractice = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now());
+                QuizSubmission quizSubmissionPractice = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now());
                 participationUtilService.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student" + i);
                 participationUtilService.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice),
                         false);
@@ -747,12 +747,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
 
         // submission with everything selected
-        QuizSubmission quizSubmissionPractice = QuizExerciseFactory.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), true);
+        QuizSubmission quizSubmissionPractice = quizExerciseUtilService.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), true);
         participationUtilService.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         // submission with nothing selected
-        quizSubmissionPractice = QuizExerciseFactory.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), false);
+        quizSubmissionPractice = quizExerciseUtilService.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), false);
         participationUtilService.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student5");
         participationUtilService.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
@@ -1078,7 +1078,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseToSameCourse() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
-
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         courseUtilService.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
 
@@ -1451,7 +1450,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private QuizExercise createQuizOnServerForExam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
 
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
