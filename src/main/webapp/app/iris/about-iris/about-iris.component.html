@@ -12,35 +12,13 @@
     </div>
 
     <div class="mb-5 ms-2" style="margin-right: 70px">
-        <h3 class="mb-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.feature' | artemisTranslate }}</h3>
-        <ul>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f1' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f2' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f3' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f4' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f5' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f6' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f7' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f8' | artemisTranslate }}</span>
-            </li>
-            <li>
-                <span>{{ 'artemisApp.exerciseChatbot.f9' | artemisTranslate }}</span>
-            </li>
-        </ul>
+        <div *ngFor="let key of objectKeys(bulletPoints)">
+            <h4 class="mb-3 font-weight-bold">{{ 'artemisApp.exerciseChatbot.subheading' + key | artemisTranslate }}</h4>
+            <ul>
+                <li *ngFor="let item of array(bulletPoints[key]); let i = index">
+                    <span [jhiTranslate]="'artemisApp.exerciseChatbot.text' + key + '_' + (i + 1)"></span>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
