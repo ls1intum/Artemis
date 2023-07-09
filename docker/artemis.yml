@@ -5,7 +5,6 @@
 services:
     artemis-app:
         container_name: artemis-app
-        platform: linux/amd64
         # look in the docs for more information about how to build your Artemis code with Docker
         # https://docs.artemis.cit.tum.de/dev/setup/#
         image: ghcr.io/ls1intum/artemis
@@ -19,7 +18,7 @@ services:
         # system environments are the default way for custom configuration overrides in the containerized artemis setups
         # either add them in the environments or env_file section (alternative to application-local.yml)
         env_file:
-            - ./artemis/config/prod-application-local.env
+            - ./artemis/config/prod.env
         # if you need to use another port than 8080 or one fixed port for all artemis-app containers in the future
         # you will probably not be able to override this setting outside the artemis.yml
         # as stated in the docker compose docs (at least not when this was committed)

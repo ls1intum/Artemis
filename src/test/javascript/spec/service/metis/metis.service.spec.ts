@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -39,6 +39,7 @@ import {
     metisUser2,
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -303,6 +304,15 @@ describe('Metis Service', () => {
         expect(updateCoursePostTagsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not fetch course post tags if communication is not enabled', () => {
+        const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        metisService.setCourse(course);
+        const getCourseReturn = metisService.getCourse();
+        expect(getCourseReturn).toEqual(course);
+        expect(updateCoursePostTagsSpy).not.toHaveBeenCalled();
+    });
+
     it('should set course when current course has different id', () => {
         metisService.setCourse(course);
         const newCourse = new Course();
@@ -371,6 +381,29 @@ describe('Metis Service', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForExam(metisExam.id!.toString());
         expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/exams/${metisExam.id!.toString()}`);
+    });
+
+    it('should determine the router link required for navigation based on the channel subtype', () => {
+        metisService.setCourse(course);
+        const channelDTO = new ChannelDTO();
+        channelDTO.subTypeReferenceId = 1;
+
+        channelDTO.subType = ChannelSubType.EXERCISE;
+        const exerciseRouterLink = metisService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.LECTURE;
+        const lectureRouterLink = metisService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.EXAM;
+        const examRouterLink = metisService.getLinkForChannelSubType(channelDTO);
+
+        channelDTO.subType = ChannelSubType.GENERAL;
+        const generalRouterLink = metisService.getLinkForChannelSubType(channelDTO);
+
+        expect(exerciseRouterLink).toBe(`/courses/${metisCourse.id}/exercises/1`);
+        expect(lectureRouterLink).toBe(`/courses/${metisCourse.id}/lectures/1`);
+        expect(examRouterLink).toBe(`/courses/${metisCourse.id}/exams/1`);
+        expect(generalRouterLink).toBeUndefined();
     });
 
     it('should determine the query param for a reference to a post with course-wide context', () => {

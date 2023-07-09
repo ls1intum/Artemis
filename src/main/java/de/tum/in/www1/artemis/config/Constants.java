@@ -284,6 +284,11 @@ public final class Constants {
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
+    /**
+     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     */
+    public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
+
     private Constants() {
     }
 }

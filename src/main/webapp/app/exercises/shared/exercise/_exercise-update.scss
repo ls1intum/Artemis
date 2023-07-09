@@ -17,6 +17,13 @@ label {
     font-weight: bolder;
 }
 
+.badge {
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .plagiarism-option {
     align-items: center;
     display: flex;
