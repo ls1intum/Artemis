@@ -27,6 +27,17 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") long submissionId);
 
     /**
+     * Load text submission only
+     *
+     * @param submissionId the submissionId
+     * @return optional text submission
+     */
+    @NotNull
+    default TextSubmission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Text Submission", submissionId));
+    }
+
+    /**
      * Load text submission with eager Results
      *
      * @param submissionId the submissionId

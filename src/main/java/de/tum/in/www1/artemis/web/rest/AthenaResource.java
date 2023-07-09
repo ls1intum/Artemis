@@ -1,0 +1,64 @@
+package de.tum.in.www1.artemis.web.rest;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import de.tum.in.www1.artemis.domain.TextBlockRef;
+import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
+
+/**
+ * REST controller for Athena feedback suggestions.
+ */
+@RestController
+@RequestMapping("/api/athena")
+@Profile("athena")
+public class AthenaResource {
+
+    private final Logger log = LoggerFactory.getLogger(AthenaResource.class);
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
+
+    public AthenaResource(AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, TextExerciseRepository textExerciseRepository,
+            TextSubmissionRepository textSubmissionRepository) {
+        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.textExerciseRepository = textExerciseRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
+    }
+
+    /**
+     * GET athena/exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena
+     *
+     * @param exerciseId   the id of the exercise the submission belongs to
+     * @param submissionId the id of the submission to get feedback suggestions for
+     * @return 200 Ok if successful with the corresponding result as body
+     */
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<TextBlockRef>> getFeedbackSuggestions(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
+
+        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        final var submission = textSubmissionRepository.findByIdElseThrow(submissionId);
+        try {
+            List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
+            return ResponseEntity.ok(feedbackSuggestions);
+        }
+        catch (NetworkingError e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+    }
+}
