@@ -8,11 +8,11 @@ runDejagnuTests = fileExists("./testsuite")
 tool = getToolName()
 hasSecretTestFiles = secretTestFilesFolderExists()
 
-dockerImage = "ghcr.io/uni-passau-artemis/artemis-dejagnu:20"
-dockerFlags = ""
+dockerImage = "#dockerImage"
+dockerFlags = "#dockerArgs"
 secretTestVolume = "artemis_blackbox_${tool}-secret"
 secret_volume_mount_path = "/secrets"
-rebuildImage = true
+isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**
  * Main function called by Jenkins.
@@ -239,6 +239,10 @@ private boolean secretTestFilesFolderExists() {
  * Runs the static code analysis
  */
 private void staticCodeAnalysis() {
+    if (!isStaticCodeAnalysisEnabled) {
+        return
+    }
+
     stage("StaticCodeAnalysis") {
         docker.image(dockerImage).inside(dockerFlags) { c ->
             /*

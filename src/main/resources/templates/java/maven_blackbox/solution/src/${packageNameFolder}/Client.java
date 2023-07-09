@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 public final class Client {
     private static final String PROMPT = "sort> ";
     private static final Context CONTEXT = new Context();
-    // private static final Policy POLICY = new Policy(context);
 
     private Client() {
         throw new IllegalCallerException("utility class");
@@ -41,7 +40,6 @@ public final class Client {
         if (command instanceof Command.AddCommand addCommand) {
             CONTEXT.addDates(addCommand.dates());
         } else if (command instanceof Command.SortCommand) {
-            // POLICY.configure();
             CONTEXT.sort();
         } else if (command instanceof Command.ClearCommand) {
             CONTEXT.clearDates();
