@@ -97,7 +97,7 @@ public class ExamUtilService {
 
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = courseUtilService.createCourse();
-        Exam exam = addExam(course, user, visible, start, end);
+        Exam exam = addExamWithUser(course, user, false, visible, start, end);
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
@@ -105,7 +105,7 @@ public class ExamUtilService {
 
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
         Course course = courseUtilService.createCourse();
-        Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
+        Exam exam = addExamWithUser(course, user, false, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
@@ -270,8 +270,22 @@ public class ExamUtilService {
         return exam;
     }
 
-    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+    /**
+     * creates and saves an exam with the passed user
+     *
+     * @param course        course of the exam
+     * @param user          registered exam user
+     * @param exerciseGroup should an (empty) exercise group be added
+     * @param visibleDate   visible date of the exam
+     * @param startDate     start date of the exam
+     * @param endDate       end date of the exam
+     * @return newly created exam
+     */
+    public Exam addExamWithUser(Course course, User user, boolean exerciseGroup, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ExamFactory.generateExam(course);
+        if (exerciseGroup) {
+            ExamFactory.generateExerciseGroup(true, exam);
+        }
         exam = examRepository.save(exam);
         var registeredExamUser = new ExamUser();
         registeredExamUser.setUser(user);

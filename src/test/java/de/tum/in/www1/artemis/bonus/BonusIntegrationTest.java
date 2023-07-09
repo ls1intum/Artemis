@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
@@ -86,16 +87,11 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         examRepository.save(targetExam);
 
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(course, true);
-        bonusToExamGradingScale = new GradingScale();
-        bonusToExamGradingScale.setGradeType(GradeType.GRADE);
-        bonusToExamGradingScale.setExam(targetExam);
+        bonusToExamGradingScale = GradingScaleFactory.generateGradingScaleForExam(targetExam, GradeType.GRADE);
 
-        sourceExamGradingScale = new GradingScale();
-        sourceExamGradingScale.setGradeType(GradeType.BONUS);
-        sourceExamGradingScale.setExam(sourceExam);
+        sourceExamGradingScale = GradingScaleFactory.generateGradingScaleForExam(sourceExam, GradeType.BONUS);
 
-        courseGradingScale = new GradingScale();
-        courseGradingScale.setGradeType(GradeType.BONUS);
+        courseGradingScale = GradingScaleFactory.generateGradingScaleForExam(sourceExam, GradeType.BONUS);
         courseGradingScale.setCourse(course);
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
@@ -140,11 +136,9 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
-        // todo
         Exam newExam = examUtilService.addExamWithExerciseGroup(course, true);
-        var newExamGradingScale = new GradingScale();
-        newExamGradingScale.setGradeType(GradeType.BONUS);
-        newExamGradingScale.setExam(newExam);
+
+        var newExamGradingScale = GradingScaleFactory.generateGradingScaleForExam(newExam, GradeType.BONUS);
         gradingScaleRepository.save(newExamGradingScale);
 
         Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());

@@ -226,6 +226,20 @@ public class TextExerciseUtilService {
         return course;
     }
 
+    /**
+     * renames the passed text exercise using the passed title
+     *
+     * @param textExercise exercise to be renamed
+     * @param title        new title of the exercise
+     * @return the renamed exercise
+     */
+    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+        textExercise.setTitle(title);
+        textExerciseRepository.save(textExercise);
+
+        return textExercise;
+    }
+
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
     }
