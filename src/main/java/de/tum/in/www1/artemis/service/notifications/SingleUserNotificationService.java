@@ -340,7 +340,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser the responsibleUser sending the message reply
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, responsibleUser);
     }
 
     /**
