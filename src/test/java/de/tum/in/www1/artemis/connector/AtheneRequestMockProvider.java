@@ -4,7 +4,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.net.SocketTimeoutException;
-import java.util.List;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +20,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 
 @Component
 @Profile("athene")
@@ -68,20 +65,6 @@ public class AtheneRequestMockProvider {
         if (closeable != null) {
             closeable.close();
         }
-    }
-
-    /**
-     * This method mocks feedback consistency response coming from Athene
-     *
-     * @param feedbackConflictResponseDTOs List of response DTOs, ideally an array of feedback conflicts
-     */
-    public void mockFeedbackConsistency(List<FeedbackConflictResponseDTO> feedbackConflictResponseDTOs) {
-        final ObjectNode node = mapper.createObjectNode();
-        node.set("feedbackInconsistencies", mapper.valueToTree(feedbackConflictResponseDTOs));
-        final String json = node.toString();
-
-        mockServer.expect(ExpectedCount.once(), requestTo(atheneUrl + "/feedback_consistency")).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
     }
 
     /**
