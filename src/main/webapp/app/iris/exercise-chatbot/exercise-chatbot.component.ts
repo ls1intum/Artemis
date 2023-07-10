@@ -59,6 +59,11 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.hasNewMessages = state.numNewMessages > 0;
         });
+
+        this.chatOpenSubscription = this.sharedService.chatOpen.subscribe((status) => {
+            this.chatOpen = status;
+            this.closed = !status;
+        });
     }
 
     ngOnDestroy() {
@@ -73,7 +78,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
             this.stateStore.dispatch(new NumNewMessagesResetAction());
             this.dialog.closeAll();
             //this.runAnimation = false;
-            //this.sharedService.changeChatOpenStatus(false);
             this.chatOpen = false;
             this.closed = true;
         } else {

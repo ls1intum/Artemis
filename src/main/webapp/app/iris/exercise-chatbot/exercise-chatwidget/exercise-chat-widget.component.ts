@@ -88,23 +88,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faThumbsDown = faThumbsDown;
 
     ngOnInit() {
-        /*this.dialog.afterOpened.subscribe(() => {
-            this.sharedService.changeChatOpenStatus(true);
-
-        });
-        this.dialog.afterAllClosed.subscribe(() => {
-            this.sharedService.changeChatOpenStatus(false);
-        });*/
-        /*this.dialog.afterOpened.subscribe(() => {
-            console.log('cağiriyor muuu');
-            this.data.chatOpen = true;
-            this.data.closed = false;
-        });
-        this.dialog.afterAllClosed.subscribe(() => {
-            console.log('kapanıyor mumumumum');
-            this.data.chatOpen = false;
-            this.data.closed = true;
-        });*/
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';
@@ -184,6 +167,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
+        this.sharedService.changeChatOpenStatus(false);
         this.dialog.closeAll();
     }
 
