@@ -1,4 +1,6 @@
-package de.tum.in.www1.artemis.domain.iris;
+package de.tum.in.www1.artemis.domain.iris.session;
+
+import java.time.ZonedDateTime;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -17,6 +19,10 @@ import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 @DiscriminatorValue("HESTIA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisHestiaSession extends IrisSession {
+
+    public IrisHestiaSession() {
+        setCreationDate(ZonedDateTime.now());
+    }
 
     @ManyToOne
     @JsonIgnore

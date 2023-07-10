@@ -172,6 +172,16 @@
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
                         </button>
                     </span>
+                    <button
+                        *ngIf="irisEnabled"
+                        type="button"
+                        (click)="showIrisSettings()"
+                        class="btn btn-secondary btn-sm"
+                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
+                    >
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
+                    </button>
                 </div>
                 <div>
                     <button
@@ -429,10 +439,6 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record testwise coverage</span></dt>
                 <dd>
                     <span>{{ programmingExercise.testwiseCoverageEnabled }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.irisActivated">Allow Iris Chatbot</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.irisActivated }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>

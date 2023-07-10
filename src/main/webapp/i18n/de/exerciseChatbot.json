@@ -27,7 +27,8 @@
             "text4_4": "<b>Vollbildmodus:</b> Du kannst das Widget im Vollbildmodus öffnen, indem du auf den Vollbildmodus-Button (in der oberen rechten Ecke des Widgets) klickst.",
             "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Ungelesene Nachrichten",
-            "buttonTooltip": "Beginne mit Iris zu chatten!"
+            "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst hier mehr über mich erfahren."
         }
     }
 }

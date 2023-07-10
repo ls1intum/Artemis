@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 
 /**
  * Interface for Iris session sub services.

@@ -7,7 +7,13 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    NumNewMessagesResetAction,
+    RateMessageSuccessAction,
+    StudentMessageSentAction,
+} from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
@@ -15,6 +21,7 @@ import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
 import { Overlay } from '@angular/cdk/overlay';
 import { SharedService } from 'app/iris/shared.service';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -42,6 +49,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     error = '';
     dots = 1;
     isInitializing = false;
+    isFirstMessage = false;
 
     userAccepted = false;
     isScrolledToBottom = true;
@@ -74,7 +82,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }
         });
     }
-
     // Icons
     faCircle = faCircle;
     faPaperPlane = faPaperPlane;
@@ -104,6 +111,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
+        this.loadFirstMessage();
         setTimeout(() => {
             this.isInitializing = false;
         }, 50);
@@ -120,7 +128,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngAfterViewInit() {
-        this.unreadMessageIndex = this.messages.length === 0 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
+        this.unreadMessageIndex = this.messages.length <= 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages; //<=1 first greeting message from chatbot will not show as unread
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
         } else {
@@ -142,6 +150,27 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         setInterval(() => {
             this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
         }, 500);
+    }
+
+    loadFirstMessage(): void {
+        const firstMessageContent = {
+            textContent: 'artemisApp.exerciseChatbot.firstMessage',
+            type: IrisMessageContentType.TEXT,
+        } as IrisMessageContent;
+
+        const firstMessage = {
+            sender: IrisSender.LLM,
+            id: 0,
+            content: [firstMessageContent],
+            sentAt: dayjs(),
+        } as IrisServerMessage;
+
+        if (this.messages.length === 0) {
+            this.isFirstMessage = true;
+            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
+        } else if (this.messages[0].id === firstMessage.id) {
+            this.isFirstMessage = true;
+        }
     }
 
     onSend(): void {
