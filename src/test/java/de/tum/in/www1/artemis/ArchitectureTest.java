@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
@@ -90,8 +91,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaMethod item, ConditionEvents events) {
                 boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
                 if (!satisfied) {
-                    events.add(
-                            SimpleConditionEvent.violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
                 }
             }
         };
