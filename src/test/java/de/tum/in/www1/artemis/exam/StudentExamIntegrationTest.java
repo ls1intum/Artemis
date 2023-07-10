@@ -409,7 +409,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
-
+            for (Exercise exercise : response.getExercises()) {
+                assertThat(exercise.getExerciseGroup()).isNotNull();
+            }
             assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
         }
