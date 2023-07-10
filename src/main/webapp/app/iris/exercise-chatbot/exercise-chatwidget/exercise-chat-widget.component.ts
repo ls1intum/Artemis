@@ -111,10 +111,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
-        this.loadFirstMessage();
         setTimeout(() => {
             this.isInitializing = false;
         }, 50);
+        this.loadFirstMessage();
     }
 
     scrollToBottom(behavior: ScrollBehavior) {
