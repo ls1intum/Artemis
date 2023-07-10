@@ -12,12 +12,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 /**
  * Spring Data JPA repository for the ModelElement entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ModelElementRepository extends JpaRepository<ModelElement, Long> {
-
-    @Query("select element from ModelElement element left join fetch element.cluster cluster where element.modelElementId = :#{#modelElementId}")
-    ModelElement findByModelElementIdWithCluster(@Param("modelElementId") String elementId);
 
     List<ModelElement> findByModelElementIdIn(List<String> elementIds);
 
