@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import {
@@ -14,7 +14,6 @@ import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServer
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs';
-import { IrisSessionService } from 'app/iris/session.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
