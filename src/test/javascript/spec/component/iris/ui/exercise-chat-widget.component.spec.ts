@@ -69,15 +69,18 @@ describe('ExerciseChatWidgetComponent', () => {
         // then
         expect(component.messages).toContain('Hello');
         expect(stateStore.dispatch).toHaveBeenCalledWith(
-            new StudentMessageSentAction({
-                sender: IrisSender.USER,
-                content: [
-                    {
-                        type: IrisMessageContentType.TEXT,
-                        textContent: 'Hello',
-                    },
-                ],
-            }),
+            new StudentMessageSentAction(
+                {
+                    sender: IrisSender.USER,
+                    content: [
+                        {
+                            type: IrisMessageContentType.TEXT,
+                            textContent: 'Hello',
+                        },
+                    ],
+                },
+                null,
+            ),
         );
     }));
 

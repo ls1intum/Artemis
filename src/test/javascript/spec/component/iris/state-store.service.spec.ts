@@ -260,7 +260,7 @@ describe('IrisStateStore', () => {
 
         const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
 
-        stateStore.dispatch(new StudentMessageSentAction(mockClientMessage));
+        stateStore.dispatch(new StudentMessageSentAction(mockClientMessage, null));
 
         const state2 = (await promise2) as MessageStoreState;
 
