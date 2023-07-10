@@ -81,7 +81,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
-        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(javaAnnotation -> javaAnnotation.getRawType().getPackageName());
+        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
     }
 
     private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
