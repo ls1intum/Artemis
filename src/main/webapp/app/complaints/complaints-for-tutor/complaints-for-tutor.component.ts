@@ -54,7 +54,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
         this.maxComplaintResponseTextLimit = this.course!.maxComplaintResponseTextLimit ?? 0;
         if (!this.exercise?.course) {
-            // exam
+            // Exams should always allow at least 2000 characters
             this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
         }
 
