@@ -35,6 +35,10 @@
                 "notFound": "No conversation found",
                 "favorites": "Favorites",
                 "channels": "Channels",
+                "generalChannels": "General",
+                "exerciseChannels": "Exercises",
+                "lectureChannels": "Lectures",
+                "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
                 "groupChats": "Group Chats",
@@ -180,7 +184,12 @@
                 }
             },
             "channelOverview": {
-                "title": "All Channels in course {{ courseTitle }}",
+                "title": {
+                    "general": "All General Channels in course {{ courseTitle }}",
+                    "exercise": "All Exercise Channels in course {{ courseTitle }}",
+                    "lecture": "All Lecture Channels in course {{ courseTitle }}",
+                    "exam": "All Exam Channels in course {{ courseTitle }}"
+                },
                 "createChannelButton": "Create a new channel",
                 "channelItem": {
                     "joined:": "Joined",

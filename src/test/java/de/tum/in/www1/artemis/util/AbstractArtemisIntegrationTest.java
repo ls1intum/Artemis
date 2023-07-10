@@ -16,7 +16,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
@@ -119,9 +118,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected TextBlockService textBlockService;
-
-    @SpyBean
-    protected PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
     @Autowired
     protected QuizScheduleService quizScheduleService;

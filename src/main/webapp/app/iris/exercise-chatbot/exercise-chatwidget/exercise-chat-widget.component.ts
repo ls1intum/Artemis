@@ -1,13 +1,12 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
-import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -28,9 +27,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     newMessageTextContent = '';
     isLoading: boolean;
     sessionId: number;
-    error: IrisErrorType | null;
     numNewMessages = 0;
     unreadMessageIndex: number;
+    error: IrisErrorType | null;
     dots = 1;
     resendAnimationActive = false;
     shakeErrorField = false;
@@ -71,17 +70,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
         this.toggleScrollLock(false);
-    }
-
-    private newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
-            textContent: message,
-        };
-        return {
-            sender: this.SENDER_USER,
-            content: [content],
-        };
     }
 
     animateDots() {
@@ -126,6 +114,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.dialog.closeAll();
+    }
+
+    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        return isStudentSentMessage(message);
+    }
+
+    isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isServerSentMessage(message);
+    }
+
+    private newUserMessage(message: string): IrisClientMessage {
+        const content: IrisMessageContent = {
+            type: IrisMessageContentType.TEXT,
+            textContent: message,
+        };
+        return {
+            sender: this.SENDER_USER,
+            content: [content],
+        };
     }
 
     rateMessage(message_id: number, index: number, helpful: boolean) {

@@ -65,6 +65,7 @@ import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercis
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
+import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -124,6 +125,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(LtiInitializerComponent),
                 MockComponent(ModelingEditorComponent),
+                MockComponent(ExerciseInfoComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -155,7 +157,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false, irisEnabled: true } as ProfileInfo;
+                const profileInfo = { inProduction: false } as ProfileInfo;
                 const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
                 getProfileInfoMock.mockReturnValue(profileInfoSubject);
 
@@ -192,7 +194,6 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         tick(500);
         expect(comp.inProductionEnvironment).toBeFalse();
-        expect(comp.irisProfileEnabled).toBeTrue();
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.hasMoreResults).toBeFalse();
@@ -300,25 +301,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
 
-    it('should handle new programming exercise', fakeAsync(() => {
-        const studentParticipation = new StudentParticipation();
-        studentParticipation.student = new User(99);
-        studentParticipation.submissions = [new TextSubmission()];
-        studentParticipation.type = ParticipationType.STUDENT;
-        studentParticipation.id = 42;
-        const result = new Result();
-        result.id = 1;
-        result.completionDate = dayjs();
-        studentParticipation.results = [result];
-        studentParticipation.exercise = exercise;
-
-        participationService = TestBed.inject(ParticipationService);
-        mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
-        mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
-
-        fixture.detectChanges();
-        tick(500);
-
+    it('should handle new programming exercise', () => {
         const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
         const submissionPolicy = new LockRepositoryPolicy();
         const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
@@ -332,7 +315,6 @@ describe('CourseExerciseDetailsComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: true,
             numberOfAssessmentsOfCorrectionRounds: [],
-            irisActivated: true,
         } as ProgrammingExercise;
 
         const childComponent = {} as DiscussionSectionComponent;
@@ -340,18 +322,15 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const courseId = programmingExercise.course!.id!;
 
-        comp.hasSubmissionPolicy = false;
         comp.courseId = courseId;
 
         comp.handleNewExercise(programmingExercise);
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
-        expect(comp.hasSubmissionPolicy).toBeTrue();
-        expect(comp.irisActivated).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
-    }));
+    });
 
     it('should handle error when getting latest rated result', fakeAsync(() => {
         const alertService = fixture.debugElement.injector.get(AlertService);

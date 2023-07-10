@@ -19,7 +19,7 @@
             <div *ngFor="let message of messages; let i = index">
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate | uppercase }}</span>
                 <div *ngFor="let content of message.content">
-                    <div *ngIf="message.sender === SENDER_USER" style="display: flex; flex-direction: row">
+                    <div *ngIf="isStudentSentMessage(message)" class="my-chat">
                         <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
                             <button
                                 id="resendButton"
@@ -35,7 +35,7 @@
                             <span [innerHTML]="content.textContent! | htmlForMarkdown" class="my-chat"></span>
                         </div>
                     </div>
-                    <div *ngIf="message.sender === SENDER_SERVER" style="width: fit-content">
+                    <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="client-chat">
                             <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>

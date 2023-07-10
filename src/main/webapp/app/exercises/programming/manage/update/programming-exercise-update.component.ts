@@ -105,8 +105,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public inProductionEnvironment: boolean;
 
-    public irisProfileEnabled: boolean;
-
     public supportedLanguages = ['java'];
 
     public packageNameRequired = true;
@@ -445,11 +443,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
-        // Checks if iris profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
-                this.irisProfileEnabled = profileInfo.irisEnabled;
             }
         });
 
@@ -776,6 +772,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseChannelName(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
             this.validateExerciseAuxiliryRepositories(validationErrorReasons);
         }
@@ -807,6 +804,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseChannelName(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.channelName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
                 translateValues: {},
             });
         }
@@ -1048,7 +1054,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
             selectedProjectType: this.selectedProjectType,
-            irisProfileEnabled: this.irisProfileEnabled,
         };
     }
 }

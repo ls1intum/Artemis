@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -124,6 +125,7 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
             mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setContent(answerPost.getContent());
+            existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         this.preparePostAndBroadcast(updatedAnswerPost, course);

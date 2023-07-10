@@ -30,7 +30,6 @@
     "allowOnlineEditor": true,
     "staticCodeAnalysisEnabled": false,
     "allowOfflineIde": true,
-    "irisActivated": false,
     "programmingLanguage": "JAVA",
     "noVersionControlAndContinuousIntegrationAvailable": false,
     "checkoutSolutionRepository": false,

@@ -27,13 +27,13 @@
     ></jhi-programming-exercise-editable-instructions>
 </div>
 <div class="form-group" *ngIf="!isExamMode">
-    <jhi-learning-goal-selection
-        id="learning-goals"
-        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+    <jhi-competency-selection
+        id="competencies"
+        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+        [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
         [(ngModel)]="programmingExercise.competencies"
-        name="learningGoals"
-    ></jhi-learning-goal-selection>
+        name="competencies"
+    ></jhi-competency-selection>
 </div>
 <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
     <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
@@ -158,15 +158,6 @@
                 placement="auto"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
             ></fa-icon>
-        </label>
-    </div>
-</div>
-<div class="form-group mb-0" *ngIf="irisProfileEnabled">
-    <div class="form-check">
-        <label class="form-check-label" for="field_irisActivated">
-            <input class="form-check-input" type="checkbox" name="irisActivated" id="field_irisActivated" [(ngModel)]="programmingExercise.irisActivated" checked />
-            <span jhiTranslate="artemisApp.programmingExercise.irisActivated">Allow Iris Chatbot</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.irisActivatedTooltip"></jhi-help-icon>
         </label>
     </div>
 </div>

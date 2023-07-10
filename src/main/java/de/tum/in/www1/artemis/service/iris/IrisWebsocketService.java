@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service.iris;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**

@@ -6,7 +6,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import de.tum.in.www1.artemis.domain.iris.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

@@ -43,8 +43,10 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -66,6 +68,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -90,16 +93,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
+    irisSettings?: IrisSettings;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
-
-    irisActivated?: boolean;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -108,8 +109,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-
-    public irisProfileEnabled: boolean;
 
     // Icons
     faBook = faBook;
@@ -140,6 +139,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -158,11 +158,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         // Checks if the current environment is production
-        // Checks if iris profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
-                this.irisProfileEnabled = profileInfo.irisEnabled;
             }
         });
     }
@@ -215,12 +213,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
-            this.irisActivated = this.irisProfileEnabled && programmingExercise.irisActivated;
+
+            this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!).subscribe((settings) => {
+                this.irisSettings = settings;
+            });
         }
 
         this.showIfExampleSolutionPresent(newExercise);
@@ -444,6 +443,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 

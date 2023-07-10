@@ -168,10 +168,11 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.useRealTimers();
     });
 
-    it('should set the appropriate message styles based on the sender', async () => {
+    it('should set the appropriate message styles based on the sender', fakeAsync(() => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
 
         fixture.detectChanges();
+        fixture.whenStable();
 
         const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
         const clientChats = chatBodyElement.querySelectorAll('.client-chat');
@@ -179,7 +180,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
-    });
+    }));
 
     it('should render rate message buttons for server responses only', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage, mockServerMessage]));

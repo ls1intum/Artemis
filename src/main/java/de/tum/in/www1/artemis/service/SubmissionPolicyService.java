@@ -238,7 +238,7 @@ public class SubmissionPolicyService {
     private void lockParticipationsWhenSubmissionsGreaterLimit(ProgrammingExercise exercise, int submissionLimit) {
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
             if (getParticipationSubmissionCount(studentParticipation) >= submissionLimit) {
-                programmingExerciseParticipationService.lockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
+                programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
     }
@@ -246,7 +246,7 @@ public class SubmissionPolicyService {
     private void unlockParticipationsWhenSubmissionsGreaterLimit(ProgrammingExercise exercise, int submissionLimit) {
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
             if (getParticipationSubmissionCount(studentParticipation) >= submissionLimit) {
-                programmingExerciseParticipationService.unlockStudentRepository(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
+                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
     }
@@ -294,7 +294,7 @@ public class SubmissionPolicyService {
         if (submissions == allowedSubmissions) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository
                     .findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
-            programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
+            programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
         }
         // This is the fallback behavior in case the VCS does not lock the repository for whatever reason when the
         // submission limit is reached.
@@ -373,20 +373,5 @@ public class SubmissionPolicyService {
                 result.addFeedback(penaltyFeedback);
             }
         }
-    }
-
-    /**
-     * Determines whether a participation repository is locked, depending on the active policy
-     * of a programming exercise. This method does NOT take any other factors into account.
-     *
-     * @param policy                   that determines the submission limit for the programming exercise
-     * @param programmingParticipation that is either locked or unlocked
-     * @return true when the repository should be locked, false if not
-     */
-    public boolean isParticipationLocked(LockRepositoryPolicy policy, Participation programmingParticipation) {
-        if (policy == null || !policy.isActive()) {
-            return false;
-        }
-        return policy.getSubmissionLimit() <= getParticipationSubmissionCount(programmingParticipation);
     }
 }

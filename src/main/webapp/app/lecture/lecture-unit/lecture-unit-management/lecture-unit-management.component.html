@@ -55,12 +55,12 @@
                 <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
             </div>
             <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                <jhi-learning-goals-popover
-                    *ngIf="lecture.course?.id && showLearningGoals"
+                <jhi-competencies-popover
+                    *ngIf="lecture.course?.id && showCompetencies"
                     [courseId]="lecture.course!.id!"
-                    [learningGoals]="lectureUnit.competencies || []"
-                    [navigateTo]="'learningGoalManagement'"
-                ></jhi-learning-goals-popover>
+                    [competencies]="lectureUnit.competencies || []"
+                    [navigateTo]="'competencyManagement'"
+                ></jhi-competencies-popover>
                 <div class="d-flex gap-1 w-100">
                     <button
                         type="button"

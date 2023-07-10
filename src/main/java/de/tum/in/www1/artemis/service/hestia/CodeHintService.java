@@ -24,7 +24,7 @@ public class CodeHintService {
 
     private final Logger log = LoggerFactory.getLogger(CodeHintService.class);
 
-    private final IrisHestiaSessionService irisHestiaSessionService;
+    private final Optional<IrisHestiaSessionService> irisHestiaSessionService;
 
     private final CodeHintRepository codeHintRepository;
 
@@ -32,7 +32,7 @@ public class CodeHintService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
-    public CodeHintService(IrisHestiaSessionService irisHestiaSessionService, CodeHintRepository codeHintRepository, ProgrammingExerciseTaskRepository taskRepository,
+    public CodeHintService(Optional<IrisHestiaSessionService> irisHestiaSessionService, CodeHintRepository codeHintRepository, ProgrammingExerciseTaskRepository taskRepository,
             ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.codeHintRepository = codeHintRepository;
@@ -193,6 +193,6 @@ public class CodeHintService {
      * @return The code hint with description and content
      */
     public CodeHint generateDescriptionWithIris(CodeHint codeHint) {
-        return irisHestiaSessionService.generateDescription(codeHint);
+        return irisHestiaSessionService.orElseThrow().generateDescription(codeHint);
     }
 }

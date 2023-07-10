@@ -9,7 +9,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
@@ -259,7 +259,16 @@ describe('ComplaintService', () => {
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
-        it('should calculate the correct complaint due date for no exercise deadline', () => {
+        it('should return undefined for quiz exercise', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3;
+            exercise.dueDate = undefined;
+            exercise.type = ExerciseType.QUIZ;
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
+            expect(individualComplaintDueDate).toBeUndefined();
+        });
+
+        it('should calculate the correct complaint due date for no exercise due date', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
             exercise.dueDate = undefined;

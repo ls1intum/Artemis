@@ -30,6 +30,8 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisFor(course);
+        activateIrisFor(exercise);
     }
 
     @Test
@@ -37,8 +39,8 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
     void updateSolutionEntriesOnSaving() throws Exception {
         addCodeHints();
 
-        gpt35RequestMockProvider.mockResponse("Hello World Content");
-        gpt35RequestMockProvider.mockResponse("Hello World Description");
+        irisRequestMockProvider.mockResponse("Hello World Content");
+        irisRequestMockProvider.mockResponse("Hello World Description");
 
         var updatedCodeHint = request.postWithResponseBody("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/generate-description", null,
                 CodeHint.class, HttpStatus.OK);

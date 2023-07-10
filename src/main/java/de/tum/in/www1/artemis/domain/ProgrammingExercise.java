@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -142,8 +143,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
 
-    @Column(name = "iris_activated", table = "programming_exercise_details")
-    private boolean irisActivated = false;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
+    private IrisSettings irisSettings;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -698,7 +700,7 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the deadline
+            // as their relevantDueDate is before the due date
             if (getAllowManualFeedbackRequests()) {
                 return true;
             }
@@ -854,6 +856,10 @@ public class ProgrammingExercise extends Exercise {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
+    public IrisSettings getIrisSettings() {
+        return irisSettings;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -864,11 +870,7 @@ public class ProgrammingExercise extends Exercise {
         super.disconnectRelatedEntities();
     }
 
-    public boolean isIrisActivated() {
-        return irisActivated;
-    }
-
-    public void setIrisActivated(boolean irisActivated) {
-        this.irisActivated = irisActivated;
+    public void setIrisSettings(IrisSettings irisSettings) {
+        this.irisSettings = irisSettings;
     }
 }
