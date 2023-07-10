@@ -71,6 +71,9 @@ public class AthenaFeedbackSuggestionsService {
                 var ref = feedbackDTO.toTextBlockRef(submission);
                 ref.getBlock().automatic();
                 ref.getFeedback().setType(FeedbackType.AUTOMATIC);
+                // Add IDs to connect block and ID
+                ref.getBlock().computeId();
+                ref.getFeedback().setReference(ref.getBlock().getId());
                 return ref;
             }).toList();
         }

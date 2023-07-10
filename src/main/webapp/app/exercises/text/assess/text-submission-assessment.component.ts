@@ -37,6 +37,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
+import { TextBlock } from 'app/entities/text-block.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -238,6 +239,69 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
+     * Adds a TextBlockRef, adjusting existing automatic text blocks to fit around the new text block if necessary (and possible).
+     * Example: There already are 2 text blocks:
+     *          - block 1 from index 0 to 10 (automatically generated)
+     *          - block 2 from index 10 to 20 (automatically generated)
+     *          Now, we add a new text block ref with feedback from index 5 to 15.
+     *          Then, we have three text blocks: 0-5, 5-15, 15-20.
+     * If the split conflicts with a manual feedback, we don't add the TextBlockRef at all.
+     *
+     * @param refToAdd The TextBlockRef to add (text block + feedback on it)
+     * @private
+     */
+    private addAutomaticTextBlockRef(refToAdd: TextBlockRef) {
+        const newTextBlockRefs: TextBlockRef[] = [];
+        const [start, end] = [refToAdd.block!.startIndex!, refToAdd.block!.endIndex!];
+        for (const existingBlockRef of this.textBlockRefs) {
+            const [exStart, exEnd] = [existingBlockRef.block!.startIndex!, existingBlockRef.block!.endIndex!];
+            if (exEnd <= start || exStart >= end) {
+                // No overlap with text block to add
+                newTextBlockRefs.push(existingBlockRef);
+            } else {
+                if (exStart < start) {
+                    // Existing text block starts before text block to add
+                    if (exEnd > end) {
+                        // Existing text block ends after text block to add => covers the whole text block to add
+                        // Split the existing text block into two text blocks
+                        const newBlockRef = new TextBlockRef(new TextBlock(), undefined);
+                        newBlockRef.block!.startIndex = end;
+                        newBlockRef.block!.endIndex = exEnd;
+                        newBlockRef.block!.submission = this.submission;
+                        newBlockRef.block!.computeId();
+
+                        existingBlockRef.block!.endIndex = start;
+                        newTextBlockRefs.push(existingBlockRef);
+                        newTextBlockRefs.push(newBlockRef);
+                    } else {
+                        existingBlockRef.block!.endIndex = start;
+                        newTextBlockRefs.push(existingBlockRef);
+                    }
+                } else if (exEnd > end) {
+                    // Existing text block ends after text block to add
+                    existingBlockRef.block!.startIndex = end;
+                    newTextBlockRefs.push(existingBlockRef);
+                }
+            }
+        }
+
+        // Add the text block to add
+        newTextBlockRefs.push(refToAdd);
+
+        // Sort the new text block refs by their start index
+        newTextBlockRefs.sort((ref1, ref2) => ref1.block!.startIndex! - ref2.block!.startIndex!);
+
+        // Update the text on all text block refs
+        for (const blockRef of newTextBlockRefs) {
+            blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex!);
+        }
+
+        this.textBlockRefs = newTextBlockRefs;
+        this.submission!.blocks = this.textBlockRefs.map((blockRef) => blockRef.block!);
+        this.result!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined) as Feedback[];
+    }
+
+    /**
      * Start loading feedback suggestions from Athena
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
@@ -248,9 +312,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.feedbackSuggestionsObservable = this.athenaService.getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!).pipe(
             map((resp: HttpResponse<TextBlockRef[]>) => {
                 const feedbackSuggestions = resp.body!;
-                this.textBlockRefs = [...this.textBlockRefs, ...feedbackSuggestions];
-                // update text blocks and feedbacks and resolve text block conflicts
-                this.prepareTextBlocksAndFeedbacks();
+                for (const suggestion of feedbackSuggestions) {
+                    this.addAutomaticTextBlockRef(suggestion);
+                }
             }),
         );
         // actually consume data
