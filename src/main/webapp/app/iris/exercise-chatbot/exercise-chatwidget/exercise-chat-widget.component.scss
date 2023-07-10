@@ -20,6 +20,8 @@
     height: 430px;
     background-color: var(--iris-chat-widget-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+    max-width: 90%;
+    max-height: 81%;
 }
 
 .ng-draggable {
