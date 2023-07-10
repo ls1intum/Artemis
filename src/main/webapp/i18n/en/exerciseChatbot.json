@@ -18,6 +18,7 @@
                 "irisDisabled": "Iris has been disabled for this exercise.",
                 "timeout": "The Artemis server has not sent a response yet. Please don't reload the page."
             }
+            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me here."
         }
     }
 }

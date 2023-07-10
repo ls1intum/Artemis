@@ -18,6 +18,7 @@
                 "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
                 "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut."
             }
+            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst hier mehr über mich erfahren."
         }
     }
 }
