@@ -37,6 +37,7 @@
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="rate-message-buttons">
+                            <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
                                 <fa-icon
                                     [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
@@ -53,7 +54,6 @@
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
                         <div class="client-chat">
                             <span *ngIf="isGreetingMessage && i == 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
-                            <span *ngIf="!isGreetingMessage || (isGreetingMessage && i > 0)" [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>
                     </div>
                 </div>
