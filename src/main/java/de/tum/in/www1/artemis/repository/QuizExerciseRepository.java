@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the QuizExercise entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
@@ -64,11 +63,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
         return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
-
-    @NotNull
-    default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
-    };
 
     /**
      * Get one quiz exercise

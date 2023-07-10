@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
@@ -19,18 +19,22 @@ import {
 } from '../../support/artemis';
 import { admin, instructor, studentOne } from '../../support/users';
 
+// Common primitives
+const uid = generateUUID();
+const examTitle = 'exam' + uid;
+let groupCount = 0;
+let createdGroup: ExerciseGroup;
+
 describe('Exam management', () => {
     let course: Course;
     let exam: Exam;
-    let createdGroup: ExerciseGroup;
-    let groupCount = 0;
 
-    before('Create course', () => {
+    before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new ExamBuilder(course).title('Exam ' + generateUUID()).build();
+            const examConfig = new ExamBuilder(course).title(examTitle).build();
             courseManagementRequest.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
@@ -55,7 +59,7 @@ describe('Exam management', () => {
         it('Create exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.id!);
+            courseManagement.openExamsOfCourse(course.shortName!);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
             examExerciseGroups.clickAddExerciseGroup();
@@ -75,7 +79,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
-            const textExerciseTitle = 'Text ' + generateUUID();
+            const textExerciseTitle = 'text' + uid;
             textExerciseCreation.typeTitle(textExerciseTitle);
             textExerciseCreation.typeMaxPoints(10);
             textExerciseCreation.create().its('response.statusCode').should('eq', 201);
@@ -87,7 +91,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddQuizExercise(exerciseGroup.id!);
-            const quizExerciseTitle = 'Quiz ' + generateUUID();
+            const quizExerciseTitle = 'quiz' + uid;
             quizExerciseCreation.setTitle(quizExerciseTitle);
             quizExerciseCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
             quizExerciseCreation.saveQuiz().its('response.statusCode').should('eq', 201);
@@ -99,7 +103,7 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
-            const modelingExerciseTitle = 'Modeling ' + generateUUID();
+            const modelingExerciseTitle = 'modeling' + uid;
             modelingExerciseCreation.setTitle(modelingExerciseTitle);
             modelingExerciseCreation.setPoints(10);
             modelingExerciseCreation.save().its('response.statusCode').should('eq', 201);
@@ -111,11 +115,9 @@ describe('Exam management', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
-            const uid = generateUUID();
-            const programmingExerciseTitle = 'Programming ' + uid;
-            const programmingExerciseShortName = 'programming' + uid;
+            const programmingExerciseTitle = 'programming' + uid;
             programmingExerciseCreation.setTitle(programmingExerciseTitle);
-            programmingExerciseCreation.setShortName(programmingExerciseShortName);
+            programmingExerciseCreation.setShortName(programmingExerciseTitle);
             programmingExerciseCreation.setPackageName('de.test');
             programmingExerciseCreation.setPoints(10);
             programmingExerciseCreation.generate().its('response.statusCode').should('eq', 201);
@@ -138,7 +140,7 @@ describe('Exam management', () => {
         it('Delete an exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.id!);
+            courseManagement.openExamsOfCourse(course.shortName!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
             let group = exerciseGroup;
@@ -162,18 +164,21 @@ describe('Exam management', () => {
             studentExamManagement.clickRegisterCourseStudents().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
-            studentExamManagement.getRegisteredStudents().contains(studentOne.username).should('be.visible');
+            cy.get('#registered-students').contains(studentOne.username).should('be.visible');
         });
 
         it('Generates student exams', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openStudentExams(exam.id!);
             studentExamManagement.clickGenerateStudentExams();
-            studentExamManagement.getGenerateStudentExamsButton().should('be.disabled');
+            cy.get('#generateMissingStudentExamsButton').should('be.disabled');
         });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+    after(() => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });
