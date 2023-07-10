@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class QuizCacheTest extends AbstractSpringIntegrationTest {
 
     private static final String TEST_PREFIX = "quizcachetest";
 

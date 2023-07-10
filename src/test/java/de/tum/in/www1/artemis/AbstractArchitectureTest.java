@@ -8,7 +8,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 
-public abstract class AbstractArchitectureTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public abstract class AbstractArchitectureTest extends AbstractSpringIntegrationTest {
 
     protected static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
 

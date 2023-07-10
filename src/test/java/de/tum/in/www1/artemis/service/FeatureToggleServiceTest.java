@@ -9,11 +9,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
-class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeatureToggleServiceTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private FeatureToggleService featureToggleService;

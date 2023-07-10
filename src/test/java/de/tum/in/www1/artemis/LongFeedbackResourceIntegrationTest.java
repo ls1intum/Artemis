@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
     private static final String TEST_PREFIX = "longfeedbackintegration";
 

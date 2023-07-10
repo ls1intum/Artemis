@@ -27,7 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -58,7 +58,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SingleUserNotificationServiceTest extends AbstractSpringIntegrationTest {
 
     private static final String TEST_PREFIX = "singleusernotification";
 

@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
-class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationTest {
 
     private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
 

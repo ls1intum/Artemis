@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
@@ -14,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -41,7 +40,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 /**
  * Contains useful methods for testing the conversations futures
  */
-abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class AbstractConversationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CourseRepository courseRepository;

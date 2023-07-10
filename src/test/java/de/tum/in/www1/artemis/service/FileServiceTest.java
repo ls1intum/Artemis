@@ -20,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
-class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileServiceTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;

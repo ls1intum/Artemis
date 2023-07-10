@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
     private static final String TEST_PREFIX = "fileintegration";
 
