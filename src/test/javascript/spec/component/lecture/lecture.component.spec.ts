@@ -236,11 +236,12 @@ describe('Lecture', () => {
 
     it('should sort rows', () => {
         const sortSpy = jest.spyOn(sortService, 'sortByProperty');
-        lectureComponent.filteredLectures = [currentLecture];
-        lectureComponent.predicate = 'testPredicate';
-        lectureComponent.ascending = true;
+        lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
+        lectureComponent.predicate = 'id';
+        lectureComponent.ascending = false;
         lectureComponent.sortRows();
         expect(sortSpy).toHaveBeenCalledWith(lectureComponent.filteredLectures, lectureComponent.predicate, lectureComponent.ascending);
         expect(sortSpy).toHaveBeenCalledOnce();
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([8, 7, 6, 5, 4, 3, 2, 1]);
     });
 });
