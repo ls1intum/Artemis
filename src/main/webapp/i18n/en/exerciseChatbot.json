@@ -7,7 +7,8 @@
             "accept": "Accept",
             "decline": "Decline",
             "unreadMessages": "Unread messages",
-            "buttonTooltip": "Start chatting with Iris!"
+            "buttonTooltip": "Start chatting with Iris!",
+            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me here."
         }
     }
 }
