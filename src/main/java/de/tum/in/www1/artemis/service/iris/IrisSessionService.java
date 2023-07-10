@@ -54,7 +54,6 @@ public class IrisSessionService {
 
     /**
      * Creates a new Iris session for the given exercise and user.
-     * If a session already exists, created a new one.
      *
      * @param exercise The exercise the session belongs to
      * @param user     The user the session belongs to
