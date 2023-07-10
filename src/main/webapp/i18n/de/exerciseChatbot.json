@@ -16,7 +16,8 @@
                 "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
-                "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut."
+                "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
+                "emptyMessage": "Du kannst nicht leere Nachrichten abschicken."
             },
             "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst hier mehr über mich erfahren."
         }

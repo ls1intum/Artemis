@@ -67,7 +67,10 @@
                     </div>
                 </div>
             </div>
-            <div class="client-chat-error" *ngIf="error" [ngClass]="{ 'shake-animation': shakeErrorField }">
+            <div class="client-chat-error" *ngIf="error && isEmptyMessageError()" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationEnd($event)">
+                {{ error.key | artemisTranslate }}
+            </div>
+            <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()" [ngClass]="{ 'shake-animation': shakeErrorField }">
                 {{ error.key | artemisTranslate }}
             </div>
         </div>
@@ -75,7 +78,7 @@
         <!-- input field section -->
         <div class="chat-input">
             <input [(ngModel)]="newMessageTextContent" type="text" (keyup.enter)="onSend()" placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}" />
-            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading || !!error">
+            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="deactivateSubmitButton()">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
         </div>

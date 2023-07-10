@@ -24,11 +24,29 @@ import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/ir
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs';
+import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
+    animations: [
+        trigger('fadeAnimation', [
+            state(
+                'start',
+                style({
+                    opacity: 1,
+                }),
+            ),
+            state(
+                'end',
+                style({
+                    opacity: 0,
+                }),
+            ),
+            transition('start => end', [animate('2s ease')]),
+        ]),
+    ],
 })
 export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
@@ -52,6 +70,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     shakeErrorField = false;
     isGreetingMessage = false;
     shouldLoadGreetingMessage = true;
+    fadeState = '';
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
@@ -73,6 +92,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
+            if (state.error?.key == IrisErrorMessageKey.EMPTY_MESSAGE) {
+                this.fadeState = 'start';
+            }
         });
         if (this.shouldLoadGreetingMessage) {
             this.loadFirstMessage();
@@ -120,6 +142,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     onSend(): void {
+        if (this.newMessageTextContent.trim() === '') {
+            this.stateStore.dispatchAndThen(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE)).catch(() => this.scrollToBottom('smooth'));
+            return;
+        }
         if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
             const timeoutId = setTimeout(() => {
@@ -236,6 +262,20 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             document.body.classList.add('cdk-global-scrollblock');
         } else {
             document.body.classList.remove('cdk-global-scrollblock');
+        }
+    }
+
+    deactivateSubmitButton(): boolean {
+        return this.isLoading || (!!this.error && this.error.fatal);
+    }
+
+    isEmptyMessageError(): boolean {
+        return !!this.error && this.error.key == IrisErrorMessageKey.EMPTY_MESSAGE;
+    }
+
+    onFadeAnimationEnd(event: AnimationEvent) {
+        if (event.toState === 'start') {
+            this.fadeState = 'end';
         }
     }
 }

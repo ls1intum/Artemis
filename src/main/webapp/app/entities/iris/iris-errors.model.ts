@@ -7,6 +7,7 @@ export enum IrisErrorMessageKey {
     RATE_MESSAGE_FAILED = 'artemisApp.exerciseChatbot.errors.rateMessageFailed',
     IRIS_DISABLED = 'artemisApp.exerciseChatbot.errors.irisDisabled',
     IRIS_SERVER_RESPONSE_TIMEOUT = 'artemisApp.exerciseChatbot.errors.timeout',
+    EMPTY_MESSAGE = 'artemisApp.exerciseChatbot.errors.emptyMessage',
 }
 
 export interface IrisErrorType {
@@ -23,6 +24,7 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.RATE_MESSAGE_FAILED, fatal: false },
     { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: true },
     { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT, fatal: false },
+    { key: IrisErrorMessageKey.EMPTY_MESSAGE, fatal: false },
 ];
 
 export const errorMessages: Readonly<{ [key in IrisErrorMessageKey]: IrisErrorType }> = Object.freeze(
