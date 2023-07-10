@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Participation entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
@@ -85,8 +84,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     List<StudentParticipation> findByTeamId(Long teamId);
 
-    Optional<StudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
-
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
 
@@ -118,16 +115,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.testRun = :#{#testRun}
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
-            @Param("testRun") boolean testRun);
-
-    @Query("""
-            SELECT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.student.login = :#{#username}
-            AND p.testRun = :#{#testRun}
-            """)
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
             @Param("testRun") boolean testRun);
 
     @Query("""
@@ -188,11 +175,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(@Param("exerciseId") Long exerciseId,
             @Param("studentId") Long studentId, @Param("testRun") boolean testRun);
-
-    default StudentParticipation findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksElseThrow(Long exerciseId, Long studentId, boolean testRun) {
-        return findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exerciseId, studentId, testRun)
-                .orElseThrow(() -> new EntityNotFoundException("Student Participation", exerciseId + "-" + studentId));
-    }
 
     /**
      * Get all participations for an exercise with each manual and latest results (determined by id).
@@ -451,44 +433,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
 
     /**
-     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database. Returns an empty Optional if the
-     * participation could not be found.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with eager submissions and results or an empty Optional
-     */
-    @Query("""
-            select p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.submission rs
-            left join fetch p.submissions s
-            left join fetch s.results
-            left join p.team.students
-            where p.id = :#{#participationId}
-                and (s.type <> 'ILLEGAL' or s.type is null)
-                and (rs.type <> 'ILLEGAL' or rs.type is null)
-            """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(@Param("participationId") Long participationId);
-
-    /**
-     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
-     * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with eager submissions, results, exercise and course or an empty Optional
-     */
-    @Query("""
-            select p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch p.submissions s
-            left join fetch s.results sr
-            left join fetch sr.feedbacks
-            left join p.team.students
-            where p.id = :#{#participationId}
-            """)
-    Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(@Param("participationId") Long participationId);
-
-    /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
      * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
      * <p>
@@ -578,13 +522,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            WHERE p.student.id = :#{#studentId}
-                AND p.exercise in :#{#exercises}
-            """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
