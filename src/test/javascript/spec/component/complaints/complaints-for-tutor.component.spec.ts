@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -265,6 +266,7 @@ describe('ComplaintsForTutorComponent', () => {
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         expect(responseTextArea.value).toHaveLength(26);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(26);
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -316,6 +318,16 @@ describe('ComplaintsForTutorComponent', () => {
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         expect(responseTextArea.maxLength).toBe(26);
     }));
+
+    it('should calculate the correct maximum text length for exam exercises', () => {
+        exercise.course = undefined;
+        exercise.exerciseGroup = { exam: { course: course } } as ExerciseGroup;
+
+        complaintForTutorComponentFixture.detectChanges();
+
+        // use the default value if the course would define a lower maximum for exam exercises
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);
+    });
 
     it.each(['success', 'failure'])(
         'should handle %s after updating assessment after complaint',
