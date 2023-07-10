@@ -227,7 +227,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
     }
 
-    public boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups) {
+    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         if (exercise.isExamExercise()) {
             return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
