@@ -37,4 +37,5 @@ export const mockState = {
     error: null,
     numNewMessages: 0,
     sessionId: 0,
+    serverResponseTimeout: null,
 };

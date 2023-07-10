@@ -34,6 +34,7 @@ export class IrisStateStore implements OnDestroy {
         isLoading: false,
         numNewMessages: 0,
         error: null,
+        serverResponseTimeout: null,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -111,7 +112,6 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        // TODO handle timeout
         if (state.error != null && state.error.fatal) {
             return {
                 messages: [...state.messages],
@@ -119,6 +119,7 @@ export class IrisStateStore implements OnDestroy {
                 numNewMessages: state.numNewMessages,
                 isLoading: false,
                 error: state.error,
+                serverResponseTimeout: null,
             };
         }
 
@@ -127,6 +128,7 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 isLoading: false,
                 error: errorMessages[IrisErrorMessageKey.INVALID_SESSION_STATE],
+                serverResponseTimeout: null,
             };
         }
         if (isNumNewMessagesResetAction(action)) {
@@ -142,20 +144,29 @@ export class IrisStateStore implements OnDestroy {
                 messages: [...state.messages, castedAction.message],
                 isLoading: false,
                 error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isActiveConversationMessageLoadedAction(action)) {
             const castedAction = action as ActiveConversationMessageLoadedAction;
+            if (state.serverResponseTimeout) {
+                clearTimeout(state.serverResponseTimeout);
+            }
             return {
                 messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
                 isLoading: false,
                 numNewMessages: state.numNewMessages + 1,
                 error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
+            if (state.serverResponseTimeout && (castedAction.errorType == IrisErrorMessageKey.SEND_MESSAGE_FAILED || castedAction.errorType == IrisErrorMessageKey.IRIS_DISABLED)) {
+                clearTimeout(state.serverResponseTimeout);
+                state.serverResponseTimeout = null;
+            }
             return {
                 ...state,
                 isLoading: false,
@@ -169,6 +180,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: castedAction.messages,
                 sessionId: castedAction.sessionId,
                 error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isStudentMessageSentAction(action)) {
@@ -181,6 +193,7 @@ export class IrisStateStore implements OnDestroy {
                 messages: [...state.messages, castedAction.message],
                 isLoading: true,
                 error: null,
+                serverResponseTimeout: castedAction.timeoutId,
             };
         }
         if (isRateMessageSuccessAction(action)) {

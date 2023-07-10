@@ -15,7 +15,8 @@
                 "sessionCreationFailed": "Could not create a new session.",
                 "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
                 "rateMessageFailed": "Could not rate message. Please try again later.",
-                "irisDisabled": "Iris has been disabled for this exercise."
+                "irisDisabled": "Iris has been disabled for this exercise.",
+                "timeout": "The Artemis server has not sent a response yet. Please don't reload the page."
             }
         }
     }

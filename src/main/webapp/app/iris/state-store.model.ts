@@ -5,13 +5,17 @@ export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
     ACTIVE_CONVERSATION_MESSAGE_LOADED = 'active-conversation-message-loaded',
-    CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred', // TODO rename to error changed after advanced ui PR is merged
+    CONVERSATION_ERROR_OCCURRED = 'conversation-error-occurred',
     STUDENT_MESSAGE_SENT = 'student-message-sent',
     SESSION_CHANGED = 'session-changed',
     RATE_MESSAGE_SUCCESS = 'rate-message-success',
 }
 
-export class NumNewMessagesResetAction {
+export interface MessageStoreAction {
+    type: ActionType;
+}
+
+export class NumNewMessagesResetAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor() {
@@ -19,7 +23,7 @@ export class NumNewMessagesResetAction {
     }
 }
 
-export class HistoryMessageLoadedAction {
+export class HistoryMessageLoadedAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(public readonly message: IrisServerMessage) {
@@ -27,7 +31,7 @@ export class HistoryMessageLoadedAction {
     }
 }
 
-export class ActiveConversationMessageLoadedAction {
+export class ActiveConversationMessageLoadedAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(public readonly message: IrisServerMessage) {
@@ -35,7 +39,7 @@ export class ActiveConversationMessageLoadedAction {
     }
 }
 
-export class ConversationErrorOccurredAction {
+export class ConversationErrorOccurredAction implements MessageStoreAction {
     readonly type: ActionType;
 
     constructor(public readonly errorType: IrisErrorMessageKey | null) {
@@ -43,15 +47,15 @@ export class ConversationErrorOccurredAction {
     }
 }
 
-export class StudentMessageSentAction {
+export class StudentMessageSentAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage) {
+    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout>) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
     }
 }
 
-export class SessionReceivedAction {
+export class SessionReceivedAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(public readonly sessionId: number, public readonly messages: ReadonlyArray<IrisMessage>) {
@@ -59,22 +63,13 @@ export class SessionReceivedAction {
     }
 }
 
-export class RateMessageSuccessAction {
+export class RateMessageSuccessAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(public readonly index: number, public readonly helpful: boolean) {
         this.type = ActionType.RATE_MESSAGE_SUCCESS;
     }
 }
-
-export type MessageStoreAction =
-    | NumNewMessagesResetAction
-    | HistoryMessageLoadedAction
-    | ActiveConversationMessageLoadedAction
-    | ConversationErrorOccurredAction
-    | StudentMessageSentAction
-    | SessionReceivedAction
-    | RateMessageSuccessAction;
 
 export function isNumNewMessagesResetAction(action: MessageStoreAction): action is NumNewMessagesResetAction {
     return action.type === ActionType.NUM_NEW_MESSAGES_RESET;
@@ -111,5 +106,6 @@ export class MessageStoreState {
         public isLoading: boolean,
         public numNewMessages: number,
         public error: IrisErrorType | null,
+        public serverResponseTimeout: ReturnType<typeof setTimeout> | null,
     ) {}
 }

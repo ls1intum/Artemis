@@ -88,8 +88,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     onSend(): void {
         if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
+            const timeoutId = setTimeout(() => {
+                // will be cleared by the store automatically
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            }, 20000);
             this.stateStore
-                .dispatchAndThen(new StudentMessageSentAction(message))
+                .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
                 .catch(() => {
@@ -174,7 +178,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     isSendMessageFailedError(): boolean {
-        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED; // TODO or timeout
+        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED || this.error?.key == IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT;
     }
 
     triggerShake() {

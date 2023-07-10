@@ -122,6 +122,7 @@ describe('IrisStateStore', () => {
         const action: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
+            timeoutId: null,
         };
 
         const obs = stateStore.getState();
@@ -143,6 +144,7 @@ describe('IrisStateStore', () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
+            timeoutId: null,
         };
 
         const action2: ActiveConversationMessageLoadedAction = {
@@ -221,6 +223,7 @@ describe('IrisStateStore', () => {
         expect(state).toStrictEqual({
             ...mockState,
             error: errorMessages[IrisErrorMessageKey.HISTORY_LOAD_FAILED],
+            serverResponseTimeout: null,
         });
     });
 
@@ -228,6 +231,7 @@ describe('IrisStateStore', () => {
         const action: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
+            timeoutId: null,
         };
 
         await stateStore.dispatchAndThen(action).then(async () => {
