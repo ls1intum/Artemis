@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './submission-result-status.component.html',
 })
 export class SubmissionResultStatusComponent implements OnChanges {
+    private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
     readonly dayjs = dayjs;
@@ -59,11 +60,10 @@ export class SubmissionResultStatusComponent implements OnChanges {
         if (this.exercise.type === ExerciseType.QUIZ) {
             this.shouldShowResult = !!this.studentParticipation?.results?.length;
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const initializationStatesForResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
             this.shouldShowResult =
                 (!!this.studentParticipation?.results?.length || !afterDueDate) &&
                 !!this.studentParticipation?.initializationState &&
-                initializationStatesForResult.includes(this.studentParticipation.initializationState);
+                this.initializationStatesToShowProgrammingResult.includes(this.studentParticipation.initializationState);
         } else {
             this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
         }
