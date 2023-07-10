@@ -295,8 +295,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
         textarea.rows = 1;
-        scrollArrow.style.bottom = '60 px';
-        chatBody.style.height = `calc(100% - 100px)`;
+        textarea.style.height = '';
+        scrollArrow.style.bottom = '';
+        chatBody.style.height = '';
         this.stateStore.dispatch(new NumNewMessagesResetAction());
     }
 
