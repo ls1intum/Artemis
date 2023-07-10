@@ -91,13 +91,14 @@
         <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary" (click)="downloadArchive()">
+    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-primary" (click)="downloadArchive()">
         <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
     <button
         *ngIf="canCleanupCourse()"
         [disabled]="isBeingArchived"
+        [attr.data-mode]="archiveMode"
         jhiDeleteButton
         [buttonSize]="ButtonSize.MEDIUM"
         [actionType]="ActionType.Cleanup"

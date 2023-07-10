@@ -1,6 +1,6 @@
 <div *ngIf="course">
     <jhi-header-course [course]="course"></jhi-header-course>
-    <div class="temp-tab-bar">
+    <div class="tab-bar">
         <div>
             <a [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
                 <fa-icon [icon]="faGraduationCap"></fa-icon>

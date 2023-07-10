@@ -2,7 +2,6 @@ button {
     margin: 0 !important; // override bootstrap
 }
 
-#archiveButton[data-mode='Exam'] {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0 !important;
+button[data-mode='Exam'] {
+    margin-top: 0.25rem !important; // override bootstrap
 }
