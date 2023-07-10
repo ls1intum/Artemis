@@ -19,7 +19,7 @@
             "subheading3": "Boundaries & Limitations",
             "text3_1": "<b>No Solution:</b> Iris is designed to guide your learning process, which means she won't simply give you the complete solution to a task. Instead, she will help you by answering specific questions and offering hints to assist you in solving the task on your own.",
             "text3_2": "<b>No Off-Topic Conversations:</b> Iris's main focus is programming. Therefore, she won't answer questions that aren't related to programming or the current programming exercise you're working on.",
-            "text3_3": "<b>No Organizational Information:</b> Iris won't provide information to organizational topics.",
+            "text3_3": "<b>No Organizational Information:</b> Iris won't provide information to organizational topics. Often, the first slides or the course website will give you more information.",
             "subheading4": "Chat Widget Function",
             "text4_1": "<b>Close the Widget:</b> You can close the widget by clicking on the 'X' button (top right corner of the widget) or on the chatbot button (below the widget).",
             "text4_2": "<b>Movable Functionality:</b> You have the flexibility to move the widget around. Simply click and hold on the widget and drag it to the desired position.",
