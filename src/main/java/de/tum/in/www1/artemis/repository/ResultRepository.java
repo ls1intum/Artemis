@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Result entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
@@ -46,9 +45,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "participation" })
-    List<Result> findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(Long exerciseId);
 
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
@@ -82,9 +78,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = "assessor")
-    Optional<Result> findDistinctWithAssessorBySubmissionId(Long submissionId);
-
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
@@ -94,14 +87,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
-
-    @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.submission
-            LEFT JOIN FETCH r.feedbacks
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
@@ -249,8 +234,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.submission.submissionDate > p.exercise.dueDate
             """)
     long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") Long exerciseId, @Param("types") List<AssessmentType> types);
-
-    long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
     @Query("""
             SELECT r
