@@ -62,7 +62,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faPersonChalkboard = faPersonChalkboard;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
-    protected readonly isMessagingEnabled = isMessagingEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     constructor(
         private eventManager: EventManager,
