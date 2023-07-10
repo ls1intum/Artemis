@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, ProgrammingExerciseAssessmentType, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, ProgrammingExerciseAssessmentType, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import {
@@ -15,31 +15,32 @@ import {
     examStartEnd,
     exerciseAssessment,
     modelingExerciseAssessment,
+    programmingExerciseEditor,
     studentAssessment,
 } from '../../support/artemis';
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
 import { EXERCISE_TYPE } from '../../support/constants';
 import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
 
+let exam: Exam;
+let course: Course;
+
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
     return false;
 });
 
-let exam: Exam;
-
 describe('Exam assessment', () => {
-    let course: Course;
     let examEnd: Dayjs;
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
     let studentOneName: string;
 
-    before('Create course', () => {
+    before('Create a course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addInstructorToCourse(course, instructor);
@@ -53,7 +54,7 @@ describe('Exam assessment', () => {
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(3, 'minutes');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Programming);
+            prepareExam(examEnd, EXERCISE_TYPE.Programming);
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
@@ -64,7 +65,7 @@ describe('Exam assessment', () => {
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            examParticipation.getResultScore().should('contain.text', '66.2%').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '66.2%').and('be.visible');
             programmingAssessmentSuccessful = true;
         });
 
@@ -78,7 +79,7 @@ describe('Exam assessment', () => {
     describe('Modeling exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Modeling);
+            prepareExam(examEnd, EXERCISE_TYPE.Modeling);
         });
 
         it('Assess a modeling exercise submission', () => {
@@ -96,7 +97,7 @@ describe('Exam assessment', () => {
                 expect(assessmentResponse.response?.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            examParticipation.getResultScore().should('contain.text', '40%').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '40%').and('be.visible');
             modelingAssessmentSuccessful = true;
         });
 
@@ -110,7 +111,7 @@ describe('Exam assessment', () => {
     describe('Text exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(40, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Text);
+            prepareExam(examEnd, EXERCISE_TYPE.Text);
         });
 
         it('Assess a text exercise submission', () => {
@@ -123,7 +124,7 @@ describe('Exam assessment', () => {
                 expect(assessmentResponse.response!.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            examParticipation.getResultScore().should('contain.text', '70%').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '70%').and('be.visible');
             textAssessmentSuccessful = true;
         });
 
@@ -140,7 +141,7 @@ describe('Exam assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Quiz);
+            prepareExam(examEnd, EXERCISE_TYPE.Quiz);
         });
 
         it('Assesses quiz automatically', () => {
@@ -157,16 +158,22 @@ describe('Exam assessment', () => {
             }
             examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            examParticipation.getResultScore().should('contain.text', '50%').and('be.visible');
+            // Sometimes the feedback fails to load properly on the first load...
+            const resultSelector = '#result-score';
+            cy.reloadUntilFound(resultSelector);
+            programmingExerciseEditor.getResultScore().should('contain.text', '50%').and('be.visible');
         });
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        if (course) {
+            cy.login(admin);
+            // courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });
 
-function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: EXERCISE_TYPE) {
+function prepareExam(end: dayjs.Dayjs, exerciseType: EXERCISE_TYPE) {
     cy.login(admin);
     const resultDate = end.add(1, 'second');
     const examContent = new ExamBuilder(course)
@@ -217,7 +224,7 @@ function startAssessing(courseID: number, examID: number, timeout: number) {
     courseAssessment.clickExerciseDashboardButton();
     exerciseAssessment.clickHaveReadInstructionsButton();
     exerciseAssessment.clickStartNewAssessment();
-    exerciseAssessment.getLockedMessage();
+    cy.get('#assessmentLockedCurrentUser').should('be.visible');
 }
 
 function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseType: EXERCISE_TYPE) {
