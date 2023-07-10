@@ -17,19 +17,13 @@ import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 
-// Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
-jest.mock('app/entities/exercise.model', () => ({
-    getCourseFromExercise: () => {
-        const course = new Course();
-        course.maxComplaintResponseTextLimit = 26;
-        return course;
-    },
-}));
-
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let complaintForTutorComponentFixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
+
+    let course: Course;
+    let exercise: Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,6 +36,12 @@ describe('ComplaintsForTutorComponent', () => {
                 complaintForTutorComponentFixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 complaintsForTutorComponent = complaintForTutorComponentFixture.componentInstance;
                 injectedComplaintResponseService = complaintForTutorComponentFixture.debugElement.injector.get(ComplaintResponseService);
+
+                course = new Course();
+                course.maxComplaintResponseTextLimit = 26;
+
+                exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
+                complaintsForTutorComponent.exercise = exercise;
             });
     });
 
@@ -237,7 +237,6 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.id = 1;
         unhandledComplaint.accepted = undefined;
         unhandledComplaint.complaintText = 'please check again';
-        unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
@@ -338,7 +337,6 @@ describe('ComplaintsForTutorComponent', () => {
 
             complaintsForTutorComponent.complaint = unhandledComplaint;
             complaintsForTutorComponent.complaintResponse = newComplaintResponse;
-            complaintsForTutorComponent.exercise = { id: 11, isAtLeastInstructor: true } as Exercise;
 
             complaintsForTutorComponent.isLoading = false;
             complaintsForTutorComponent.handled = false;
