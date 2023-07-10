@@ -8,12 +8,19 @@ import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    NumNewMessagesResetAction,
+    SessionReceivedAction,
+    StudentMessageSentAction,
+} from 'app/iris/state-store.model';
 import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -130,7 +137,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         await component.onSend();
 
-        expect(stateStore.dispatchAndThen).not.toHaveBeenCalled();
+        expect(stateStore.dispatchAndThen).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE));
         expect(mockHttpMessageService.createMessage).not.toHaveBeenCalled();
         expect(component.newMessageTextContent).toBe('');
         expect(component.scrollToBottom).toHaveBeenCalled();
