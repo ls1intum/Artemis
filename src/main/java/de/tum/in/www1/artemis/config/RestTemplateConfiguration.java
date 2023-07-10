@@ -13,6 +13,7 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.auth.AtheneAuthorizationInterceptor;
+import de.tum.in.www1.artemis.config.auth.IrisAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
@@ -76,9 +77,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("iris-gpt3_5")
-    public RestTemplate gpt35RestTemplate() {
-        return createRestTemplate();
+    @Profile("iris")
+    public RestTemplate irisRestTemplate(IrisAuthorizationInterceptor irisAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(irisAuthorizationInterceptor, createRestTemplate());
     }
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
@@ -126,6 +127,12 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("apollon")
     public RestTemplate shortTimeoutApollonRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
+    @Bean
+    @Profile("iris")
+    public RestTemplate shortTimeoutIrisRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 

@@ -27,7 +27,8 @@
             "text4_4": "<b>Full Screen Feature:</b> You can expand the widget to full screen mode by clicking on the full screen button (top right corner of the widget).",
             "supportText": "(If you have any problems using the widget or messaging Iris, please create an issue on GitHub: https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Unread messages",
-            "buttonTooltip": "Start chatting with Iris!"
+            "buttonTooltip": "Start chatting with Iris!",
+            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me here."
         }
     }
 }

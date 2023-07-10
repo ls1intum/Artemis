@@ -56,7 +56,6 @@ describe('CloneRepoButtonComponent', () => {
         externalUserManagementURL: '',
         features: [],
         inProduction: false,
-        irisEnabled: false,
         programmingLanguageFeatures: [],
         ribbonEnv: '',
         sshCloneURLTemplate: 'ssh://git@bitbucket.ase.in.tum.de:7999/',

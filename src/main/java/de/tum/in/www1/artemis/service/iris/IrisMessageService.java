@@ -1,15 +1,17 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
  * Service for managing Iris messages.
  */
 @Service
+@Profile("iris")
 public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;
@@ -48,6 +51,7 @@ public class IrisMessageService {
 
         message.setSession(null);
         message.setSender(sender);
+        message.setSentAt(ZonedDateTime.now());
         var contents = message.getContent();
         message.setContent(new ArrayList<>());
         var savedMessage = irisMessageRepository.saveAndFlush(message);

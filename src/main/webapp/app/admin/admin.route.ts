@@ -87,6 +87,10 @@ export const adminState: Routes = [
                 path: 'imprint',
                 loadChildren: () => import('./legal/legal-update.module').then((module) => module.LegalUpdateModule),
             },
+            {
+                path: 'iris',
+                loadChildren: () => import('../iris/settings/iris-settings-update-routing.module').then((module) => module.IrisSettingsUpdateRoutingModule),
+            },
             ...organizationMgmtRoute,
             ...userManagementRoute,
             ...systemNotificationManagementRoute,

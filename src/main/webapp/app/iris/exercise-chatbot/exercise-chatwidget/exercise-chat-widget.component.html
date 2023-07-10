@@ -56,7 +56,8 @@
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left">
-                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
+                            <span *ngIf="isFirstMessage && i == 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
+                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>
                         <div class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">

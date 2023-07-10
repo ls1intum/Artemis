@@ -15,8 +15,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.IrisSession;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
@@ -30,9 +29,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisMessageService irisMessageService;
 
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -41,20 +37,19 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.setIrisActivated(false);
-        programmingExerciseRepository.save(exercise);
+        activateIrisFor(course);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSessionUnauthorized() throws Exception {
-        request.post("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, HttpStatus.BAD_REQUEST);
+        request.post("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getCurrentSessionUnauthorized() throws Exception {
-        request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.BAD_REQUEST, IrisSession.class);
+        request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.FORBIDDEN, IrisSession.class);
     }
 
     @Test
@@ -65,7 +60,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
         messageToSend.setContent(List.of(createMockContent(messageToSend)));
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -89,7 +84,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
 
-        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.BAD_REQUEST, IrisMessage.class);
+        request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessage.class);
     }
 
     private IrisMessageContent createMockContent(IrisMessage message) {

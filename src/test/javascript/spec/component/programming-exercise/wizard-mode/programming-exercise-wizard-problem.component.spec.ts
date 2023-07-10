@@ -46,7 +46,6 @@ describe('ProgrammingExerciseWizardProblemComponent', () => {
                     validIdeSelection(): boolean | undefined {
                         return undefined;
                     },
-                    irisProfileEnabled: false,
                 };
 
                 const exercise = new ProgrammingExercise(undefined, undefined);

@@ -105,8 +105,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public inProductionEnvironment: boolean;
 
-    public irisProfileEnabled: boolean;
-
     public supportedLanguages = ['java'];
 
     public packageNameRequired = true;
@@ -445,11 +443,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
-        // Checks if iris profile is enabled
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
-                this.irisProfileEnabled = profileInfo.irisEnabled;
             }
         });
 
@@ -1058,7 +1054,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
             selectedProjectType: this.selectedProjectType,
-            irisProfileEnabled: this.irisProfileEnabled,
         };
     }
 }
