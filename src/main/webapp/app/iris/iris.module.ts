@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // Import FormsModule
+import { FormsModule } from '@angular/forms';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -21,13 +21,24 @@ import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/setting
     declarations: [
         ExerciseChatWidgetComponent,
         ExerciseChatbotComponent,
+        AboutIrisComponent,
         IrisSettingsUpdateComponent,
         IrisGlobalSettingsUpdateComponent,
         IrisCourseSettingsUpdateComponent,
         IrisProgrammingExerciseSettingsUpdateComponent,
         IrisSubSettingsUpdateComponent,
     ],
-    imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule],
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ArtemisSharedModule,
+        ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
+        AngularDraggableModule,
+        RouterModule,
+    ],
     providers: [],
     exports: [ExerciseChatbotComponent],
 })
