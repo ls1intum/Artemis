@@ -94,8 +94,6 @@ export class ExerciseChatbotComponent implements OnDestroy, OnInit {
                 position: { bottom: '0px', right: '0px' },
                 data: {
                     stateStore: this.stateStore,
-                    exerciseId: this.exerciseId,
-                    sessionService: this.sessionService,
                 },
             });
             this.dialogRef.afterClosed().subscribe(() => {

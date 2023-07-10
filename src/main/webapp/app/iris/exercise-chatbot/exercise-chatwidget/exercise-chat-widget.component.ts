@@ -23,8 +23,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
     readonly stateStore: IrisStateStore;
-    readonly exerciseId: number;
-    readonly sessionService: IrisSessionService;
 
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
@@ -40,12 +38,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
-        this.exerciseId = data.exerciseId;
-        this.sessionService = data.sessionService;
     }
 
     // Icons
-    faTrash = faTrash;
     faPaperPlane = faPaperPlane;
     faCircle = faCircle;
     faExpand = faExpand;
@@ -103,10 +98,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
-    }
-
-    onClearSession(): void {
-        this.sessionService.createNewSession(this.exerciseId);
     }
 
     scrollToBottom(behavior: ScrollBehavior) {

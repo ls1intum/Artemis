@@ -56,7 +56,7 @@ export class IrisSessionService {
      * Creates a new session for the given exercise ID.
      * @param exerciseId The exercise ID for which to create a new session.
      */
-    createNewSession(exerciseId: number): void {
+    private createNewSession(exerciseId: number): void {
         this.httpSessionService.createSessionForProgrammingExercise(exerciseId).subscribe(
             (irisSessionResponse: any) => {
                 this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.id, []));
