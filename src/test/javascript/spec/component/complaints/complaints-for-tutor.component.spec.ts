@@ -289,7 +289,6 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.id = 1;
         unhandledComplaint.accepted = undefined;
         unhandledComplaint.complaintText = 'please check again';
-        unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
