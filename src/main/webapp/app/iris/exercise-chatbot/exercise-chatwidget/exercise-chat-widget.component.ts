@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
@@ -8,6 +8,7 @@ import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServer
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
+import { IrisSessionService } from 'app/iris/session.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -22,6 +23,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
     readonly stateStore: IrisStateStore;
+    readonly exerciseId: number;
+    readonly sessionService: IrisSessionService;
 
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
@@ -37,9 +40,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
+        this.exerciseId = data.exerciseId;
+        this.sessionService = data.sessionService;
     }
 
     // Icons
+    faTrash = faTrash;
     faPaperPlane = faPaperPlane;
     faCircle = faCircle;
     faExpand = faExpand;
@@ -93,6 +99,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
+    }
+
+    onClearSession(): void {
+        this.sessionService.createNewSession(this.exerciseId);
     }
 
     scrollToBottom(behavior: ScrollBehavior) {
