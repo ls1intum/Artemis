@@ -19,7 +19,7 @@ import {
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
-import {errorMessages, IrisErrorMessageKey} from "app/entities/iris/iris-errors.model";
+import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
 

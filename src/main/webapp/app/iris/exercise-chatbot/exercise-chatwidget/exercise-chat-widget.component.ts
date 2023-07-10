@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, NumNewMessagesResetAction, RateMessageSuccessAction, StudentMessageSentAction } from 'app/iris/state-store.model';
@@ -7,6 +7,7 @@ import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -158,6 +159,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             })
             .finally(() => {
                 this.resendAnimationActive = false;
+                this.scrollToBottom('smooth');
             });
     }
 
