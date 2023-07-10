@@ -411,7 +411,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // Only instructors or higher may override the anonymization setting
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
-            repositoryExportOptions.setAnonymizeStudentCommits(true);
+            repositoryExportOptions.setAnonymizeRepository(true);
         }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
