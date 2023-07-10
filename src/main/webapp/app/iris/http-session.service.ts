@@ -22,7 +22,7 @@ export class IrisHttpSessionService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
     getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, { observe: 'response' });
+        return this.http.get<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions/current`, { observe: 'response' });
     }
 
     /**
