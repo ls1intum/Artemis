@@ -56,7 +56,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     rows = 1;
     initialWidth = 330;
     initialHeight = 430;
-    fullWidth = '93vw';
+    fullWidth = '90vw';
     fullHeight = '85vh';
     fullSize = localStorage.getItem('fullSize') === 'true';
     widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
