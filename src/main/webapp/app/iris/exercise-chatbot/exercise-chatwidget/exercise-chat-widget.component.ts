@@ -225,15 +225,19 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     handleKey(event: KeyboardEvent): void {
         if (event.key === 'Enter') {
-            if (!event.shiftKey) {
-                event.preventDefault();
-                this.onSend();
+            if (!this.isLoading) {
+                if (!event.shiftKey) {
+                    event.preventDefault();
+                    this.onSend();
+                } else {
+                    const textArea = event.target as HTMLTextAreaElement;
+                    const { selectionStart, selectionEnd } = textArea;
+                    const value = textArea.value;
+                    textArea.value = value.slice(0, selectionStart) + value.slice(selectionEnd);
+                    textArea.selectionStart = textArea.selectionEnd = selectionStart + 1;
+                }
             } else {
-                const textArea = event.target as HTMLTextAreaElement;
-                const { selectionStart, selectionEnd } = textArea;
-                const value = textArea.value;
-                textArea.value = value.slice(0, selectionStart) + value.slice(selectionEnd);
-                textArea.selectionStart = textArea.selectionEnd = selectionStart + 1;
+                event.preventDefault();
             }
         }
     }

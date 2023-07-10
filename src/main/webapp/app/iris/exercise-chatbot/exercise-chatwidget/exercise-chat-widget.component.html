@@ -92,7 +92,7 @@
         <!-- input field section -->
         <div class="chat-input">
             <textarea
-                [disabled]="!userAccepted || isLoading"
+                [disabled]="!userAccepted"
                 [(ngModel)]="newMessageTextContent"
                 (input)="onInput()"
                 (paste)="onPaste()"
