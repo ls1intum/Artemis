@@ -62,9 +62,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
         var nonNullPredicate = simpleNameAnnotation("NonNull");
         var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
 
-        Set<DescribedPredicate<? super JavaAnnotation<?>>> set = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
 
-        for (var predicate : set) {
+        for (var predicate : allPredicates) {
             ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
             ArchRule parameters = methods().should(notHaveAnyParameterAnnotatedWith(predicate));
 
