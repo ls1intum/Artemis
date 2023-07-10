@@ -14,6 +14,7 @@ import { IrisSubSettingsUpdateComponent } from './settings/iris-settings-update/
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
+import { IrisLogoComponent } from './iris-logo/iris-logo.component';
 
 @NgModule({
     declarations: [
@@ -25,6 +26,7 @@ import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/setting
         IrisCourseSettingsUpdateComponent,
         IrisProgrammingExerciseSettingsUpdateComponent,
         IrisSubSettingsUpdateComponent,
+        IrisLogoComponent,
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule],
     providers: [],
