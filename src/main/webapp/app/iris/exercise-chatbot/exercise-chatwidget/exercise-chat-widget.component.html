@@ -52,11 +52,11 @@
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
                     <div *ngIf="isStudentSentMessage(message)" class="bubble-right">
-                        <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                        <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left">
-                            <span [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
                         </div>
                         <div class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
