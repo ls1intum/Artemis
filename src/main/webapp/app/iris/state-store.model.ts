@@ -34,7 +34,7 @@ export class HistoryMessageLoadedAction implements MessageStoreAction {
 export class ActiveConversationMessageLoadedAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisServerMessage) {
+    public constructor(public readonly message: IrisMessage) {
         this.type = ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
     }
 }
@@ -50,7 +50,7 @@ export class ConversationErrorOccurredAction implements MessageStoreAction {
 export class StudentMessageSentAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout>) {
+    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout> | null) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
     }
 }

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import {
@@ -10,11 +10,19 @@ import {
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
+import {
+    IrisArtemisClientMessage,
+    IrisClientMessage,
+    IrisMessage,
+    IrisSender,
+    IrisServerMessage,
+    isArtemisClientSentMessage,
+    isServerSentMessage,
+    isStudentSentMessage,
+} from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
-import { IrisSessionService } from 'app/iris/session.service';
 import dayjs from 'dayjs';
 
 @Component({
@@ -42,7 +50,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     dots = 1;
     resendAnimationActive = false;
     shakeErrorField = false;
-    isFirstMessage = false;
+    isGreetingMessage = false;
+    shouldLoadGreetingMessage = true;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private httpMessageService: IrisHttpMessageService) {
         this.stateStore = data.stateStore;
@@ -65,7 +74,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
-        this.loadFirstMessage();
+        if (this.shouldLoadGreetingMessage) {
+            this.loadFirstMessage();
+        }
     }
 
     ngAfterViewInit() {
@@ -95,17 +106,16 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisMessageContent;
 
         const firstMessage = {
-            sender: IrisSender.LLM,
-            id: 0,
+            sender: IrisSender.ARTEMIS_CLIENT,
             content: [firstMessageContent],
             sentAt: dayjs(),
-        } as IrisServerMessage;
+        } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isFirstMessage = true;
+            this.isGreetingMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
-        } else if (this.messages[0].id === firstMessage.id) {
-            this.isFirstMessage = true;
+        } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
+            this.isGreetingMessage = true;
         }
     }
 
@@ -115,6 +125,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             const timeoutId = setTimeout(() => {
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+                this.scrollToBottom('smooth');
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
@@ -122,6 +133,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 .then(() => this.scrollToBottom('smooth'))
                 .catch(() => {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                    this.scrollToBottom('smooth');
                 });
             // TODO show that iris has been disabled after the corresponding PR is merged
             this.newMessageTextContent = '';
@@ -159,6 +171,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return isServerSentMessage(message);
     }
 
+    isArtemisClientSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isArtemisClientSentMessage(message);
+    }
+
     private newUserMessage(message: string): IrisClientMessage {
         const content: IrisMessageContent = {
             type: IrisMessageContentType.TEXT,
@@ -181,12 +197,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     resendMessage(message: IrisClientMessage) {
         this.resendAnimationActive = true;
 
-        this.triggerShake();
-
-        this.httpMessageService
-            .createMessage(<number>this.sessionId, message)
-            .toPromise()
-            .then(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(null)))
+        const timeoutId = setTimeout(() => {
+            // will be cleared by the store automatically
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            this.scrollToBottom('smooth');
+        }, 20000);
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+            .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+            .then(() => {
+                this.scrollToBottom('smooth');
+            })
             .catch(() => {
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
                 this.triggerShake();
