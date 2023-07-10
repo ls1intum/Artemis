@@ -16,7 +16,6 @@ import { Subscription } from 'rxjs';
 import dayjs from 'dayjs';
 import { IrisSessionService } from 'app/iris/session.service';
 
-
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
