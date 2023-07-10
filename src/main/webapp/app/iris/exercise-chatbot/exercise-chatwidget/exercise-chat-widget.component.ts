@@ -32,7 +32,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
-    @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef;
+    @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
     readonly SENDER_USER = IrisSender.USER;
@@ -113,7 +113,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
         setTimeout(() => {
             this.isInitializing = false;
-        }, 50);
+            this.messageTextarea.nativeElement.focus();
+        }, 150);
         this.loadFirstMessage();
     }
 
