@@ -185,7 +185,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
-            if (state.messages.some((msg) => msg.id === castedAction.message.id)) {
+            if (state.messages.some((msg) => msg.id && msg.id === castedAction.message.id)) {
                 return {
                     ...state,
                     isLoading: true,
