@@ -1,17 +1,20 @@
 package de.tum.in.www1.artemis;
 
-import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 
-import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaAnnotation;
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.lang.*;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -51,5 +54,46 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testNullnessAnnotations() {
+        var notNullPredicate = and(not(resideInPackageAnnotation("javax.validation.constraints")), simpleNameAnnotation("NotNull"));
+        var nonNullPredicate = simpleNameAnnotation("NonNull");
+        var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
+
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> set = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+
+        for (var predicate : set) {
+            ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
+            ArchRule parameters = methods().should(notHaveAnyParameterAnnotatedWith(predicate));
+
+            units.check(allClasses);
+            parameters.check(allClasses);
+        }
+    }
+
+    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
+
+    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
+        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
+    }
+
+    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
+        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(javaAnnotation -> javaAnnotation.getRawType().getPackageName());
+    }
+
+    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
+        return new ArchCondition<>("have parameters annotated with ") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
+                if (!satisfied) {
+                    events.add(
+                            SimpleConditionEvent.violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
     }
 }
