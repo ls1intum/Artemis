@@ -186,7 +186,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.result = getLatestSubmissionResult(this.submission);
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (this.submission.submitted && this.result && this.result.completionDate) {
+        if (this.submission.submitted && this.result && this.result.completionDate && !(this.isAfterAssessmentDueDate && this.submission.plagiarismDetected)) {
             this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                 this.assessmentResult = assessmentResult;
                 this.prepareAssessmentData();

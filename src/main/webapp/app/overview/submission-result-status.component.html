@@ -33,10 +33,6 @@
             >
                 {{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}
             </span>
-            <ng-container *ngIf="studentParticipation?.submissions?.[0]?.plagiarismDetected">
-                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
-            </ng-container>
             <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
                 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate
             }}</span>

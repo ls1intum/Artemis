@@ -159,7 +159,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     get isActive(): boolean {
         const isActive =
             !this.examMode &&
-            !this.result &&
+            (!this.result || this.submission.plagiarismDetected) &&
             (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
