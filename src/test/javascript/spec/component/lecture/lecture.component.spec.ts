@@ -48,36 +48,44 @@ describe('Lecture', () => {
         pastLecture = new Lecture();
         pastLecture.id = 6;
         pastLecture.endDate = yesterday;
+        pastLecture.title = 'introduction to Computer Science';
 
         pastLecture2 = new Lecture();
         pastLecture2.id = 7;
         pastLecture2.startDate = lastWeek;
         pastLecture2.endDate = yesterday;
+        pastLecture2.title = 'Data Structures';
 
         currentLecture = new Lecture();
         currentLecture.id = 4;
         currentLecture.startDate = yesterday;
         currentLecture.endDate = tomorrow;
+        currentLecture.title = 'Algorithms';
 
         currentLecture2 = new Lecture();
         currentLecture2.id = 5;
         currentLecture2.startDate = yesterday;
+        currentLecture2.title = 'operating Systems';
 
         currentLecture3 = new Lecture();
         currentLecture3.id = 3;
         currentLecture3.endDate = tomorrow;
+        currentLecture3.title = 'computer Networks';
 
         futureLecture = new Lecture();
         futureLecture.id = 2;
         futureLecture.startDate = tomorrow;
+        futureLecture.title = 'Database Systems';
 
         futureLecture2 = new Lecture();
         futureLecture2.id = 8;
         futureLecture2.startDate = tomorrow;
         futureLecture2.endDate = nextWeek;
+        futureLecture2.title = 'Artificial Intelligence';
 
         unspecifiedLecture = new Lecture();
         unspecifiedLecture.id = 1;
+        unspecifiedLecture.title = 'machine Learning';
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -243,5 +251,13 @@ describe('Lecture', () => {
         expect(sortSpy).toHaveBeenCalledWith(lectureComponent.filteredLectures, lectureComponent.predicate, lectureComponent.ascending);
         expect(sortSpy).toHaveBeenCalledOnce();
         expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([8, 7, 6, 5, 4, 3, 2, 1]);
+    });
+
+    it('should sort rows alphabetically', () => {
+        lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
+        lectureComponent.predicate = 'title';
+        lectureComponent.ascending = true;
+        lectureComponent.sortRows();
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([4, 8, 3, 7, 2, 6, 1, 5]);
     });
 });

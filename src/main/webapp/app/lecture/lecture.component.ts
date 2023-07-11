@@ -121,7 +121,14 @@ export class LectureComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
+        //Sort alphabetically for title and description
+        if (this.predicate == 'title')
+            this.filteredLectures.sort((a: Lecture, b: Lecture) => (this.ascending ? (a.title || '').localeCompare(b.title || '') : (b.title || '').localeCompare(a.title || '')));
+        else if (this.predicate == 'description')
+            this.filteredLectures.sort((a: Lecture, b: Lecture) =>
+                this.ascending ? (a.description || '').localeCompare(b.description || '') : (b.description || '').localeCompare(a.description || ''),
+            );
+        else this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
     }
 
     private loadAll() {
