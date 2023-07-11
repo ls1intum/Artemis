@@ -101,6 +101,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
      * Sets the configuration options for the dialog, including position, size, and data.
      */
     openChat() {
+        this.chatOpen = true;
         this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
             hasBackdrop: false,
             scrollStrategy: this.overlay.scrollStrategies.noop(),
