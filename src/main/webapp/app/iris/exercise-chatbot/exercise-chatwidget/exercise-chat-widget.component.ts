@@ -114,7 +114,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         setTimeout(() => {
             this.isInitializing = true;
         }, 50);
-        this.loadFirstMessage();
 
         // Subscribe to state changes
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
@@ -153,7 +152,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     /**
-     * Animates the dots in the chat widget.
+     * Animates the dots while loading each Iris message in the chat widget.
      */
     animateDots() {
         setInterval(() => {
@@ -246,6 +245,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
 
         this.userAccepted = true;
+        this.loadFirstMessage();
     }
 
     /**
