@@ -308,9 +308,8 @@ public class LectureResource {
     @GetMapping("/lectures/{lectureId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
-        return ResponseEntity.ok(lecture.getTitle());
+        final var title = lectureRepository.getLectureTitle(lectureId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
