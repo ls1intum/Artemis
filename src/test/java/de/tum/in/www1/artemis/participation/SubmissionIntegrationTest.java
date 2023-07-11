@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.participation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -174,7 +175,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
-        long randomExerciseId = 12345L;
+        long randomExerciseId = UUID.randomUUID().getMostSignificantBits();
         PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -226,7 +227,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionId_submissionNotFound() throws Exception {
-        long randomSubmissionId = 12345L;
+        long randomSubmissionId = UUID.randomUUID().getMostSignificantBits();
         request.getList("/api/submissions/" + randomSubmissionId + "/versions", HttpStatus.NOT_FOUND, Submission.class);
     }
 
