@@ -29,16 +29,31 @@ import dayjs from 'dayjs';
     styleUrls: ['./exercise-chat-widget.component.scss'],
 })
 export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+    // Icons
+    faCircle = faCircle;
+    faPaperPlane = faPaperPlane;
+    faExpand = faExpand;
+    faXmark = faXmark;
+    faArrowDown = faArrowDown;
+    faRobot = faRobot;
+    faCircleInfo = faCircleInfo;
+    faCompress = faCompress;
+    faThumbsUp = faThumbsUp;
+    faThumbsDown = faThumbsDown;
+
+    // ViewChilds
     @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
+    // Constants
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
-    readonly stateStore: IrisStateStore;
 
+    // State variables
+    stateStore: IrisStateStore;
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
     newMessageTextContent = '';
@@ -51,6 +66,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     isInitializing = false;
     isFirstMessage = false;
 
+    // User preferences
     userAccepted = false;
     isScrolledToBottom = true;
     rows = 1;
@@ -82,28 +98,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }
         });
     }
-    // Icons
-    faCircle = faCircle;
-    faPaperPlane = faPaperPlane;
-    faExpand = faExpand;
-    faXmark = faXmark;
-    faArrowDown = faArrowDown;
-    faRobot = faRobot;
-    faCircleInfo = faCircleInfo;
-    faCompress = faCompress;
-    faThumbsUp = faThumbsUp;
-    faThumbsDown = faThumbsDown;
 
     ngOnInit() {
+        // Check if the user has accepted the chat widget permissions
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';
             }
         });
+
+        // Animate dots
         this.animateDots();
+
+        // Set initializing flag to true and load the first message
         setTimeout(() => {
             this.isInitializing = true;
         }, 50);
+        this.loadFirstMessage();
+
+        // Subscribe to state changes
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
@@ -111,48 +124,46 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
+
+        // Set initializing flag to false and focus on message textarea
         setTimeout(() => {
             this.isInitializing = false;
             this.messageTextarea.nativeElement.focus();
         }, 150);
-        this.loadFirstMessage();
-    }
-
-    scrollToBottom(behavior: ScrollBehavior) {
-        setTimeout(() => {
-            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
-            chatBodyElement.scrollTo({
-                top: chatBodyElement.scrollHeight,
-                behavior: behavior,
-            });
-        });
     }
 
     ngAfterViewInit() {
-        this.unreadMessageIndex = this.messages.length <= 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages; //<=1 first greeting message from chatbot will not show as unread
+        // Determine the unread message index and scroll to the unread message if applicable
+        this.unreadMessageIndex = this.messages.length <= 1 || this.numNewMessages === 0 ? -1 : this.messages.length - this.numNewMessages;
         if (this.numNewMessages > 0) {
             this.scrollToUnread();
         } else {
             this.scrollToBottom('auto');
         }
 
-        const chatWidget: HTMLElement = this.chatWidget.nativeElement; // element you want to watch
+        // Add a resize sensor to the chat widget to store the new width and height in local storage
+        const chatWidget: HTMLElement = this.chatWidget.nativeElement;
         new ResizeSensor(chatWidget, () => {
             localStorage.setItem('widgetWidth', chatWidget.style.width);
             localStorage.setItem('widgetHeight', chatWidget.style.height);
         });
     }
-
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
     }
 
+    /**
+     * Animates the dots in the chat widget.
+     */
     animateDots() {
         setInterval(() => {
             this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
         }, 500);
     }
 
+    /**
+     * Loads the first message in the conversation if it's not already loaded.
+     */
     loadFirstMessage(): void {
         const firstMessageContent = {
             textContent: 'artemisApp.exerciseChatbot.firstMessage',
@@ -174,6 +185,23 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
+    /**
+     * Scrolls the chat body to the bottom.
+     * @param behavior - The scroll behavior.
+     */
+    scrollToBottom(behavior: ScrollBehavior) {
+        setTimeout(() => {
+            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
+            chatBodyElement.scrollTo({
+                top: chatBodyElement.scrollHeight,
+                behavior: behavior,
+            });
+        });
+    }
+
+    /**
+     * Handles the send button click event and sends the user's message.
+     */
     onSend(): void {
         if (this.newMessageTextContent.trim()) {
             const message = this.newUserMessage(this.newMessageTextContent);
@@ -188,6 +216,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.resetChatBodyHeight();
     }
 
+    /**
+     * Scrolls to the unread message.
+     */
     scrollToUnread() {
         setTimeout(() => {
             const unreadMessageElement: HTMLElement = this.unreadMessage.nativeElement;
@@ -195,12 +226,18 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
     }
 
+    /**
+     * Closes the chat widget.
+     */
     closeChat() {
         this.stateStore.dispatch(new NumNewMessagesResetAction());
         this.sharedService.changeChatOpenStatus(false);
         this.dialog.closeAll();
     }
 
+    /**
+     * Accepts the permission to use the chat widget.
+     */
     acceptPermission() {
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
@@ -211,6 +248,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.userAccepted = true;
     }
 
+    /**
+     * Checks if the chat body is scrolled to the bottom.
+     */
     checkChatScroll() {
         const chatBody = this.chatBody.nativeElement;
         const scrollHeight = chatBody.scrollHeight;
@@ -219,6 +259,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
     }
 
+    /**
+     * Resets the screen by closing and reopening the chat widget.
+     */
     resetScreen() {
         setTimeout(() => {
             this.dialog.closeAll();
@@ -239,6 +282,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }, 140);
     }
 
+    /**
+     * Maximizes the chat widget screen.
+     */
     maximizeScreen() {
         this.resetScreen();
         localStorage.setItem('widgetWidth', this.fullWidth);
@@ -246,6 +292,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         localStorage.setItem('fullSize', 'true');
     }
 
+    /**
+     * Minimizes the chat widget screen.
+     */
     minimizeScreen() {
         this.resetScreen();
         localStorage.setItem('widgetWidth', `${this.initialWidth}px`);
@@ -253,6 +302,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         localStorage.setItem('fullSize', 'false');
     }
 
+    /**
+     * Handles the key events in the message textarea.
+     * @param event - The keyboard event.
+     */
     handleKey(event: KeyboardEvent): void {
         if (event.key === 'Enter') {
             if (!this.isLoading) {
@@ -272,16 +325,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
+    /**
+     * Handles the input event in the message textarea.
+     */
     onInput() {
         this.adjustTextareaRows();
     }
 
+    /**
+     * Handles the paste event in the message textarea.
+     */
     onPaste() {
         setTimeout(() => {
             this.adjustTextareaRows();
         }, 0);
     }
 
+    /**
+     * Adjusts the height of the message textarea based on its content.
+     */
     adjustTextareaRows() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
@@ -294,6 +356,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.adjustChatBodyHeight(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
     }
 
+    /**
+     * Handles the row change event in the message textarea.
+     */
     onRowChange() {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const newRows = textarea.value.split('\n').length;
@@ -306,6 +371,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
     }
 
+    /**
+     * Adjusts the height of the chat body based on the number of rows in the message textarea.
+     * @param newRows - The new number of rows.
+     */
     adjustChatBodyHeight(newRows: number) {
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
         const chatBody: HTMLElement = this.chatBody.nativeElement;
@@ -320,6 +389,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }, 10);
     }
 
+    /**
+     * Resets the height of the chat body.
+     */
     resetChatBodyHeight() {
         const chatBody: HTMLElement = this.chatBody.nativeElement;
         const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
@@ -331,6 +403,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.stateStore.dispatch(new NumNewMessagesResetAction());
     }
 
+    /**
+     * Rates a message as helpful or unhelpful.
+     * @param message_id - The ID of the message to rate.
+     * @param index - The index of the message in the messages array.
+     * @param helpful - A boolean indicating if the message is helpful or not.
+     */
     rateMessage(message_id: number, index: number, helpful: boolean) {
         this.httpMessageService
             .rateMessage(<number>this.sessionId, message_id, helpful)
@@ -342,14 +420,29 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             });
     }
 
+    /**
+     * Checks if a message is a student-sent message.
+     * @param message - The message to check.
+     * @returns A boolean indicating if the message is a student-sent message.
+     */
     isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
         return isStudentSentMessage(message);
     }
 
+    /**
+     * Checks if a message is a server-sent message.
+     * @param message - The message to check.
+     * @returns A boolean indicating if the message is a server-sent message.
+     */
     isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
         return isServerSentMessage(message);
     }
 
+    /**
+     * Creates a new user message.
+     * @param message - The content of the message.
+     * @returns A new IrisClientMessage object representing the user message.
+     */
     private newUserMessage(message: string): IrisClientMessage {
         const content: IrisMessageContent = {
             type: IrisMessageContentType.TEXT,
