@@ -110,7 +110,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExamSubmissionComponent;
         activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
-        activeProgrammingComponent?.updateExamTimelineView();
     }
 
     private setupRangeSlider() {
@@ -325,7 +324,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         let smallestDiff = Number.MAX_VALUE;
         let timestampWithSmallestDiff = 0;
         // @ts-ignore
-        const numberOfSubmissionsForExercise = submissions.filter((submission: Submission) => submission.participation?.exercise?.id === exercise.id).length;
+        const numberOfSubmissionsForExercise = submissions.filter(
+            (submission: ProgrammingSubmission | FileUploadSubmission) => submission.participation?.exercise?.id === exercise.id,
+        ).length;
         for (let i = 0; i < submissions.length; i++) {
             if (
                 submissions[i].submissionDate!.diff(comparisonObject) < smallestDiff &&

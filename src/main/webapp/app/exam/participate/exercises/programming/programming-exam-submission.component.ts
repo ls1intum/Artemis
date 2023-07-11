@@ -139,7 +139,4 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // do nothing - submission versions are not supported for programming exercises
     }
-    updateExamTimelineView(): void {
-        this.changeDetectorReference.detectChanges();
-    }
 }
