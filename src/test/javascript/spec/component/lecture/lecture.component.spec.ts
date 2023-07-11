@@ -21,14 +21,12 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortService } from 'app/shared/service/sort.service';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let modalService: NgbModal;
-    let sortService: SortService;
 
     let pastLecture: Lecture;
     let pastLecture2: Lecture;
@@ -142,7 +140,6 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
-                sortService = TestBed.inject(SortService);
             });
     });
 
@@ -242,22 +239,14 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
 
-    it('should sort rows', () => {
-        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+    it.each([
+        { predicate: 'id', ascending: false, expected: [8, 7, 6, 5, 4, 3, 2, 1] },
+        { predicate: 'title', ascending: true, expected: [4, 8, 3, 7, 2, 6, 1, 5] },
+    ])('should sort rows', ({ predicate, ascending, expected }) => {
         lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
-        lectureComponent.predicate = 'id';
-        lectureComponent.ascending = false;
+        lectureComponent.predicate = predicate;
+        lectureComponent.ascending = ascending;
         lectureComponent.sortRows();
-        expect(sortSpy).toHaveBeenCalledWith(lectureComponent.filteredLectures, lectureComponent.predicate, lectureComponent.ascending);
-        expect(sortSpy).toHaveBeenCalledOnce();
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([8, 7, 6, 5, 4, 3, 2, 1]);
-    });
-
-    it('should sort rows alphabetically', () => {
-        lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
-        lectureComponent.predicate = 'title';
-        lectureComponent.ascending = true;
-        lectureComponent.sortRows();
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([4, 8, 3, 7, 2, 6, 1, 5]);
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual(expected);
     });
 });
