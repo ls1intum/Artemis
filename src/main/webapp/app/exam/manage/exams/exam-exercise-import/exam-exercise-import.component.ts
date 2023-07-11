@@ -189,6 +189,7 @@ export class ExamExerciseImportComponent implements OnInit {
             });
         });
         return (
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.title?.length! > 0 &&
             this.titleNamePattern.test(exercise.title!) &&
             exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) &&
@@ -212,6 +213,7 @@ export class ExamExerciseImportComponent implements OnInit {
         });
 
         return (
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.shortName?.length! > 2 &&
             this.shortNamePattern.test(exercise.shortName!) &&
             exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) &&

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
@@ -97,7 +96,7 @@ public class ExamImportService {
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
-        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(examToCopy.getExerciseGroups());
 
         // 1st: Save the exam without exercises to the database and create a new channel for the exam
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
@@ -121,10 +120,7 @@ public class ExamImportService {
      * @return a List of all Exercise Groups of the target exam
      */
     public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
-
-        Course targetCourse = courseRepository.findByIdElseThrow(courseId);
-
-        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy);
 
         Exam targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 
@@ -141,7 +137,7 @@ public class ExamImportService {
      * @param exerciseGroups the list of all exercises (not only programming) to be checked
      * @throws ExamConfigurationException in case one or more programming exercise project keys are not unique
      */
-    private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups, String targetCourseShortName) {
+    private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups) {
         // check for duplicated titles
         List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
                 .toList();
@@ -161,27 +157,15 @@ public class ExamImportService {
                     "invalidExam");
         }
 
-        // Flag to determine, if a programming exercise with an invalid shortName was found
-        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
         // Iterate over all exercises
         exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise programmingExercise) {
+                exercise.setShortName(exercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+                ((ProgrammingExercise) exercise).generateAndSetProjectKey();
                 // Method to check, if the project already exists.
-
-                boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI(programmingExercise, targetCourseShortName);
-                if (invalidShortName) {
-                    // If the project already exists and thus the short name isn't valid, it is removed
-                    // TODO: why do set those values to empty?
-                    exercise.setShortName("");
-                    exercise.setTitle("");
-                    numberOfInvalidProgrammingExercises.getAndIncrement();
-                }
+                programmingExerciseService.checkIfProjectExists(programmingExercise);
             }
         });
-        if (numberOfInvalidProgrammingExercises.get() > 0) {
-            // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get());
-        }
     }
 
     /**
