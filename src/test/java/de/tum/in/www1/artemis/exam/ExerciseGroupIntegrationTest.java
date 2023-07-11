@@ -10,6 +10,8 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -159,36 +161,19 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "A,A,B,C", "A,B,C,C", "A,A,B,B" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExerciseGroup_programmingExerciseSameShortName() throws Exception {
+    void testImportExerciseGroup_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
         ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
 
-        exercise1.setShortName("Same Short Name");
-        exercise2.setShortName("Same Short Name");
-        exercise1.setTitle("Different Title 1");
-        exercise2.setTitle("Different Title 2");
-        examRepository.save(exam);
-
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExerciseGroup_programmingExerciseSameTitle() throws Exception {
-        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
-        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
-        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
-
-        exercise1.setTitle("Same Title");
-        exercise2.setTitle("Same Title");
-        exercise1.setShortName("Different Short Name 1");
-        exercise2.setShortName("Different Short Name 2");
+        exercise1.setShortName(shortName1);
+        exercise2.setShortName(shortName2);
+        exercise1.setTitle(title1);
+        exercise2.setTitle(title2);
         examRepository.save(exam);
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,

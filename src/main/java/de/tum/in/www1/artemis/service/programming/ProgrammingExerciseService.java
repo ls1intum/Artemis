@@ -740,13 +740,13 @@ public class ProgrammingExerciseService {
         String projectKey;
         String projectName;
 
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
-            projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
-            projectName = courseShortName + " " + programmingExercise.getTitle();
-        }
-        else {
+        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
             projectKey = programmingExercise.getProjectKey();
             projectName = programmingExercise.getProjectName();
+        }
+        else {
+            projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+            projectName = courseShortName + " " + programmingExercise.getTitle();
         }
 
         boolean projectExists = versionControlService.orElseThrow().checkIfProjectExists(projectKey, projectName);
@@ -761,6 +761,14 @@ public class ProgrammingExerciseService {
         // means the project does not exist in version control server and does not exist in continuous integration server
     }
 
+    /**
+     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     * This prevents errors then the actual projects will be generated later on.
+     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     */
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         checkIfProjectExists(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
     }

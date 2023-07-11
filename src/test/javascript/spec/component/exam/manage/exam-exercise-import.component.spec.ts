@@ -220,6 +220,32 @@ describe('Exam Exercise Import Component', () => {
         expect(component.getBlocklistShortNameOfProgrammingExercise(55)).toBe('');
     });
 
+    it('should correctly invalidate programming exercises with same short name or title', () => {
+        component.exam = exam1;
+        const programmingExercise1 = new ProgrammingExercise(undefined, exerciseGroup3);
+        programmingExercise1.id = 44;
+        programmingExercise1.title = programmingExercise.title;
+        programmingExercise1.shortName = programmingExercise.shortName;
+
+        component.ngOnInit();
+
+        expect(component.validateShortNameOfProgrammingExercise(programmingExercise1)).toBeFalse();
+        expect(component.validateTitleOfProgrammingExercise(programmingExercise1)).toBeFalse();
+    });
+
+    it('should correctly validate programming exercise with same title as an existing non programming exercise', () => {
+        component.exam = exam1;
+        const programmingExercise1 = new ProgrammingExercise(undefined, exerciseGroup3);
+        programmingExercise1.id = 44;
+        programmingExercise1.title = modelingExercise.title;
+        programmingExercise1.shortName = 'progEx1';
+
+        component.ngOnInit();
+
+        expect(component.validateTitleOfProgrammingExercise(programmingExercise1)).toBeTrue();
+        expect(component.validateShortNameOfProgrammingExercise(programmingExercise1)).toBeTrue();
+    });
+
     it('should correctly map selected Exercises To Exercise Groups', () => {
         component.exam = exam1;
         component.ngOnInit();
