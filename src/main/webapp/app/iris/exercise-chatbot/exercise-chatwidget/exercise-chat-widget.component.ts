@@ -100,14 +100,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnInit() {
-        // Check if the user has accepted the chat widget permissions
-        this.accountService.identity().then((user: User) => {
-            if (typeof user!.login === 'string') {
-                this.userAccepted = localStorage.getItem(user!.login) == 'true';
+        setTimeout(() => {
+            if (this.messages.length != 0) {
+                this.userAccepted = true;
             }
-        });
-
-        // Animate dots
+        }, 100);
         this.animateDots();
 
         // Set initializing flag to true and load the first message
@@ -238,12 +235,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
-        this.accountService.identity().then((user: User) => {
-            if (typeof user!.login === 'string') {
-                localStorage.setItem(user!.login, 'true');
-            }
-        });
-
         this.userAccepted = true;
         this.loadFirstMessage();
     }

@@ -41,13 +41,6 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
-            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
-                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
-                <div class="button-container">
-                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
-                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
-                </div>
-            </div>
             <div *ngFor="let message of messages; let i = index">
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
@@ -80,6 +73,13 @@
                     <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
                         <fa-icon [icon]="faCircle" size="xs"></fa-icon>
                     </div>
+                </div>
+            </div>
+            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
+                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+                <div class="button-container">
+                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
+                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
                 </div>
             </div>
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
