@@ -3424,6 +3424,38 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_programmingExerciseSameShortName() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+
+        exercise1.setShortName("Same Short Name");
+        exercise2.setShortName("Same Short Name");
+        exercise1.setTitle("Different Title 1");
+        exercise2.setTitle("Different Title 2");
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_sameTitle() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+
+        exercise1.setTitle("Same Title");
+        exercise2.setTitle("Same Title");
+        exercise1.setShortName("Different Short Name 1");
+        exercise2.setShortName("Different Short Name 2");
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithoutExercises() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         exam.setId(null);
@@ -3504,7 +3536,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
+                .andExpect(result -> assertThat(result.getResolvedException()).hasMessageContaining("Project already exists on the Version Control Server:"));
     }
 
     private int prepareExerciseStart(Exam exam) throws Exception {

@@ -161,6 +161,42 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_programmingExerciseSameShortName() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+
+        exercise1.setShortName("Same Short Name");
+        exercise2.setShortName("Same Short Name");
+        exercise1.setTitle("Different Title 1");
+        exercise2.setTitle("Different Title 2");
+        examRepository.save(exam);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_programmingExerciseSameTitle() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+
+        exercise1.setTitle("Same Title");
+        exercise2.setTitle("Same Title");
+        exercise1.setShortName("Different Short Name 1");
+        exercise2.setShortName("Different Short Name 2");
+        examRepository.save(exam);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 

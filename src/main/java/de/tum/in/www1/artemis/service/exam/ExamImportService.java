@@ -96,7 +96,7 @@ public class ExamImportService {
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
-        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(examToCopy.getExerciseGroups());
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
 
         // 1st: Save the exam without exercises to the database and create a new channel for the exam
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
@@ -120,7 +120,9 @@ public class ExamImportService {
      * @return a List of all Exercise Groups of the target exam
      */
     public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
-        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy);
+        Course targetCourse = courseRepository.findByIdElseThrow(courseId);
+
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
 
         Exam targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 
@@ -134,17 +136,19 @@ public class ExamImportService {
      * Checks that all programming exercises of the given exercise group have a unique title and short name.
      * Additionally, checks if an exercise with the same project key or name already exists on the VSC / CI.
      *
-     * @param exerciseGroups the list of all exercises (not only programming) to be checked
+     * @param exerciseGroups  the list of all exercises (not only programming) to be checked
+     * @param courseShortName the short name of the course the exercise will be imported into
      * @throws ExamConfigurationException in case one or more programming exercise project keys are not unique
      */
-    private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups) {
+    private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups, String courseShortName) {
         // check for duplicated titles
         List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
                 .toList();
 
         if (titles.size() != titles.stream().distinct().count()) {
             List<String> duplicatedTitles = titles.stream().filter(title -> Collections.frequency(titles, title) > 1).distinct().toList();
-            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same title " + "\"" + duplicatedTitles.get(0) + "\"", "Exam", "invalidExam");
+            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same title: " + duplicatedTitles.get(0) + ". Please choose a different title!",
+                    "Exam", "invalidExam");
         }
 
         // check for duplicated titles
@@ -152,18 +156,17 @@ public class ExamImportService {
                 .map(BaseExercise::getShortName).toList();
 
         if (shortNames.size() != shortNames.stream().distinct().count()) {
-            List<String> duplicatedShortNames = titles.stream().filter(shortName -> Collections.frequency(shortNames, shortName) > 1).distinct().toList();
-            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same short name " + "\"" + duplicatedShortNames.get(0) + "\"", "Exam",
+            List<String> duplicatedShortNames = shortNames.stream().filter(shortName -> Collections.frequency(shortNames, shortName) > 1).distinct().toList();
+            throw new BadRequestAlertException(
+                    "Multiple programming exercises in the exam have the same short name: " + duplicatedShortNames.get(0) + ". Please choose a different short name!", "Exam",
                     "invalidExam");
         }
 
         // Iterate over all exercises
         exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                exercise.setShortName(exercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
-                ((ProgrammingExercise) exercise).generateAndSetProjectKey();
                 // Method to check, if the project already exists.
-                programmingExerciseService.checkIfProjectExists(programmingExercise);
+                programmingExerciseService.checkIfProjectExists(programmingExercise, courseShortName);
             }
         });
     }

@@ -186,4 +186,11 @@ public class ExamFactory {
         studentExam.setTestRun(true);
         return studentExam;
     }
+
+    public static Exam generateExamWithExerciseGroup(Course course, boolean mandatory) {
+        Exam exam = generateExam(course);
+        generateExerciseGroup(mandatory, exam);
+
+        return exam;
+    }
 }
