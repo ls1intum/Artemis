@@ -136,11 +136,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
                 // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.umlModel = JSON.parse(model);
                 this.modelingEditor.umlModel = this.umlModel;
-                if (this.initialSubmissionVersion) {
-                    this.initialSubmissionVersion = false;
-                } else {
-                    this.changeDetectorReference.detectChanges();
-                }
+                // if (this.initialSubmissionVersion) {
+                //     this.initialSubmissionVersion = false;
+                // } else {
+                //     this.changeDetectorReference.detectChanges();
+                // }
             }
             this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
         }

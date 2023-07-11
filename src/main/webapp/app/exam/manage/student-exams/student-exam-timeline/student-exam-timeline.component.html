@@ -1,5 +1,6 @@
 <h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 <div *ngIf="studentExam">
+    <ngx-slider class="mb-5" #slider [(value)]="value" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>
     <jhi-exam-navigation-bar
         #examNavigationBar
         id="exam-navigation-bar"
@@ -36,13 +37,13 @@
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-text-editor-exam>
-                        <!--                        <jhi-modeling-submission-exam-->
-                        <!--                            *ngSwitchCase="MODELING"-->
-                        <!--                            [exercise]="exercise"-->
-                        <!--                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"-->
-                        <!--                            [readonly]="true"-->
-                        <!--                            [examTimeline]="true"-->
-                        <!--                        ></jhi-modeling-submission-exam>-->
+                        <jhi-modeling-submission-exam
+                            *ngSwitchCase="MODELING"
+                            [exercise]="exercise"
+                            [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                            [readonly]="true"
+                            [examTimeline]="true"
+                        ></jhi-modeling-submission-exam>
                         <jhi-programming-submission-exam
                             *ngSwitchCase="PROGRAMMING"
                             [exercise]="exercise"
@@ -57,4 +58,3 @@
         </ng-container>
     </ng-container>
 </div>
-<ngx-slider #slider [(value)]="value" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>
