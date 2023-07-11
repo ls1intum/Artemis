@@ -84,7 +84,7 @@ public class LectureService {
      * @return lectures with filtered attachments
      */
     public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        if (!authCheckService.isOnlyStudentInCourse(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return lecturesWithAttachments;
         }
 
