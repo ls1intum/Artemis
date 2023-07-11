@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository;
 
-import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.*;
@@ -14,24 +13,17 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextCluster;
 
 /**
  * Spring Data repository for the TextBlock entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
-
-    Optional<Set<TextBlock>> findAllByCluster(TextCluster textCluster);
 
     @EntityGraph(type = LOAD, attributePaths = { "cluster" })
     Set<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
 
     Set<TextBlock> findAllBySubmissionId(Long id);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission" })
-    Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);
 
     @Transactional // ok because of delete
     @Modifying
@@ -67,16 +59,4 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
             GROUP BY tb.id
             """)
     List<TextBlockCount> countOtherBlocksInSameClusterForSubmissionId(@Param("submissionId") Long submissionId);
-
-    /**
-     * This function calls query `countOtherBlocksInSameClusterForSubmissionId` and converts the result into a Map
-     * so that it's values will be easily accessed through key value pairs
-     *
-     * @param submissionId the `id` of the Submission
-     * @return a Map data type representing key value pairs where the key is the TextBlock id
-     *         and the value is the number of other blocks in the same cluster for that TextBlock.
-     */
-    default Map<String, Integer> countOtherBlocksInClusterBySubmissionId(Long submissionId) {
-        return countOtherBlocksInSameClusterForSubmissionId(submissionId).stream().collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
-    }
 }
