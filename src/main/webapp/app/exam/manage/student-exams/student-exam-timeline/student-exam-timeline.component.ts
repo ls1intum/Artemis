@@ -79,6 +79,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.pageComponentVisited = new Array(this.studentExam.exercises!.length).fill(false);
         this.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
             results.forEach((result) => {
+                //workaround because instanceof does not work.
                 if (this.isSubmissionVersion(result)) {
                     const submissionVersion = result as SubmissionVersion;
                     this.submissionVersions.push(submissionVersion);
@@ -123,6 +124,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.options = newOptions;
     }
 
+    /**
+     * Checks if the submission is a submission version
+     * @param object the object to check
+     */
     isSubmissionVersion(object: SubmissionVersion | Submission | undefined) {
         if (!object) {
             return false;
@@ -131,6 +136,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return submissionVersion.id && submissionVersion.createdDate && submissionVersion.content && submissionVersion.submission;
     }
 
+    /**
+     * Retrieve all submission versions/submissions for all exercises of the exam
+     */
     retrieveSubmissionDataAndTimeStamps() {
         const submissionObservables: Observable<SubmissionVersion[] | Submission[]>[] = [];
         this.studentExam.exercises?.forEach((exercise) => {
@@ -154,10 +162,17 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return returnObservable;
     }
 
+    /**
+     * Sorts the time stamps in ascending order
+     */
     private sortTimeStamps() {
         this.submissionTimeStamps = this.submissionTimeStamps.sort((date1, date2) => (date1.isAfter(date2) ? 1 : -1));
     }
 
+    /**
+     * This method is called when the user clicks on the next or previous button in the navigation bar or on the slider.
+     * @param exerciseChange contains the exercise to which the user wants to navigate to and the submission that should be displayed
+     */
     onPageChange(exerciseChange: {
         overViewChange: boolean;
         exercise?: Exercise;
@@ -235,11 +250,13 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return this.currentPageComponents.find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
     }
 
+    /**
+     * This method is called when the user clicks on the slider
+     * @param changeContext the change context of the slider
+     */
     onInputChange(changeContext: ChangeContext) {
         this.value = changeContext.value;
-        console.log('change');
         const submission = this.findCorrespondingSubmissionForTimestamp(changeContext.value);
-        console.log(submission);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
             this.currentExercise = submissionVersion.submission.participation?.exercise;
@@ -256,10 +273,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.examNavigationBarComponent.changePage(false, exerciseIndex, false, submission);
     }
 
+    /**
+     * Finds the submission for the current timestamp.
+     * @param timestamp The timestamp for which the submission should be found.
+     */
     private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined {
-        console.log('find submission for timestamp' + timestamp);
         for (let i = 0; i < this.submissionVersions.length; i++) {
-            console.log(timestamp);
             const comparisonObject = dayjs(timestamp);
             const submissionVersion = this.submissionVersions[i];
             if (submissionVersion.createdDate.isSame(comparisonObject)) {
@@ -283,6 +302,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return undefined;
     }
 
+    /**
+     * helper method to check if the object is a file upload submission
+     * @param object the object to check
+     */
     private isFileUploadSubmission(object: FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined) {
         if (!object) {
             return false;
@@ -291,10 +314,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         return !!fileUploadSubmission.id && fileUploadSubmission.submissionDate && fileUploadSubmission.filePath;
     }
 
+    /**
+     * Finds the submission for the exercise with the closest timestamp to the current timestamp.
+     * @param exercise The exercise for which the submission should be found.
+     */
     private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: Exercise) {
         const comparisonObject = dayjs(this.value);
-        console.log('find submission for exercise closest to current timestamp');
-        console.log(comparisonObject);
         let smallestDiff = Number.MAX_VALUE;
         let timestampWithSmallestDiff = 0;
         if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -315,11 +340,15 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 }
             }
         }
-        console.log(dayjs(timestampWithSmallestDiff));
         return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff);
     }
 
-    private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: ProgrammingSubmission[] | FileUploadSubmission[]) {
+    /**
+     * Finds the closest timestamp for a submission of a given exercise in a given submission array
+     * @param exercise the exercise for which the submission should be found
+     * @param submissions the submissions array in which the submission should be found
+     */
+    private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: ProgrammingSubmission[] | FileUploadSubmission[]): number {
         const comparisonObject = dayjs(this.value);
         let smallestDiff = Number.MAX_VALUE;
         let timestampWithSmallestDiff = 0;
