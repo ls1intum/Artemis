@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActiveConversationMessageLoadedAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage } from '../../helpers/sample/iris-sample-data';
+import { mockServerMessage, mockWebsocketMessage } from '../../helpers/sample/iris-sample-data';
 
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
@@ -16,7 +16,7 @@ describe('IrisWebsocketService', () => {
     let irisStateStore: IrisStateStore;
 
     const channel = '/user/topic/iris/sessions/0';
-    const newMessageObservable = of(mockServerMessage);
+    const newMessageObservable = of(mockWebsocketMessage);
 
     beforeEach(() => {
         TestBed.configureTestingModule({
