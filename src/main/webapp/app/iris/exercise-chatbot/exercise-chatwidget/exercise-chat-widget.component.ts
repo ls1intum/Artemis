@@ -100,23 +100,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnInit() {
-        // Check if the user has accepted the chat widget permissions
         this.accountService.identity().then((user: User) => {
             if (typeof user!.login === 'string') {
                 this.userAccepted = localStorage.getItem(user!.login) == 'true';
             }
         });
-
-        // Animate dots
         this.animateDots();
-
-        // Set initializing flag to true and load the first message
         setTimeout(() => {
             this.isInitializing = true;
         }, 50);
-        this.loadFirstMessage();
-
-        // Subscribe to state changes
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
@@ -124,12 +116,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
         });
-
-        // Set initializing flag to false and focus on message textarea
         setTimeout(() => {
             this.isInitializing = false;
             this.messageTextarea.nativeElement.focus();
         }, 150);
+        this.loadFirstMessage();
     }
 
     ngAfterViewInit() {
