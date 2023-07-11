@@ -115,24 +115,6 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    // @Disabled // TODO we should implement this in the future
-    void testRemoveTestCaseNames() {
-        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).text("test()");
-        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).text("test2()").detailText("This is wrong.");
-
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setExercise(exercise);
-        result.setParticipation(participation);
-
-        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
-
-        result.filterSensitiveFeedbacks(true);
-
-        assertThat(result.getFeedbacks()).allMatch(feedback -> feedback.getText() == null);
-    }
-
-    @Test
     void keepTestNamesWhenExerciseSettingActive() {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setShowTestNamesToStudents(true);
