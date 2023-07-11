@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import org.jvnet.hk2.annotations.Service;
@@ -11,9 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
@@ -31,7 +31,9 @@ class ContinuousPlagiarismControlResultsService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlResultsService.class);
 
-    private static final String PLAGIARISM_RESULT_FEEDBACK = "Plagiarisms detected. Score reduced to 0.";
+    private static final String PLAGIARISM_RESULT_FEEDBACK_EN = "Suspicion of plagiarism! Score reduced to 0.";
+
+    private static final String PLAGIARISM_RESULT_FEEDBACK_DE = "Verdacht auf Plagiat! Punktestand auf 0 reduziert.";
 
     private final SubmissionRepository submissionRepository;
 
@@ -77,10 +79,14 @@ class ContinuousPlagiarismControlResultsService {
         var feedback = new Feedback();
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setPositive(false);
-        feedback.setText(PLAGIARISM_RESULT_FEEDBACK);
         feedback.setResult(result);
         feedback.setVisibility(Visibility.ALWAYS);
         feedback.setCredits(0.0);
+
+        var feedbackText = participation.getStudent().map(User::getLangKey).map(Locale::forLanguageTag).filter(isEqual(Locale.ENGLISH)).map(it -> PLAGIARISM_RESULT_FEEDBACK_EN)
+                .orElse(PLAGIARISM_RESULT_FEEDBACK_DE);
+        feedback.setText(feedbackText);
+
         result.setFeedbacks(List.of(feedback));
 
         resultRepository.save(result);
@@ -89,6 +95,8 @@ class ContinuousPlagiarismControlResultsService {
     private void deletePastResultsWithPlagiarismFeedback(long submissionId) {
         log.debug("Removing cpc results for submission: submissionId={}.", submissionId);
         resultRepository.findAllWithFeedbackBySubmissionId(submissionId).stream()
-                .filter(result -> result.getFeedbacks().stream().anyMatch(it -> it.getText().contains(PLAGIARISM_RESULT_FEEDBACK))).forEach(resultRepository::delete);
+                .filter(result -> result.getFeedbacks().stream()
+                        .anyMatch(it -> it.getText().contains(PLAGIARISM_RESULT_FEEDBACK_EN) || it.getText().contains(PLAGIARISM_RESULT_FEEDBACK_DE)))
+                .forEach(resultRepository::delete);
     }
 }

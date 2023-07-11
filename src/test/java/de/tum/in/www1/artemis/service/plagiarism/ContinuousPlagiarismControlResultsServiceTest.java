@@ -39,7 +39,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
         // and: existing past result for no plagiarism submission
         var pastResult = new Result();
         var feedback = new Feedback();
-        feedback.setText("Plagiarisms detected. Score reduced to 0.");
+        feedback.setText("Verdacht auf Plagiat! Punktestand auf 0 reduziert.");
         pastResult.setFeedbacks(List.of(feedback));
         when(resultRepository.findAllWithFeedbackBySubmissionId(3L)).thenReturn(List.of(pastResult));
 
