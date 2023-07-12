@@ -104,10 +104,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
-    updateViewFromSubmissionVersion() {
+    private updateViewFromSubmissionVersion() {
         if (this.submissionVersion) {
             if (this.submissionVersion.content) {
-                // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.answer = this.submissionVersion.content;
             }
         }

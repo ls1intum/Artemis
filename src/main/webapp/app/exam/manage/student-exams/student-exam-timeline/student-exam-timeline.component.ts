@@ -57,7 +57,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
-    activePageComponentHolder: ExamSubmissionComponent | undefined;
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
     @ViewChild('slider') slider: SliderComponent;
@@ -158,8 +157,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 );
             }
         });
-        const returnObservable = merge(...submissionObservables);
-        return returnObservable;
+        return merge(...submissionObservables);
     }
 
     /**
@@ -278,22 +276,20 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
      * @param timestamp The timestamp for which the submission should be found.
      */
     private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined {
+        const comparisonObject = dayjs(timestamp);
         for (let i = 0; i < this.submissionVersions.length; i++) {
-            const comparisonObject = dayjs(timestamp);
             const submissionVersion = this.submissionVersions[i];
             if (submissionVersion.createdDate.isSame(comparisonObject)) {
                 return submissionVersion;
             }
         }
         for (let i = 0; i < this.programmingSubmissions.length; i++) {
-            const comparisonObject = dayjs(timestamp);
             const programmingSubmission = this.programmingSubmissions[i];
             if (programmingSubmission.submissionDate?.isSame(comparisonObject)) {
                 return programmingSubmission;
             }
         }
         for (let i = 0; i < this.fileUploadSubmissions.length; i++) {
-            const comparisonObject = dayjs(timestamp);
             const fileUploadSubmission = this.fileUploadSubmissions[i];
             if (fileUploadSubmission.submissionDate?.isSame(comparisonObject)) {
                 return fileUploadSubmission;

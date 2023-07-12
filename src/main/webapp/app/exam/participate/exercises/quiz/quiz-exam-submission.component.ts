@@ -260,6 +260,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmissionVersion(): void {
+        console.log(this.submissionVersion.content);
         this.studentSubmission.submittedAnswers = JSON.parse(this.submissionVersion.content);
         this.updateViewFromSubmission();
     }
