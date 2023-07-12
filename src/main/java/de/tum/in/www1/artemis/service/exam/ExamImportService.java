@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -162,13 +164,27 @@ public class ExamImportService {
                     "invalidExam");
         }
 
+        // Flag to determine, if a programming exercise with an invalid shortName was found
+        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
         // Iterate over all exercises
         exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).forEach(exercise -> {
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
+            if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
                 // Method to check, if the project already exists.
-                programmingExerciseService.checkIfProjectExists(programmingExercise, courseShortName);
+                boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
+                if (invalidShortName) {
+                    // If the project already exists the short name and title are removed. It has to be set in the client again
+                    exercise.setShortName("");
+                    exercise.setTitle("");
+                    numberOfInvalidProgrammingExercises.getAndIncrement();
+                }
             }
         });
+
+        if (numberOfInvalidProgrammingExercises.get() > 0) {
+            // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get());
+        }
+
     }
 
     /**

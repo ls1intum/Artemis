@@ -733,21 +733,10 @@ public class ProgrammingExerciseService {
      * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
-     * @param courseShortName     the short name of the course the exercise is imported into. It is used for putting together the project key and name in case the course
-     *                                of the exercise is not set
      */
-    public void checkIfProjectExists(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey;
-        String projectName;
-
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
-            projectKey = programmingExercise.getProjectKey();
-            projectName = programmingExercise.getProjectName();
-        }
-        else {
-            projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
-            projectName = courseShortName + " " + programmingExercise.getTitle();
-        }
+    public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
+        String projectKey = programmingExercise.getProjectKey();
+        String projectName = programmingExercise.getProjectName();
 
         boolean projectExists = versionControlService.orElseThrow().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
@@ -762,15 +751,26 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
-     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
-     * This prevents errors then the actual projects will be generated later on.
-     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
+     * Pre-Checks if a project with the same ProjectKey or ProjectName already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @param courseShortName     the shortName of the course the programming exercise should be imported in
+     * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
-    public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
-        checkIfProjectExists(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
+    public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
+        String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+        String projectName = courseShortName + " " + programmingExercise.getTitle();
+        log.debug("Project Key: {}", projectKey);
+        log.debug("Project Name: {}", projectName);
+
+        boolean projectExists = versionControlService.orElseThrow().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return true;
+        }
+        String errorMessageCis = continuousIntegrationService.orElseThrow().checkIfProjectExists(projectKey, projectName);
+        // means the project does not exist in version control server and does not exist in continuous integration server
+        return errorMessageCis != null;
     }
 
     /**
