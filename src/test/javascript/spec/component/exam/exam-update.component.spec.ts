@@ -635,30 +635,24 @@ describe('Exam Update Component', () => {
         });
 
         it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
-            'should perform import of exercise groups AND correctly process conflict from server',
+            'should perform import of examWithoutExercises AND correctly process conflict exception from server',
             (errorKey) => {
                 const preCheckError = new HttpErrorResponse({
-                    error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 0, params: { exerciseGroups: [exerciseGroup1] } },
+                    error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
                     status: 400,
                 });
-                const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
+                const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
                 const alertSpy = jest.spyOn(alertService, 'error');
-                const modalSpy = jest.spyOn(activeModal, 'close');
 
-                component.subsequentExerciseGroupSelection = true;
-                component.exam = exam1WithExercises;
-                component.targetCourseId = 1;
-                component.targetExamId = 2;
                 fixture.detectChanges();
-                component.performImportOfExerciseGroups();
+                component.save();
 
-                expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+                expect(importSpy).toHaveBeenCalledWith(1, examForImport);
                 if (errorKey == 'invalidKey') {
-                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 0 });
+                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
                 } else {
                     expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                 }
-                expect(modalSpy).not.toHaveBeenCalled();
             },
         );
 
