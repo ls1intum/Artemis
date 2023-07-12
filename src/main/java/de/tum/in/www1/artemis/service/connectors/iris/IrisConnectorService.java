@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.iris;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
 
 /**
@@ -54,6 +57,14 @@ public class IrisConnectorService {
     public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, IrisModel preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
         return sendRequest(request);
+    }
+
+    public List<IrisModelDTO> getOfferedModels() throws IrisConnectorException {
+        var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
+        if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+            throw new IrisConnectorException("Could not fetch offered models");
+        }
+        return Arrays.asList((IrisModelDTO[]) parseResponse(response, IrisModelDTO.class.arrayType()));
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
