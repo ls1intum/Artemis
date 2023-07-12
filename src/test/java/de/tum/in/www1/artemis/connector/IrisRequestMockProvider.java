@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 
 @Component
@@ -79,7 +78,7 @@ public class IrisRequestMockProvider {
         irisMessage.setSender(IrisMessageSender.LLM);
         irisMessage.setSentAt(ZonedDateTime.now());
 
-        var response = new IrisMessageResponseDTO(IrisModel.GPT35_TURBO, irisMessage);
+        var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);
 
         mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));

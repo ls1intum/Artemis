@@ -51,10 +51,10 @@ public class IrisConnectorService {
      *                           not reachable)
      * @param parameters     A map of parameters to be included in the template through handlebars (if they are specified
      *                           in the template)
-     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used {@link IrisModel}
+     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used IrisModel
      */
     @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, IrisModel preferredModel, Map<String, Object> parameters) {
+    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
         return sendRequest(request);
     }

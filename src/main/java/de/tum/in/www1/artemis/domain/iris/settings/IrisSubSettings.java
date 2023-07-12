@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 
 /**
  * An IrisSubSettings object represents the settings for a specific feature of Iris.
@@ -31,8 +30,7 @@ public class IrisSubSettings extends DomainObject {
 
     @Nullable
     @Column(name = "preferredModel")
-    @Enumerated(EnumType.STRING)
-    private IrisModel preferredModel;
+    private String preferredModel;
 
     public boolean isEnabled() {
         return enabled;
@@ -52,11 +50,11 @@ public class IrisSubSettings extends DomainObject {
     }
 
     @Nullable
-    public IrisModel getPreferredModel() {
+    public String getPreferredModel() {
         return preferredModel;
     }
 
-    public void setPreferredModel(@Nullable IrisModel preferredModel) {
+    public void setPreferredModel(@Nullable String preferredModel) {
         this.preferredModel = preferredModel;
     }
 }
