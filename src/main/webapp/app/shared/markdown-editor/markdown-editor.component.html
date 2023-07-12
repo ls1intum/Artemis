@@ -181,7 +181,7 @@
                             </div>
                         </ng-container>
                         <ng-container *ngFor="let command of domainCommands | typeCheck : DomainMultiOptionCommand">
-                            <div ngbDropdown class="d-inline-block">
+                            <div ngbDropdown class="btn-group">
                                 <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
                                     {{ command.buttonTranslationString | artemisTranslate }}
                                 </button>
