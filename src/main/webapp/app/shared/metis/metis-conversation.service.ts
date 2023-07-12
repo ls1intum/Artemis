@@ -169,7 +169,7 @@ export class MetisConversationService implements OnDestroy {
                 this.activeConversation = conversation.body!;
             }),
             catchError((res: HttpErrorResponse) => {
-                if (res.error?.skipAlert === false) {
+                if (!res.error?.skipAlert) {
                     return of(null);
                 }
 
