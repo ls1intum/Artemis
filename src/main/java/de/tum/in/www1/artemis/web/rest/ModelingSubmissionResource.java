@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import static java.util.Objects.requireNonNullElse;
+
+import java.util.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -327,8 +327,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getLatestResult() != null
+        // do not send the result to the client if the assessment is not finished and plagiarism is not detected
+        if (!requireNonNullElse(modelingSubmission.getPlagiarismDetected(), false) && modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
         }

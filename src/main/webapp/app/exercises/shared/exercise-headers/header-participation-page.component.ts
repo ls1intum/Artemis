@@ -6,6 +6,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -27,6 +28,9 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Sets the status badge and categories of the exercise on init
@@ -64,6 +68,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
                     getCourseFromExercise(this.exercise),
                 );
             }
+            this.plagiarismDetected = !!this.participation?.submissions?.[0].plagiarismDetected;
         }
     }
 }

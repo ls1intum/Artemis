@@ -337,6 +337,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
     }
 
+    @Nullable
+    public Boolean getPlagiarismDetected() {
+        return plagiarismDetected;
+    }
+
     @Override
     public int compareTo(Submission other) {
         if (getSubmissionDate() == null || other.getSubmissionDate() == null || Objects.equals(getSubmissionDate(), other.getSubmissionDate())) {
