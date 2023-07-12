@@ -190,21 +190,9 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
-        const uniqueTitle = true;
-
-        /*this.selectedExercises.forEach((exerciseGroup) => {
-            exerciseGroup.forEach((ex) => {
-                if (ex !== exercise && ex.type === ExerciseType.PROGRAMMING && ex.title === exercise.title) {
-                    uniqueTitle = false;
-                }
-            });
-        }); */
         return (
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.title?.length! > 0 &&
-            this.titleNamePattern.test(exercise.title!) &&
-            exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) &&
-            uniqueTitle
+            exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!)
         );
     }
 
@@ -213,22 +201,11 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
-        const uniqueShortName = true;
-
-        /*this.selectedExercises.forEach((exerciseGroup) => {
-            exerciseGroup.forEach((ex) => {
-                if (ex !== exercise && ex.type === ExerciseType.PROGRAMMING && ex.shortName === exercise.shortName) {
-                    uniqueShortName = false;
-                }
-            });
-        }); */
-
         return (
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.shortName?.length! > 2 &&
             this.shortNamePattern.test(exercise.shortName!) &&
-            exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) &&
-            uniqueShortName
+            exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
         );
     }
 

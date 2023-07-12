@@ -145,43 +145,35 @@ public class ExamImportService {
         // check for duplicated titles
         List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
                 .toList();
-        var uniqueTitles = new HashSet<>(titles);
+        Set<String> uniqueTitles = new HashSet<>(titles);
 
         if (titles.size() != uniqueTitles.size()) {
-            AtomicInteger numberOfInvalidProgrammingExercise = new AtomicInteger(0);
             exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
                 if (!uniqueTitles.contains(exercise.getTitle())) {
-                    // exercise.setShortName("");
                     exercise.setTitle("");
-                    numberOfInvalidProgrammingExercise.getAndIncrement();
                 }
                 else {
                     uniqueTitles.remove(exercise.getTitle());
                 }
             }));
-
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercise.get(), "examContainsProgrammingExercisesDuplicatedTitle");
+            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
         }
 
         // check for duplicated short names
         List<String> shortNames = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise)
                 .map(BaseExercise::getShortName).toList();
-
-        var uniqueShortNames = new HashSet<>(shortNames);
+        Set<String> uniqueShortNames = new HashSet<>(shortNames);
 
         if (shortNames.size() != uniqueShortNames.size()) {
-            AtomicInteger numberOfInvalidProgrammingExercise = new AtomicInteger(0);
             exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
                 if (!uniqueShortNames.contains(exercise.getShortName())) {
                     exercise.setShortName("");
-                    // exercise.setTitle("");
-                    numberOfInvalidProgrammingExercise.getAndIncrement();
                 }
                 else {
                     uniqueShortNames.remove(exercise.getShortName());
                 }
             }));
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercise.get(), "examContainsProgrammingExercisesDuplicatedTitle");
+            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
         }
 
         // Flag to determine, if a programming exercise with an invalid shortName was found
@@ -202,7 +194,7 @@ public class ExamImportService {
 
         if (numberOfInvalidProgrammingExercises.get() > 0) {
             // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get(), "examContainsProgrammingExercisesWithInvalidKey");
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get(), "invalidKey");
         }
 
     }
