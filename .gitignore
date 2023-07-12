@@ -185,6 +185,7 @@ data-exports/
 !/docker/.docker-data/artemis-data/.gitkeep
 /docker/.docker-data/artemis-mysql-data/*
 !/docker/.docker-data/artemis-mysql-data/.gitkeep
+test-outputs
 
 ######################
 # Cypress

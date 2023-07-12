@@ -1,54 +1,60 @@
 services:
     artemis-android-e2e:
-        image: artemis-android:latest
+        image: harbor.ase.in.tum.de/artemis-android/application:${ANDROID_APP_VERSION_TAG}
         depends_on:
-            - nginx
+            - artemis-app-setup
         environment:
-            username: artemis_test_user_4
-            password: ArTEMiS_4_pw2017
-            serverUrl: https://nginx
+            - USER_1_USERNAME=aa01aaa
+            - USER_1_PASSWORD=test_user_1_password
+            - USER_2_USERNAME=aa02aaa
+            - USER_2_DISPLAY_NAME=Test User2
+            - USER_3_USERNAME=aa03aaa
+            - SERVER_URL=http://artemis-app:8080
+            - DEFAULT_TIMEOUT=10000
+            - ADMIN_USERNAME=artemis_admin
+            - ADMIN_PASSWORD=artemis_admin
         command: test
         networks:
             - artemis
+        volumes:
+            - ../test-outputs/:/app/test-outputs/
 
     mysql:
         extends:
-            file: ./mysql.yml
+            file: ./mysql-for-android.yml
             service: mysql
 
     artemis-app:
         extends:
-            file: ./artemis.yml
+            file: ./artemis-for-android.yml
             service: artemis-app
         depends_on:
             mysql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress.env
+            - ./artemis/config/artemis_e2e_config.env
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8080:8080"
+        expose:
+            - "5005"
+        networks:
+            - artemis
 
-    nginx:
-        extends:
-            file: ./nginx.yml
-            service: nginx
-        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+    artemis-app-setup:
+        image: ellerbrock/alpine-bash-curl-ssl:latest
         depends_on:
             artemis-app:
-                condition: service_started
+                condition: service_healthy
         volumes:
-            - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
-        ports:
-            - "80:80"
-            - "443:443"
-            # see comments in artemis/config/cypress.env why this port is necessary
-            - "54321:54321"
+            - ./create_test_users.sh:/create_test_users.sh
+        entrypoint: /bin/bash -c "/bin/bash /create_test_users.sh artemis-app:8080"
+        networks:
+            - artemis
 
 networks:
     artemis:
         driver: "bridge"
         name: artemis
 
-volumes:
-    artemis-mysql-data:
-        name: artemis-mysql-data
-    artemis-data:
-        name: artemis-data

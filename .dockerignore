@@ -9,6 +9,7 @@ reports/
 surefire-reports/
 test-classes/
 test-results/
+test-outputs/
 www/
 !*.jar
 !*.war
