@@ -16,7 +16,7 @@ services:
         pull_policy: always
         restart: always
         env_file:
-            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-application-local.env}
+            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal

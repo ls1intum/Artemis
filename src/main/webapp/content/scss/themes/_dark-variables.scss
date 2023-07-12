@@ -46,6 +46,8 @@ $input-group-addon-color: $gray-500;
 $input-group-addon-bg: $gray-700;
 $form-check-input-border: none;
 $form-file-button-color: $white;
+$form-file-button-bg: $gray-600;
+$form-file-button-hover-bg: #666;
 
 $dropdown-bg: $gray-900;
 $dropdown-border-color: $gray-700;
@@ -519,9 +521,6 @@ $textblock-assessment-text-feedback-neutral-background: $gray-800;
 $textblock-assessment-text-feedback-neutral-active-decoration: $gray-100;
 $textblock-assessment-text-feedback-highlighted-color: $gray-100;
 $textblock-assessment-text-feedback-highlighted-background: darkblue;
-$textblock-assessment-text-feedback-conflicting-color: $gray-100;
-$textblock-assessment-text-feedback-conflicting-background: $warning;
-$textblock-assessment-text-feedback-conflicting-active-decoration: $gray-100;
 $textblock-assessment-textblock-feedback-editor-active-border: $gray-600;
 $textblock-feedback-editor-dropdown-hover: $gray-700;
 $manual-text-selection-span-hover-background-color: $gray-700;

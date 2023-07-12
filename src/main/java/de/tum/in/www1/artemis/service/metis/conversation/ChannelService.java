@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -215,6 +216,17 @@ public class ChannelService {
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
+    }
+
+    /**
+     * Deletes the channel if it exists
+     *
+     * @param channel the channel to delete
+     */
+    public void deleteChannel(@Nullable Channel channel) {
+        if (channel != null) {
+            conversationService.deleteConversation(channel);
+        }
     }
 
     /**

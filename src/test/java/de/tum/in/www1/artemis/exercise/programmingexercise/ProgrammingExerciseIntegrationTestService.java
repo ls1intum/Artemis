@@ -471,7 +471,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
-        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString())).findFirst();
+        Optional<Path> extractedRepo1 = entries.stream()
+                .filter(entry -> entry.toString().endsWith(Path.of("-" + String.valueOf(participation1.getId()) + "-student-submission.git", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -531,7 +532,7 @@ class ProgrammingExerciseIntegrationTestService {
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAnonymizeStudentCommits(true);
+        repositoryExportOptions.setAnonymizeRepository(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         return repositoryExportOptions;
@@ -1980,7 +1981,7 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
-        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).isEmpty());
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {

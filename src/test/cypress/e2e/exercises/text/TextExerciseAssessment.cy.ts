@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import {
     courseAssessment,
     courseManagement,
@@ -13,38 +13,31 @@ import {
 } from '../../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
-// Common primitives
-const tutorFeedback = 'Try to use some newlines next time!';
-const tutorFeedbackPoints = 4;
-const tutorTextFeedback = 'Nice ending of the sentence!';
-const tutorTextFeedbackPoints = 2;
-const complaint = "That feedback wasn't very useful!";
-
 describe('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;
+    const tutorFeedback = 'Try to use some newlines next time!';
+    const tutorFeedbackPoints = 4;
+    const tutorTextFeedback = 'Nice ending of the sentence!';
+    const tutorTextFeedbackPoints = 2;
+    const complaint = "That feedback wasn't very useful!";
 
-    before('Create course', () => {
-        cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createTextExercise({ course }).then((textResponse) => {
-                exercise = textResponse.body;
-                cy.login(studentOne);
-                courseManagementRequest.startExerciseParticipation(exercise.id!);
-                cy.fixture('loremIpsum.txt').then((submission) => {
-                    courseManagementRequest.makeTextExerciseSubmission(exercise.id!, submission);
-                });
-            });
+    before('Creates a text exercise and makes a student submission', () => {
+        createCourseWithTextExercise().then(() => {
+            makeTextSubmissionAsStudent();
         });
+    });
+
+    after(() => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
-        courseManagement.openAssessmentDashboardOfCourse(course.id!);
+        courseManagement.openAssessmentDashboardOfCourse(course.shortName!);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
@@ -83,7 +76,24 @@ describe('Text exercise assessment', () => {
         });
     });
 
-    after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
-    });
+    function createCourseWithTextExercise() {
+        cy.login(admin);
+        return courseManagementRequest.createCourse().then((response) => {
+            course = convertCourseAfterMultiPart(response);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.createTextExercise({ course }).then((textResponse) => {
+                exercise = textResponse.body;
+            });
+        });
+    }
+
+    function makeTextSubmissionAsStudent() {
+        cy.login(studentOne);
+        courseManagementRequest.startExerciseParticipation(exercise.id!);
+        cy.fixture('loremIpsum.txt').then((submission) => {
+            courseManagementRequest.makeTextExerciseSubmission(exercise.id!, submission);
+        });
+    }
 });

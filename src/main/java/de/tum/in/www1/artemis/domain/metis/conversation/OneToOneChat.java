@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 
 @Entity
@@ -22,5 +23,10 @@ public class OneToOneChat extends Conversation {
             throw new IllegalArgumentException("OneToOneChat can only have max two participants");
         }
         super.setConversationParticipants(conversationParticipant);
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        return sender.getName();
     }
 }

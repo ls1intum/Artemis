@@ -112,10 +112,8 @@ public class AssessmentService {
      * @return true if the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
-
         final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
-
         // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
         if (isExamMode) {
             assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
