@@ -8,6 +8,17 @@
             "decline": "Decline",
             "unreadMessages": "Unread messages",
             "buttonTooltip": "Start chatting with Iris!",
+            "errors": {
+                "invalidSessionState": "Iris session state is invalid. It is impossible to send messages in this state.",
+                "historyLoadFailed": "Could not fetch messages.",
+                "sessionLoadFailed": "Could not fetch session details.",
+                "sessionCreationFailed": "Could not create a new session.",
+                "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
+                "rateMessageFailed": "Could not rate message. Please try again later.",
+                "irisDisabled": "Iris has been disabled for this exercise.",
+                "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
+                "emptyMessage": "You cannot submit empty messages."
+            },
             "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me here."
         }
     }

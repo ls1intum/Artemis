@@ -19,8 +19,9 @@ import {
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
-type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: string) => void };
+type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
 
 /**
  * Provides a store to manage message-related state data and dispatch actions. Is valid only inside CourseExerciseDetailsComponent
@@ -32,7 +33,8 @@ export class IrisStateStore implements OnDestroy {
         sessionId: null,
         isLoading: false,
         numNewMessages: 0,
-        error: '',
+        error: null,
+        serverResponseTimeout: null,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -110,11 +112,23 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
+        if (state.error != null && state.error.fatal) {
+            return {
+                messages: [...state.messages],
+                sessionId: state.sessionId,
+                numNewMessages: state.numNewMessages,
+                isLoading: false,
+                error: state.error,
+                serverResponseTimeout: null,
+            };
+        }
+
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
                 ...state,
                 isLoading: false,
-                error: 'Iris ChatBot state is invalid. It is impossible to send messages in such a session.', // TODO translate to German
+                error: errorMessages[IrisErrorMessageKey.INVALID_SESSION_STATE],
+                serverResponseTimeout: null,
             };
         }
         if (isNumNewMessagesResetAction(action)) {
@@ -129,25 +143,34 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: [...state.messages, castedAction.message],
                 isLoading: false,
-                error: '',
+                error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isActiveConversationMessageLoadedAction(action)) {
             const castedAction = action as ActiveConversationMessageLoadedAction;
+            if (state.serverResponseTimeout) {
+                clearTimeout(state.serverResponseTimeout);
+            }
             return {
                 messages: [...state.messages, castedAction.message],
                 sessionId: state.sessionId,
                 isLoading: false,
                 numNewMessages: state.numNewMessages + 1,
-                error: '',
+                error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
+            if (state.serverResponseTimeout && (castedAction.errorType == IrisErrorMessageKey.SEND_MESSAGE_FAILED || castedAction.errorType == IrisErrorMessageKey.IRIS_DISABLED)) {
+                clearTimeout(state.serverResponseTimeout);
+                state.serverResponseTimeout = null;
+            }
             return {
                 ...state,
                 isLoading: false,
-                error: castedAction.errorMessage,
+                error: castedAction.errorType == null ? null : errorMessages[castedAction.errorType],
             };
         }
         if (isSessionReceivedAction(action)) {
@@ -156,16 +179,26 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: castedAction.messages,
                 sessionId: castedAction.sessionId,
-                error: '',
+                error: null,
+                serverResponseTimeout: null,
             };
         }
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
+            if (state.messages.some((msg) => msg.id && msg.id === castedAction.message.id)) {
+                return {
+                    ...state,
+                    isLoading: true,
+                    error: null,
+                    serverResponseTimeout: castedAction.timeoutId,
+                };
+            }
             return {
                 ...state,
                 messages: [...state.messages, castedAction.message],
                 isLoading: true,
-                error: '',
+                error: null,
+                serverResponseTimeout: castedAction.timeoutId,
             };
         }
         if (isRateMessageSuccessAction(action)) {
