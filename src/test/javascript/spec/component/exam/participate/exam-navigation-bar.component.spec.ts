@@ -18,7 +18,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
-import { faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Exam Navigation Bar Component', () => {
@@ -245,5 +245,18 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
+    });
+    it.each([
+        { currentIndex: 0, newIndex: 0 },
+        { currentIndex: 0, newIndex: 1 },
+    ])('should set the correct exercise button status in exam timeline view', ({ currentIndex, newIndex }) => {
+        comp.examTimeLineView = true;
+        comp.exerciseIndex = currentIndex;
+        if (newIndex === currentIndex) {
+            expect(comp.setExerciseButtonStatus(newIndex)).toBe('synced active');
+        } else {
+            expect(comp.setExerciseButtonStatus(newIndex)).toBe('synced');
+        }
+        expect(comp.icon).toEqual(faCheck);
     });
 });
