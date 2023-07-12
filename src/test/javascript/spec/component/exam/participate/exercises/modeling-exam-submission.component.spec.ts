@@ -233,38 +233,14 @@ describe('ModelingExamSubmissionComponent', () => {
     it('should update the model on submission version change', () => {
         const submissionVersion = {
             content:
-                'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[{"id":"e7fa68b9-767d-4798-aaff-e6b04fa194b9","name":"Class","type":"Class","owner":null,"bounds":{"x":0,"y":0,"width":160,"height":90},"attributes":["c8bf8580-7437-47be-a103-380ff4543960"],"methods":["9709c844-94a9-48be-b61b-c81338d1d351"]},{"id":"c8bf8580-7437-47be-a103-380ff4543960","name":"+ attribute: Type","type":"ClassAttribute","owner":"e7fa68b9-767d-4798-aaff-e6b04fa194b9","bounds":{"x":0.5,"y":30.5,"width":159,"height":30}},{"id":"9709c844-94a9-48be-b61b-c81338d1d351","name":"+ method()","type":"ClassMethod","owner":"e7fa68b9-767d-4798-aaff-e6b04fa194b9","bounds":{"x":0.5,"y":60.5,"width":159,"height":30}}],"relationships":[],"assessments":[]}; Explanation: explanation',
+                'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
         } as unknown as SubmissionVersion;
         const parsedModel = {
             version: '2.0.0',
             type: 'ClassDiagram',
             size: { width: 220, height: 420 },
             interactive: { elements: [], relationships: [] },
-            elements: [
-                {
-                    id: 'e7fa68b9-767d-4798-aaff-e6b04fa194b9',
-                    name: 'Class',
-                    type: 'Class',
-                    owner: null,
-                    bounds: { x: 0, y: 0, width: 160, height: 90 },
-                    attributes: ['c8bf8580-7437-47be-a103-380ff4543960'],
-                    methods: ['9709c844-94a9-48be-b61b-c81338d1d351'],
-                },
-                {
-                    id: 'c8bf8580-7437-47be-a103-380ff4543960',
-                    name: '+ attribute: Type',
-                    type: 'ClassAttribute',
-                    owner: 'e7fa68b9-767d-4798-aaff-e6b04fa194b9',
-                    bounds: { x: 0.5, y: 30.5, width: 159, height: 30 },
-                },
-                {
-                    id: '9709c844-94a9-48be-b61b-c81338d1d351',
-                    name: '+ method()',
-                    type: 'ClassMethod',
-                    owner: 'e7fa68b9-767d-4798-aaff-e6b04fa194b9',
-                    bounds: { x: 0.5, y: 60.5, width: 159, height: 30 },
-                },
-            ],
+            elements: [],
             relationships: [],
             assessments: [],
         } as UMLModel;
@@ -272,7 +248,4 @@ describe('ModelingExamSubmissionComponent', () => {
         expect(comp.umlModel).toEqual(parsedModel);
         expect(comp.explanationText).toBe('explanation');
     });
-    const parseExpectedModel = (expectedModel: string) => {
-        return JSON.parse(expectedModel);
-    };
 });

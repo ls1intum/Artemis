@@ -131,11 +131,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     updateViewFromSubmission(): void {
         // do nothing - the code editor itself is taking care of updating the view from submission
     }
-
-    updateViewFromSubmissionVersion(): void {
-        // do nothing - submission versions are not supported for programming exercises
-    }
-
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // do nothing - submission versions are not supported for programming exercises
     }

@@ -17,6 +17,7 @@ import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -224,11 +225,16 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         if (this.currentExercise?.type === ExerciseType.PROGRAMMING) {
             this.updateProgrammingExerciseView();
         } else if (this.currentExercise?.type === ExerciseType.FILE_UPLOAD) {
-            this.activePageComponent!.submission = this.currentSubmission as FileUploadSubmission;
-            this.activePageComponent?.updateViewFromSubmission();
+            this.updateFileUploadExerciseView();
         } else {
             this.activePageComponent?.setSubmissionVersion(this.currentSubmission as SubmissionVersion);
         }
+    }
+
+    private updateFileUploadExerciseView() {
+        const fileUploadComponent = this.activePageComponent as FileUploadExamSubmissionComponent;
+        fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
+        fileUploadComponent.updateViewFromSubmission();
     }
 
     private activateActiveComponent() {

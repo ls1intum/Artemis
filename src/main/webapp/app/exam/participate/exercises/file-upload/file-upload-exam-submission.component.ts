@@ -131,8 +131,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        console.log('updateViewFromSubmission');
-        console.log(this.studentSubmission);
         if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.studentSubmission.filePath && this.examTimeline)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
@@ -140,8 +138,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             this.submittedFileName = filePath.last()!;
             const fileName = this.submittedFileName.split('.');
             this.submittedFileExtension = fileName.last()!;
-            console.log(this.submittedFileName);
-            console.log(this.studentSubmission.filePath);
         }
     }
 
@@ -171,11 +167,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     private onError() {
         this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
-
-    updateViewFromSubmissionVersion(): void {
-        // submission versions are not supported for file upload exercises
-    }
-
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // submission versions are not supported for file upload exercises
     }
