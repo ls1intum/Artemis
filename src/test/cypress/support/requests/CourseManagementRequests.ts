@@ -25,7 +25,6 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -41,17 +40,13 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param course the course
-     * @param admin the admin user
+     * @param courseId the course id
      * @returns <Chainable> request response
      */
-    deleteCourse(course: Course, admin: CypressCredentials) {
+    deleteCourse(courseId: number) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(20000);
-        if (course) {
-            cy.login(admin);
-            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}` });
-        }
+        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
     }
 
     /**
@@ -68,7 +63,7 @@ export class CourseManagementRequests {
     createCourse(
         customizeGroups = false,
         courseName = 'Course ' + generateUUID(),
-        courseShortName = 'course' + generateUUID(),
+        courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
         fileName?: string,
@@ -514,7 +509,7 @@ export class CourseManagementRequests {
         title = 'Quiz ' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
-    ): Cypress.Chainable<Cypress.Response<QuizExercise>> {
+    ) {
         const quizExercise: any = {
             ...quizTemplate,
             title,
@@ -532,14 +527,10 @@ export class CourseManagementRequests {
         } else {
             newQuizExercise = Object.assign({}, quizExercise, body);
         }
-
-        const formData = new FormData();
-        formData.append('exercise', new File([JSON.stringify(newQuizExercise)], 'exercise', { type: 'application/json' }));
-
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
-            body: formData,
+            body: newQuizExercise,
         });
     }
 
@@ -813,7 +804,7 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-export function convertModelAfterMultiPart<T>(response: Cypress.Response<T>): T {
+export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');
