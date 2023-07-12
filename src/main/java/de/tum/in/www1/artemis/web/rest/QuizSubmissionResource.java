@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import javax.validation.Valid;
 
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SubmissionVersion;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -22,10 +20,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -39,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing QuizSubmission.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("/api")
 public class QuizSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
@@ -65,11 +64,9 @@ public class QuizSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final SubmissionVersionRepository submissionVersionRepository;
-
     public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
             WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, SubmissionVersionRepository submissionVersionRepository) {
+            StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
@@ -78,7 +75,6 @@ public class QuizSubmissionResource {
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.submissionVersionRepository = submissionVersionRepository;
     }
 
     /**
@@ -88,7 +84,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/submissions/live")
+    @PostMapping("/exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
@@ -112,7 +108,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/submissions/practice")
+    @PostMapping("/exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudent
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
@@ -238,18 +234,5 @@ public class QuizSubmissionResource {
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
-    }
-
-    /**
-     * Retrieve all submission versions for a given submission id
-     *
-     * @param submissionId id of the submission
-     * @return a list of submission versions ordered by creation date
-     */
-    @GetMapping("quiz-submissions/{submissionId}/versions")
-    @EnforceAtLeastInstructor
-    public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
-        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
-
     }
 }

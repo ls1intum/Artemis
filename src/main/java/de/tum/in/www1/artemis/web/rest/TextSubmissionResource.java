@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing TextSubmission.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("/api")
 public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
@@ -61,13 +60,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
-    private final SubmissionVersionRepository submissionVersionRepository;
-
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService, SubmissionVersionRepository submissionVersionRepository) {
+            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -80,7 +77,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.plagiarismService = plagiarismService;
-        this.submissionVersionRepository = submissionVersionRepository;
     }
 
     /**
@@ -90,7 +86,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param textSubmission the textSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/text-submissions")
+    @PostMapping("/exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save text submission : {}", textSubmission);
@@ -110,7 +106,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
      *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
-    @PutMapping("exercises/{exerciseId}/text-submissions")
+    @PutMapping("/exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update text submission: {}", textSubmission);
@@ -147,7 +143,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param submissionId the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
-    @GetMapping("text-submissions/{submissionId}")
+    @GetMapping("/text-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
@@ -173,7 +169,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "exercises/{exerciseId}/text-submissions")
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -191,7 +187,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission                  optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "exercises/{exerciseId}/text-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
@@ -240,18 +236,5 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
         return ResponseEntity.ok().body(textSubmission);
-    }
-
-    /**
-     * Retrieve all submission versions for a given submission id
-     *
-     * @param submissionId id of the submission
-     * @return a list of submission versions ordered by creation date
-     */
-    @GetMapping("text-submissions/{submissionId}/versions")
-    @EnforceAtLeastInstructor
-    public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
-        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submissionId);
-
     }
 }
