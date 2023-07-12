@@ -141,7 +141,7 @@ export class ExamUpdateComponent implements OnInit {
         if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidKey') {
             this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             // The update() Method is called to update the exercises
-            this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+            this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToInvalidProjectKey();
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else {

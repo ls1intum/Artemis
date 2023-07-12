@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.service.TextExerciseImportService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
 
 @Service
@@ -146,22 +145,43 @@ public class ExamImportService {
         // check for duplicated titles
         List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
                 .toList();
+        var uniqueTitles = new HashSet<>(titles);
 
-        if (titles.size() != titles.stream().distinct().count()) {
-            List<String> duplicatedTitles = titles.stream().filter(title -> Collections.frequency(titles, title) > 1).distinct().toList();
-            throw new BadRequestAlertException("Multiple programming exercises in the exam have the same title: " + duplicatedTitles.get(0) + ". Please choose a different title!",
-                    "Exam", "invalidExam");
+        if (titles.size() != uniqueTitles.size()) {
+            AtomicInteger numberOfInvalidProgrammingExercise = new AtomicInteger(0);
+            exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+                if (!uniqueTitles.contains(exercise.getTitle())) {
+                    // exercise.setShortName("");
+                    exercise.setTitle("");
+                    numberOfInvalidProgrammingExercise.getAndIncrement();
+                }
+                else {
+                    uniqueTitles.remove(exercise.getTitle());
+                }
+            }));
+
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercise.get(), "examContainsProgrammingExercisesDuplicatedTitle");
         }
 
-        // check for duplicated titles
+        // check for duplicated short names
         List<String> shortNames = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise)
                 .map(BaseExercise::getShortName).toList();
 
-        if (shortNames.size() != shortNames.stream().distinct().count()) {
-            List<String> duplicatedShortNames = shortNames.stream().filter(shortName -> Collections.frequency(shortNames, shortName) > 1).distinct().toList();
-            throw new BadRequestAlertException(
-                    "Multiple programming exercises in the exam have the same short name: " + duplicatedShortNames.get(0) + ". Please choose a different short name!", "Exam",
-                    "invalidExam");
+        var uniqueShortNames = new HashSet<>(shortNames);
+
+        if (shortNames.size() != uniqueShortNames.size()) {
+            AtomicInteger numberOfInvalidProgrammingExercise = new AtomicInteger(0);
+            exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+                if (!uniqueShortNames.contains(exercise.getShortName())) {
+                    exercise.setShortName("");
+                    // exercise.setTitle("");
+                    numberOfInvalidProgrammingExercise.getAndIncrement();
+                }
+                else {
+                    uniqueShortNames.remove(exercise.getShortName());
+                }
+            }));
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercise.get(), "examContainsProgrammingExercisesDuplicatedTitle");
         }
 
         // Flag to determine, if a programming exercise with an invalid shortName was found
@@ -182,7 +202,7 @@ public class ExamImportService {
 
         if (numberOfInvalidProgrammingExercises.get() > 0) {
             // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get());
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get(), "examContainsProgrammingExercisesWithInvalidKey");
         }
 
     }

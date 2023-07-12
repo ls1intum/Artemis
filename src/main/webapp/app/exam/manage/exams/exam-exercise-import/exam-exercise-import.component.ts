@@ -51,9 +51,20 @@ export class ExamExerciseImportComponent implements OnInit {
      * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
      * Called by the parent component
      */
-    updateMapsAfterRejectedImport() {
+    updateMapsAfterRejectedImportDueToInvalidProjectKey() {
         this.titleAndShortNameOfProgrammingExercises.clear();
         this.initializeTitleAndShortNameMap();
+        this.selectedExercises.clear();
+        this.containsProgrammingExercises.clear();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+    }
+
+    /**
+     * Method to update the Maps after a rejected import due to duplicated short name or title
+     * Called by the parent component
+     */
+    updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle() {
+        this.titleAndShortNameOfProgrammingExercises.clear();
         this.selectedExercises.clear();
         this.containsProgrammingExercises.clear();
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
@@ -179,15 +190,15 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
-        let uniqueTitle = true;
+        const uniqueTitle = true;
 
-        this.selectedExercises.forEach((exerciseGroup) => {
+        /*this.selectedExercises.forEach((exerciseGroup) => {
             exerciseGroup.forEach((ex) => {
                 if (ex !== exercise && ex.type === ExerciseType.PROGRAMMING && ex.title === exercise.title) {
                     uniqueTitle = false;
                 }
             });
-        });
+        }); */
         return (
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.title?.length! > 0 &&
@@ -202,15 +213,15 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
-        let uniqueShortName = true;
+        const uniqueShortName = true;
 
-        this.selectedExercises.forEach((exerciseGroup) => {
+        /*this.selectedExercises.forEach((exerciseGroup) => {
             exerciseGroup.forEach((ex) => {
                 if (ex !== exercise && ex.type === ExerciseType.PROGRAMMING && ex.shortName === exercise.shortName) {
                     uniqueShortName = false;
                 }
             });
-        });
+        }); */
 
         return (
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
