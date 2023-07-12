@@ -33,13 +33,13 @@ export class ComplaintsFormComponent implements OnInit {
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise);
+        this.maxComplaintTextLimit = this.course?.maxComplaintTextLimit ?? 0;
         if (this.exercise.course) {
             // only set the complaint limit for course exercises, there are unlimited complaints for exams
             this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
-            this.maxComplaintTextLimit = this.course!.maxComplaintTextLimit!;
         } else {
             // Complaints for exams should always allow at least 2000 characters. If the course limit is higher, the custom limit gets used.
-            this.maxComplaintTextLimit = Math.max(2000, this.course?.maxComplaintTextLimit ?? 0);
+            this.maxComplaintTextLimit = Math.max(2000, this.maxComplaintTextLimit);
         }
     }
 

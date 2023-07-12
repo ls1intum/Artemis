@@ -52,8 +52,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise!);
 
-        this.maxComplaintResponseTextLimit = this.course!.maxComplaintResponseTextLimit ?? 0;
-        if (!this.exercise?.course) {
+        this.maxComplaintResponseTextLimit = this.course?.maxComplaintResponseTextLimit ?? 0;
+        if (this.exercise?.exerciseGroup) {
             // Exams should always allow at least 2000 characters
             this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
         }
