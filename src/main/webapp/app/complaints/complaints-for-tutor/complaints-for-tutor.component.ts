@@ -39,6 +39,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     lockedByCurrentUser = false;
     isLockedForLoggedInUser = false;
     course?: Course;
+    maxComplaintResponseTextLimit: number;
 
     constructor(
         private alertService: AlertService,
@@ -50,6 +51,12 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise!);
+
+        this.maxComplaintResponseTextLimit = this.course?.maxComplaintResponseTextLimit ?? 0;
+        if (this.exercise?.exerciseGroup) {
+            // Exams should always allow at least 2000 characters
+            this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
+        }
 
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
@@ -147,10 +154,9 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        if (this.complaintResponse.responseText.length > this.course?.maxComplaintResponseTextLimit!) {
+        if (this.complaintResponse.responseText.length > this.maxComplaintResponseTextLimit) {
             this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
-                maxComplaintRespondTextLimit: this.course?.maxComplaintResponseTextLimit,
+                maxComplaintRespondTextLimit: this.maxComplaintResponseTextLimit,
             });
             return;
         }

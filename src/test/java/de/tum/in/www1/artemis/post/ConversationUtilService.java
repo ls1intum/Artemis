@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.post;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -41,8 +40,6 @@ public class ConversationUtilService {
     private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
-
-    private static int dayCount = 1;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -210,7 +207,7 @@ public class ConversationUtilService {
         List<Post> posts = new ArrayList<>();
         for (Exercise exerciseContext : exerciseContexts) {
             for (int i = 0; i < 4; i++) {
-                Post postToAdd = createBasicPost(i, userPrefix + "student");
+                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "student", (i + 1))));
                 postToAdd.setExercise(exerciseContext);
                 postRepository.save(postToAdd);
                 posts.add(postToAdd);
@@ -224,7 +221,7 @@ public class ConversationUtilService {
         List<Post> posts = new ArrayList<>();
         for (Lecture lectureContext : lectureContexts) {
             for (int i = 0; i < 4; i++) {
-                Post postToAdd = createBasicPost(i, userPrefix + "tutor");
+                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "tutor", (i + 1))));
                 postToAdd.setLecture(lectureContext);
                 postRepository.save(postToAdd);
                 posts.add(postToAdd);
@@ -236,7 +233,7 @@ public class ConversationUtilService {
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "editor");
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "editor", (i + 1))));
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
             postRepository.save(postToAdd);
@@ -246,33 +243,16 @@ public class ConversationUtilService {
     }
 
     private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
-        Post postToAdd = createBasicPost(0, userPrefix + "instructor");
+        Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
-    private Post createBasicPost(Integer i, String usernamePrefix) {
-        Post post = new Post();
-        post.setTitle(String.format("Title Post %s", (i + 1)));
-        post.setContent(String.format("Content Post %s", (i + 1)));
-        post.setVisibleForStudents(true);
-        post.setDisplayPriority(DisplayPriority.NONE);
-        post.setAuthor(userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
-        post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
-        String tag = String.format("Tag %s", (i + 1));
-        Set<String> tags = new HashSet<>();
-        tags.add(tag);
-        post.setTags(tags);
-
-        dayCount = (dayCount % 25) + 1;
-        return post;
-    }
-
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "tutor", (i + 1))));
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -389,7 +369,7 @@ public class ConversationUtilService {
     }
 
     private void addReactionForUserToPost(String login, Post post) {
-        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setPost(post);
         conversationRepository.save(post.getConversation());
         postRepository.save(post);
@@ -397,17 +377,10 @@ public class ConversationUtilService {
     }
 
     private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
-        Reaction reaction = createReactionForUser(userUtilService.getUserByLogin(login));
+        Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setAnswerPost(answerPost);
         answerPostRepository.save(answerPost);
         reactionRepository.save(reaction);
-    }
-
-    private Reaction createReactionForUser(User user) {
-        Reaction reaction = new Reaction();
-        reaction.setEmojiId("heart");
-        reaction.setUser(user);
-        return reaction;
     }
 
     public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
