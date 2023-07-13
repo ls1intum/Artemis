@@ -48,7 +48,7 @@ describe('Course communication', () => {
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
             courseCommunication.selectContextInModal(CourseWideContext.ORGANIZATION);
-            courseCommunication.setTitleInModal('Cypress Test Post');
+            courseCommunication.setTitleInModal('Test Post');
             cy.fixture('loremIpsum.txt').then((text) => {
                 courseCommunication.setContentInModal(text);
             });
