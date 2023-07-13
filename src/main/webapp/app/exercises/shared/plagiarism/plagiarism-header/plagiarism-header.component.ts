@@ -27,7 +27,7 @@ export class PlagiarismHeaderComponent {
     readonly plagiarismStatus = PlagiarismStatus;
     disableConfirmDenyButton = false;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal, public router: Router) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal, private router: Router) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
