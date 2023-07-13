@@ -29,7 +29,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 @Component({
     selector: 'jhi-course-management-tab-bar',
     templateUrl: './course-management-tab-bar.component.html',
-    styleUrls: ['../../../shared/tab-bar/tab-bar.scss'],
+    styleUrls: ['./course-management-tab-bar.component.scss'],
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;

@@ -1,7 +1,3 @@
-button {
-    margin: 0 !important; // override bootstrap
-}
-
 button[data-mode='Exam'] {
-    margin-top: 0.25rem !important; // override bootstrap
+    margin-top: 0.25rem;
 }

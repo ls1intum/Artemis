@@ -53,11 +53,9 @@
 
         <!-- Exam Monitoring sections -->
         <div class="tab-bar border-0 mb-0 pb-0" id="monitoring-tab-bar">
-            <div>
-                <a *ngFor="let section of this.sections" id="monitoring-{{ section }}-tab" [routerLink]="section" routerLinkActive="active">
-                    <span jhiTranslate="artemisApp.examMonitoring.menu.{{ section }}.title">{{ section }}</span>
-                </a>
-            </div>
+            <a class="tab-link" *ngFor="let section of this.sections" id="monitoring-{{ section }}-tab" [routerLink]="section" routerLinkActive="active">
+                <span jhiTranslate="artemisApp.examMonitoring.menu.{{ section }}.title">{{ section }}</span>
+            </a>
         </div>
         <div *ngIf="this.examMonitoringGloballyEnabled && exam.monitoring" class="position-relative">
             <router-outlet></router-outlet>
