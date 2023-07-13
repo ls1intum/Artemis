@@ -418,7 +418,6 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    // @Disabled // TODO: Fix the TODO inside automaticCleanupBuildPlans() before enabling the test again.
     void testAutomaticCleanUpBuildPlans() throws Exception {
         programmingExerciseTestService.automaticCleanupBuildPlans();
     }
