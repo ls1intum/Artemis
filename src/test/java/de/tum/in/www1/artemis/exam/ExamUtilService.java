@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -324,17 +325,9 @@ public class ExamUtilService {
     }
 
     public Channel addExamChannel(Exam exam, String channelName) {
-        Channel channel = new Channel();
-        channel.setCourse(exam.getCourse());
-        channel.setName(channelName);
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+        Channel channel = ConversationFactory.generateChannel(exam.getCourse(), channelName);
         channel.setExam(exam);
-        channel = conversationRepository.save(channel);
-        exam.setChannelName(channelName);
-        return channel;
+        return conversationRepository.save(channel);
     }
 
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
@@ -377,7 +370,7 @@ public class ExamUtilService {
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
         for (int i = 0; i <= 4; i++) {
-            ExamFactory.generateExerciseGroup(true, exam);
+            ExamFactory.generateExerciseGroupWithTitle(true, exam, "Group " + i);
         }
         exam.setNumberOfExercisesInExam(5);
         exam.setExamMaxPoints(5 * 5);
@@ -572,15 +565,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
@@ -598,15 +591,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());

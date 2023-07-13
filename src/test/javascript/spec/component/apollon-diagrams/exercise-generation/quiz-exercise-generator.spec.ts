@@ -78,6 +78,8 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
+        const examplePath = '/path/to/file';
+        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
         jest.spyOn(quizExerciseService, 'create').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore

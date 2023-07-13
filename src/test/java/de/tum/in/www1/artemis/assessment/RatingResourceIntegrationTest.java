@@ -79,7 +79,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
-        Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
+        Rating savedRating = ratingService.findRatingByResultId(result.getId()).orElseThrow();
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }
@@ -125,7 +125,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isEqualTo(5);
     }
 
@@ -134,7 +134,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testUpdateInvalidRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isNotEqualTo(7);
         assertThat(updatedRating.getRating()).isEqualTo(2);
     }
@@ -146,7 +146,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
 
         // check that rating is not updated
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isNotEqualTo(5);
     }
 

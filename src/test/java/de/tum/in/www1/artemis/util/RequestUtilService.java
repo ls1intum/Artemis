@@ -72,11 +72,11 @@ public class RequestUtilService {
         }
         builder.file(json);
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
+        restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
@@ -439,10 +439,6 @@ public class RequestUtilService {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
     }
 
-    public File getFile(String path, HttpStatus expectedStatus) throws Exception {
-        return getFile(path, expectedStatus, new LinkedMultiValueMap<>());
-    }
-
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
@@ -546,20 +542,6 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
-    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
-            String[] expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-
-        if (expectedResponseHeaders != null) {
-            for (String header : expectedResponseHeaders) {
-                assertThat(res.getResponse().containsHeader(header)).isTrue();
-            }
-        }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
-    }
-
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
@@ -591,7 +573,7 @@ public class RequestUtilService {
      * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
-    public void restoreSecurityContext() {
+    private void restoreSecurityContext() {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
     }
 

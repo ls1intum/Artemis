@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -97,6 +99,9 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private QuizScheduleService quizScheduleService;
 
     /**
      * Create, join and start a batch for student by tutor
@@ -179,9 +184,6 @@ public class QuizExerciseUtilService {
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
             dragItem3.setQuestion((DragAndDropQuestion) question);
             log.debug(dragItem3.toString());
-            DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
-            dragItem4.setQuestion((DragAndDropQuestion) question);
-            log.debug(dragItem4.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -192,21 +194,16 @@ public class QuizExerciseUtilService {
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
             dropLocation3.setQuestion((DragAndDropQuestion) question);
             log.debug(dropLocation3.toString());
-            DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
-            dropLocation4.setQuestion((DragAndDropQuestion) question);
-            log.debug(dropLocation4.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4));
             }
             else {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation4));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation2));
             }
 
             return submittedAnswer;
@@ -519,24 +516,19 @@ public class QuizExerciseUtilService {
         dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setTempID(generateTempId());
-        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
-        dropLocation4.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
         dnd.addDropLocation(dropLocation3);
-        dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
+        var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
-        var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
-        dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
@@ -544,7 +536,6 @@ public class QuizExerciseUtilService {
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
         dnd.addDragItem(dragItem3);
-        dnd.addDragItem(dragItem4);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -560,8 +551,6 @@ public class QuizExerciseUtilService {
         dnd.addCorrectMapping(mapping2);
         var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
         dnd.addCorrectMapping(mapping3);
-        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
-        dnd.addCorrectMapping(mapping4);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         log.debug("DnD: {}", dnd);
@@ -841,4 +830,9 @@ public class QuizExerciseUtilService {
         return singleChoiceQuestion;
     }
 
+    public void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
+        var user = new User();
+        user.setLogin(username);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
+    }
 }

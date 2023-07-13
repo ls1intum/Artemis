@@ -66,7 +66,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        this.lecture1 = course1.getLectures().stream().findFirst().get();
+        this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -80,11 +80,11 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // textUnit3 is not one of the lecture units connected to the lecture
         this.textUnit3 = lectureUtilService.createTextUnit();
 
-        lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), List.of(textUnit2));
+        lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
-        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
-        this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();
+        this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
+        this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
     }
 
     @Test
@@ -173,7 +173,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(3);
-        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
+        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().orElseThrow();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
         lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
