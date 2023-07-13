@@ -1047,7 +1047,7 @@ public class FileService implements DisposableBean {
      * @return stripped string
      */
     public String removeIllegalCharacters(String string) {
-        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\.+", ".");
     }
 
     /**
@@ -1160,14 +1160,15 @@ public class FileService implements DisposableBean {
      * @param fileName        file name to set file name
      * @param extension       extension of the file (e.g .pdf or .png)
      * @param streamByteArray byte array to save to the temp file
-     * @return multipartFile wrapper for the file stored on disk
+     * @return multipartFile wrapper for the file stored on disk with a sanitized name
      */
     public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
         try {
-            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), removeIllegalCharacters(fileName) + extension);
             Files.write(tempPath, streamByteArray);
             File outputFile = tempPath.toFile();
-            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+            FileItem fileItem = new DiskFileItem(removeIllegalCharacters(fileName), Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
 
             try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);

@@ -201,14 +201,13 @@ describe('TextAssessment Service', () => {
 
     it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
-        const participationId = 42;
         service
-            .getFeedbackDataForExerciseSubmission(participationId, submissionId)
+            .getFeedbackDataForExerciseSubmission(submissionId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
+            url: `api/text-submissions/${submissionId}/for-assessment?correction-round=0`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -217,16 +216,15 @@ describe('TextAssessment Service', () => {
 
     it('should get feedback data with resultId set', fakeAsync(() => {
         const submissionId = 42;
-        const participationId = 42;
         const resultId = result.id;
 
         service
-            .getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId)
+            .getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?resultId=6`,
+            url: `api/text-submissions/${submissionId}/for-assessment?resultId=6`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -298,7 +296,7 @@ describe('TextAssessment Service', () => {
         resolver.resolve(snapshot);
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
-        expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
+        expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
     });
 
     afterEach(() => {
