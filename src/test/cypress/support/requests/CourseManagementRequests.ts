@@ -128,7 +128,7 @@ export class CourseManagementRequests {
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
         title = 'Programming ' + generateUUID(),
-        programmingShortName = 'cypress' + generateUUID(),
+        programmingShortName = 'programming' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
         assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,

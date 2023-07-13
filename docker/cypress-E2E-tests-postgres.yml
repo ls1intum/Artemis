@@ -43,8 +43,8 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
-            SORRY_CYPRESS_PROJECT_ID: "artemis-postgresql"
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:postgresql"
+            SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:postgres"
 
 networks:
     artemis:
