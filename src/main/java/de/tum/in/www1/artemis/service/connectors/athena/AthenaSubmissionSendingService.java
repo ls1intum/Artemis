@@ -83,8 +83,8 @@ public class AthenaSubmissionSendingService {
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.data);
         }
-        catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
+        catch (NetworkingError error) {
+            log.error("Error while calling Remote Service: {}", error.getMessage());
         }
     }
 

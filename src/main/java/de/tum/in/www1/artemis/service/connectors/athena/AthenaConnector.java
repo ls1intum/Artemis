@@ -4,6 +4,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.springframework.http.*;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
@@ -73,9 +74,9 @@ class AthenaConnector<RequestType, ResponseType> {
             try {
                 return invoke(url, requestObject);
             }
-            catch (NetworkingError error) {
+            catch (NetworkingError | ResourceAccessException error) {
                 if (retries >= maxRetries) {
-                    throw error;
+                    throw new NetworkingError("An Error occurred while calling Athena: " + error.getMessage());
                 }
             }
         }

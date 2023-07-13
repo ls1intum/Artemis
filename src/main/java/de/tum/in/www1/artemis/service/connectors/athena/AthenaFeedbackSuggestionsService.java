@@ -77,9 +77,9 @@ public class AthenaFeedbackSuggestionsService {
                 return ref;
             }).toList();
         }
-        catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
-            throw networkingError;
+        catch (NetworkingError error) {
+            log.error("Error while calling Remote Service: {}", error.getMessage());
+            throw error;
         }
     }
 
