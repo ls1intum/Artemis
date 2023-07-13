@@ -80,7 +80,6 @@ export class TextAssessmentService {
      * @param textBlocks of type {TextBlock[]}
      * @param complaintResponse of type {ComplaintResponse}
      * @param submissionId of corresponding submission of type {number}
-     * @param participationId of the corresponding participation
      */
     public updateAssessmentAfterComplaint(
         feedbacks: Feedback[],
@@ -124,12 +123,11 @@ export class TextAssessmentService {
     }
 
     /**
-     * @param participationId id of the participation the submission belongs to
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound
      * @param resultId id of the searched result (if instructors search for a specific result)
      */
-    public getFeedbackDataForExerciseSubmission(participationId: number, submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();
         if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
@@ -138,7 +136,7 @@ export class TextAssessmentService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/for-text-assessment`, { observe: 'response', params })
+            .get<StudentParticipation>(`${this.resourceUrl}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params })
             .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
                 // Wire up Result and Submission
                 tap((response: HttpResponse<StudentParticipation>) => {

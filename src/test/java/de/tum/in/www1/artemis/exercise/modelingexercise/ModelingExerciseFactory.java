@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -36,5 +38,38 @@ public class ModelingExerciseFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
+    }
+
+    /**
+     * Create modeling exercise for a given course
+     *
+     * @param courseId id of the given course
+     * @return created modeling exercise
+     */
+    public static ModelingExercise createModelingExercise(Long courseId) {
+        return createModelingExercise(courseId, null);
+    }
+
+    /**
+     * Create modeling exercise with a given id for a given course
+     *
+     * @param courseId   id of the given course
+     * @param exerciseId id of modeling exercise
+     * @return created modeling exercise
+     */
+    public static ModelingExercise createModelingExercise(Long courseId, Long exerciseId) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = CourseFactory.generateCourse(courseId, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course1);
+        modelingExercise.setGradingInstructions("Grading instructions");
+        modelingExercise.getCategories().add("Modeling");
+        modelingExercise.setId(exerciseId);
+        course1.addExercises(modelingExercise);
+
+        return modelingExercise;
     }
 }
