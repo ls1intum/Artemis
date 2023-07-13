@@ -27,7 +27,7 @@ import { MockHttpService } from '../../../helpers/mocks/service/mock-http.servic
 import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
-import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage, isArtemisClientSentMessage, isServerSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 describe('ExerciseChatWidgetComponent', () => {
@@ -348,5 +348,100 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.spyOn(stateStore, 'dispatch');
         component.loadFirstMessage();
         expect(stateStore.dispatch).toHaveBeenCalled();
+    });
+
+    it('should return true when the message is an Artemis client sent message', () => {
+        const artemisClientMessage: IrisArtemisClientMessage = {
+            id: 1,
+            content: [],
+            sentAt: new Date(),
+            sender: IrisSender.ARTEMIS_CLIENT,
+        };
+
+        expect(isArtemisClientSentMessage(artemisClientMessage)).toBeTruthy();
+    });
+
+    it('should return false when the message is not an Artemis client sent message', () => {
+        const notArtemisClientMessage: IrisClientMessage = {
+            id: 1,
+            content: [],
+            sentAt: new Date(),
+            sender: IrisSender.USER,
+        };
+
+        expect(isArtemisClientSentMessage(notArtemisClientMessage)).toBeFalsy();
+    });
+
+    it('should return true when the message is a server sent message', () => {
+        const serverMessage: IrisServerMessage = {
+            id: 1,
+            content: [],
+            sentAt: new Date(),
+            sender: IrisSender.ARTEMIS_SERVER,
+        };
+
+        expect(isServerSentMessage(serverMessage)).toBeTruthy();
+    });
+
+    it('should return false when the message is not a server sent message', () => {
+        const notServerMessage: IrisServerMessage = {
+            id: 1,
+            content: [],
+            sentAt: new Date(),
+            sender: IrisSender.USER,
+        };
+
+        expect(isServerSentMessage(notServerMessage)).toBeFalsy();
+    });
+
+    it('should return an IrisClientMessage with correct fields', () => {
+        const testMessage = 'Test message';
+        const expectedResult: IrisClientMessage = {
+            sender: IrisSender.USER, // Make sure to replace IrisSender.USER with the value of this.SENDER_USER in the actual class
+            content: [
+                {
+                    type: IrisMessageContentType.TEXT,
+                    textContent: testMessage,
+                },
+            ],
+        };
+
+        const result = component.newUserMessage(testMessage);
+
+        expect(result).toEqual(expectedResult);
+    });
+
+    it('should return true if the error key is SEND_MESSAGE_FAILED', () => {
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return true if the error key is IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return false if the error key is neither SEND_MESSAGE_FAILED nor IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: 'AnotherKey' };
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error', () => {
+        component.error = null;
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should set shakeErrorField to true and then false after 1 second', () => {
+        jest.useFakeTimers();
+        component.triggerShake();
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeFalsy();
+
+        jest.clearAllTimers();
     });
 });
