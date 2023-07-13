@@ -5,9 +5,9 @@ import { NgModel } from '@angular/forms';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CreateFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
@@ -126,7 +126,36 @@ describe('CodeEditorAceComponent', () => {
         fixture.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
+        expect(comp.fileSession).toEqual({ dummy: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } });
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+    });
+
+    it.each([
+        [new ConnectionError(), 'loadingFailedInternetDisconnected'],
+        [new Error(), 'loadingFailed'],
+    ])('should correctly init editor after file change in case of error', (error: Error, errorCode: string) => {
+        const selectedFile = 'dummy';
+        const fileSession = {};
+        const loadFileSubject = new Subject();
+        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
+        comp.selectedFile = selectedFile;
+        comp.fileSession = fileSession;
+
+        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
+        fixture.detectChanges();
+
+        expect(comp.isLoading).toBeTrue();
+        expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
+        loadFileSubject.error(error);
+        fixture.detectChanges();
+
+        expect(comp.isLoading).toBeFalse();
+        expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
+        expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+        expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
     });
 
     it('should discard all new feedback after a re-init because of a file change', () => {
@@ -139,7 +168,7 @@ describe('CodeEditorAceComponent', () => {
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
         const selectedFile = 'dummy';
-        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } } };
+        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
         const loadFileSpy = jest.spyOn(comp, 'loadFile');
         comp.selectedFile = selectedFile;
@@ -152,11 +181,29 @@ describe('CodeEditorAceComponent', () => {
         expect(loadFileSpy).not.toHaveBeenCalled();
     });
 
+    it('should load the file from server on selected file change if the file is already in session but there was a loading error', () => {
+        const selectedFile = 'dummy';
+        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
+        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        comp.selectedFile = selectedFile;
+        comp.fileSession = fileSession;
+
+        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
+        fixture.detectChanges();
+
+        expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
+        expect(loadFileSpy).toHaveBeenCalledOnce();
+    });
+
     it('should update file session references on file rename', () => {
         const selectedFile = 'file';
         const newFileName = 'newFilename';
         const fileChange = new RenameFileChange(FileType.FILE, selectedFile, newFileName);
-        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } }, anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 } } };
+        const fileSession = {
+            [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false },
+            anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 }, loadingError: false },
+        };
         comp.selectedFile = newFileName;
         comp.fileSession = fileSession;
 
@@ -168,7 +215,7 @@ describe('CodeEditorAceComponent', () => {
     it('should init editor on newly created file if selected', () => {
         const selectedFile = 'file';
         const fileChange = new CreateFileChange(FileType.FILE, selectedFile);
-        const fileSession = { anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 } } };
+        const fileSession = { anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 }, loadingError: false } };
         const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
@@ -176,7 +223,7 @@ describe('CodeEditorAceComponent', () => {
         comp.onFileChange(fileChange);
 
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
-        expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } });
+        expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } });
     });
 
     it('should not do anything on file content change if the code has not changed', () => {
@@ -185,7 +232,7 @@ describe('CodeEditorAceComponent', () => {
         const onFileContentChangeSpy = jest.spyOn(comp.onFileContentChange, 'emit');
 
         const selectedFile = 'file';
-        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } } };
+        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
@@ -199,7 +246,7 @@ describe('CodeEditorAceComponent', () => {
 
         const selectedFile = 'file';
         const newFileContent = 'lorem ipsum new';
-        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } } };
+        const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         const annotations = [{ fileName: selectedFile, row: 5, column: 4, text: 'error', type: 'error', timestamp: 0 }];
         const editorChange = { start: { row: 1, column: 1 }, end: { row: 2, column: 1 }, action: 'remove' };
 
