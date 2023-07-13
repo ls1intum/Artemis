@@ -844,10 +844,6 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
-    public void updateCourseGroups(String userPrefix, List<Course> courses, String suffix) {
-        courses.forEach(course -> updateCourseGroups(userPrefix, course, suffix));
-    }
-
     public void updateCourseGroups(String userPrefix, Course course, String suffix) {
         course.setStudentGroupName(userPrefix + "student" + suffix);
         course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
