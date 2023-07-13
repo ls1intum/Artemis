@@ -5,14 +5,22 @@ import dayjs from 'dayjs/esm';
 export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
-    ARTEMIS = 'ARTEMIS',
+    ARTEMIS_SERVER = 'ARTEMIS_SERVER',
+    ARTEMIS_CLIENT = 'ARTEMIS_CLIENT',
+}
+
+export class IrisArtemisClientMessage implements BaseEntity {
+    id?: number;
+    content: IrisMessageContent[];
+    sentAt: dayjs.Dayjs;
+    sender: IrisSender.ARTEMIS_CLIENT;
 }
 
 export class IrisServerMessage implements BaseEntity {
     id: number;
     content: IrisMessageContent[];
     sentAt: dayjs.Dayjs;
-    sender: IrisSender.LLM | IrisSender.ARTEMIS;
+    sender: IrisSender.LLM | IrisSender.ARTEMIS_SERVER;
     helpful?: boolean;
 }
 
@@ -23,10 +31,14 @@ export class IrisClientMessage implements BaseEntity {
     sender: IrisSender.USER;
 }
 
-export type IrisMessage = IrisServerMessage | IrisClientMessage;
+export type IrisMessage = IrisServerMessage | IrisClientMessage | IrisArtemisClientMessage;
 
 export function isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
-    return message.sender === IrisSender.ARTEMIS || message.sender === IrisSender.LLM;
+    return message.sender === IrisSender.ARTEMIS_SERVER || message.sender === IrisSender.LLM;
+}
+
+export function isArtemisClientSentMessage(message: IrisMessage): message is IrisServerMessage {
+    return message.sender === IrisSender.ARTEMIS_CLIENT;
 }
 
 export function isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {

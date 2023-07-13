@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
     <!-- chat box -->
     <div
         [style.width]="widgetWidth"
@@ -44,18 +44,24 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
-            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
-                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
-                <div class="button-container">
-                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
-                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
-                </div>
-            </div>
             <div *ngFor="let message of messages; let i = index">
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
-                    <div *ngIf="isStudentSentMessage(message)" class="bubble-right">
-                        <pre><span [innerHTML]="content.textContent! | htmlForMarkdown"></span></pre>
+                    <div *ngIf="isStudentSentMessage(message)" style="display: flex">
+                        <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
+                            <button
+                                id="resendButton"
+                                style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
+                                (click)="resendMessage(message)"
+                                [disabled]="resendAnimationActive"
+                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && isSendMessageFailedError()"
+                            >
+                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
+                            </button>
+                        </div>
+                        <div style="display: flex">
+                            <span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span>
+                        </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left">
@@ -76,6 +82,11 @@
                             </button>
                         </div>
                     </div>
+                    <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
+                        <div class="client-chat">
+                            <span [innerHTML]="content.textContent! | artemisTranslate"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="bubble-left" *ngIf="isLoading">
@@ -85,31 +96,42 @@
                     </div>
                 </div>
             </div>
+            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
+                <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
+                <div class="button-container">
+                    <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
+                    <button class="button" (click)="closeChat()">{{ 'artemisApp.exerciseChatbot.decline' | artemisTranslate }}</button>
+                </div>
+            </div>
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
-            <div class="client-chat-error" *ngIf="error">
-                {{ error }}
+            <div class="client-chat-error" *ngIf="error && isEmptyMessageError()" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationEnd($event)">
+                {{ error.key | artemisTranslate }}
+            </div>
+            <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()" [ngClass]="{ 'shake-animation': shakeErrorField }">
+                {{ error.key | artemisTranslate }}
             </div>
         </div>
 
         <!-- input field section -->
         <div class="chat-input">
             <textarea
-                [disabled]="!userAccepted"
                 [(ngModel)]="newMessageTextContent"
+                rows="1"
+                class="form-control"
+                maxRows="3"
+                (ngModelChange)="onRowChange()"
                 (input)="onInput()"
                 (paste)="onPaste()"
-                (ngModelChange)="onRowChange()"
                 type="text"
-                rows="1"
-                maxRows="3"
-                class="form-control"
                 (keydown)="handleKey($event)"
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button [disabled]="!userAccepted || isLoading" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" (onClick)="onSend()" style="margin-bottom: auto"></jhi-button>
+            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="deactivateSubmitButton()">
+                <fa-icon [icon]="faPaperPlane"></fa-icon>
+            </button>
         </div>
     </div>
 </div>

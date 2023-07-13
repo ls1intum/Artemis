@@ -28,6 +28,17 @@
             "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Ungelesene Nachrichten",
             "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "errors": {
+                "invalidSessionState": "Der Zustand der Iris Session ist ungültig. Es ist nicht möglich, in diesem Zustand Nachrichten zu senden.",
+                "historyLoadFailed": "Der Chatverlauf konnte nicht abgerufen werden.",
+                "sessionLoadFailed": "Die Sitzungsdetails konnten nicht abrufen werden.",
+                "sessionCreationFailed": "Die Sitzung konnte nicht erstellt werden.",
+                "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
+                "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
+                "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
+                "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
+                "emptyMessage": "Du kannst nicht leere Nachrichten abschicken."
+            },
             "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst hier mehr über mich erfahren."
         }
     }
