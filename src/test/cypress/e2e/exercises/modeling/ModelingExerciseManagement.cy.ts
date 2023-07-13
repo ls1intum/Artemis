@@ -79,7 +79,7 @@ describe('Modeling Exercise Management Spec', () => {
 
         it('Edit Existing Modeling Exercise', () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            const newTitle = 'Cypress EDITED ME';
+            const newTitle = 'New Modeling Exercise Title';
             const points = 100;
             modelingExerciseCreation.setTitle(newTitle);
             modelingExerciseCreation.pickDifficulty({ hard: true });
