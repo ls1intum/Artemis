@@ -218,7 +218,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 return;
             }
             User student = optionalStudentWithGroups.get();
-            if (!isAllowedToSubmit(studentParticipation, student)) {
+            if (!isAllowedToSubmit(studentParticipation, student, programmingSubmission)) {
                 final String message = "The student %s just illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the programming exercise %d"
                         .formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getId());
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
@@ -228,22 +228,22 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
     }
 
-    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups) {
+    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         if (exercise.isExamExercise()) {
             return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
         }
         else {
-            return isAllowedToSubmitForCourseExercise(participation);
+            return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
         }
     }
 
-    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation) {
+    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
         var dueDate = ExerciseDateService.getDueDate(participation);
         if (dueDate.isEmpty()) {
             return true;
         }
-        return dueDate.get().plusSeconds(GRACE_PERIOD_SECONDS).isAfter(ZonedDateTime.now());
+        return dueDate.get().plusSeconds(GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
     }
 
     /**

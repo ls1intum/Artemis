@@ -235,6 +235,20 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 
+    @Test
+    void testTestRunsNonRated() {
+        programmingExerciseStudentParticipation.setTestRun(true);
+        programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, submission);
+
+        result.setRatedIfNotAfterDueDate(submission, submission.getParticipation());
+        // The participation is a test run -> should not be rated
+        assertThat(result.isRated()).isFalse();
+    }
+
     private static Stream<Arguments> setResultRatedPermutations() {
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime dateInFuture = now.plusHours(1);
