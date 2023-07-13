@@ -127,6 +127,10 @@
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "removeBreakSlide": "Entferne Pausenfolien",
                 "removeBreakSlideTooltip": "Folien, die 'Break' enthalten, werden entfernt.",
+                "removeBreakSlideInfo": "Alle Pausenrutschen werden aus allen Einheiten entfernt.",
+                "removeSolutionSlide": "Folien der Beispiellösung entfernen",
+                "removeSolutionSlideTooltip": "Wenn die Folie das Wort \"Example solution\" enthält, wird die Folie aus dem Gerät entfernt.",
+                "removeSolutionSlideInfo": "Alle Folien mit Beispiellösungen werden aus allen Einheiten entfernt.",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
                     "empty": {
