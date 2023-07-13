@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.textexercise;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
