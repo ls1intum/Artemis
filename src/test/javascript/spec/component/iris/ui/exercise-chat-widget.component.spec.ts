@@ -315,4 +315,33 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(textAreaElement.selectionStart).toBe(expectedSelectionStart);
         expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
     });
+
+    it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
+        const originalGetComputedStyle = window.getComputedStyle;
+
+        const scrollHeightGetterSpy = jest.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
+        const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' });
+
+        jest.spyOn(component, 'adjustChatBodyHeight');
+
+        component.adjustTextareaRows();
+
+        expect(textarea.style.height).toBe('60px'); // Assuming the calculated height is 60px
+        expect(component.adjustChatBodyHeight).toHaveBeenCalledWith(3); // Assuming lineHeight is 20px, scrollHeight is 100, and maxRows is 3
+
+        // Restore original getters and methods
+        scrollHeightGetterSpy.mockRestore();
+        getComputedStyleSpy.mockRestore();
+        textarea.__defineGetter__('scrollHeight', originalScrollHeightGetter);
+        window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    it('should load greeting message if shouldLoadGreetingMessage is true', async () => {
+        component.shouldLoadGreetingMessage = true;
+        jest.spyOn(stateStore, 'dispatch');
+        component.loadFirstMessage();
+        expect(stateStore.dispatch).toHaveBeenCalled();
+    });
 });
