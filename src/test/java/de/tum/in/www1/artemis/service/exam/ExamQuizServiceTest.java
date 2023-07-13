@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -66,9 +66,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private ExamUtilService examUtilService;
 
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
-
     private QuizExercise quizExercise;
 
     private Course course;
@@ -90,7 +87,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam.setNumberOfExercisesInExam(1);
         exerciseGroup = exam.getExerciseGroups().get(0);
 
-        quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup);
+        quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         exerciseGroup.addExercise(quizExercise);
 
         // Add an instructor who is not in the course
@@ -169,7 +166,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
-            QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
@@ -266,13 +263,13 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             userUtilService.changeUser(user.getLogin());
-            QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
             final var studentParticipation = studentParticipationRepository
                     .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(quizExercise.getId(), user.getLogin(), false).orElseThrow();
-            QuizSubmission quizSubmission2 = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission2 = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);
         }
@@ -317,7 +314,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
-            QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
