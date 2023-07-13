@@ -185,8 +185,9 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            // only editors and instructors have permission to trigger participation after due date passed
             if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
-                    || (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
+                    || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
                 throw new AccessForbiddenException("Not allowed");
             }
             exercise = programmingExercise;

@@ -131,7 +131,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 4, 2, 1, 2);
 
         // Add users that are not in the course/exercise
         userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
@@ -294,13 +294,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void participateInProgrammingExerciseAsInstructorDueDatePassed() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void participateInProgrammingExerciseAsEditorDueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
         prepareMocksForProgrammingExercise(user.getLogin(), false);
-        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "instructor1", Set.of(user), true);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "editor1", Set.of(user), true);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
                 HttpStatus.CREATED);
