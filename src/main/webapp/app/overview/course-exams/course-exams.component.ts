@@ -69,7 +69,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.course?.exams) {
             // Loading the exams from the course
             const exams = this.course.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
-            // add new exams tho the attempt map
+            // add new exams to the attempt map
             exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
 
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
