@@ -13,6 +13,7 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -57,7 +58,9 @@ public class ContinuousPlagiarismControlService {
 
             try {
                 var result = executeChecksForExercise(exercise);
-                resultsService.handleCpcResult(result);
+                if (exercise.getExerciseType() != ExerciseType.PROGRAMMING) {
+                    resultsService.handleCpcResult(result);
+                }
             }
             catch (ExitException e) {
                 log.error("Cannot check plagiarism due to Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);

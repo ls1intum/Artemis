@@ -371,8 +371,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
-            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(0);
-            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
             expect(comp.complaintsEnabled).toBeFalse();
         });
     });
