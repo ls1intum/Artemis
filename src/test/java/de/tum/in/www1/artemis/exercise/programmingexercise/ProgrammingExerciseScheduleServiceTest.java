@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,8 @@ import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
 
@@ -58,9 +58,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired
     private ExamRepository examRepository;
@@ -94,7 +91,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @BeforeEach
     void init() throws Exception {
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        gitlabRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
@@ -109,17 +106,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    void tearDown() throws InterruptedException {
-        // not yet finished scheduled futures may otherwise affect following tests
+    void tearDown() throws Exception {
         scheduleService.clearAllTasks();
-
-        // TODO: find a better solution in the future, because this makes the tests slower
-        // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
-        // Otherwise, the following test might fail.
-        Thread.sleep(500);  // ok
-
-        bambooRequestMockProvider.reset();
-        bitbucketRequestMockProvider.reset();
+        gitlabRequestMockProvider.reset();
     }
 
     private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, long timeoutInMs) {
@@ -142,10 +131,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
     }
 
-    private void mockStudentRepoLocks() throws URISyntaxException, GitAPIException {
+    private void mockStudentRepoLocks() throws URISyntaxException, GitAPIException, GitLabApiException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
-            final var repositorySlug = (programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
-            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), participation.getStudents());
+            final VcsRepositoryUrl repositoryUrl = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
+            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, participation.getStudents());
             doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                     .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
         }
@@ -396,7 +385,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
-        bitbucketRequestMockProvider.reset();
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
