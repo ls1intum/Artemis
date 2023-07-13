@@ -59,6 +59,11 @@ public class IrisConnectorService {
         return sendRequest(request);
     }
 
+    /**
+     * Requests all available models from Pyris
+     *
+     * @return A list of available Models as IrisModelDTO
+     */
     public List<IrisModelDTO> getOfferedModels() throws IrisConnectorException {
         var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
