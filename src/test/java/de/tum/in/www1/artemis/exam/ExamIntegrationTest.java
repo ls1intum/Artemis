@@ -1855,7 +1855,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 HttpStatus.FORBIDDEN);
     }
 
-    @Test // TODO migt became flaky due to parallelism?
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void lockAllRepositories() throws Exception {
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();

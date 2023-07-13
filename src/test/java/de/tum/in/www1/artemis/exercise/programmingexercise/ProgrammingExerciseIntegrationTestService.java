@@ -1658,12 +1658,13 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        Thread.sleep(500);
-
-        verify(versionControlService).configureRepository(programmingExercise, participation1, true);
-        verify(versionControlService).configureRepository(programmingExercise, participation2, true);
+        verify(versionControlService, timeout(300)).configureRepository(programmingExercise, participation1, true);
+        verify(versionControlService, timeout(300)).configureRepository(programmingExercise, participation2, true);
 
         userUtilService.changeUser(userPrefix + "instructor1");
+
+        // Wait until the notifications got created
+        Thread.sleep(300);
 
         var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Instructor get notified that unlock operations were successful")
