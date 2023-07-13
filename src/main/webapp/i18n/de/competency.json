@@ -163,6 +163,11 @@
                     "progress": "Fortschritt",
                     "view": "Ansehen"
                 }
+            },
+            "sideBar": {
+                "hide": "Lernpfad ausbleden",
+                "show": "Lernpfad einblenden",
+                "header": "Lernpfad"
             }
         }
     }

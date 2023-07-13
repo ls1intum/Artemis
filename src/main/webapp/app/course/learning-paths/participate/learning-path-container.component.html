@@ -1,0 +1,18 @@
+<div class="row mt-2">
+    <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+        <jhi-learning-path-sidebar></jhi-learning-path-sidebar>
+    </div>
+    <div class="col pe-0 flex-grow-1" style="min-width: 200px">
+        content more content far more content
+        <!--<iframe src="http://localhost:9000/courses/2/exercises/1" height="100%" width="100%"></iframe>-->
+        <jhi-learning-path-lecture-unit-view *ngIf="lectureUnit" [lectureUnit]="lectureUnit!"></jhi-learning-path-lecture-unit-view>
+        <!-- todo exercise -->
+    </div>
+    <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">discussions discussions discussions</div>
+</div>
+<button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()">
+    <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span>
+</button>
+<button type="button" class="btn btn-primary next-button" (click)="onNextTask()">
+    <span jhiTranslate="health.refresh.button">Refresh</span> <fa-icon [icon]="faChevronRight"></fa-icon>
+</button>

@@ -162,6 +162,11 @@
                     "progress": "Progress",
                     "view": "View"
                 }
+            },
+            "sideBar": {
+                "hide": "Hide Learning Path",
+                "show": "Show Learning Path",
+                "header": "Learning Path"
             }
         }
     }

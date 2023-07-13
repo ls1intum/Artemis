@@ -1,0 +1,10 @@
+.graph-container {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    .ngx-graph {
+        width: auto;
+    }
+}

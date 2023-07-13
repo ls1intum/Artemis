@@ -1,0 +1,4 @@
+<div [ngSwitch]="type">
+    <fa-icon *ngSwitchCase="NodeType.COMPLETED" [icon]="faCheckCircle"></fa-icon>
+    <fa-icon *ngSwitchDefault [icon]="faCircle"></fa-icon>
+</div>

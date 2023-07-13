@@ -66,6 +66,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
             },
             {
+                path: 'learning-path',
+                loadChildren: () => import('./course-learning-path/course-learning-path.module').then((m) => m.CourseLearningPathModule),
+            },
+            {
                 path: 'discussion',
                 loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },

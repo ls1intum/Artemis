@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
@@ -40,13 +41,20 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            CourseRepository courseRepository, CompetencyRelationRepository competencyRelationRepository) {
+            CourseRepository courseRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
+            ExerciseRepository exerciseRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -372,5 +380,15 @@ public class LearningPathService {
 
     public static String getDirectEdgeId(long competencyId) {
         return competencyId + "-direct";
+    }
+
+    public LearningObject getRecommendation(LearningPath learningPath) {
+        return learningPath.getCompetencies().stream()
+                .flatMap(competency -> Stream.concat(
+                        competency.getLectureUnits().stream()
+                                .filter(lectureUnit -> !lectureUnitRepository.findWithEagerCompletedUsersByIdElseThrow(lectureUnit.getId()).isCompletedFor(learningPath.getUser())),
+                        competency.getExercises().stream()
+                                .filter(exercise -> !exerciseRepository.findByIdWithStudentParticipationsElseThrow(exercise.getId()).isCompletedFor(learningPath.getUser()))))
+                .findFirst().orElseThrow();
     }
 }

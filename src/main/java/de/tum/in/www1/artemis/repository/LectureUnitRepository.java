@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -55,5 +60,13 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
 
     default LectureUnit findByIdWithCompetenciesElseThrow(long lectureUnitId) {
         return findByIdWithCompetencies(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "completedUsers" })
+    Optional<LectureUnit> findWithEagerCompletedUsersById(long lectureUnitId);
+
+    @NotNull
+    default LectureUnit findWithEagerCompletedUsersByIdElseThrow(long lectureUnitId) {
+        return findWithEagerCompletedUsersById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 }

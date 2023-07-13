@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -348,5 +349,24 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains completed competency").isNotEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetNgxLearningPathForLearningPathsDisabled() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/learning-path-graph", HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetNgxLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        request.get("/api/courses/" + course.getId() + "/learning-path-graph", HttpStatus.OK, NgxLearningPathDTO.class);
     }
 }
