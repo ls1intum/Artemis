@@ -502,14 +502,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         };
     }
 
-    rateMessage(message_id: number, index: number, helpful: boolean) {
-        this.httpMessageService
-            .rateMessage(<number>this.sessionId, message_id, helpful)
-            .toPromise()
-            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
-            .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED)));
-    }
-
     resendMessage(message: IrisClientMessage) {
         this.resendAnimationActive = true;
 
