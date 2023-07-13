@@ -17,7 +17,7 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     }
 
     private findVisibleInlineFeedback() {
-        return cy.get('[id="inline-feedback"]').should('be.visible');
+        return cy.get('[id*="code-editor-inline-feedback-"]').should('be.visible');
     }
 
     shouldShowRepositoryLockedWarning() {
