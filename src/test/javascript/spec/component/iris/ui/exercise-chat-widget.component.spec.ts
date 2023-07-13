@@ -397,7 +397,7 @@ describe('ExerciseChatWidgetComponent', () => {
     it('should return an IrisClientMessage with correct fields', () => {
         const testMessage = 'Test message';
         const expectedResult: IrisClientMessage = {
-            sender: IrisSender.USER, // Make sure to replace IrisSender.USER with the value of this.SENDER_USER in the actual class
+            sender: IrisSender.USER,
             content: [
                 {
                     type: IrisMessageContentType.TEXT,
@@ -443,5 +443,42 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.shakeErrorField).toBeFalsy();
 
         jest.clearAllTimers();
+    });
+
+    it('should return true if error key is EMPTY_MESSAGE', () => {
+        component.error = { key: IrisErrorMessageKey.EMPTY_MESSAGE };
+        expect(component.isEmptyMessageError()).toBeTruthy();
+    });
+
+    it('should return false if error key is not EMPTY_MESSAGE', () => {
+        component.error = { key: 'AnotherKey' };
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error for empty message', () => {
+        component.error = null;
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return true if isLoading is true', () => {
+        component.isLoading = true;
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return true if error exists and it is fatal', () => {
+        component.error = { fatal: true };
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return false if isLoading is false and no error exists', () => {
+        component.isLoading = false;
+        component.error = null;
+        expect(component.deactivateSubmitButton()).toBeFalsy();
+    });
+
+    it('should return false if isLoading is false and error is not fatal', () => {
+        component.isLoading = false;
+        component.error = { fatal: false };
+        expect(component.deactivateSubmitButton()).toBeFalsy();
     });
 });
