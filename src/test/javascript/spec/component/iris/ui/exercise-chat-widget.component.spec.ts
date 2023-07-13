@@ -10,7 +10,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import dayjs = require('dayjs');
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -30,6 +29,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage, isArtemisClientSentMessage, isServerSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import dayjs = require('dayjs');
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -355,7 +355,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const artemisClientMessage: IrisArtemisClientMessage = {
             id: 1,
             content: [],
-            sentAt: dayjs(),
+            sentAt: dayjs().toDate(),
             sender: IrisSender.ARTEMIS_CLIENT,
         };
 
@@ -366,7 +366,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const notArtemisClientMessage: IrisClientMessage = {
             id: 1,
             content: [],
-            sentAt: dayjs(),
+            sentAt: dayjs().toDate(),
             sender: IrisSender.USER,
         };
 
@@ -377,7 +377,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const serverMessage: IrisServerMessage = {
             id: 1,
             content: [],
-            sentAt: dayjs(),
+            sentAt: dayjs().toDate(),
             sender: IrisSender.ARTEMIS_SERVER,
         };
 
@@ -412,7 +412,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should return false if the error key is neither SEND_MESSAGE_FAILED nor IRIS_SERVER_RESPONSE_TIMEOUT', () => {
-        component.error = { key: 'AnotherKey', fatal: false };
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
         expect(component.isSendMessageFailedError()).toBeFalsy();
     });
 
@@ -441,7 +441,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should return false if error key is not EMPTY_MESSAGE', () => {
-        component.error = { key: 'AnotherKey', fatal: false };
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
         expect(component.isEmptyMessageError()).toBeFalsy();
     });
 
@@ -468,7 +468,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
     it('should return false if isLoading is false and error is not fatal', () => {
         component.isLoading = false;
-        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false }; // replace SOME_KEY with an actual enum key
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
         expect(component.deactivateSubmitButton()).toBeFalsy();
     });
 });
