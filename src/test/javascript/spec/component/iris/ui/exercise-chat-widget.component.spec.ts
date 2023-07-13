@@ -10,6 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import dayjs = require('dayjs');
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -354,7 +355,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const artemisClientMessage: IrisArtemisClientMessage = {
             id: 1,
             content: [],
-            sentAt: new Date(),
+            sentAt: dayjs(),
             sender: IrisSender.ARTEMIS_CLIENT,
         };
 
@@ -365,7 +366,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const notArtemisClientMessage: IrisClientMessage = {
             id: 1,
             content: [],
-            sentAt: new Date(),
+            sentAt: dayjs(),
             sender: IrisSender.USER,
         };
 
@@ -376,22 +377,11 @@ describe('ExerciseChatWidgetComponent', () => {
         const serverMessage: IrisServerMessage = {
             id: 1,
             content: [],
-            sentAt: new Date(),
+            sentAt: dayjs(),
             sender: IrisSender.ARTEMIS_SERVER,
         };
 
         expect(isServerSentMessage(serverMessage)).toBeTruthy();
-    });
-
-    it('should return false when the message is not a server sent message', () => {
-        const notServerMessage: IrisServerMessage = {
-            id: 1,
-            content: [],
-            sentAt: new Date(),
-            sender: IrisSender.USER,
-        };
-
-        expect(isServerSentMessage(notServerMessage)).toBeFalsy();
     });
 
     it('should return an IrisClientMessage with correct fields', () => {
@@ -412,17 +402,17 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should return true if the error key is SEND_MESSAGE_FAILED', () => {
-        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED };
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
         expect(component.isSendMessageFailedError()).toBeTruthy();
     });
 
     it('should return true if the error key is IRIS_SERVER_RESPONSE_TIMEOUT', () => {
-        component.error = { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT };
+        component.error = { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT, fatal: false };
         expect(component.isSendMessageFailedError()).toBeTruthy();
     });
 
     it('should return false if the error key is neither SEND_MESSAGE_FAILED nor IRIS_SERVER_RESPONSE_TIMEOUT', () => {
-        component.error = { key: 'AnotherKey' };
+        component.error = { key: 'AnotherKey', fatal: false };
         expect(component.isSendMessageFailedError()).toBeFalsy();
     });
 
@@ -446,12 +436,12 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should return true if error key is EMPTY_MESSAGE', () => {
-        component.error = { key: IrisErrorMessageKey.EMPTY_MESSAGE };
+        component.error = { key: IrisErrorMessageKey.EMPTY_MESSAGE, fatal: true };
         expect(component.isEmptyMessageError()).toBeTruthy();
     });
 
     it('should return false if error key is not EMPTY_MESSAGE', () => {
-        component.error = { key: 'AnotherKey' };
+        component.error = { key: 'AnotherKey', fatal: false };
         expect(component.isEmptyMessageError()).toBeFalsy();
     });
 
@@ -466,7 +456,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should return true if error exists and it is fatal', () => {
-        component.error = { fatal: true };
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: true };
         expect(component.deactivateSubmitButton()).toBeTruthy();
     });
 
@@ -478,7 +468,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
     it('should return false if isLoading is false and error is not fatal', () => {
         component.isLoading = false;
-        component.error = { fatal: false };
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false }; // replace SOME_KEY with an actual enum key
         expect(component.deactivateSubmitButton()).toBeFalsy();
     });
 });

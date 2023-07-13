@@ -491,7 +491,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @param message - The content of the message.
      * @returns A new IrisClientMessage object representing the user message.
      */
-    private newUserMessage(message: string): IrisClientMessage {
+    newUserMessage(message: string): IrisClientMessage {
         const content: IrisMessageContent = {
             type: IrisMessageContentType.TEXT,
             textContent: message,
