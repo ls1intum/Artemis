@@ -144,7 +144,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         int submissionCount = 2;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
-        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
+        var textBlocks = TextExerciseFactory.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
 
         // Create Exercise to save blocks & submissions
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
