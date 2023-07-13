@@ -135,7 +135,7 @@ public class ExamImportService {
 
     /**
      * Checks that all programming exercises of the given exercise group have a unique title and short name.
-     * Additionally, checks if an exercise with the same project key or name already exists on the VSC / CI.
+     * Additionally, checks if an exercise with the same project key or name already exists on the VCS / CI.
      *
      * @param exerciseGroups  the list of all exercises (not only programming) to be checked
      * @param courseShortName the short name of the course the exercise will be imported into
@@ -149,11 +149,13 @@ public class ExamImportService {
 
         if (titles.size() != uniqueTitles.size()) {
             exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
-                if (!uniqueTitles.contains(exercise.getTitle())) {
-                    exercise.setTitle("");
-                }
-                else {
-                    uniqueTitles.remove(exercise.getTitle());
+                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
+                    if (!uniqueTitles.contains(exercise.getTitle())) {
+                        exercise.setTitle("");
+                    }
+                    else {
+                        uniqueTitles.remove(exercise.getTitle());
+                    }
                 }
             }));
             throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
@@ -166,11 +168,13 @@ public class ExamImportService {
 
         if (shortNames.size() != uniqueShortNames.size()) {
             exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
-                if (!uniqueShortNames.contains(exercise.getShortName())) {
-                    exercise.setShortName("");
-                }
-                else {
-                    uniqueShortNames.remove(exercise.getShortName());
+                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
+                    if (!uniqueShortNames.contains(exercise.getShortName())) {
+                        exercise.setShortName("");
+                    }
+                    else {
+                        uniqueShortNames.remove(exercise.getShortName());
+                    }
                 }
             }));
             throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
