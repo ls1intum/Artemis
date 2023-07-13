@@ -534,6 +534,17 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    public void importFromFile_exception_DirectoryDeleted() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var course = courseUtilService.addEmptyCourse();
+        exercise.setChannelName("testchannel-pe");
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     // TEST
     void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature) throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
