@@ -5,7 +5,7 @@ import { NgModel } from '@angular/forms';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { CreateFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -270,6 +270,15 @@ describe('CodeEditorAceComponent', () => {
 
         expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
         expect(displayFeedbacksSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should be in readonly mode when the file could not be loaded', () => {
+        comp.selectedFile = 'asdf';
+        comp.fileSession = { asdf: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } };
+
+        fixture.detectChanges();
+
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
     });
 
     it('should setup inline comment buttons in gutter', () => {
