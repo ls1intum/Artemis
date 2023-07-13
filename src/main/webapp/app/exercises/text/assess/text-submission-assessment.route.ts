@@ -39,15 +39,14 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const participationId = Number(route.paramMap.get('participationId'));
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
         }
         if (submissionId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, correctionRound).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(catchError(() => of(undefined)));
         }
         return of(undefined);
     }
@@ -69,7 +68,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participations/:participationId/submissions/:submissionId/assessment',
+        path: 'submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -82,7 +81,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participations/:participationId/submissions/:submissionId/assessments/:resultId',
+        path: 'submissions/:submissionId/assessments/:resultId',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
