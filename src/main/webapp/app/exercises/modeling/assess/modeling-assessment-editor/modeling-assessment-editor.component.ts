@@ -235,6 +235,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
+        console.log('Handle Feedback:');
+        console.log(this.referencedFeedback);
         this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
@@ -309,6 +311,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
+        console.log('Save Assessment:');
+        console.log(this.feedback);
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!).subscribe({
             next: (result: Result) => {
                 this.result = result;
@@ -421,12 +425,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
+        console.log('Feedback changed:');
+        console.log(this.referencedFeedback);
 
         if (!this.isApollonModelLoaded) {
             this.isApollonModelLoaded = true;
             this.calculateTotalScore();
             this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
-            return;
         }
 
         this.validateFeedback();
