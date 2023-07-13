@@ -39,7 +39,7 @@ html {
     color: $link-color;
 }
 
-// selects a label element with the class btn-check:checked + label.btn and sets the text color to white
+// Making the style in bootstrap radio (class btn-check) consistent with other button styles
 .btn-check:checked + label.btn {
     color: white;
 }
