@@ -10,6 +10,7 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { of, throwError } from 'rxjs';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { mockClientMessage, mockServerMessage } from '../../helpers/sample/iris-sample-data';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 describe('IrisSessionService', () => {
     let irisSessionService: IrisSessionService;
@@ -85,7 +86,7 @@ describe('IrisSessionService', () => {
         await irisSessionService.getCurrentSessionOrCreate(exerciseId);
 
         // then
-        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction('Could not fetch session details'));
+        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_LOAD_FAILED));
     });
 
     it('should dispatch an error if getCurrentSession is successful. but getMessages returned an error', async () => {
@@ -119,7 +120,7 @@ describe('IrisSessionService', () => {
         expect(getCurrentSessionMock).toHaveBeenCalledWith(exerciseId);
         expect(getMessagesMock).toHaveBeenCalledWith(sessionId);
 
-        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction('Could not fetch messages'));
+        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.HISTORY_LOAD_FAILED));
     });
 
     it('should dispatch an error if getCurrentSession is 404 and createSession returned an error', async () => {
@@ -138,6 +139,6 @@ describe('IrisSessionService', () => {
         expect(getCurrentSessionMock).toHaveBeenCalledWith(exerciseId);
         expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
 
-        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction('Could not create a new session'));
+        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_CREATION_FAILED));
     });
 });

@@ -1,4 +1,4 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faRobot, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,18 +14,46 @@ import {
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisSender, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
+import {
+    IrisArtemisClientMessage,
+    IrisClientMessage,
+    IrisMessage,
+    IrisSender,
+    IrisServerMessage,
+    isArtemisClientSentMessage,
+    isServerSentMessage,
+    isStudentSentMessage,
+} from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
 import { Overlay } from '@angular/cdk/overlay';
 import { SharedService } from 'app/iris/shared.service';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs';
+import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
+    animations: [
+        trigger('fadeAnimation', [
+            state(
+                'start',
+                style({
+                    opacity: 1,
+                }),
+            ),
+            state(
+                'end',
+                style({
+                    opacity: 0,
+                }),
+            ),
+            transition('start => end', [animate('2s ease')]),
+        ]),
+    ],
 })
 export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     // Icons
@@ -39,6 +67,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faCompress = faCompress;
     faThumbsUp = faThumbsUp;
     faThumbsDown = faThumbsDown;
+    faRedo = faRedo;
 
     // ViewChilds
     @ViewChild('chatWidget') chatWidget!: ElementRef;
@@ -60,10 +89,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     sessionId: number;
     numNewMessages = 0;
     unreadMessageIndex: number;
-    error = '';
+    error: IrisErrorType | null;
     dots = 1;
     isInitializing = false;
     isFirstMessage = false;
+    resendAnimationActive = false;
+    shakeErrorField = false;
+    isGreetingMessage = false;
+    shouldLoadGreetingMessage = true;
+    fadeState = '';
 
     // User preferences
     userAccepted = false;
@@ -118,6 +152,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.error = state.error;
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
+            if (state.error?.key == IrisErrorMessageKey.EMPTY_MESSAGE) {
+                this.fadeState = 'start';
+            }
         });
 
         // Set initializing flag to false and focus on message textarea
@@ -145,6 +182,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
+        this.toggleScrollLock(false);
     }
 
     /**
@@ -166,17 +204,16 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisMessageContent;
 
         const firstMessage = {
-            sender: IrisSender.LLM,
-            id: 0,
+            sender: IrisSender.ARTEMIS_CLIENT,
             content: [firstMessageContent],
             sentAt: dayjs(),
-        } as IrisServerMessage;
+        } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isFirstMessage = true;
+            this.isGreetingMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
-        } else if (this.messages[0].id === firstMessage.id) {
-            this.isFirstMessage = true;
+        } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
+            this.isGreetingMessage = true;
         }
     }
 
@@ -198,13 +235,26 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
-        if (this.newMessageTextContent.trim()) {
+        if (this.newMessageTextContent.trim() === '') {
+            this.stateStore.dispatchAndThen(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE)).catch(() => this.scrollToBottom('smooth'));
+            return;
+        }
+        if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
+            const timeoutId = setTimeout(() => {
+                // will be cleared by the store automatically
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+                this.scrollToBottom('smooth');
+            }, 20000);
             this.stateStore
-                .dispatchAndThen(new StudentMessageSentAction(message))
+                .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
-                .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!')));
+                .catch(() => {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+            // TODO show that iris has been disabled after the corresponding PR is merged
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
@@ -216,8 +266,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      */
     scrollToUnread() {
         setTimeout(() => {
-            const unreadMessageElement: HTMLElement = this.unreadMessage.nativeElement;
-            unreadMessageElement.scrollIntoView({ behavior: 'auto' });
+            const unreadMessageElement: HTMLElement = this.unreadMessage?.nativeElement;
+            if (unreadMessageElement) {
+                unreadMessageElement.scrollIntoView({ behavior: 'auto' });
+            }
         });
     }
 
@@ -235,7 +287,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      */
     acceptPermission() {
         this.userAccepted = true;
-        this.loadFirstMessage();
+        if (this.shouldLoadGreetingMessage) {
+            this.loadFirstMessage();
+        }
     }
 
     /**
@@ -428,6 +482,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return isServerSentMessage(message);
     }
 
+    isArtemisClientSentMessage(message: IrisMessage): message is IrisServerMessage {
+        return isArtemisClientSentMessage(message);
+    }
+
     /**
      * Creates a new user message.
      * @param message - The content of the message.
@@ -442,5 +500,70 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             sender: this.SENDER_USER,
             content: [content],
         };
+    }
+
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        this.httpMessageService
+            .rateMessage(<number>this.sessionId, message_id, helpful)
+            .toPromise()
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED)));
+    }
+
+    resendMessage(message: IrisClientMessage) {
+        this.resendAnimationActive = true;
+
+        const timeoutId = setTimeout(() => {
+            // will be cleared by the store automatically
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            this.scrollToBottom('smooth');
+        }, 20000);
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+            .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+            .then(() => {
+                this.scrollToBottom('smooth');
+            })
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                this.triggerShake();
+            })
+            .finally(() => {
+                this.resendAnimationActive = false;
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    isSendMessageFailedError(): boolean {
+        return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED || this.error?.key == IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT;
+    }
+
+    triggerShake() {
+        this.shakeErrorField = true;
+        setTimeout(() => {
+            this.shakeErrorField = false;
+        }, 1000);
+    }
+
+    toggleScrollLock(lockParent: boolean): void {
+        if (lockParent) {
+            document.body.classList.add('cdk-global-scrollblock');
+        } else {
+            document.body.classList.remove('cdk-global-scrollblock');
+        }
+    }
+
+    deactivateSubmitButton(): boolean {
+        return this.isLoading || (!!this.error && this.error.fatal);
+    }
+
+    isEmptyMessageError(): boolean {
+        return !!this.error && this.error.key == IrisErrorMessageKey.EMPTY_MESSAGE;
+    }
+
+    onFadeAnimationEnd(event: AnimationEvent) {
+        if (event.toState === 'start') {
+            this.fadeState = 'end';
+        }
     }
 }

@@ -13,12 +13,12 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/d
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import {
     ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
     NumNewMessagesResetAction,
-    RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { of, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -29,6 +29,8 @@ import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -48,7 +50,6 @@ describe('ExerciseChatWidgetComponent', () => {
 
         mockHttpMessageService = {
             createMessage: jest.fn(),
-            rateMessage: jest.fn(),
         } as any;
 
         stateStore = new IrisStateStore();
@@ -76,6 +77,8 @@ describe('ExerciseChatWidgetComponent', () => {
                 window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
+                component.shouldLoadGreetingMessage = false;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
             });
     });
@@ -93,15 +96,18 @@ describe('ExerciseChatWidgetComponent', () => {
         // then
         expect(component.messages).toContain('Hello');
         expect(stateStore.dispatch).toHaveBeenCalledWith(
-            new StudentMessageSentAction({
-                sender: IrisSender.USER,
-                content: [
-                    {
-                        type: IrisMessageContentType.TEXT,
-                        textContent: 'Hello',
-                    },
-                ],
-            }),
+            new StudentMessageSentAction(
+                {
+                    sender: IrisSender.USER,
+                    content: [
+                        {
+                            type: IrisMessageContentType.TEXT,
+                            textContent: 'Hello',
+                        },
+                    ],
+                },
+                null,
+            ),
         );
     }));
 
@@ -151,7 +157,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         await component.onSend();
 
-        expect(stateStore.dispatchAndThen).not.toHaveBeenCalled();
+        expect(stateStore.dispatchAndThen).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE));
         expect(mockHttpMessageService.createMessage).not.toHaveBeenCalled();
         expect(component.newMessageTextContent).toBe('');
         expect(component.scrollToBottom).toHaveBeenCalled();
@@ -193,109 +199,6 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
-    }));
-
-    it('should render rate message buttons for server resonses only', waitForAsync(async () => {
-        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage, mockServerMessage]));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
-        const myChats = chatBodyElement.querySelectorAll('.my-chat');
-        const clientChats = chatBodyElement.querySelectorAll('.client-chat');
-        const buttons = chatBodyElement.querySelectorAll('.rate-message-buttons');
-
-        expect(myChats).toHaveLength(1);
-        expect(clientChats).toHaveLength(2);
-        expect(buttons).toHaveLength(2);
-    }));
-
-    it('should render rate buttons with correct class style', () => {
-        const mockMessageContent = {
-            textContent: 'Hello, world!',
-            type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
-        const helpfulMessage = { sender: IrisSender.LLM, content: [mockMessageContent], helpful: true } as IrisServerMessage;
-        const unhelpfulMessage = { sender: IrisSender.LLM, content: [mockMessageContent], helpful: false } as IrisServerMessage;
-        const neutralMessage = { sender: IrisSender.LLM, content: [mockMessageContent] } as IrisServerMessage;
-
-        stateStore.dispatch(new SessionReceivedAction(123, [helpfulMessage, unhelpfulMessage, neutralMessage, unhelpfulMessage]));
-
-        fixture.detectChanges();
-
-        const thumbsUpClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.thumbs-up-clicked');
-        const thumbsDownClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.thumbs-down-clicked');
-        const rateNotClickedButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.rate-button-not-clicked');
-        const rateClickableButtons: HTMLInputElement = fixture.debugElement.nativeElement.querySelectorAll('.clickable');
-        expect(thumbsUpClickedButtons).toHaveLength(1);
-        expect(thumbsDownClickedButtons).toHaveLength(2);
-        expect(rateNotClickedButtons).toHaveLength(5);
-        expect(rateClickableButtons).toHaveLength(5);
-    });
-
-    it('should send request when pressing thums up button on a message', waitForAsync(async () => {
-        jest.spyOn(stateStore, 'dispatch');
-        const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
-            of(
-                new HttpResponse<IrisMessage>({
-                    status: 200,
-                    body: mockServerMessage,
-                }),
-            ),
-        );
-        const mockMessageContent = {
-            textContent: 'Hello, world!',
-            type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
-        const unhelpfulMessage = {
-            sender: IrisSender.LLM,
-            id: 18,
-            content: [mockMessageContent],
-            helpful: false,
-        } as IrisServerMessage;
-
-        stateStore.dispatch(new SessionReceivedAction(123, [unhelpfulMessage]));
-        fixture.detectChanges();
-
-        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.rate-button-not-clicked');
-
-        button.click();
-
-        expect(rateMessageMock).toHaveBeenCalledWith(123, 18, true);
-        expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, true));
-    }));
-
-    it('should send request when pressing thums down button on a message', waitForAsync(async () => {
-        jest.spyOn(stateStore, 'dispatch');
-        const rateMessageMock = jest.spyOn(mockHttpMessageService, 'rateMessage').mockReturnValueOnce(
-            of(
-                new HttpResponse<IrisMessage>({
-                    status: 200,
-                    body: mockServerMessage,
-                }),
-            ),
-        );
-        const mockMessageContent = {
-            textContent: 'Hello, world!',
-            type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
-        const helpfulMessage = {
-            sender: IrisSender.LLM,
-            id: 18,
-            content: [mockMessageContent],
-            helpful: true,
-        } as IrisServerMessage;
-
-        stateStore.dispatch(new SessionReceivedAction(123, [helpfulMessage]));
-        fixture.detectChanges();
-
-        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.rate-button-not-clicked');
-
-        button.click();
-
-        expect(rateMessageMock).toHaveBeenCalledWith(123, 18, false);
-        expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(0, false));
     }));
 
     it('should render unread message line with correct position', () => {
