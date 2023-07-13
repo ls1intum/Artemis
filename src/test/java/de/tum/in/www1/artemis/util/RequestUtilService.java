@@ -84,11 +84,12 @@ public class RequestUtilService {
     }
 
     /**
+     * Sends a multipart HTTP POST request, checks the response status against the expected status,
+     * deserializes the response content into a LectureUnitInformationDTO object, and returns that object.
+     *
      * @param lectureId
      * @param filePart
      * @param expectedStatus
-     *                           method sends a multipart HTTP POST request, checks the response status against the expected status,
-     *                           deserializes the response content into a LectureUnitInformationDTO object, and returns that object.
      * @return an instance of LectureUnitInformationDTO.
      * @throws Exception
      */
