@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -57,9 +58,9 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismChecksService).checkTextExercise(textExercise);
         verify(continuousPlagiarismControlResultsService).handleCpcResult(textPlagiarismResult);
         verify(plagiarismChecksService).checkModelingExercise(modelingExercise);
-        verify(continuousPlagiarismControlResultsService).handleCpcResult(textPlagiarismResult);
+        verify(continuousPlagiarismControlResultsService).handleCpcResult(modelingPlagiarismResult);
         verify(plagiarismChecksService).checkProgrammingExercise(programmingExercise);
-        verify(continuousPlagiarismControlResultsService).handleCpcResult(textPlagiarismResult);
+        verify(continuousPlagiarismControlResultsService, never()).handleCpcResult(programmingPlagiarismResult);
     }
 
     @Test
