@@ -245,7 +245,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param participation to wich the submission belongs
      */
     public void setRatedIfNotAfterDueDate(@NotNull Submission submission, @NotNull Participation participation) {
-        setRatedIfNotAfterDueDate(ExerciseDateService.getDueDate(participation).orElse(null), submission);
+        ZonedDateTime dueDate = ExerciseDateService.getDueDate(participation).orElse(null);
+        setRatedIfNotAfterDueDate(dueDate, submission);
     }
 
     /**

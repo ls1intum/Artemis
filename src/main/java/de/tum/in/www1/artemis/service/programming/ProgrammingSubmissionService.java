@@ -40,7 +40,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * This constant determines how many seconds after the exercise due dates submissions will stil be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
      *
-     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User)
+     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
      */
     private static final int GRACE_PERIOD_SECONDS = 60;
 
