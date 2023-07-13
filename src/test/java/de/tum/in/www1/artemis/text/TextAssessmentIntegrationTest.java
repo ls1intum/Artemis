@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -85,12 +84,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ExamRepository examRepository;
 
     @Autowired
-    private AutomaticTextFeedbackService automaticTextFeedbackService;
-
-    @Autowired
-    private FeedbackRepository feedbackRepository;
-
-    @Autowired
     private TextAssessmentService textAssessmentService;
 
     @Autowired
@@ -132,59 +125,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testPrepareSubmissionForAssessmentAutomaticLabel() {
-        // create two text blocks
-        int submissionCount = 2;
-        int submissionSize = 1;
-        int numberOfBlocksTotally = submissionCount * submissionSize;
-        var textBlocks = TextExerciseFactory.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-
-        // Create Exercise to save blocks & submissions
-        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        textExercise.setMaxPoints(1000D);
-        exerciseRepository.save(textExercise);
-
-        // save textBLocks
-        textBlockRepository.saveAll(textBlocks);
-
-        var listOfSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
-        TextSubmission firstSubmission = listOfSubmissions.get(0);
-        TextSubmission secondSubmission = listOfSubmissions.get(1);
-
-        // Create and set a sample result for submissions
-        Result firstResult = createSampleResultForSubmission(firstSubmission);
-        Result secondResult = createSampleResultForSubmission(secondSubmission);
-
-        // Create a manual feedback and attach first block to it as reference
-        Feedback feedback = new Feedback().credits(10.0).type(FeedbackType.MANUAL).detailText("gj");
-        feedback.setReference(textBlocks.iterator().next().getId());
-
-        // Set feedback to result
-        firstResult.addFeedback(feedback);
-        resultRepo.save(firstResult);
-        feedback.setResult(firstResult);
-        feedbackRepository.save(feedback);
-
-        automaticTextFeedbackService.suggestFeedback(secondResult);
-
-        assertThat(secondResult).as("saved result found").isNotNull();
-        assertThat(secondResult.getFeedbacks().get(0).getReference()).isEqualTo(textBlocks.stream().toList().get(1).getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackOriginSubmissionReference()).isEqualTo(firstSubmission.getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackParticipationReference()).isEqualTo(firstSubmission.getParticipation().getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackReference()).isEqualTo(feedback.getReference());
-    }
-
-    private Result createSampleResultForSubmission(Submission submission) {
-        Result result = new Result();
-        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        result.setCompletionDate(now());
-        result.setSubmission(submission);
-        submission.setResults(Collections.singletonList(result));
-        return result;
     }
 
     @Test
