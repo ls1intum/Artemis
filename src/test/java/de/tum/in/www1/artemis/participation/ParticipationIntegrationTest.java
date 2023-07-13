@@ -1277,7 +1277,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @MethodSource("getGetParticipationsubmittedNotEndedQuizParameters")
     void getParticipation_submittedNotEndedQuiz(QuizMode quizMode, boolean isSubmissionAllowed) throws Exception {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), quizMode, course);
-        quizExercise.addQuestions(quizExerciseUtilService.createShortAnswerQuestion());
+        quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);

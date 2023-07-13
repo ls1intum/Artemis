@@ -58,9 +58,9 @@ describe('Programming Exercise Management', () => {
             courseManagementExercises.createProgrammingExercise();
             cy.url().should('include', '/programming-exercises/new');
             cy.log('Filling out programming exercise info...');
-            const exerciseTitle = 'Cypress programming exercise ' + generateUUID();
+            const exerciseTitle = 'Programming exercise ' + generateUUID();
             programmingExerciseCreation.setTitle(exerciseTitle);
-            programmingExerciseCreation.setShortName('cypress' + generateUUID());
+            programmingExerciseCreation.setShortName('programming' + generateUUID());
             programmingExerciseCreation.setPackageName('de.test');
             programmingExerciseCreation.setPoints(100);
             programmingExerciseCreation.checkAllowOnlineEditor();
