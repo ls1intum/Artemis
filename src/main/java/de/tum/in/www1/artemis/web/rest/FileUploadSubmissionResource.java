@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -309,16 +309,16 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             // if the assessment is not finished
             boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
             // or the assessment due date isn't over yet
-            boolean assessmentDueDateNotOver = fileUploadExercise.getAssessmentDueDate() != null && fileUploadExercise.getAssessmentDueDate().isAfter(ZonedDateTime.now());
+            boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.getLatestResult().setFeedbacks(new ArrayList<>());
+                fileUploadSubmission.setResults(Collections.emptyList());
             }
         }
 
         // do not send the assessor information to students
         if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getLatestResult().setAssessor(null);
+            fileUploadSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(fileUploadSubmission);

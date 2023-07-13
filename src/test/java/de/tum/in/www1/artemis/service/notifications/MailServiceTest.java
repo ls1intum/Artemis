@@ -87,7 +87,7 @@ class MailServiceTest {
     @Test
     void testSendEmail() {
         mailService.sendEmail(student1, subject, content, false, true);
-        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
+        verify(javaMailSender).send(any(MimeMessage.class));
     }
 
     /**

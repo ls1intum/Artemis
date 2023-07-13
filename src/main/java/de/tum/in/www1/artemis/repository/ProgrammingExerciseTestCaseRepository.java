@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the ProgrammingExerciseTestCase entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<ProgrammingExerciseTestCase, Long> {
 

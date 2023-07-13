@@ -2,8 +2,8 @@ import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementExercises, courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from 'src/test/cypress/support/utils';
 
@@ -15,7 +15,7 @@ describe('Modeling Exercise Management Spec', () => {
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
@@ -79,7 +79,7 @@ describe('Modeling Exercise Management Spec', () => {
 
         it('Edit Existing Modeling Exercise', () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            const newTitle = 'Cypress EDITED ME';
+            const newTitle = 'New Modeling Exercise Title';
             const points = 100;
             modelingExerciseCreation.setTitle(newTitle);
             modelingExerciseCreation.pickDifficulty({ hard: true });

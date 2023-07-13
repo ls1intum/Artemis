@@ -22,7 +22,13 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:17-jdk as builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:17-jdk as builder
+
+# some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
+RUN echo "Installing build dependencies" \
+  && apt-get update && apt-get install -y --no-install-recommends python3 build-essential \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/artemis
 # copy gradle related files

@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../support/artemis';
@@ -14,10 +14,10 @@ const examData = {
     endDate: dayjs().add(2, 'day'),
     numberOfExercises: 4,
     maxPoints: 40,
-    startText: 'Cypress exam start text',
-    endText: 'Cypress exam end text',
-    confirmationStartText: 'Cypress exam confirmation start text',
-    confirmationEndText: 'Cypress exam confirmation end text',
+    startText: 'Exam start text',
+    endText: 'Exam end text',
+    confirmationStartText: 'Exam confirmation start text',
+    confirmationEndText: 'Exam confirmation end text',
 };
 
 const editedExamData = {
@@ -27,10 +27,10 @@ const editedExamData = {
     endDate: dayjs().add(4, 'day'),
     numberOfExercises: 3,
     maxPoints: 30,
-    startText: 'Edited cypress exam start text',
-    endText: 'Edited cypress exam end text',
-    confirmationStartText: 'Edited cypress exam confirmation start text',
-    confirmationEndText: 'Edited cypress exam confirmation end text',
+    startText: 'Edited exam start text',
+    endText: 'Edited exam end text',
+    confirmationStartText: 'Edited exam confirmation start text',
+    confirmationEndText: 'Edited exam confirmation end text',
 };
 
 const dateFormat = 'MMM D, YYYY HH:mm';
@@ -42,7 +42,7 @@ describe('Exam creation/deletion', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
         });
     });
 

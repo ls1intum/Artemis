@@ -21,7 +21,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     @Input()
     course: Course;
 
-    loading = true;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
     // Data
@@ -55,7 +54,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
 
     ngOnChanges() {
         if (this.initialStats) {
-            this.loading = false;
             this.createChartData();
         }
     }

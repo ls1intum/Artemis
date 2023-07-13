@@ -210,9 +210,12 @@ public class SingleUserNotificationFactory {
         if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+
+        String conversationTitle = answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor());
+
         String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
                 answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName() };
+                answerPost.getAuthor().getName(), conversationTitle };
         SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
         notification.setAuthor(responsibleForAction);

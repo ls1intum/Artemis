@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
 import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../../support/artemis';
@@ -15,10 +15,10 @@ const examData = {
     workingTime: 5,
     numberOfExercises: 4,
     maxPoints: 40,
-    startText: 'Cypress exam start text',
-    endText: 'Cypress exam end text',
-    confirmationStartText: 'Cypress exam confirmation start text',
-    confirmationEndText: 'Cypress exam confirmation end text',
+    startText: 'Exam start text',
+    endText: 'Exam end text',
+    confirmationStartText: 'Exam confirmation start text',
+    confirmationEndText: 'Exam confirmation end text',
 };
 
 describe('Test Exam creation/deletion', () => {
@@ -28,7 +28,7 @@ describe('Test Exam creation/deletion', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertModelAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
         });
     });
 

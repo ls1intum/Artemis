@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -312,14 +315,37 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         List<Competency> competenciesOfCourse = request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.OK, Competency.class);
 
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(competency.getId())).findFirst()).isPresent();
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().get().getLectureUnits()).isEmpty();
+        assertThat(competenciesOfCourse).anyMatch(competency -> competency.getId().equals(this.competency.getId()));
+        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnits()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void getCompetenciesOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/competencies", HttpStatus.FORBIDDEN, Competency.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(IncludedInOverallScore.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCompetencyToOptional(IncludedInOverallScore includedInOverallScore) throws Exception {
+        Competency newCompetency = new Competency();
+        newCompetency.setTitle("Title");
+        newCompetency.setDescription("Description");
+        newCompetency.setCourse(course);
+        newCompetency = competencyRepository.save(newCompetency);
+
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxPoints(1.0);
+        exercise.setIncludedInOverallScore(includedInOverallScore);
+        exercise.setCompetencies(Set.of(newCompetency));
+        exerciseRepository.save(exercise);
+
+        newCompetency.setOptional(true);
+        request.put("/api/courses/" + course.getId() + "/competencies", newCompetency, HttpStatus.OK);
+
+        Competency savedCompetency = competencyRepository.findByIdElseThrow(newCompetency.getId());
+        assertThat(savedCompetency.isOptional()).isTrue();
     }
 
     @Test
@@ -331,7 +357,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteCompetency_witRelatedCompetencies_shouldReturnBadRequest() throws Exception {
+    void deleteCompetency_withRelatedCompetencies_shouldReturnBadRequest() throws Exception {
         Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
@@ -479,7 +505,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCompetencyCourseProgressTeamsTest_asInstructorOne() throws Exception {
-        User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
         createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
@@ -498,9 +524,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCompetencyCourseProgressIndividualTest_asInstructorOne() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
-        User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
 
         createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
         createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 50, false);
@@ -519,8 +545,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCompetencyStudentProgressTest() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).get(), student1, true);
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
         createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
         createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
