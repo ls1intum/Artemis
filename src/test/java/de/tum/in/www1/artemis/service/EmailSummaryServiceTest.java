@@ -72,7 +72,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @BeforeEach
     void setUp() {
-        reset(mailService);
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
