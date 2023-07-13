@@ -203,7 +203,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
         this.loadAll();
@@ -325,6 +324,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if (this.exercise?.exerciseGroup) {
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
+                    this.exerciseGroupId = this.exercise.exerciseGroup.id!;
                     this.secondCorrectionEnabled = this.exercise?.secondCorrectionEnabled;
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
@@ -678,10 +678,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     getAssessmentLink(submission: Submission | 'new'): string[] {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let participationId = undefined;
-        if (submission !== 'new' && submission.participation !== undefined) {
-            participationId = submission.participation!.id;
+        if (submission !== 'new' && submission.participation) {
+            participationId = submission.participation.id;
         }
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId!, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
     }
 
     /**
