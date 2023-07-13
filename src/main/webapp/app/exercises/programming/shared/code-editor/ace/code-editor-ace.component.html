@@ -5,7 +5,7 @@
         <div class="btn-inline-comment">
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
-        <div *ngFor="let line of linesWithInlineFeedbackShown" class="inline-feedback">
+        <div *ngFor="let line of linesWithInlineFeedbackShown" class="inline-feedback" id="code-editor-inline-feedback-{{ line }}">
             <jhi-code-editor-tutor-assessment-inline-feedback
                 [selectedFile]="selectedFile"
                 [codeLine]="line"
