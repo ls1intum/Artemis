@@ -11,8 +11,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,8 +70,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private ExamUtilService examUtilService;
 
-    private List<Post> existingPostsAndConversationPosts;
-
     private List<Post> existingPosts;
 
     private List<Post> existingCoursePosts;
@@ -125,7 +123,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // initialize test setup and get all existing posts (there are 8 posts with lecture context (4 per lecture), 8 with exercise context (4 per exercise),
         // 1 plagiarism case, 4 with course-wide context and 3 with conversation initialized - initialized): 24 posts in total
-        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
@@ -195,7 +193,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseIds(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
+        verify(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
     @Test
@@ -248,7 +246,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseIds(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
 
@@ -266,7 +264,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setLectureIds(new Long[] { firstLectureId });
         assertThat(postsBelongingToFirstLecture).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
+        verify(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
     @Test
@@ -285,7 +283,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
+        verify(groupNotificationService).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
 
     @Test
@@ -307,7 +305,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore + 1);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
+        verify(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
 
     @Test
@@ -326,7 +324,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // assertThat(existingPostsAndConversationPosts.size()).isEqualTo(postRepository.count());
 
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @Test
@@ -346,7 +344,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         List<Post> updatedPlagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(plagiarismCase.getId());
         assertThat(updatedPlagiarismCasePosts).hasSize(1);
-        verify(singleUserNotificationService, times(1)).notifyUserAboutNewPlagiarismCase(any(), any());
+        verify(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
     }
 
     @Test
@@ -360,7 +358,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(sizeBefore);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
@@ -373,7 +371,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourseWideContext(CourseWideContext.RANDOM);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewCoursePost(any(), any());
+        verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
     }
 
     @Test
@@ -396,7 +394,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // if error occurs during parsing markdown to html, the content will be replaced by an empty string
         expectedPost.setContent("");
 
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(expectedPost, course);
+        verify(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(expectedPost, course);
     }
 
     @Test

@@ -270,6 +270,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
                 // Trigger image reload.
                 this.changeDetector.detectChanges();
+
+                // Update save button state (enable it when the background image changes)
+                this.questionUpdated.emit();
             },
             (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);

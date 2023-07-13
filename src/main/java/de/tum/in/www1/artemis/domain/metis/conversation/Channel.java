@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
@@ -72,7 +73,7 @@ public class Channel extends Conversation {
 
     @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
-    @JsonIgnoreProperties("channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Lecture lecture;
 
     @OneToOne
@@ -159,5 +160,10 @@ public class Channel extends Conversation {
 
     public void setExam(Exam exam) {
         this.exam = exam;
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        return getName();
     }
 }

@@ -335,9 +335,9 @@
                     "title": "Combine changes into one commit",
                     "tooltip": "Squashes all commits of a student into a single commit for easier review"
                 },
-                "anonymizeStudentCommits": {
-                    "title": "Anonymize all of the student's commits",
-                    "tooltip": "Hide student names in commit messages for unbiased evaluation"
+                "anonymizeRepository": {
+                    "title": "Anonymize repository",
+                    "tooltip": "Hide student names in commit messages and directory name for unbiased evaluation"
                 },
                 "normalizeCodeStyle": {
                     "title": "Normalize code style",
@@ -400,7 +400,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",

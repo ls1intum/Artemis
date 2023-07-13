@@ -313,7 +313,7 @@ public class ProgrammingExerciseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
-        courseRepo.findById(course.getId()).get();
+        courseRepo.findById(course.getId()).orElseThrow();
     }
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
@@ -491,7 +491,7 @@ public class ProgrammingExerciseUtilService {
             codeHint.setProgrammingExerciseTask(task);
 
             programmingExercise.getExerciseHints().add(codeHint);
-            codeHintRepository.save(codeHint);
+            codeHint = codeHintRepository.save(codeHint);
             for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
                 solutionEntry.setCodeHint(codeHint);
                 solutionEntryRepository.save(solutionEntry);

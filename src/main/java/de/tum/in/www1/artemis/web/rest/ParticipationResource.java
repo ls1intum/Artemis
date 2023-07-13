@@ -302,7 +302,7 @@ public class ParticipationResource {
 
         participation = participationService.resumeProgrammingExercise(participation);
         // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
         addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
@@ -343,7 +343,7 @@ public class ParticipationResource {
         participation.setIndividualDueDate(currentDate);
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
@@ -506,11 +506,11 @@ public class ParticipationResource {
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
-                    participation -> programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> programmingExerciseParticipationService
+                    .unlockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
-            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(
-                    participation -> programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
+                    .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
@@ -539,8 +539,8 @@ public class ParticipationResource {
                     participation.setSubmissions(null);
                 }
                 else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
-                    participation.setSubmissions(Set
-                            .of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL).max(Comparator.naturalOrder()).get()));
+                    participation.setSubmissions(Set.of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
+                            .max(Comparator.naturalOrder()).orElseThrow()));
                 }
             });
         }
@@ -670,7 +670,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
 
-        return continuousIntegrationService.get().retrieveLatestArtifact(participation);
+        return continuousIntegrationService.orElseThrow().retrieveLatestArtifact(participation);
     }
 
     /**

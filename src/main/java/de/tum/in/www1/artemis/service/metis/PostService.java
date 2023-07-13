@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -149,6 +150,11 @@ public class PostService extends PostingService {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
             broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course);
+        }
+
+        boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
+        if (hasContentChanged) {
+            existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
         // update: allow overwriting of values only for depicted fields if user is at least student

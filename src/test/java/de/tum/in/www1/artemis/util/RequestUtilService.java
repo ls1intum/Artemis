@@ -572,20 +572,6 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
-    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
-            String[] expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-
-        if (expectedResponseHeaders != null) {
-            for (String header : expectedResponseHeaders) {
-                assertThat(res.getResponse().containsHeader(header)).isTrue();
-            }
-        }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
-    }
-
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
