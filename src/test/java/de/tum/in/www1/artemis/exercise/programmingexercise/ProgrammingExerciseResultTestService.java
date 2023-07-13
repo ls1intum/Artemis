@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
@@ -99,9 +97,6 @@ public class ProgrammingExerciseResultTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     private Course course;
 
@@ -382,24 +377,6 @@ public class ProgrammingExerciseResultTestService {
         // the coverage result attribute is transient in the result and should not be saved to the database
         var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
         assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
-    }
-
-    // TODO: add a real submission and test the usage of its type and its impact on the rated value
-    private void testWithGracePeriod(boolean expectedRated, Object resultNotification, ProgrammingExercise programmingExercise) {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusSeconds(5));
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        programmingExerciseStudentParticipation.setExercise(programmingExercise);
-        participationRepository.save(programmingExerciseStudentParticipation);
-        Submission submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        participationUtilService.addSubmission(programmingExerciseStudentParticipation, submission);
-
-        Optional<Result> optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(optionalResult).isPresent();
-        Result createdResult = optionalResult.get();
-
-        Result resultFromDatabase = resultRepository.findByIdElseThrow(createdResult.getId());
-        assertThat(resultFromDatabase.isRated()).isEqualTo(expectedRated);
     }
 
     // Test

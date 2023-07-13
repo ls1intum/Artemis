@@ -152,12 +152,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
     }
 
-    private Object createSimpleBuildResult() {
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
-        return ProgrammingExerciseFactory.generateTestResultDTO(null, TEST_PREFIX + "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
-                List.of(commit), null);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @Disabled // TODO we should implement this in the future

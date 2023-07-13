@@ -149,10 +149,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
     }
 
-    private Object createSimpleBuildResult() {
-        return ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(), List.of(), List.of());
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
     @Disabled // TODO we should implement this in the future
