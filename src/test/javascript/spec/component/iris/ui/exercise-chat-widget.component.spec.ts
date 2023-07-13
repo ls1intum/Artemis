@@ -322,7 +322,12 @@ describe('ExerciseChatWidgetComponent', () => {
         const originalGetComputedStyle = window.getComputedStyle;
 
         const scrollHeightGetterSpy = jest.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
-        const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' });
+        const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockImplementation(
+            () =>
+                ({
+                    lineHeight: '20px',
+                } as Partial<CSSStyleDeclaration> as any),
+        );
 
         jest.spyOn(component, 'adjustChatBodyHeight');
 
