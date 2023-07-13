@@ -134,6 +134,47 @@ public class ExamImportService {
     }
 
     /**
+     * Checks if programming exercises passed to the method have duplicated titles or short names. When a duplication is found,
+     * the title / short name is removed from the corresponding exercises. After this method has been called, no exercise in
+     * exerciseGroups has a duplicated title / short name.
+     *
+     * @param exerciseGroups includes all exercises, need to be first filtered for programming ones
+     * @param checkTitle     if the title should be checked for duplications. In case it is set to false, the short names are checked
+     * @return if any duplications were found and taken care of
+     */
+    private boolean checkForAndRemoveDuplicatedTitlesAndShortNames(List<ExerciseGroup> exerciseGroups, boolean checkTitle) {
+        List<String> titlesOrShortNames = exerciseGroups.stream().flatMap(group -> group.getExercises().stream())
+                .filter(exercise -> exercise.getExerciseType() == ExerciseType.PROGRAMMING).map(checkTitle ? BaseExercise::getTitle : BaseExercise::getShortName).toList();
+        Set<String> uniqueTitlesOrShortNames = new HashSet<>(titlesOrShortNames);
+
+        // check if there are duplications
+        if (titlesOrShortNames.size() != uniqueTitlesOrShortNames.size()) {
+            // go through all exercises and use the uniqueTitlesOrShortNames set to see which ones are duplicated. When an
+            // exercise is found, it is then removed from the set
+            exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
+                    String searchFor = checkTitle ? exercise.getTitle() : exercise.getShortName();
+
+                    if (!uniqueTitlesOrShortNames.contains(searchFor)) {
+                        if (checkTitle) {
+                            exercise.setTitle("");
+                        }
+                        else {
+                            exercise.setShortName("");
+                        }
+
+                    }
+                    else {
+                        uniqueTitlesOrShortNames.remove(searchFor);
+                    }
+                }
+            }));
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Checks that all programming exercises of the given exercise group have a unique title and short name.
      * Additionally, checks if an exercise with the same project key or name already exists on the VCS / CI.
      *
@@ -143,51 +184,24 @@ public class ExamImportService {
      */
     private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups, String courseShortName) {
         // check for duplicated titles
-        List<String> titles = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise).map(BaseExercise::getTitle)
-                .toList();
-        Set<String> uniqueTitles = new HashSet<>(titles);
-
-        if (titles.size() != uniqueTitles.size()) {
-            exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
-                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
-                    if (!uniqueTitles.contains(exercise.getTitle())) {
-                        exercise.setTitle("");
-                    }
-                    else {
-                        uniqueTitles.remove(exercise.getTitle());
-                    }
-                }
-            }));
+        boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(exerciseGroups, true);
+        if (duplicatedTitles) {
             throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
         }
-
         // check for duplicated short names
-        List<String> shortNames = exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).filter(ex -> ex instanceof ProgrammingExercise)
-                .map(BaseExercise::getShortName).toList();
-        Set<String> uniqueShortNames = new HashSet<>(shortNames);
-
-        if (shortNames.size() != uniqueShortNames.size()) {
-            exerciseGroups.forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
-                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
-                    if (!uniqueShortNames.contains(exercise.getShortName())) {
-                        exercise.setShortName("");
-                    }
-                    else {
-                        uniqueShortNames.remove(exercise.getShortName());
-                    }
-                }
-            }));
+        boolean duplicatedShortNames = checkForAndRemoveDuplicatedTitlesAndShortNames(exerciseGroups, false);
+        if (duplicatedShortNames) {
             throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
         }
 
-        // Flag to determine, if a programming exercise with an invalid shortName was found
+        // Count how many programming exercises have conflicts with VCS / CI due to the project with the same key / name already existing
         AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
         // Iterate over all exercises
         exerciseGroups.stream().flatMap(group -> group.getExercises().stream()).forEach(exercise -> {
             if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
                 // Method to check, if the project already exists.
-                boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
-                if (invalidShortName) {
+                boolean projectExists = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
+                if (projectExists) {
                     // If the project already exists the short name and title are removed. It has to be set in the client again
                     exercise.setShortName("");
                     exercise.setTitle("");

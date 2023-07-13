@@ -585,7 +585,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should  perform input of an examWithoutExercises with exercises successfully', () => {
+        it('should perform input of an examWithoutExercises with exercises successfully', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -602,7 +602,7 @@ describe('Exam Update Component', () => {
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
-        it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
+        it('should trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
