@@ -39,9 +39,9 @@ html {
     color: $link-color;
 }
 
-.btn-check:checked + .btn,
-btn:hover {
-    color: white !important;
+// selects a label element with the class btn-check:checked + label.btn and sets the text color to white
+.btn-check:checked + label.btn {
+    color: white;
 }
 
 .btn-outline-primary:not(.list-group-item):hover {
