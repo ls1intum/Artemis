@@ -2,7 +2,6 @@ import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
