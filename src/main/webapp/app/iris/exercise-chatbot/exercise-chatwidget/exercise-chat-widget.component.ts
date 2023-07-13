@@ -459,7 +459,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .toPromise()
             .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
             .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
                 this.scrollToBottom('smooth');
             });
     }

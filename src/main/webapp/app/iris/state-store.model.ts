@@ -42,7 +42,7 @@ export class ActiveConversationMessageLoadedAction implements MessageStoreAction
 export class ConversationErrorOccurredAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    constructor(public readonly errorType: string) {
+    constructor(public readonly errorType: IrisErrorMessageKey | null) {
         this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
     }
 }
