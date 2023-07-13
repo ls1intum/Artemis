@@ -9,9 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 
+/**
+ * Spring Data JPA testing repository for the ProgrammingExerciseStudentParticipation entity.
+ */
 @Repository
 public interface ProgrammingExerciseStudentParticipationTestRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
+    /**
+     * updates the build plan id of all programming exercise student participations
+     *
+     * @param buildPlanId new build plan id to be set
+     */
     @Transactional
     @Modifying
     @Query("""
