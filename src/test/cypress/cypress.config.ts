@@ -38,6 +38,7 @@ export default defineConfig({
     screenshotsFolder: 'screenshots',
     videosFolder: 'videos',
     video: true,
+    videoUploadOnPasses: false,
     screenshotOnRunFailure: true,
     viewportWidth: 1920,
     viewportHeight: 1080,
