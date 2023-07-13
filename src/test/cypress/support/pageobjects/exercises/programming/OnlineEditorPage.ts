@@ -21,7 +21,6 @@ export class OnlineEditorPage {
      * It only opens existing files and writes the content there!
      * @param exerciseID the ID of the exercise
      * @param submission object which contains the information about which files need to be edited with what content
-     * @param packageName the package name of the project to overwrite it in the submission templates
      */
     typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
