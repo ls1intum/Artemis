@@ -279,10 +279,9 @@ describe('ListOfComplaintsComponent', () => {
 
         expect(comp.correctionRound).toBe(expectedCorrectionRound);
         expect(router.navigate).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledWith(
-            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
-            { queryParams: { 'correction-round': expectedCorrectionRound } },
-        );
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'submissions', `${submissionId}`, 'assessment'], {
+            queryParams: { 'correction-round': expectedCorrectionRound },
+        });
     }
 
     function createComplaintWithSubmissionAndResult(submissionId: number, participationId: number, exerciseId: number, courseId: number, type?: ComplaintType): Complaint {

@@ -79,9 +79,6 @@ public class ParticipationUtilService {
     private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private ParticipationService participationService;
 
     @Autowired
