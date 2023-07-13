@@ -143,6 +143,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         List<AttachmentUnit> attachmentUnits = request.postWithMultipartFile(lectureUnitSplitInfo, createLectureFile(true), lecture1.getId(), OK);
         assertThat(attachmentUnits).hasSize(2);
+        assertThat(slideRepository.findAll()).hasSize(19); // 19 slides should be created for 2 attachment units (1 break slide is removed)
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
         String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();

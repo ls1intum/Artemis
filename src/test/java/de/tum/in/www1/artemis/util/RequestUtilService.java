@@ -83,6 +83,15 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    /**
+     * @param lectureId
+     * @param filePart
+     * @param expectedStatus
+     *                           method sends a multipart HTTP POST request, checks the response status against the expected status,
+     *                           deserializes the response content into a LectureUnitInformationDTO object, and returns that object.
+     * @return an instance of LectureUnitInformationDTO.
+     * @throws Exception
+     */
     public LectureUnitInformationDTO postWithMultipartFile(long lectureId, MockMultipartFile filePart, HttpStatus expectedStatus) throws Exception {
         var splitResult = mvc.perform(
                 MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lectureId + "/process-units").file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
