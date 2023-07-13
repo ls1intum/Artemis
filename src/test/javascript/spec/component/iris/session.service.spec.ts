@@ -32,6 +32,39 @@ describe('IrisSessionService', () => {
         jest.restoreAllMocks();
     });
 
+    describe('createNewSession', () => {
+        it('should create a new session if success', async () => {
+            // given
+            const exerciseId = 123;
+            const sessionId = 456;
+            const createSessionForProgrammingExerciseMock = jest.spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise').mockReturnValueOnce(of({ id: sessionId }));
+            const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
+
+            // when
+            await irisSessionService.createNewSession(exerciseId);
+
+            // then
+            expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+            expect(dispatchSpy).toHaveBeenCalledWith(new SessionReceivedAction(sessionId, []));
+        });
+
+        it('should dispatch error if fail', async () => {
+            // given
+            const exerciseId = 123;
+            const createSessionForProgrammingExerciseMock = jest
+                .spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise')
+                .mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 500 })));
+            const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
+
+            // when
+            await irisSessionService.createNewSession(exerciseId);
+
+            // then
+            expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+            expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction('Could not create a new session'));
+        });
+    });
+
     it('should create a new session if getCurrentSession returns 404 and createSession is successful', async () => {
         // given
         const exerciseId = 123;

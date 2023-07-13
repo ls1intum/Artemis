@@ -1,4 +1,4 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faThumbsDown, faThumbsUp, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRobot, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 import { ResizeSensor } from 'css-element-queries';
 import { Overlay } from '@angular/cdk/overlay';
 import { SharedService } from 'app/iris/shared.service';
+import { IrisSessionService } from 'app/iris/session.service';
 import dayjs from 'dayjs';
 
 @Component({
@@ -38,6 +39,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
     readonly stateStore: IrisStateStore;
+    readonly exerciseId: number;
+    readonly sessionService: IrisSessionService;
 
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
@@ -76,6 +79,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private sharedService: SharedService,
     ) {
         this.stateStore = data.stateStore;
+        this.exerciseId = data.exerciseId;
+        this.sessionService = data.sessionService;
         this.navigationSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 this.dialog.closeAll();
@@ -83,6 +88,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
     }
     // Icons
+    faTrash = faTrash;
     faCircle = faCircle;
     faPaperPlane = faPaperPlane;
     faExpand = faExpand;
@@ -186,6 +192,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
         this.scrollToBottom('smooth');
         this.resetChatBodyHeight();
+    }
+
+    onClearSession(): void {
+        this.sessionService.createNewSession(this.exerciseId);
     }
 
     scrollToUnread() {

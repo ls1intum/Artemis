@@ -29,12 +29,14 @@ import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisSessionService } from 'app/iris/session.service';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
     let fixture: ComponentFixture<ExerciseChatWidgetComponent>;
     let stateStore: IrisStateStore;
     let mockHttpMessageService: IrisHttpMessageService;
+    let mockSessionService: IrisSessionService;
     let mockDialog: MatDialog;
 
     beforeEach(async () => {
@@ -51,13 +53,17 @@ describe('ExerciseChatWidgetComponent', () => {
             rateMessage: jest.fn(),
         } as any;
 
+        mockSessionService = {
+            createNewSession: jest.fn(),
+        } as any;
+
         stateStore = new IrisStateStore();
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
             declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
-                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore } },
+                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
@@ -413,5 +419,15 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(textAreaElement.value).toBe(expectedValue);
         expect(textAreaElement.selectionStart).toBe(expectedSelectionStart);
         expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
+    });
+
+    it('should call onClearSession when click on the clear button', () => {
+        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+        jest.spyOn(mockSessionService, 'createNewSession');
+        component.exerciseId = 18;
+
+        button.click();
+
+        expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
     });
 });
