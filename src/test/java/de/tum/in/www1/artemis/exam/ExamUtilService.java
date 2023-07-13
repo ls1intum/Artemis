@@ -479,13 +479,12 @@ public class ExamUtilService {
         exerciseRepo.save(textExercise2);
         QuizExercise quizExercise1;
         if (withAllQuizQuestionTypes) {
-            quizExercise1 = quizExerciseUtilService.createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
+            quizExercise1 = QuizExerciseFactory.createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
         }
         else {
-            quizExercise1 = quizExerciseUtilService.createQuizForExam(exerciseGroup1);
+            quizExercise1 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         }
 
-        QuizExercise quizExercise1 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);

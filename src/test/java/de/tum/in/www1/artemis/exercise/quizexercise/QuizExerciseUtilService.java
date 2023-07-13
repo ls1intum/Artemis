@@ -275,8 +275,14 @@ public class QuizExerciseUtilService {
         quizBatchRepository.save(batch);
     }
 
-    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
-        QuizExercise quizExercise = createAndSaveQuizWithAllQuestionTypes(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean assessmentDueDateInTheFuture) throws IOException {
+        QuizExercise quizExercise;
+        if (assessmentDueDateInTheFuture) {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
+        }
+        else {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, pastTimestamp, QuizMode.SYNCHRONIZED);
+        }
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -377,8 +383,8 @@ public class QuizExerciseUtilService {
         return quizExercise;
     }
 
-    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }

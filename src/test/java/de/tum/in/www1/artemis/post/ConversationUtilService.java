@@ -242,7 +242,7 @@ public class ConversationUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+    public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
@@ -357,7 +357,7 @@ public class ConversationUtilService {
         return conversationRepository.save(oneToOneChat);
     }
 
-    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+    public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
         answerPost.setContent("answer post");
@@ -368,7 +368,7 @@ public class ConversationUtilService {
         answerPostRepository.save(answerPost);
     }
 
-    private void addReactionForUserToPost(String login, Post post) {
+    public void addReactionForUserToPost(String login, Post post) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setPost(post);
         conversationRepository.save(post.getConversation());
@@ -376,7 +376,7 @@ public class ConversationUtilService {
         reactionRepository.save(reaction);
     }
 
-    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+    public void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setAnswerPost(answerPost);
         answerPostRepository.save(answerPost);

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.validation.constraints.NotNull;
@@ -520,5 +521,12 @@ public class QuizExerciseFactory {
         quizSubmission.submissionDate(submissionDate);
 
         return quizSubmission;
+    }
+
+    @NotNull
+    public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        return quizExercise;
     }
 }
