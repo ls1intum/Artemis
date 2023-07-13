@@ -27,9 +27,8 @@ import { MockHttpService } from '../../../helpers/mocks/service/mock-http.servic
 import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
-import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage, isArtemisClientSentMessage, isServerSentMessage } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import dayjs = require('dayjs');
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -349,39 +348,6 @@ describe('ExerciseChatWidgetComponent', () => {
         jest.spyOn(stateStore, 'dispatch');
         component.loadFirstMessage();
         expect(stateStore.dispatch).toHaveBeenCalled();
-    });
-
-    it('should return true when the message is an Artemis client sent message', () => {
-        const artemisClientMessage: IrisArtemisClientMessage = {
-            id: 1,
-            content: [],
-            sentAt: dayjs().toDate(),
-            sender: IrisSender.ARTEMIS_CLIENT,
-        };
-
-        expect(isArtemisClientSentMessage(artemisClientMessage)).toBeTruthy();
-    });
-
-    it('should return false when the message is not an Artemis client sent message', () => {
-        const notArtemisClientMessage: IrisClientMessage = {
-            id: 1,
-            content: [],
-            sentAt: dayjs().toDate(),
-            sender: IrisSender.USER,
-        };
-
-        expect(isArtemisClientSentMessage(notArtemisClientMessage)).toBeFalsy();
-    });
-
-    it('should return true when the message is a server sent message', () => {
-        const serverMessage: IrisServerMessage = {
-            id: 1,
-            content: [],
-            sentAt: dayjs().toDate(),
-            sender: IrisSender.ARTEMIS_SERVER,
-        };
-
-        expect(isServerSentMessage(serverMessage)).toBeTruthy();
     });
 
     it('should return an IrisClientMessage with correct fields', () => {
