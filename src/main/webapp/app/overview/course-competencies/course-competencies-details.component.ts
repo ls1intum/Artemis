@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
@@ -122,5 +123,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    get softDueDatePassed(): boolean {
+        return dayjs().isAfter(this.competency.softDueDate);
     }
 }

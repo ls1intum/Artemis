@@ -128,8 +128,8 @@
                 >
                     <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
-                        {{ weeklyExercisesGrouped[weekKey].start | artemisDate : 'long-date' }} -
-                        {{ weeklyExercisesGrouped[weekKey].end | artemisDate : 'long-date' }}
+                        {{ weeklyExercisesGrouped[weekKey].start | artemisDate : 'short-date' }} -
+                        {{ weeklyExercisesGrouped[weekKey].end | artemisDate : 'short-date' }}
                     </span>
                     <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
@@ -205,7 +205,7 @@
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
-            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDueDate' | artemisTranslate">
+            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDueDates' | artemisTranslate">
                 <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.exercise.title }}</div>

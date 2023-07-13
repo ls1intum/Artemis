@@ -339,9 +339,9 @@
                     "title": "Alle Änderungen in einem Commit zusammenfassen",
                     "tooltip": "Fasst alle Commits eines Studierenden in einem einzigen Commit für leichtere Korrektur zusammen"
                 },
-                "anonymizeStudentCommits": {
-                    "title": "Alle Änderungen von Studierenden anonymisieren",
-                    "tooltip": "Verberge die Namen der Studierenden in Commits für eine unvoreingenommene Bewertung"
+                "anonymizeRepository": {
+                    "title": "Repository anonymisieren",
+                    "tooltip": "Verberge die Namen der Studierenden in Commits und Ordnernamen für eine unvoreingenommene Bewertung"
                 },
                 "normalizeCodeStyle": {
                     "title": "Code-Style normalisieren",
@@ -406,7 +406,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
-                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
             "preview": {
                 "label": "Vorschau",

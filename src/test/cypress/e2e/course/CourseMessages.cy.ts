@@ -108,7 +108,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createLecture(course, 'Test Lecture');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseLectureChannelsButton();
                 courseMessages.checkChannelsExists('lecture-test-lecture');
             });
 
@@ -116,7 +116,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseExerciseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');
             });
 
@@ -125,7 +125,7 @@ describe('Course messages', () => {
                 const examContent = new ExamBuilder(course).build();
                 courseManagementRequest.createExam(examContent);
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.browseChannelsButton();
+                courseMessages.browseExamChannelsButton();
                 courseMessages.checkChannelsExists(titleLowercase(examContent.title));
             });
         });
@@ -227,7 +227,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -402,7 +402,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 

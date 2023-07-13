@@ -284,7 +284,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         userUtilService.changeUser(TEST_PREFIX + "student1");
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
         assertThat(version.get().getContent()).as("submission version has correct content")
                 .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
@@ -301,7 +301,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         userUtilService.changeUser(TEST_PREFIX + "student2");
         version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
         assertThat(version.get().getContent()).as("submission version has correct content")
                 .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
@@ -350,7 +350,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
                 ModelingSubmission.class);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
+        storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).orElseThrow();
         assertThat(storedSubmission.getLatestResult()).as("submission still unrated").isNull();
     }
 

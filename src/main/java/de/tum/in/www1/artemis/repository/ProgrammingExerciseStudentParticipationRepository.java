@@ -11,9 +11,11 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -21,7 +23,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Participation entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
@@ -43,29 +44,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
-
-    /**
-     * Will return the participation with the provided participationId. The participation will come with all its manual results, submissions, feedbacks and assessors
-     *
-     * @param participationId the participation id
-     * @return a participation with all its manual results.
-     */
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks
-                LEFT JOIN FETCH pr.submission
-                LEFT JOIN FETCH pr.assessor
-            WHERE p.id = :participationId
-                AND pr.id IN (
-                    SELECT prr.id
-                    FROM p.results prr
-                    WHERE prr.assessmentType = 'MANUAL'
-                        OR prr.assessmentType = 'SEMI_AUTOMATIC')
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
-            @Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
@@ -154,14 +132,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.individualDueDate IS NOT NULL
-            """)
-    List<ProgrammingExerciseStudentParticipation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = "results")
     ProgrammingExerciseStudentParticipation findWithResultsById(Long participationId);
 
@@ -176,4 +146,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
         return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.locked = :#{#locked}
+            WHERE p.id = :#{#participationId}
+            """)
+    void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
 }
