@@ -37,7 +37,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
-     * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid.
+     * This constant determines how many seconds after the exercise due dates submissions will stil be considered rated.
+     * Submissions after the grace period exceeded will be flagged as illegal.
      *
      * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User)
      */
@@ -212,7 +213,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             var optionalStudent = studentParticipation.getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
+            var optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
             if (optionalStudentWithGroups.isEmpty()) {
                 return;
             }
