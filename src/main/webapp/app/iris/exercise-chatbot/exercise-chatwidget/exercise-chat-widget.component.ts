@@ -288,13 +288,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     onClearSession(content: any) {
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
-                this.sessionService.createNewSession(this.exerciseId);
+                this.createNewSession();
             }
         });
-    }
-
-    isClearChatEnabled(): boolean {
-        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
     }
 
     /**
@@ -598,5 +594,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         if (event.toState === 'start') {
             this.fadeState = 'end';
         }
+    }
+
+    isClearChatEnabled(): boolean {
+        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
+    }
+
+    private createNewSession() {
+        this.sessionService.createNewSession(this.exerciseId);
     }
 }

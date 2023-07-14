@@ -3,6 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockPipe } from 'ng-mocks';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
@@ -18,7 +19,7 @@ import {
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { throwError } from 'rxjs';
-import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
+import { mockArtemisClientMessage, mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -38,6 +39,7 @@ describe('ExerciseChatWidgetComponent', () => {
     let mockHttpMessageService: IrisHttpMessageService;
     let mockSessionService: IrisSessionService;
     let mockDialog: MatDialog;
+    let mockModalService: NgbModal;
 
     beforeEach(async () => {
         mockDialog = {
@@ -57,6 +59,9 @@ describe('ExerciseChatWidgetComponent', () => {
         } as any;
 
         stateStore = new IrisStateStore();
+        mockModalService = {
+            open: jest.fn(),
+        } as any;
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
@@ -64,6 +69,7 @@ describe('ExerciseChatWidgetComponent', () => {
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
+                { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
@@ -322,16 +328,6 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
     });
 
-    it('should call onClearSession when click on the clear button', () => {
-        const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
-        jest.spyOn(mockSessionService, 'createNewSession');
-        component.exerciseId = 18;
-
-        button.click();
-
-        expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
-    });
-
     it('should adjust textarea rows and call adjustChatBodyHeight', () => {
         const textarea = fixture.nativeElement.querySelector('textarea');
         const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
@@ -452,5 +448,56 @@ describe('ExerciseChatWidgetComponent', () => {
         component.isLoading = false;
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
         expect(component.deactivateSubmitButton()).toBeFalsy();
+    });
+
+    describe('clear chat session', () => {
+        it('should call service to clear old session and create a new one', () => {
+            jest.spyOn(mockSessionService, 'createNewSession');
+            component.exerciseId = 18;
+
+            component.createNewSession();
+
+            expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
+        });
+
+        it('should open confirm modal when click on the clear button', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            button.click();
+
+            const openModalStub = jest.spyOn(mockModalService, 'open');
+            expect(openModalStub).toHaveBeenCalledOnce();
+        });
+
+        it('should not render clear chat button if the history is empty', () => {
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            expect(button).toBeNull();
+        });
+
+        it('should not render clear chat button if the history has only one message from the client', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockArtemisClientMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).toBeNull();
+        });
+
+        it('should render clear chat button if the history has one message from server', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).not.toBeNull();
+        });
+
+        it('should render clear chat button if the history has one message from user', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).not.toBeNull();
+        });
     });
 });

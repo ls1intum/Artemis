@@ -25,7 +25,7 @@
                     </a>
                 </h3>
                 <div class="button-container">
-                    <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(toggleClearConfirmModal)" class="header-icon">
+                    <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(clearConfirmModal)" class="header-icon">
                         <fa-icon size="lg" [icon]="faTrash"></fa-icon>
                     </button>
                     <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <ng-template #toggleClearConfirmModal let-modal>
+        <ng-template #clearConfirmModal let-modal>
             <div class="modal-header">
                 <h4 class="modal-title">
                     <span>{{ 'artemisApp.exerciseChatbot.clearSession.title' | artemisTranslate }}</span>
