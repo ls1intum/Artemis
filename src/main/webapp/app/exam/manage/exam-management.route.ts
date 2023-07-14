@@ -814,15 +814,6 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: ModelingAssessmentEditorComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
         data: {
