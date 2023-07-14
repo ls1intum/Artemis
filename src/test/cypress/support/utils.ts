@@ -15,7 +15,7 @@ day.extend(utc);
  * */
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
-    return uuid.substr(0, 5);
+    return uuid.substr(0, 9);
 }
 
 /**
