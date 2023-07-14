@@ -7,6 +7,12 @@
     </div>
 
     <div class="plagiarism-header-right">
+        <button class="btn btn-primary btn-sm" (click)="navigateToPlagiarismCases()" data-qa="navigate-to-plagiarism-cases-button">
+            {{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCases' | artemisTranslate }}
+        </button>
+
+        <div class="vertical-divider"></div>
+
         <button
             [disabled]="comparison.status === plagiarismStatus.CONFIRMED || disableConfirmDenyButton"
             class="btn btn-success btn-sm"
@@ -23,10 +29,6 @@
             data-qa="deny-plagiarism-button"
         >
             {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
-        </button>
-
-        <button class="btn btn-primary btn-sm" (click)="navigateToPlagiarismCases()" data-qa="navigate-to-plagiarism-cases-button">
-            {{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCases' | artemisTranslate }}
         </button>
 
         <div class="vertical-divider"></div>
