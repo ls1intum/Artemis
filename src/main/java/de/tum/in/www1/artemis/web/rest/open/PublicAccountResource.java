@@ -103,7 +103,8 @@ public class PublicAccountResource {
      * {@code GET /activate} : activate the registered user.
      *
      * @param key the activation key.
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user registration is disabled
+     * @throws EntityNotFoundException {@code 404 (Not Found)} if the user provided an invalid activation key
      */
     @GetMapping("activate")
     @EnforceNothing
