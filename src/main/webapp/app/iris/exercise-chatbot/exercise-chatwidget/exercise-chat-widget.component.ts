@@ -600,7 +600,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
     }
 
-    private createNewSession() {
+    createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
 }
