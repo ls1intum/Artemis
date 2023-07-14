@@ -1,4 +1,4 @@
-<h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: 'ge12abc' }">Exam timeline</h4>
+<h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
 <div *ngIf="studentExam">
     <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>
     <jhi-exam-navigation-bar
