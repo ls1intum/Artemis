@@ -57,16 +57,6 @@ span {
                 text-decoration-color: var(--textblock-assessment-text-feedback-neutral-active-decoration);
             }
         }
-
-        &.conflicting-feedback {
-            color: var(--textblock-assessment-text-feedback-conflicting-color);
-            background-color: var(--textblock-assessment-text-feedback-conflicting-background);
-
-            &.active {
-                text-decoration-style: dashed;
-                text-decoration-color: var(--textblock-assessment-text-feedback-conflicting-active-decoration);
-            }
-        }
     }
 }
 

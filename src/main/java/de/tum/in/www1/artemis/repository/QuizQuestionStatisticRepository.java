@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
 /**
  * Spring Data JPA repository for the QuizQuestionStatistic entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface QuizQuestionStatisticRepository extends JpaRepository<QuizQuestionStatistic, Long> {
 

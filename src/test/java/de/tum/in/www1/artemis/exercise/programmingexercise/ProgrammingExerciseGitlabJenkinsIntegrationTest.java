@@ -3,7 +3,12 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -178,6 +183,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_NoZip_badRequest() throws Exception {
         programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_exception_directoryDeleted() throws Exception {
+        doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test

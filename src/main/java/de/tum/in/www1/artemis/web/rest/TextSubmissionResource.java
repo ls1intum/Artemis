@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
@@ -61,13 +60,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
-    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
-
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
+            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -80,7 +77,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.plagiarismService = plagiarismService;
-        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
     /**
@@ -159,14 +155,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.ok(textSubmission);
         }
 
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        if (textSubmission.getLatestResult() != null) {
-            this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
-        }
-
-        return bodyBuilder.body(textSubmission);
+        return ResponseEntity.ok().body(textSubmission);
     }
 
     /**
@@ -246,13 +235,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        if (textSubmission.getLatestResult() != null) {
-            this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
-        }
-        return bodyBuilder.body(textSubmission);
+        return ResponseEntity.ok().body(textSubmission);
     }
 }

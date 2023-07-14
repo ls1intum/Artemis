@@ -181,8 +181,8 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), atLeastOnce()).createPipelineTrigger(any(), anyString());
-        verify(gitlab.getPipelineApi(), times(1)).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class),
-                anyString(), isNull());
+        verify(gitlab.getPipelineApi()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class), anyString(),
+                isNull());
     }
 
     @Test

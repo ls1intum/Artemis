@@ -15,6 +15,9 @@
             "onlyYou": "Only you",
             "archived": "Archived",
             "sendMessage": "Send",
+            "goToExercise": "Go to exercise",
+            "goToLecture": "Go to lecture",
+            "goToExam": "Go to exam",
             "conversationMessages": {
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",
@@ -190,6 +193,7 @@
                     "lecture": "All Lecture Channels in course {{ courseTitle }}",
                     "exam": "All Exam Channels in course {{ courseTitle }}"
                 },
+                "otherChannels": "Other Channels",
                 "createChannelButton": "Create a new channel",
                 "channelItem": {
                     "joined:": "Joined",

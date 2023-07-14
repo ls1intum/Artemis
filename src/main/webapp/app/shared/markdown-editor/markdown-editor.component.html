@@ -2,7 +2,7 @@
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="changeNavigation($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
-            <a ngbNavLink class="btn-sm text-normal" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div [ngStyle]="{ 'minHeight.px': minHeightEditor }" class="height-100 border-0 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
                     <jhi-ace-editor
@@ -37,14 +37,14 @@
         </ng-container>
         <!-- visual Mode -->
         <ng-container ngbNavItem="editor_visual">
-            <a ngbNavLink class="btn-sm text-normal" *ngIf="showVisualModeButton">{{ 'entity.action.visual' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" *ngIf="showVisualModeButton">{{ 'entity.action.visual' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <ng-content select="[#visual]"></ng-content>
             </ng-template>
         </ng-container>
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
-            <a ngbNavLink class="btn-sm text-normal" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <ng-content select="[#preview]"></ng-content>
                 <div
@@ -65,7 +65,7 @@
                     <button
                         *ngFor="let command of defaultCommands | negatedTypeCheck : MultiOptionCommand"
                         type="button"
-                        class="btn btn-sm"
+                        class="btn btn-sm py-0"
                         (click)="command.execute()"
                         [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                     >
@@ -86,8 +86,13 @@
                     </div>
                     <ng-container *ngFor="let command of defaultCommands | typeCheck : MultiOptionCommand">
                         <div>
-                            <button mat-button [matMenuTriggerFor]="isTypeOfExerciseReferenceCommand(command) ? subMenuExercise : subMenuLecture" type="button" class="ml-1">
-                                <span>{{ command.buttonTranslationString | artemisTranslate }}</span>
+                            <button
+                                mat-button
+                                [matMenuTriggerFor]="isTypeOfExerciseReferenceCommand(command) ? subMenuExercise : subMenuLecture"
+                                type="button"
+                                class="btn btn-sm m-0 ml-1 py-0"
+                            >
+                                <span class="default-font-size">{{ command.buttonTranslationString | artemisTranslate }}</span>
                                 <fa-icon [icon]="faAngleDown" class="ms-1"></fa-icon>
                             </button>
                             <mat-menu #subMenuExercise="matMenu" type="button">

@@ -130,9 +130,30 @@ public class ExamFactory {
         return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam, channelName);
     }
 
+    /**
+     * generates an exercise group for an exam
+     *
+     * @param mandatory if the exercise group is mandatory
+     * @param exam      the exam that this exercise group should be added to
+     *
+     * @return the newly created exercise
+     */
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
+        return generateExerciseGroupWithTitle(mandatory, exam, "Exercise group title");
+    }
+
+    /**
+     * generates an exercise group for an exam with the given title
+     *
+     * @param mandatory if the exercise group is mandatory
+     * @param exam      the exam that this exercise group should be added to
+     * @param title     title of the exercise group
+     *
+     * @return the newly created exercise
+     */
+    public static ExerciseGroup generateExerciseGroupWithTitle(boolean mandatory, Exam exam, String title) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
-        exerciseGroup.setTitle("Exercise group title");
+        exerciseGroup.setTitle(title);
         exerciseGroup.setIsMandatory(mandatory);
         exam.addExerciseGroup(exerciseGroup);
         return exerciseGroup;
