@@ -1,4 +1,4 @@
-<h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: studentExam.user!.login! }">Exam timeline</h4>
+<h4 class="mb-4" jhiTranslate="artemisApp.timeline.title" [translateValues]="{ username: 'ge12abc' }">Exam timeline</h4>
 <div *ngIf="studentExam">
     <ngx-slider class="mb-5" #slider [(value)]="selectedTimestamp" [options]="options" (userChange)="onInputChange($event)"></ngx-slider>
     <jhi-exam-navigation-bar
@@ -17,35 +17,35 @@
                 <ng-container [ngSwitch]="exercise.type">
                     <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                         <jhi-quiz-submission-exam
-                            *ngSwitchCase="QUIZ"
+                            *ngSwitchCase="ExerciseType.QUIZ"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-quiz-submission-exam>
                         <jhi-file-upload-submission-exam
-                            *ngSwitchCase="FILEUPLOAD"
+                            *ngSwitchCase="ExerciseType.FILE_UPLOAD"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-file-upload-submission-exam>
                         <jhi-text-editor-exam
-                            *ngSwitchCase="TEXT"
+                            *ngSwitchCase="ExerciseType.TEXT"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-text-editor-exam>
                         <jhi-modeling-submission-exam
-                            *ngSwitchCase="MODELING"
+                            *ngSwitchCase="ExerciseType.MODELING"
                             [exercise]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-modeling-submission-exam>
                         <jhi-programming-submission-exam
-                            *ngSwitchCase="PROGRAMMING"
+                            *ngSwitchCase="ExerciseType.PROGRAMMING"
                             [exercise]="exercise"
                             [studentParticipation]="exercise.studentParticipations[0]"
                             [courseId]="courseId"

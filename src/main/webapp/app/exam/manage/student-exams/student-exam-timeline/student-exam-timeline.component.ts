@@ -31,14 +31,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     selectedTimestamp: number;
     options: Options = {
         showTicks: true,
-
         stepsArray: [{ value: 0 }],
-        // ticksTooltip: (value: number): string => {
-        //     return this.datePipe.transform(value, 'time', true);
-        // },
-        ticksValuesTooltip: (value: number): string => {
-            return this.datePipe.transform(value, 'time', true);
-        },
         translate: (value: number): string => {
             return this.datePipe.transform(value, 'time', true);
         },
@@ -118,7 +111,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             };
         });
         newOptions.ticksTooltip = (value: number): string => {
-            return this.datePipe.transform(value, 'time', true);
+            return this.datePipe.transform(this.options.stepsArray?.at(value)?.value, 'time', true);
         };
         this.options = newOptions;
     }
