@@ -68,7 +68,7 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(ModelingExamSubmissionComponent).not.toBeNull();
         });
 
-        it('should show exercise title if any', () => {
+        it('should show exercise group title', () => {
             comp.exercise.exerciseGroup = { title: 'Test Group' } as ExerciseGroup;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.exerciseGroup?.title);
