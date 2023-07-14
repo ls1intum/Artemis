@@ -263,7 +263,8 @@ public class ExamService {
      */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
-        var exam = studentExam.getExam();
+        // load again from the database because the exam object of the student exam might not have all the properties we need
+        var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
         Long studentId = studentExam.getUser().getId();
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
