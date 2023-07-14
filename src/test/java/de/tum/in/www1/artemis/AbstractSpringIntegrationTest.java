@@ -2,13 +2,14 @@ package de.tum.in.www1.artemis;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -20,268 +21,280 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
-@ResourceLock(value = "AbstractSpringIntegrationTest")
+@ResourceLock("AbstractSpringIntegrationTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
-public abstract class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTest {
+public class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTest {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @AfterEach
+    protected void resetSpyBeans() {
+        super.resetSpyBeans();
+    }
+
+    /**
+     * Note: This test group is used for tests that do not require to mock requests to the VC and CI server.
+     */
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConnectorRequestsForSetup with args {}, {}", exercise, failToCreateCiProject);
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConnectorRequestsForImport with args {}, {}, {}, {}", sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
     }
 
     @Override
     public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConnectorRequestForImportFromFile with args {}", exerciseForImport);
     }
 
     @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockImportProgrammingExerciseWithFailingEnablePlan with args {}, {}, {}, {}", sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
     }
 
     @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConnectorRequestsForStartParticipation with args {}, {}, {}, {}", exercise, username, users, ltiUserExists);
     }
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConnectorRequestsForResumeParticipation with args {}, {}, {}, {}", exercise, username, users, ltiUserExists);
     }
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockUpdatePlanRepositoryForParticipation with args {}, {}", exercise, username);
     }
 
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockUpdatePlanRepository with args {}, {}, {}, {}, {}", exercise, planName, repoNameInCI, repoNameInVcs, triggeredBy);
     }
 
     @Override
     public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockRemoveRepositoryAccess with args {}, {}, {}", exercise, team, firstStudent);
     }
 
     @Override
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCopyRepositoryForParticipation with args {}, {}", exercise, username);
     }
 
     @Override
     public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockRepositoryWritePermissionsForTeam with args {}, {}, {}, {}", team, newStudent, exercise, status);
     }
 
     @Override
     public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockRepositoryWritePermissionsForStudent with args {}, {}, {}", student, exercise, status);
     }
 
     @Override
     public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockRetrieveArtifacts with args {}", participation);
     }
 
     @Override
-    public void mockFetchCommitInfo(String projectKey1, String repositorySlug, String hash) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
+        log.debug("Called mockFetchCommitInfo with args {}, {}, {}", projectKey, repositorySlug, hash);
     }
 
     @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCopyBuildPlan with args {}", participation);
     }
 
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConfigureBuildPlan with args {}", participation);
     }
 
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockTriggerFailedBuild with args {}", participation);
     }
 
     @Override
     public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockGrantReadAccess with args {}", participation);
     }
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockNotifyPush with args {}", participation);
     }
 
     @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockTriggerParticipationBuild with args {}", participation);
     }
 
     @Override
     public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockTriggerInstructorBuildAll with args {}", participation);
     }
 
     @Override
     public void resetMockProvider() {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called resetMockProvider");
     }
 
     @Override
     public void verifyMocks() {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called verifyMocks");
     }
 
     @Override
     public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockUpdateUserInUserManagement with args {}, {}, {}, {}", oldLogin, user, password, oldGroups);
     }
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockUpdateCoursePermissions with args {}, {}, {}, {}", updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
     }
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
             boolean failToAddUsers, boolean failToRemoveUsers) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockFailUpdateCoursePermissionsInCi with args {}, {}, {}, {}, {}, {}", updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup,
+                failToAddUsers, failToRemoveUsers);
     }
 
     @Override
     public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCreateUserInUserManagement with args {}, {}", user, userExistsInCi);
     }
 
     @Override
     public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockFailToCreateUserInExternalUserManagement with args {}, {}, {}, {}", user, failInVcs, failInCi, failToGetCiUser);
     }
 
     @Override
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockDeleteUserInUserManagement with args {}, {}, {}, {}", user, userExistsInUserManagement, failInVcs, failInCi);
     }
 
     @Override
     public void mockCreateGroupInUserManagement(String groupName) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCreateGroupInUserManagement with args {}", groupName);
     }
 
     @Override
     public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockDeleteGroupInUserManagement with args {}", groupName);
     }
 
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockAddUserToGroupInUserManagement with args {}, {}, {}", user, group, failInCi);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
+        log.debug("Called mockRemoveUserFromGroup with args {}, {}, {}", user, group, failInCi);
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey1, String repositoryName, boolean shouldFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
+        log.debug("Called mockDeleteRepository with args {}, {}, {}", projectKey, repositoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey1, boolean shouldFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
+        log.debug("Called mockDeleteProjectInVcs with args {}, {}", projectKey, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) {
+        log.debug("Called mockDeleteBuildPlan with args {}, {}, {}", projectKey, planName, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey1, boolean shouldFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
+        log.debug("Called mockDeleteBuildPlanProject with args {}, {}", projectKey, shouldFail);
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
+        log.debug("Called mockGetBuildPlan with args {}, {}, {}, {}, {}, {}", projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
     }
 
     @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockHealthInCiService with args {}, {}", isRunning, httpStatus);
     }
 
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConfigureBuildPlan with args {}, {}", participation, defaultBranch);
     }
 
     @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCheckIfProjectExistsInVcs with args {}, {}", exercise, existsInVcs);
     }
 
     @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockCheckIfProjectExistsInCi with args {}, {}, {}", exercise, existsInCi, shouldFail);
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey1, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
+        log.debug("Called mockCheckIfBuildPlanExists with args {}, {}, {}, {}", projectKey, templateBuildPlanId, buildPlanExists, shouldFail);
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey1, boolean b) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) {
+        log.debug("Called mockRepositoryUrlIsValid with args {}, {}, {}", vcsTemplateRepositoryUrl, projectKey, b);
     }
 
     @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
+        log.debug("Called mockTriggerBuild with args {}", solutionParticipation);
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockTriggerBuildFailed with args {}", solutionParticipation);
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey1, Set<User> users) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
+        log.debug("Called mockSetRepositoryPermissionsToReadOnly with args {}, {}, {}", repositoryUrl, projectKey, users);
     }
 
     @Override
     public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) {
-        // Not implemented for AbstractSpringIntegrationTest
+        log.debug("Called mockConfigureRepository with args {}, {}, {}, {}", exercise, participantIdentifier, students, userExists);
     }
 
     @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
+        log.debug("Called mockDefaultBranch with args {}", programmingExercise);
     }
 
     @Override
-    public void mockUserExists(String username) throws Exception {
-        // Not implemented for AbstractSpringIntegrationTest
+    public void mockUserExists(String username) {
+        log.debug("Called mockUserExists with args {}", username);
     }
 }
