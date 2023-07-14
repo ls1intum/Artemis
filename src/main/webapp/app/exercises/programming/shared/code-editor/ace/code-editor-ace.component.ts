@@ -45,6 +45,7 @@ import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
+export type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -106,7 +107,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
-    fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } } = {};
+    fileSession: FileSession = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};

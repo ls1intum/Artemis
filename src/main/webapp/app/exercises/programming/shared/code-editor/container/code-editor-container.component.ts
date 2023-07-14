@@ -222,8 +222,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onError(error: any) {
         let errorTranslationKey: string;
         const translationParams = { connectionIssue: '' };
-        if (typeof error !== 'string' || !error.includes(ConnectionError.message)) {
-            errorTranslationKey = error as string;
+        if (!error.includes(ConnectionError.message)) {
+            errorTranslationKey = error;
         } else {
             translationParams.connectionIssue = this.translateService.instant(`artemisApp.editor.errors.${ConnectionError.message}`);
             errorTranslationKey = error.replaceAll(ConnectionError.message, '');

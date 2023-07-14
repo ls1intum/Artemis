@@ -97,7 +97,7 @@
                 "submitBeforeStartDate": "Du kannst vor dem Startdatum keine Abgaben einreichen.",
                 "submitAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Abgaben einreichen.",
                 "submitAfterReachingSubmissionLimit": "Du hast das Abgabelimit erreicht und kannst keine weiteren Abgaben einreichen.",
-                "InternetDisconnected": "Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal."
+                "InternetDisconnected": "Bitte stelle eine stabile Internetverbindung sicher und versuche es nochmal."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
