@@ -1,4 +1,17 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faRobot, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faCircle,
+    faCircleInfo,
+    faCompress,
+    faExpand,
+    faPaperPlane,
+    faRedo,
+    faRobot,
+    faThumbsDown,
+    faThumbsUp,
+    faTrash,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -81,8 +94,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     // Constants
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
-    readonly exerciseId: number;
-    readonly sessionService: IrisSessionService;
 
     // State variables
     stateStore: IrisStateStore;
@@ -102,6 +113,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     isGreetingMessage = false;
     shouldLoadGreetingMessage = true;
     fadeState = '';
+    exerciseId: number;
+    sessionService: IrisSessionService;
 
     // User preferences
     userAccepted = false;
