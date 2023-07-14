@@ -161,4 +161,29 @@ public class UserResource {
         String result = userCreationService.setRandomPasswordAndReturn(user);
         return ResponseEntity.ok().body(new UserInitializationDTO(result));
     }
+
+    /**
+     * PUT users/accept-iris : sets the irisAccepted flag for the user to true
+     *
+     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
+     */
+    @PutMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setIrisAcceptedToTrue() {
+        User user = userRepository.getUser();
+        userRepository.updateIrisAcceptedToTrue(user.getId());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET users/accept-iris : gets the irisAccepted flag for the user
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as boolean, or with status 404 (Not Found)
+     */
+    @PutMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> getIrisAcceptedForStudent() {
+        User user = userRepository.getUser();
+        return ResponseEntity.ok().body(user.isIrisAccepted());
+    }
 }

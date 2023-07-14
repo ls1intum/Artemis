@@ -180,6 +180,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<DataExport> dataExports = new HashSet<>();
 
+    @Column(name = "iris_accepted", nullable = false)
+    private boolean irisAccepted = false;
+
     public String getLogin() {
         return login;
     }
@@ -459,5 +462,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setDataExports(Set<DataExport> dataExports) {
         this.dataExports = dataExports;
+    }
+
+    public boolean isIrisAccepted() {
+        return irisAccepted;
+    }
+
+    public void setIrisAccepted(boolean irisAccepted) {
+        this.irisAccepted = irisAccepted;
     }
 }
