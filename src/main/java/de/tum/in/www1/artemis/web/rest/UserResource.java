@@ -163,26 +163,29 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-iris : sets the irisAccepted flag for the user to true
+     * PUT users/accept-iris : sets the irisAccepted flag for the user to ZonedDateTime.now()
      *
-     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
      */
     @PutMapping("users/accept-iris")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setIrisAcceptedToTrue() {
         User user = userRepository.getUser();
-        userRepository.updateIrisAcceptedToTrue(user.getId());
+        if (user.isIrisAccepted() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+        userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
         return ResponseEntity.ok().build();
     }
 
     /**
      * GET users/accept-iris : gets the irisAccepted flag for the user
      *
-     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as boolean, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as ZonedDateTime, or with status 404 (Not Found)
      */
     @PutMapping("users/accept-iris")
     @EnforceAtLeastStudent
-    public ResponseEntity<Boolean> getIrisAcceptedForStudent() {
+    public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
         User user = userRepository.getUser();
         return ResponseEntity.ok().body(user.isIrisAccepted());
     }

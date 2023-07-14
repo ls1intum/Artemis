@@ -67,7 +67,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private String vcsAccessToken;
 
-    private boolean irisAccepted;
+    private ZonedDateTime irisAccepted;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -76,12 +76,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.isInternal());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.isIrisAccepted());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, boolean irisAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime irisAccepted) {
 
         this.id = id;
         this.login = login;
@@ -257,11 +257,11 @@ public class UserDTO extends AuditingEntityDTO {
         isInternal = internal;
     }
 
-    public boolean isIrisAccepted() {
+    public ZonedDateTime isIrisAccepted() {
         return irisAccepted;
     }
 
-    public void setIrisAccepted(boolean irisAccepted) {
+    public void setIrisAccepted(ZonedDateTime irisAccepted) {
         this.irisAccepted = irisAccepted;
     }
 }
