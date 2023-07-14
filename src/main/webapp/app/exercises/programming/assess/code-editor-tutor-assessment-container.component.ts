@@ -162,7 +162,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             submissionObservable
                 .pipe(
                     tap({
-                        next: (submission: ProgrammingSubmission) => {
+                        next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
                                 // there are no unassessed submission, nothing we have to worry about
                                 return;
@@ -214,7 +214,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
+    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission | undefined> {
         return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
