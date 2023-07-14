@@ -107,9 +107,6 @@
                         <span jhiTranslate="artemisApp.lecture.endDate">End Date</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="d-md-table-cell">
-                        <span jhiTranslate="artemisApp.lecture.course">Course</span>
-                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -124,11 +121,6 @@
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
-                    <td>
-                        <div *ngIf="lecture.course">
-                            <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
-                        </div>
-                    </td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
