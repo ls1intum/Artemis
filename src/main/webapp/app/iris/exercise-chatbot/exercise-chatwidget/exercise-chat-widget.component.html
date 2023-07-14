@@ -65,7 +65,7 @@
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left">
-                            <span *ngIf="isFirstMessage && i == 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
                             <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.textContent! | htmlForMarkdown"></span>
                         </div>
                         <div class="rate-message-buttons">
@@ -83,7 +83,7 @@
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
-                        <div class="client-chat">
+                        <div class="bubble-left">
                             <span [innerHTML]="content.textContent! | artemisTranslate"></span>
                         </div>
                     </div>
@@ -129,9 +129,8 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <button id="sendButton" (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="deactivateSubmitButton()">
-                <fa-icon [icon]="faPaperPlane"></fa-icon>
-            </button>
+            <jhi-button id="sendButton" (click)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
+            </jhi-button>
         </div>
     </div>
 </div>

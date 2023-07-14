@@ -472,7 +472,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .toPromise()
             .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
             .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction('Something went wrong. Please try again later!'));
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
                 this.scrollToBottom('smooth');
             });
     }
@@ -504,7 +504,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @param message - The content of the message.
      * @returns A new IrisClientMessage object representing the user message.
      */
-    private newUserMessage(message: string): IrisClientMessage {
+    newUserMessage(message: string): IrisClientMessage {
         const content: IrisMessageContent = {
             type: IrisMessageContentType.TEXT,
             textContent: message,

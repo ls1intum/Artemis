@@ -1,5 +1,5 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
-import { IrisErrorType } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 
 export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
@@ -42,7 +42,7 @@ export class ActiveConversationMessageLoadedAction implements MessageStoreAction
 export class ConversationErrorOccurredAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    constructor(public readonly errorType: string) {
+    constructor(public readonly errorType: IrisErrorMessageKey | null) {
         this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
     }
 }

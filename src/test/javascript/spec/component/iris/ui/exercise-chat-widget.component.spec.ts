@@ -27,7 +27,7 @@ import { MockHttpService } from '../../../helpers/mocks/service/mock-http.servic
 import { HttpClient } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
-import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
 
@@ -330,5 +330,72 @@ describe('ExerciseChatWidgetComponent', () => {
         button.click();
 
         expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
+    });
+
+    it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
+        const originalGetComputedStyle = window.getComputedStyle;
+
+        const scrollHeightGetterSpy = jest.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
+        const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockImplementation(
+            () =>
+                ({
+                    lineHeight: '20px',
+                } as Partial<CSSStyleDeclaration> as any),
+        );
+
+        jest.spyOn(component, 'adjustChatBodyHeight');
+
+        component.adjustTextareaRows();
+
+        expect(textarea.style.height).toBe('60px'); // Assuming the calculated height is 60px
+        expect(component.adjustChatBodyHeight).toHaveBeenCalledWith(3); // Assuming lineHeight is 20px, scrollHeight is 100, and maxRows is 3
+
+        // Restore original getters and methods
+        scrollHeightGetterSpy.mockRestore();
+        getComputedStyleSpy.mockRestore();
+        textarea.__defineGetter__('scrollHeight', originalScrollHeightGetter);
+        window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    it('should load greeting message if shouldLoadGreetingMessage is true', async () => {
+        component.shouldLoadGreetingMessage = true;
+        jest.spyOn(stateStore, 'dispatch');
+        component.loadFirstMessage();
+        expect(stateStore.dispatch).toHaveBeenCalled();
+    });
+
+    it('should return an IrisClientMessage with correct fields', () => {
+        const testMessage = 'Test message';
+        const expectedResult: IrisClientMessage = {
+            sender: IrisSender.USER,
+            content: [
+                {
+                    type: IrisMessageContentType.TEXT,
+                    textContent: testMessage,
+                },
+            ],
+        };
+
+        const result = component.newUserMessage(testMessage);
+
+        expect(result).toEqual(expectedResult);
+    });
+
+    it('should return true if the error key is SEND_MESSAGE_FAILED', () => {
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return true if the error key is IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return false if isLoading is false and error is not fatal', () => {
+        component.isLoading = false;
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        expect(component.deactivateSubmitButton()).toBeFalsy();
     });
 });
