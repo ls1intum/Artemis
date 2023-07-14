@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
 
-public class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     LearningPathService learningPathService;
@@ -122,7 +122,7 @@ public class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitb
                     new NgxLearningPathDTO.Edge(LearningPathService.getLectureUnitOutEdgeId(competency.getId(), lectureUnit.getId()),
                             LearningPathService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), endNodeId),
                     new NgxLearningPathDTO.Edge(LearningPathService.getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId,
-                            LearningPathService.getExerciseNodeId(competency.getId(), lectureUnit.getId())),
+                            LearningPathService.getExerciseNodeId(competency.getId(), exercise.getId())),
                     new NgxLearningPathDTO.Edge(LearningPathService.getExerciseOutEdgeId(competency.getId(), exercise.getId()),
                             LearningPathService.getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
             Set<NgxLearningPathDTO.Cluster> expectedClusters = Set.of(new NgxLearningPathDTO.Cluster(String.valueOf(competency.getId()), competency.getTitle(),
