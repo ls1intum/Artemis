@@ -203,6 +203,7 @@ describe('QuizExamSubmissionComponent', () => {
             JSON.stringify([multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer]),
         );
     });
+
     it('should parse the answers from the submission version', () => {
         const submissionVersion = {
             content:

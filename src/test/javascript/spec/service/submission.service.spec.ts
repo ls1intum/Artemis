@@ -191,6 +191,7 @@ describe('Submission Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+
     it('should get submission versions for submission', fakeAsync(() => {
         const submissionId = 1;
         const submissionVersion = {

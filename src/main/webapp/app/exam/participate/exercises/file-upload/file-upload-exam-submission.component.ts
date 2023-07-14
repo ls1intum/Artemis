@@ -169,5 +169,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // submission versions are not supported for file upload exercises
+        throw new Error('Submission versions are not supported for file upload exercises.');
     }
 }

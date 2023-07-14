@@ -230,6 +230,7 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(comp.explanationText).toEqual(explanationText);
         });
     });
+
     it('should update the model on submission version change', () => {
         const submissionVersion = {
             content:

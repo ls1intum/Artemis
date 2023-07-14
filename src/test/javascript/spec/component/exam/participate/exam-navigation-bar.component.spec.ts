@@ -246,6 +246,7 @@ describe('Exam Navigation Bar Component', () => {
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
+
     it.each([
         { currentIndex: 0, newIndex: 0 },
         { currentIndex: 0, newIndex: 1 },

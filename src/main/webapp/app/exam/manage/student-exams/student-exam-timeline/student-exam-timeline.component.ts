@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -16,25 +16,22 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
-    styleUrls: ['./student-exam-timeline.component.scss'],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
-    readonly TEXT = ExerciseType.TEXT;
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly ExerciseType = ExerciseType;
+    readonly SubmissionVersion = SubmissionVersion;
+
     // determines if component was once drawn visited
     pageComponentVisited: boolean[];
-    value: number;
+    selectedTimestamp: number;
     options: Options = {
         showTicks: true,
+
         stepsArray: [{ value: 0 }],
         // ticksTooltip: (value: number): string => {
         //     return this.datePipe.transform(value, 'time', true);
@@ -61,7 +58,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
     @ViewChild('slider') slider: SliderComponent;
-    readonly SubmissionVersion = SubmissionVersion;
 
     constructor(
         private studentExamService: StudentExamService,
@@ -73,7 +69,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {
             this.studentExam = studentExamWithGrade.studentExam;
-            this.courseId = this.studentExam.exam?.course?.id!;
+            this.courseId = this.studentExam.exam!.course!.id!;
         });
         this.exerciseIndex = 0;
         this.pageComponentVisited = new Array(this.studentExam.exercises!.length).fill(false);
@@ -114,13 +110,16 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     private setupRangeSlider() {
-        this.value = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
+        this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
         const newOptions: Options = Object.assign({}, this.options);
         newOptions.stepsArray = this.submissionTimeStamps.map((date) => {
             return {
                 value: date.toDate().getTime(),
             };
         });
+        newOptions.ticksTooltip = (value: number): string => {
+            return this.datePipe.transform(value, 'time', true);
+        };
         this.options = newOptions;
     }
 
@@ -142,11 +141,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     retrieveSubmissionDataAndTimeStamps() {
         const submissionObservables: Observable<SubmissionVersion[] | Submission[]>[] = [];
         this.studentExam.exercises?.forEach((exercise) => {
-            if (exercise.type === this.PROGRAMMING) {
+            if (exercise.type === ExerciseType.PROGRAMMING) {
                 const id = exercise.studentParticipations![0].id!;
                 const programmingSubmission = this.submissionService.findAllSubmissionsOfParticipation(id).pipe(map(({ body }) => body!));
                 submissionObservables.push(programmingSubmission);
-            } else if (exercise.type === this.FILEUPLOAD) {
+            } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
                 const id = exercise.studentParticipations![0].id!;
                 submissionObservables.push(this.submissionService.findAllSubmissionsOfParticipation(id).pipe(map(({ body }) => body!)));
             } else {
@@ -189,22 +188,22 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
 
         if (this.isSubmissionVersion(exerciseChange.submission)) {
             const submissionVersion = exerciseChange.submission as SubmissionVersion;
-            this.value = submissionVersion.createdDate.toDate().getTime();
+            this.selectedTimestamp = submissionVersion.createdDate.toDate().getTime();
         } else if (this.isFileUploadSubmission(exerciseChange.submission)) {
             const fileUploadSubmission = exerciseChange.submission as FileUploadSubmission;
-            this.value = fileUploadSubmission.submissionDate!.toDate().getTime();
+            this.selectedTimestamp = fileUploadSubmission.submissionDate!.toDate().getTime();
         } else {
             const programmingSubmission = exerciseChange.submission as ProgrammingSubmission;
-            this.value = programmingSubmission.submissionDate!.toDate().getTime();
+            this.selectedTimestamp = programmingSubmission.submissionDate!.toDate().getTime();
         }
         this.currentSubmission = exerciseChange.submission;
         this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
     }
 
     private findFirstSubmissionForFirstExercise(exercise: Exercise): FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined {
-        if (exercise.type === this.PROGRAMMING) {
+        if (exercise.type === ExerciseType.PROGRAMMING) {
             return this.programmingSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
-        } else if (exercise.type === this.FILEUPLOAD) {
+        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             return this.fileUploadSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
         } else {
             return this.submissionVersions.find((submission) => submission.createdDate.isSame(this.submissionTimeStamps[0]));
@@ -259,7 +258,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
      * @param changeContext the change context of the slider
      */
     onInputChange(changeContext: ChangeContext) {
-        this.value = changeContext.value;
+        this.selectedTimestamp = changeContext.value;
         const submission = this.findCorrespondingSubmissionForTimestamp(changeContext.value);
         if (this.isSubmissionVersion(submission)) {
             const submissionVersion = submission as SubmissionVersion;
@@ -321,7 +320,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
      * @param exercise The exercise for which the submission should be found.
      */
     private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: Exercise) {
-        const comparisonObject = dayjs(this.value);
+        const comparisonObject = dayjs(this.selectedTimestamp);
         let smallestDiff = Number.MAX_VALUE;
         let timestampWithSmallestDiff = 0;
         if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -350,11 +349,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
      * @param exercise the exercise for which the submission should be found
      * @param submissions the submissions array in which the submission should be found
      */
-    private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: ProgrammingSubmission[] | FileUploadSubmission[]): number {
-        const comparisonObject = dayjs(this.value);
+    private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: Submission[]): number {
+        const comparisonObject = dayjs(this.selectedTimestamp);
         let smallestDiff = Number.MAX_VALUE;
         let timestampWithSmallestDiff = 0;
-        // @ts-ignore
         const numberOfSubmissionsForExercise = submissions.filter(
             (submission: ProgrammingSubmission | FileUploadSubmission) => submission.participation?.exercise?.id === exercise.id,
         ).length;

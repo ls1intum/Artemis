@@ -123,13 +123,14 @@ describe('Student Exam Timeline Component', () => {
         fixture.detectChanges();
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
-        expect(component.value).toEqual(dayjs('2023-01-07').valueOf());
+        expect(component.selectedTimestamp).toEqual(dayjs('2023-01-07').valueOf());
         expect(component.submissionTimeStamps).toEqual([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
         expect(component.courseId).toBe(1);
         expect(component.submissionVersions).toEqual([submissionVersion]);
         expect(component.fileUploadSubmissions).toEqual([fileUploadSubmission1]);
         expect(component.programmingSubmissions).toEqual([programmingSubmission1]);
     }));
+
     it('should subscribe to changes in ViewAfterInit', () => {
         component.currentPageComponents = new QueryList();
         component.ngAfterViewInit();
@@ -163,7 +164,7 @@ describe('Student Exam Timeline Component', () => {
         let expectedSubmission = submission;
         // set the current timestamp needed to find the closest submission if no submission is set
         if (!submission) {
-            component.value = dayjs('2023-01-07').valueOf();
+            component.selectedTimestamp = dayjs('2023-01-07').valueOf();
             if (exercise === programmingExercise) {
                 expectedSubmission = programmingSubmission1;
             }
@@ -191,12 +192,12 @@ describe('Student Exam Timeline Component', () => {
         // text exercise has the submission version
         if (exercise === textExercise) {
             const submissionVersion = component.currentSubmission as SubmissionVersion;
-            expect(component.value).toEqual(submissionVersion.createdDate.valueOf());
+            expect(component.selectedTimestamp).toEqual(submissionVersion.createdDate.valueOf());
         } else if (exercise === programmingExercise) {
             const programmingSubmission = component.currentSubmission as ProgrammingSubmission;
-            expect(component.value).toEqual(programmingSubmission.submissionDate?.valueOf());
+            expect(component.selectedTimestamp).toEqual(programmingSubmission.submissionDate?.valueOf());
         } else {
-            expect(component.value).toEqual(fileUploadSubmission1.submissionDate?.valueOf());
+            expect(component.selectedTimestamp).toEqual(fileUploadSubmission1.submissionDate?.valueOf());
         }
     });
 
@@ -224,7 +225,7 @@ describe('Student Exam Timeline Component', () => {
                 expect(component.exerciseIndex).toBe(2);
                 expect(component.currentExercise).toEqual(fileUploadExercise);
             }
-            expect(component.value).toEqual(changeContext.value);
+            expect(component.selectedTimestamp).toEqual(changeContext.value);
         }),
     );
 });
