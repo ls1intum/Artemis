@@ -28,6 +28,11 @@
             "supportText": "(If you have any problems using the widget or messaging Iris, please create an issue on GitHub: https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Unread messages",
             "buttonTooltip": "Start chatting with Iris!",
+            "clearSession": {
+                "title": "Clear chat history",
+                "text": "Are you sure you want to clear the chat history?",
+                "submit": "Submit"
+            },
             "errors": {
                 "invalidSessionState": "Iris session state is invalid. It is impossible to send messages in this state.",
                 "historyLoadFailed": "Could not fetch messages.",

@@ -13,6 +13,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -140,6 +141,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private overlay: Overlay,
         private router: Router,
         private sharedService: SharedService,
+        private modalService: NgbModal,
     ) {
         this.stateStore = data.stateStore;
         this.exerciseId = data.exerciseId;
@@ -283,8 +285,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     /**
      * Clear session and start a new conversation.
      */
-    onClearSession(): void {
-        this.sessionService.createNewSession(this.exerciseId);
+    onClearSession(content: any) {
+        this.modalService.open(content).result.then((result: string) => {
+            if (result === 'confirm') {
+                this.sessionService.createNewSession(this.exerciseId);
+            }
+        });
     }
 
     isClearChatEnabled(): boolean {
