@@ -393,6 +393,61 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.isSendMessageFailedError()).toBeTruthy();
     });
 
+    it('should return false if the error key is neither SEND_MESSAGE_FAILED nor IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error', () => {
+        component.error = null;
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should set shakeErrorField to true and then false after 1 second', () => {
+        jest.useFakeTimers();
+        component.triggerShake();
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeFalsy();
+
+        jest.clearAllTimers();
+    });
+
+    it('should return true if error key is EMPTY_MESSAGE', () => {
+        component.error = { key: IrisErrorMessageKey.EMPTY_MESSAGE, fatal: true };
+        expect(component.isEmptyMessageError()).toBeTruthy();
+    });
+
+    it('should return false if error key is not EMPTY_MESSAGE', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error for empty message', () => {
+        component.error = null;
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return true if isLoading is true', () => {
+        component.isLoading = true;
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return true if error exists and it is fatal', () => {
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: true };
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return false if isLoading is false and no error exists', () => {
+        component.isLoading = false;
+        component.error = null;
+        expect(component.deactivateSubmitButton()).toBeFalsy();
+    });
+
     it('should return false if isLoading is false and error is not fatal', () => {
         component.isLoading = false;
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
