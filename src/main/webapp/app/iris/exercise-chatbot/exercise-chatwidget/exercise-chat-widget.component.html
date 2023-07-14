@@ -25,12 +25,13 @@
                     </a>
                 </h3>
                 <div class="button-container">
-                    <button id="clear-chat-session" (click)="onClearSession()" class="header-icon">
+                    <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession()" class="header-icon">
                         <fa-icon size="lg" [icon]="faTrash"></fa-icon>
                     </button>
                     <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faExpand"></fa-icon></button
-                    ><ng-template #compressButton>
+                        <fa-icon [icon]="faExpand"></fa-icon>
+                    </button>
+                    <ng-template #compressButton>
                         <button (click)="minimizeScreen()" class="header-icon">
                             <fa-icon [icon]="faCompress"></fa-icon>
                         </button>
