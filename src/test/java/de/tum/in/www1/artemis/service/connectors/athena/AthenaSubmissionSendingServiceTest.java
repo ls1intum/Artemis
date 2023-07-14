@@ -40,6 +40,7 @@ class AthenaFeedbackSendingServiceTest {
         textExercise = new TextExercise();
         textExercise.setId(1L);
         textExercise.setTitle("Test Exercise");
+        textExercise.setMaxPoints(10.0);
 
         textSubmission = new TextSubmission();
         textSubmission.setId(2L);
@@ -47,6 +48,7 @@ class AthenaFeedbackSendingServiceTest {
         feedback = new Feedback();
         feedback.setId(3L);
         feedback.setText("Feedback");
+        feedback.setCredits(2.5);
     }
 
     @Test
