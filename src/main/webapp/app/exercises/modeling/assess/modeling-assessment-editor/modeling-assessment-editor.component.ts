@@ -143,7 +143,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submission, nothing we have to worry about
+                    // there are no unassessed submissions, nothing we have to worry about
+                    this.submission = submission;
                     return;
                 }
 
@@ -438,7 +439,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
             next: (submission: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submission, nothing we have to worry about
+                    // there are no unassessed submissions, nothing we have to worry about
+                    this.submission = submission;
                     return;
                 }
 

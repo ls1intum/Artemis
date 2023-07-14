@@ -164,7 +164,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     tap({
                         next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
-                                // there are no unassessed submission, nothing we have to worry about
+                                // there are no unassessed submissions, nothing we have to worry about
                                 return;
                             }
 
