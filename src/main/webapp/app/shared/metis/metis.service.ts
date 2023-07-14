@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
@@ -31,6 +31,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -133,7 +134,9 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
-            this.updateCoursePostTags();
+            if (isCommunicationEnabled(course)) {
+                this.updateCoursePostTags();
+            }
         }
     }
 
@@ -366,6 +369,39 @@ export class MetisService implements OnDestroy {
      */
     getLinkForLecture(lectureId: string): string {
         return `/courses/${this.getCourse().id}/lectures/${lectureId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the exam
+     * @param {string} examId ID of the exam to be navigated to
+     * @return {string} router link of the exam
+     */
+    getLinkForExam(examId: string): string {
+        return `/courses/${this.getCourse().id}/exams/${examId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the channel subtype reference
+     *
+     * @param {ChannelDTO} channel
+     * @return {string} router link of the channel subtype reference
+     */
+    getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
+        const referenceId = channel?.subTypeReferenceId?.toString();
+        if (!referenceId) {
+            return undefined;
+        }
+
+        switch (channel?.subType) {
+            case ChannelSubType.EXERCISE:
+                return this.getLinkForExercise(referenceId);
+            case ChannelSubType.LECTURE:
+                return this.getLinkForLecture(referenceId);
+            case ChannelSubType.EXAM:
+                return this.getLinkForExam(referenceId);
+            default:
+                return undefined;
+        }
     }
 
     /**

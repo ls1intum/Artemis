@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the TextCluster entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface TextClusterRepository extends JpaRepository<TextCluster, Long> {
 

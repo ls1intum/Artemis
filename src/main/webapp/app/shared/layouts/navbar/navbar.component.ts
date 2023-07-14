@@ -290,7 +290,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
         example_submission_editor: 'artemisApp.exampleSubmission.home.editor',
-        text_feedback_conflict: 'artemisApp.textAssessment.title',
         grading: 'artemisApp.programmingExercise.configureGrading.shortTitle',
         test: 'artemisApp.editor.home.title',
         ide: 'artemisApp.editor.home.title',
@@ -489,10 +488,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
                 break;
-            case 'text-feedback-conflict':
-                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                this.addTranslationAsCrumb(currentPath, 'text-feedback-conflict');
-                break;
             // No breadcrumbs for those segments
             case 'competency-management':
             case 'unit-management':
@@ -537,7 +532,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-units':
             case 'attachment-units':
             case 'video-units':
-            case 'text-feedback-conflict':
             case 'grading':
             case 'mc-question-statistic':
             case 'dnd-question-statistic':

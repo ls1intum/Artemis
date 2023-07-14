@@ -316,13 +316,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     private void assertFavoriteStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedFavoriteStatus) {
         var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
-        assertThat(participant.get().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
+        assertThat(participant.orElseThrow().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
     }
 
     private void assertHiddenStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedHiddenStatus) {
         var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
-        assertThat(participant.get().getIsHidden()).isEqualTo(expectedHiddenStatus);
+        assertThat(participant.orElseThrow().getIsHidden()).isEqualTo(expectedHiddenStatus);
     }
 
 }

@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ModelingExerciseRepository extends JpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
 
