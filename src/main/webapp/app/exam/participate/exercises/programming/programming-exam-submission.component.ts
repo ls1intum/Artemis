@@ -131,6 +131,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     updateViewFromSubmission(): void {
         // do nothing - the code editor itself is taking care of updating the view from submission
     }
+    //@ts-ignore it's intentionally unused
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // submission versions are not supported for programming exercises
         throw new Error('Submission versions are not supported for file upload exercises.');

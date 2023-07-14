@@ -167,6 +167,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     private onError() {
         this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
+
+    //@ts-ignore it's intentionally unused
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         // submission versions are not supported for file upload exercises
         throw new Error('Submission versions are not supported for file upload exercises.');

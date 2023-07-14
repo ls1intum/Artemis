@@ -1,5 +1,5 @@
-<!-- ngIf online-code-editor -->
-<div *ngIf="exercise.allowOnlineEditor || examTimeline">
+<!-- ngIf online-code-editor, in the exam timeline we always show the editor for now, even if for the exercise only the offline ide was enabled -->
+<div *ngIf="exercise.allowOnlineEditor || (examTimeline && exercise.isAtLeastInstructor)">
     <div class="d-flex mb-3">
         <div class="d-flex flex-wrap flex-column justify-content-center">
             <h4 class="mb-0 me-1">Online Code Editor</h4>
