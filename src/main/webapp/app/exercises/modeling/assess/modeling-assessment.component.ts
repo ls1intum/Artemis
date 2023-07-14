@@ -125,8 +125,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
         if (!this.readOnly) {
             this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
-                console.log('Assessment change');
-                console.log(assessments);
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessments);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
             });
