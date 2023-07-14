@@ -267,15 +267,16 @@ describe('ModelingAssessmentComponent', () => {
         expect(relationship!.highlight).toBe('blue');
     });
 
-    it('should update model', fakeAsync(() => {
+    it('should update model', async () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set').mockImplementation((model) => model);
-        tick();
-        comp.ngOnChanges(changes);
-        expect(apollonSpy).toHaveBeenCalledWith(newModel);
-    }));
+        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
+        await addDelay(300).then(() => {
+            comp.ngOnChanges(changes);
+            expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        });
+    });
 
     it('should update highlighted elements', async () => {
         const highlightedElements = new Map();
