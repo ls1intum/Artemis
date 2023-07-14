@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
+import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-about-iris',
@@ -13,4 +14,5 @@ export class AboutIrisComponent {
 
     objectKeys = Object.keys;
     array = Array;
+    protected readonly IrisLogoSize = IrisLogoSize;
 }

@@ -14,6 +14,9 @@ export class IrisLogoComponent implements OnInit {
     @Input()
     size: IrisLogoSize = IrisLogoSize.BIG;
 
+    @Input()
+    maxWidthPct: number;
+
     logoUrl: string;
 
     ngOnInit() {
