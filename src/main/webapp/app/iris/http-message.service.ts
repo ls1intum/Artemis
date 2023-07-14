@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
@@ -24,13 +24,21 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>}
      */
     createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
-        return this.httpClient.post<IrisServerMessage>(
-            `${this.resourceUrl}/${sessionId}/messages`,
-            Object.assign({}, message, {
-                sentAt: convertDateFromClient(message.sentAt),
-            }),
-            { observe: 'response' },
-        );
+        return this.httpClient
+            .post<IrisServerMessage>(
+                `${this.resourceUrl}/${sessionId}/messages`,
+                Object.assign({}, message, {
+                    sentAt: convertDateFromClient(message.sentAt),
+                }),
+                { observe: 'response' },
+            )
+            .pipe(
+                tap((response) => {
+                    if (response.body && response.body.id) {
+                        message.id = response.body.id;
+                    }
+                }),
+            );
     }
 
     /**

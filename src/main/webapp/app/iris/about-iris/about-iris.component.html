@@ -1,0 +1,24 @@
+<div>
+    <div>
+        <div class="card-title ms-2" style="display: flex; align-items: center">
+            <fa-icon size="lg" [icon]="faRobot" style="padding-right: 7px"></fa-icon>
+            <h2 class="mb-3 mt-3 font-weight-bold">
+                {{ 'artemisApp.exerciseChatbot.title' | artemisTranslate }}
+            </h2>
+        </div>
+        <div class="card-title ms-2">
+            <p class="mb-3 mt-3 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+        </div>
+    </div>
+
+    <div class="mb-5 ms-2" style="margin-right: 70px">
+        <div *ngFor="let key of objectKeys(bulletPoints)">
+            <h4 class="mb-3 font-weight-bold">{{ 'artemisApp.exerciseChatbot.subheading' + key | artemisTranslate }}</h4>
+            <ul>
+                <li *ngFor="let item of array(bulletPoints[key]); let i = index">
+                    <span [jhiTranslate]="'artemisApp.exerciseChatbot.text' + key + '_' + (i + 1)"></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

@@ -10,7 +10,7 @@
     <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
         <div class="row align-items-center">
-            <div class="col-11 general-info">
+            <div class="general-info col">
                 <h3 class="mb-0">
                     <fa-icon
                         *ngIf="competency.taxonomy"
@@ -21,10 +21,15 @@
                     ></fa-icon>
                     <span>{{ competency!.title }}</span>
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                    <span *ngIf="competency.optional" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
                 </h3>
                 <div *ngIf="competency.description">{{ competency.description }}</div>
             </div>
-            <div class="col-1">
+            <div *ngIf="competency.softDueDate" class="col-auto text-right">
+                <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                <span class="badge" [ngClass]="softDueDatePassed ? 'bg-danger' : 'bg-success'" id="date-badge"> {{ competency.softDueDate | artemisTimeAgo }} </span>
+            </div>
+            <div class="col-auto">
                 <a
                     *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                     class="btn btn-sm btn-warning float-end"

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,20 +54,17 @@ public class IrisSessionService {
 
     /**
      * Creates a new Iris session for the given exercise and user.
-     * If a session already exists, a BadRequestException is thrown.
      *
      * @param exercise The exercise the session belongs to
      * @param user     The user the session belongs to
      * @return The created session
      */
     public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (irisChatSessionRepository.findByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()) {
-            throw new BadRequestException("Iris Session already exists for exercise " + exercise.getId() + " and user " + user.getId());
-        }
-
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
+        irisSession.setCreationDate(ZonedDateTime.now());
+
         return irisChatSessionRepository.save(irisSession);
     }
 
