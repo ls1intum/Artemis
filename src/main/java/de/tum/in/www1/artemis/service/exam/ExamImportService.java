@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
@@ -176,22 +175,19 @@ public class ExamImportService {
      * @param courseShortName      the short name of the course the exercises will be imported into
      * @return the number of exercises that need to be renamed in the client
      */
-    private AtomicInteger checkForExistingProjectAndRemoveTitleShortName(List<Exercise> programmingExercises, String courseShortName) {
+    private int checkForExistingProjectAndRemoveTitleShortName(List<Exercise> programmingExercises, String courseShortName) {
         // Count how many programming exercises have conflicts with VCS / CI due to the project with the same key / name already existing
-        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger();
-
         // Iterate over all programming exercises
-        programmingExercises.forEach(exercise -> {
+        return programmingExercises.stream().mapToInt(exercise -> {
             // Method to check, if the project already exists.
             boolean projectExists = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
             if (projectExists) {
                 // If the project already exists the short name and title are removed. It has to be set in the client again
                 exercise.setShortName("");
                 exercise.setTitle("");
-                numberOfInvalidProgrammingExercises.getAndIncrement();
             }
-        });
-        return numberOfInvalidProgrammingExercises;
+            return projectExists ? 1 : 0;
+        }).sum();
     }
 
     /**
@@ -218,9 +214,9 @@ public class ExamImportService {
             throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
         }
         // check for existing project on VCS / CI
-        AtomicInteger numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
-        if (numberOfInvalidProgrammingExercises.get() > 0) {
-            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises.get(), "invalidKey");
+        int numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
+        if (numberOfInvalidProgrammingExercises > 0) {
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises, "invalidKey");
         }
     }
 
