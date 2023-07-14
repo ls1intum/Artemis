@@ -135,12 +135,12 @@ public class ExamImportService {
 
     /**
      * Checks if programming exercises passed to the method have duplicated titles or short names. When a duplication is found,
-     * the title / short name is removed from the corresponding exercises. After this method has been called, no exercise in
+     * the title / short name is removed from the corresponding exercises. After this method has been called, no programming exercise in
      * exerciseGroups has a duplicated title / short name.
      *
      * @param programmingExercises programming exercises we have to check for duplications
      * @param checkTitle           if the title should be checked for duplications. In case it is set to false, the short names are checked
-     * @return if any duplications were found and taken care of
+     * @return true if any duplications were found and taken care of
      */
     private boolean checkForAndRemoveDuplicatedTitlesAndShortNames(List<Exercise> programmingExercises, boolean checkTitle) {
         List<String> titlesOrShortNames = programmingExercises.stream().map(checkTitle ? BaseExercise::getTitle : BaseExercise::getShortName).toList();

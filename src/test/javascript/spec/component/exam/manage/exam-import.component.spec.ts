@@ -121,7 +121,7 @@ describe('Exam Import Component', () => {
         expect(modalSpy).not.toHaveBeenCalled();
     });
 
-    it('should  perform import of exercise groups successfully', () => {
+    it('should perform import of exercise groups successfully', () => {
         const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
             of(
                 new HttpResponse({
@@ -146,7 +146,7 @@ describe('Exam Import Component', () => {
         expect(modalSpy).toHaveBeenCalledWith([exerciseGroup1]);
     });
 
-    it('should  trigger an alarm for a wrong user input', () => {
+    it('should trigger an alarm for a wrong user input', () => {
         const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
             of(
                 new HttpResponse({
