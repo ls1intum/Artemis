@@ -37,7 +37,7 @@ public class AthenaFeedbackSendingService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    private static class RequestDTO {
+    static class RequestDTO {
 
         public TextExerciseDTO exercise;
 
@@ -57,7 +57,7 @@ public class AthenaFeedbackSendingService {
         }
     }
 
-    private static class ResponseDTO {
+    static class ResponseDTO {
 
         public String data;
     }

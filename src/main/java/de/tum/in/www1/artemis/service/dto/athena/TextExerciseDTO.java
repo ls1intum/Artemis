@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 /**
  * Data Transfer Object used for communication with Athena.
  */
-public record TextExerciseDTO(long id, String title, double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement) {
+public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement) {
 
     public static TextExerciseDTO of(@NotNull TextExercise exercise) {
         return new TextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
