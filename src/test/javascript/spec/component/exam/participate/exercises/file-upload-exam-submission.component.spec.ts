@@ -78,9 +78,9 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should show exercise title if any', () => {
-            comp.exercise.title = 'Test Title';
+            comp.exercise.exerciseGroup = { title: 'Test Group' } as ExerciseGroup;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.exerciseGroup?.title);
             expect(el).not.toBeNull();
         });
 
