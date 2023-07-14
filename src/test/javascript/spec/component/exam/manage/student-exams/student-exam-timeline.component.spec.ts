@@ -38,8 +38,6 @@ describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
     let submissionService: SubmissionService;
-    let localStorageService: LocalStorageService;
-    let sessionStorageService: SessionStorageService;
 
     const courseValue = { id: 1 } as Course;
     const examValue = { course: courseValue, id: 2 } as Exam;
@@ -86,8 +84,6 @@ describe('Student Exam Timeline Component', () => {
                 fixture = TestBed.createComponent(StudentExamTimelineComponent);
                 component = fixture.componentInstance;
                 submissionService = TestBed.inject(SubmissionService);
-                localStorageService = TestBed.inject(LocalStorageService);
-                sessionStorageService = TestBed.inject(SessionStorageService);
                 fixture.detectChanges();
                 jest.spyOn(component.examNavigationBarComponent, 'changePage').mockImplementation(() => {});
             });
