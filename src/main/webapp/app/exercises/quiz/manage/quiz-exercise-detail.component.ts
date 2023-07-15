@@ -44,7 +44,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
-    quizQuestionListEditComponent: QuizQuestionListEditComponent;
+    quizQuestionsEditComponent: QuizQuestionListEditComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -404,17 +404,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
-        const filesMap = this.quizQuestionListEditComponent.fileMap;
-        const files = new Map<string, Blob>();
-        filesMap.forEach((value, key) => {
-            files.set(key, value.file);
-        });
 
         this.isSaving = true;
-        this.quizQuestionListEditComponent.parseAllQuestions();
+        this.quizQuestionsEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
-                this.quizExerciseService.import(this.quizExercise, files).subscribe({
+                this.quizExerciseService.import(this.quizExercise).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         if (quizExerciseResponse.body) {
                             this.onSaveSuccess(quizExerciseResponse.body);
@@ -429,7 +424,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
-                this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
+                this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         this.notificationText = undefined;
                         if (quizExerciseResponse.body) {
@@ -442,7 +437,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 });
             }
         } else {
-            this.quizExerciseService.create(this.quizExercise, files).subscribe({
+            this.quizExerciseService.create(this.quizExercise).subscribe({
                 next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);

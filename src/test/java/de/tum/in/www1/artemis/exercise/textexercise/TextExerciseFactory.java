@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.exercise.textexercise;
 
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
@@ -26,6 +27,28 @@ public class TextExerciseFactory {
         var textExercise = (TextExercise) ExerciseFactory.populateExerciseForExam(new TextExercise(), exerciseGroup);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
+    }
+
+    /**
+     * Generate a set of specified size containing TextBlocks with the same text
+     *
+     * @param count expected size of TextBlock set
+     * @return Set of TextBlocks with identical texts
+     */
+    public static Set<TextBlock> generateTextBlocksWithIdenticalTexts(int count) {
+        Set<TextBlock> textBlocks = new HashSet<>();
+        TextBlock textBlock;
+        String text = "TextBlock";
+
+        for (int i = 0; i < count; i++) {
+            String blockId = sha1Hex("id" + i + text);
+            textBlock = new TextBlock();
+            textBlock.setText(text);
+            textBlock.setId(blockId);
+            textBlock.automatic();
+            textBlocks.add(textBlock);
+        }
+        return textBlocks;
     }
 
     /**

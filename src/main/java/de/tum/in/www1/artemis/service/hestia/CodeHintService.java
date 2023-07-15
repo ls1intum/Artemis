@@ -146,8 +146,8 @@ public class CodeHintService {
         boolean hasUnrelatedTestCaseEntries = newEntries.stream()
                 .anyMatch(entry -> task.getTestCases().stream().noneMatch(containedTestCase -> containedTestCase.getId().equals(entry.getTestCase().getId())));
         if (hasUnrelatedTestCaseEntries) {
-            throw new BadRequestAlertException("There is at least one solution entry that references a test case" + "that does not belong to the task of the code hint.",
-                    "Code Hint", "codeHint");
+            throw new BadRequestAlertException("There is at least one solution entry that references a test case that does not belong to the task of the code hint.", "Code Hint",
+                    "codeHint");
         }
 
         var result = new HashSet<>(newEntries);

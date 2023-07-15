@@ -15,7 +15,7 @@ day.extend(utc);
  * */
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
-    return uuid.substr(0, 5);
+    return uuid.substr(0, 9);
 }
 
 /**
@@ -70,10 +70,6 @@ export function titleLowercase(title: string) {
 
 export function getExercise(exerciseId: number) {
     return cy.get(`#exercise-${exerciseId}`);
-}
-
-export function convertBooleanToYesNo(boolean: boolean) {
-    return boolean ? 'Yes' : 'No';
 }
 
 export function parseArrayBufferAsJsonObject(buffer: ArrayBuffer) {
