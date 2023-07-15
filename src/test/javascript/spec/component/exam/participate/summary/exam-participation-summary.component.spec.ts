@@ -424,6 +424,7 @@ describe('ExamParticipationSummaryComponent', () => {
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
     });
+
     it('should show exercise group title', () => {
         fixture.detectChanges();
         const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('.exercise-title');
