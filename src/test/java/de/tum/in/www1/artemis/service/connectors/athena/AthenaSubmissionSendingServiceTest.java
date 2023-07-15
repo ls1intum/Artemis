@@ -1,33 +1,23 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import static org.mockito.Mockito.*;
-
-import java.util.Collections;
-
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-@ExtendWith(MockitoExtension.class)
-class AthenaFeedbackSendingServiceTest {
+class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Mock
-    private AthenaConnector<AthenaFeedbackSendingService.RequestDTO, AthenaFeedbackSendingService.ResponseDTO> athenaConnector;
+    @Autowired
+    private AthenaRequestMockProvider athenaRequestMockProvider;
 
-    @Mock
-    private TextBlockRepository textBlockRepository;
-
-    @InjectMocks
-    private AthenaFeedbackSendingService athenaFeedbackSendingService;
+    @Autowired
+    private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     private TextExercise textExercise;
 
@@ -37,6 +27,8 @@ class AthenaFeedbackSendingServiceTest {
 
     @BeforeEach
     void setUp() {
+        athenaRequestMockProvider.enableMockingOfRequests();
+
         textExercise = new TextExercise();
         textExercise.setId(1L);
         textExercise.setTitle("Test Exercise");
@@ -51,33 +43,14 @@ class AthenaFeedbackSendingServiceTest {
         feedback.setCredits(2.5);
     }
 
-    @Test
-    void sendFeedback_Success() throws NetworkingError {
-        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, Collections.singletonList(feedback));
-        verify(athenaConnector, times(1)).invokeWithRetry(anyString(), any(), anyInt());
+    @AfterEach
+    void tearDown() throws Exception {
+        athenaRequestMockProvider.reset();
     }
 
     @Test
-    void sendFeedback_WithMaxRetries_Success() throws NetworkingError {
-        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, Collections.singletonList(feedback), 2);
-        verify(athenaConnector, times(1)).invokeWithRetry(anyString(), any(), eq(2));
-    }
-
-    @Test
-    void sendFeedback_WhenNetworkingErrorOccurs() throws NetworkingError {
-        doThrow(NetworkingError.class).when(athenaConnector).invokeWithRetry(anyString(), any(), anyInt());
-
-        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, Collections.singletonList(feedback));
-
-        verify(athenaConnector, times(1)).invokeWithRetry(anyString(), any(), anyInt());
-    }
-
-    @Test
-    void sendFeedback_WithMaxRetries_WhenNetworkingErrorOccurs() throws NetworkingError {
-        doThrow(NetworkingError.class).when(athenaConnector).invokeWithRetry(anyString(), any(), anyInt());
-
-        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, Collections.singletonList(feedback), 2);
-
-        verify(athenaConnector, times(2)).invokeWithRetry(anyString(), any(), eq(2));
+    void sendFeedbackSuccess() {
+        athenaRequestMockProvider.mockSendSubmissions();
+        athenaSubmissionSendingService.sendSubmissions(textExercise);
     }
 }

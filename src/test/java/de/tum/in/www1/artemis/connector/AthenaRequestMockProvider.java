@@ -68,14 +68,17 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks /submit api from Athena used to submit new exercises.
+     * Mocks the /submissions API from Athena used to submit all submissions of an exercise
      */
-    public void mockSubmitSubmissions() {
+    public void mockSendSubmissions() {
         final ObjectNode node = mapper.createObjectNode();
-        node.set("detail", mapper.valueToTree("Submission successful"));
+        node.set("data", null);
+        node.set("module_name", mapper.valueToTree("module_example"));
+        node.set("status", mapper.valueToTree(200));
         final String json = node.toString();
 
-        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/submit")).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions")).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
     /**
