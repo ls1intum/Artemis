@@ -165,6 +165,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
                                 // there are no unassessed submissions, nothing we have to worry about
+                                this.submission = submission;
                                 return;
                             }
 

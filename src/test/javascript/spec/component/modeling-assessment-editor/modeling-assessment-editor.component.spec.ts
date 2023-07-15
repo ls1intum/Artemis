@@ -421,7 +421,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     }));
 
     describe('test assessNext', () => {
-        it('no submissions left', fakeAsync(() => {
+        it('should navigate to the next submission', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
@@ -449,6 +449,20 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(serviceSpy).toHaveBeenCalledOnce();
             expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
         }));
+
+        it('no submission left', () => {
+            const course = new Course();
+            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.id = 1;
+            const routerSpy = jest.spyOn(router, 'navigate').mockImplementation();
+            jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            component.ngOnInit();
+
+            component.assessNext();
+
+            expect(component.submission).toBeUndefined();
+            expect(routerSpy).toHaveBeenCalledTimes(0);
+        });
 
         it('throw error while assessNext', fakeAsync(() => {
             const course = new Course();

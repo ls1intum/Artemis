@@ -20,7 +20,7 @@
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-    <ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
+    <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
 <ng-template #assessment>
     <jhi-resizeable-container *ngIf="!busy && exercise" class="col-12">

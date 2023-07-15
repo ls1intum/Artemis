@@ -63,7 +63,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
-    hasNewSubmissions = true;
     resultId: number;
     examId = 0;
     exerciseGroupId: number;
@@ -267,14 +266,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.unreferencedFeedback = [];
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe({
             next: (submission: FileUploadSubmission) => {
-                if (!submission) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.hasNewSubmissions = false;
-                    return;
-                }
-
                 this.isLoading = false;
                 this.unassessedSubmission = submission;
+                if (!submission) {
+                    // there are no unassessed submissions
+                    this.submission = submission;
+                    return;
+                }
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';

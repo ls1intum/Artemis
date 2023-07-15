@@ -570,7 +570,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         submissionObservable.subscribe({
             next: (submission?: Submission) => {
                 if (!submission) {
-                    // there are no unassessed submission, nothing we have to worry about
+                    // there are no unassessed submissions
                     // Delete this correction round, as we are done with all
                     if (this.unassessedSubmissionByRound) {
                         this.unassessedSubmissionByRound.delete(correctionRound);
