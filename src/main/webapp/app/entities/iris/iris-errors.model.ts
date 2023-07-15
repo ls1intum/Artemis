@@ -15,6 +15,7 @@ export enum IrisErrorMessageKey {
     NO_MODEL_AVAILABLE = 'artemisApp.exerciseChatbot.errors.noModelAvailable',
     NO_RESPONSE = 'artemisApp.exerciseChatbot.errors.noResponse',
     PARSE_RESPONSE = 'artemisApp.exerciseChatbot.errors.parseResponse',
+    TECHNICAL_ERROR_RESPONSE = 'artemisApp.exerciseChatbot.errors.technicalError',
 }
 
 export interface IrisErrorType {
@@ -39,6 +40,7 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.NO_RESPONSE, fatal: true },
     { key: IrisErrorMessageKey.PARSE_RESPONSE, fatal: true },
     { key: IrisErrorMessageKey.FORBIDDEN, fatal: true },
+    { key: IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE, fatal: true },
 ];
 
 export const errorMessages: Readonly<{ [key in IrisErrorMessageKey]: IrisErrorType }> = Object.freeze(

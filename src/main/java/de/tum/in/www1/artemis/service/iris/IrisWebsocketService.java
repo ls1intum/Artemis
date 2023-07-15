@@ -39,7 +39,7 @@ public class IrisWebsocketService {
         Long irisSessionId = irisMessage.getSession().getId();
         String userLogin = ((IrisChatSession) irisMessage.getSession()).getUser().getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, irisMessage);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage));
     }
 
     /**
@@ -76,7 +76,7 @@ public class IrisWebsocketService {
             this.message = message;
             this.errorMessage = null;
             this.errorTranslationKey = null;
-            this.translationParams = null;
+            this.translationParams = Collections.emptyMap();
         }
 
         public IrisWebsocketDTO(Throwable throwable) {
@@ -84,7 +84,7 @@ public class IrisWebsocketService {
             this.message = null;
             this.errorMessage = throwable.getMessage();
             this.errorTranslationKey = throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null;
-            this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null;
+            this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : Collections.emptyMap();
         }
 
         public IrisWebsocketMessageType getType() {

@@ -9,14 +9,14 @@ import {
     StudentMessageSentAction,
     isSessionReceivedAction,
 } from 'app/iris/state-store.model';
-import { IrisClientMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
  * The IrisWebsocketMessageType defines the type of message sent over the websocket.
  */
 export enum IrisWebsocketMessageType {
-    MESSAGE = 'MESSAGE',
+    MESSAGE = 'IRIS_MESSAGE',
     ERROR = 'ERROR',
 }
 
@@ -84,14 +84,20 @@ export class IrisWebsocketService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
-            if (websocketResponse.type === IrisWebsocketMessageType.ERROR && websocketResponse.errorTranslationKey) {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey, websocketResponse.translationParams));
+            console.log(websocketResponse);
+            console.log(websocketResponse.type);
+            if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
+                if (!websocketResponse.errorTranslationKey) {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+                } else {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey, websocketResponse.translationParams));
+                }
             } else if (websocketResponse.type === IrisWebsocketMessageType.MESSAGE) {
                 const message = websocketResponse.message;
                 if (!message) return;
-                if (message instanceof IrisClientMessage) {
+                if (isStudentSentMessage(message)) {
                     this.stateStore.dispatch(new StudentMessageSentAction(message, null));
-                } else {
+                } else if (isServerSentMessage(message)) {
                     this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(message));
                 }
             }
