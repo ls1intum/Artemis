@@ -110,7 +110,7 @@ describe('Test exam participation', () => {
                 } else {
                     examNavigation.openExerciseOverview();
                     examParticipation.selectExerciseOnOverview(j + 1);
-                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].title);
+                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].exerciseGroup!.title!);
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                 }
             }
