@@ -67,22 +67,29 @@ public class ProgrammingExerciseImportFromFileService {
         if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
-        Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
-        Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
+        Path importExerciseDir = null;
+        ProgrammingExercise importedProgrammingExercise;
+        try {
+            importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
+            Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
-        zipFile.transferTo(exerciseFilePath);
-        zipFileService.extractZipFileRecursively(exerciseFilePath);
-        checkRepositoriesExist(importExerciseDir);
-        var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
-        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
-        var importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
-        if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            zipFile.transferTo(exerciseFilePath);
+            zipFileService.extractZipFileRecursively(exerciseFilePath);
+            checkRepositoriesExist(importExerciseDir);
+            var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
+            programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+            if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
+                staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            }
+            copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
+            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
+            importedProgrammingExercise.setCourse(course);
         }
-        copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
-        importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
-        importedProgrammingExercise.setCourse(course);
-        fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
+        finally {
+            // want to make sure the directories are deleted, even if an exception is thrown
+            fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
+        }
         return importedProgrammingExercise;
     }
 
