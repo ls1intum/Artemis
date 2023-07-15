@@ -102,7 +102,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -164,7 +164,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingSubmission.getId());
-        var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
+        var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).orElseThrow();
         assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
     }
@@ -621,7 +621,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         exam.setEndDate(ZonedDateTime.now().minusHours(1));
         exam = examRepository.save(exam);
 
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         exercise = programmingExerciseRepository.save(exercise);
@@ -728,8 +728,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the latest automatic result, and the lock for the manual result
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         // SECOND ROUND OF CORRECTION
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
@@ -762,8 +762,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(3);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
         final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
@@ -904,7 +904,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         var responseParticipation = response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
     }
 
     @Test

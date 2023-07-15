@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockPipe } from 'ng-mocks';
-import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import {
@@ -18,8 +20,14 @@ import {
 import { throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
-import { IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 describe('ExerciseChatWidgetComponent', () => {
@@ -46,15 +54,25 @@ describe('ExerciseChatWidgetComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [ExerciseChatWidgetComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
                 { provide: MatDialog, useValue: mockDialog },
+                { provide: ActivatedRoute, useValue: {} },
+                { provide: LocalStorageService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: HttpClient, useClass: MockHttpService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
             .then(() => {
+                jest.spyOn(console, 'error').mockImplementation(() => {});
+                global.window ??= window;
+                window.scroll = jest.fn();
+                window.HTMLElement.prototype.scrollTo = jest.fn();
                 fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
@@ -237,5 +255,186 @@ describe('ExerciseChatWidgetComponent', () => {
 
         // then
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
+    });
+
+    it('should call resetScreen and update localStorage for maximizeScreen', () => {
+        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
+
+        component.maximizeScreen();
+
+        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(3);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', component.fullWidth);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', component.fullHeight);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'true');
+    });
+
+    it('should call resetScreen and update localStorage for minimizeScreen', () => {
+        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
+
+        component.minimizeScreen();
+
+        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(6);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', `${component.initialWidth}px`);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', `${component.initialHeight}px`);
+        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'false');
+    });
+
+    it('should call onSend if Enter key is pressed without Shift key', () => {
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
+        jest.spyOn(component, 'onSend');
+
+        jest.spyOn(event, 'preventDefault');
+
+        component.handleKey(event);
+
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(component.onSend).toHaveBeenCalled();
+    });
+
+    it('should remove selected text and move cursor position if Enter key is pressed with Shift key', () => {
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: true });
+        const textAreaElement = document.createElement('textarea');
+        const selectionStart = 6;
+        const selectionEnd = 10;
+        textAreaElement.value = 'Sample text';
+        textAreaElement.selectionStart = selectionStart;
+        textAreaElement.selectionEnd = selectionEnd;
+        jest.spyOn(event, 'target', 'get').mockReturnValue(textAreaElement);
+
+        component.handleKey(event);
+
+        const expectedValue = 'Samplet';
+        const expectedSelectionStart = selectionStart + 1;
+        const expectedSelectionEnd = selectionStart + 1;
+
+        // Trigger the appropriate input events to simulate user input
+        const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+        textAreaElement.dispatchEvent(inputEvent);
+
+        expect(textAreaElement.value).toBe(expectedValue);
+        expect(textAreaElement.selectionStart).toBe(expectedSelectionStart);
+        expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
+    });
+
+    it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
+        const originalGetComputedStyle = window.getComputedStyle;
+
+        const scrollHeightGetterSpy = jest.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
+        const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockImplementation(
+            () =>
+                ({
+                    lineHeight: '20px',
+                } as Partial<CSSStyleDeclaration> as any),
+        );
+
+        jest.spyOn(component, 'adjustChatBodyHeight');
+
+        component.adjustTextareaRows();
+
+        expect(textarea.style.height).toBe('60px'); // Assuming the calculated height is 60px
+        expect(component.adjustChatBodyHeight).toHaveBeenCalledWith(3); // Assuming lineHeight is 20px, scrollHeight is 100, and maxRows is 3
+
+        // Restore original getters and methods
+        scrollHeightGetterSpy.mockRestore();
+        getComputedStyleSpy.mockRestore();
+        textarea.__defineGetter__('scrollHeight', originalScrollHeightGetter);
+        window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    it('should load greeting message if shouldLoadGreetingMessage is true', async () => {
+        component.shouldLoadGreetingMessage = true;
+        jest.spyOn(stateStore, 'dispatch');
+        component.loadFirstMessage();
+        expect(stateStore.dispatch).toHaveBeenCalled();
+    });
+
+    it('should return an IrisClientMessage with correct fields', () => {
+        const testMessage = 'Test message';
+        const expectedResult: IrisClientMessage = {
+            sender: IrisSender.USER,
+            content: [
+                {
+                    type: IrisMessageContentType.TEXT,
+                    textContent: testMessage,
+                },
+            ],
+        };
+
+        const result = component.newUserMessage(testMessage);
+
+        expect(result).toEqual(expectedResult);
+    });
+
+    it('should return true if the error key is SEND_MESSAGE_FAILED', () => {
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return true if the error key is IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeTruthy();
+    });
+
+    it('should return false if the error key is neither SEND_MESSAGE_FAILED nor IRIS_SERVER_RESPONSE_TIMEOUT', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error', () => {
+        component.error = null;
+        expect(component.isSendMessageFailedError()).toBeFalsy();
+    });
+
+    it('should set shakeErrorField to true and then false after 1 second', () => {
+        jest.useFakeTimers();
+        component.triggerShake();
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeTruthy();
+
+        jest.advanceTimersByTime(500);
+        expect(component.shakeErrorField).toBeFalsy();
+
+        jest.clearAllTimers();
+    });
+
+    it('should return true if error key is EMPTY_MESSAGE', () => {
+        component.error = { key: IrisErrorMessageKey.EMPTY_MESSAGE, fatal: true };
+        expect(component.isEmptyMessageError()).toBeTruthy();
+    });
+
+    it('should return false if error key is not EMPTY_MESSAGE', () => {
+        component.error = { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: false };
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return false if there is no error for empty message', () => {
+        component.error = null;
+        expect(component.isEmptyMessageError()).toBeFalsy();
+    });
+
+    it('should return true if isLoading is true', () => {
+        component.isLoading = true;
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return true if error exists and it is fatal', () => {
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: true };
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+    });
+
+    it('should return false if isLoading is false and no error exists', () => {
+        component.isLoading = false;
+        component.error = null;
+        expect(component.deactivateSubmitButton()).toBeFalsy();
+    });
+
+    it('should return false if isLoading is false and error is not fatal', () => {
+        component.isLoading = false;
+        component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        expect(component.deactivateSubmitButton()).toBeFalsy();
     });
 });

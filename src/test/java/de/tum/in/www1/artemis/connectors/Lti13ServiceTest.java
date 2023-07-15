@@ -288,15 +288,14 @@ class Lti13ServiceTest {
 
         lti13Service.buildLtiResponse(UriComponentsBuilder.newInstance(), mock(HttpServletResponse.class));
 
-        verify(ltiService, times(1)).buildLtiResponse(any(), any());
+        verify(ltiService).buildLtiResponse(any(), any());
     }
 
     @Test
     void onNewResultNoOnlineCourseConfiguration() {
         Course course = new Course();
         course.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -316,8 +315,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -340,8 +338,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -374,8 +371,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -489,8 +485,7 @@ class Lti13ServiceTest {
         Course course = new Course();
         course.setId(1L);
 
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setMaxPoints(80d);
         exercise.setCourse(course);
 

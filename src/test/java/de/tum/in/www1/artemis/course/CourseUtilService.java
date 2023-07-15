@@ -384,7 +384,7 @@ public class CourseUtilService {
         quizExercise = exerciseRepo.save(quizExercise);
 
         // Get user and setup participations
-        User user = (userRepo.findOneByLogin(userPrefix + "student1")).get();
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).orElseThrow();
         StudentParticipation participationModeling = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
         StudentParticipation participationText = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participationFileUpload = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
@@ -842,10 +842,6 @@ public class CourseUtilService {
         course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
         assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
         return courseRepo.save(course);
-    }
-
-    public void updateCourseGroups(String userPrefix, List<Course> courses, String suffix) {
-        courses.forEach(course -> updateCourseGroups(userPrefix, course, suffix));
     }
 
     public void updateCourseGroups(String userPrefix, Course course, String suffix) {
