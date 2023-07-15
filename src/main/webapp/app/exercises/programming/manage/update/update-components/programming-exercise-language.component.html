@@ -1,88 +1,172 @@
-<div class="form-group">
-    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
-    <select
-        #select
-        required
-        class="form-select"
-        [ngModel]="languageStepInputs.selectedProgrammingLanguage"
-        (ngModelChange)="select.value = languageStepInputs.onProgrammingLanguageChange($event)"
-        name="programmingLanguage"
-        id="field_programmingLanguage"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
-    >
-        <option *ngFor="let supportedLanguage of languageStepInputs.supportedLanguages" [value]="supportedLanguage">
-            {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
-        </option>
-    </select>
-</div>
+<section class="mb-5">
+    <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</span></h1>
+    <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</span></p>
 
-<div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.projectTypes && languageStepInputs.projectTypes.length > 0">
-    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
-    <jhi-mode-picker
-        required
-        [options]="languageStepInputs.modePickerOptions"
-        [value]="languageStepInputs.selectedProjectType"
-        (valueChange)="languageStepInputs.onProjectTypeChange($event!)"
-        [disabled]="isImportFromExistingExercise || isImportFromFile || !!programmingExercise.id"
-        name="projectType"
-        id="field_projectType"
-    ></jhi-mode-picker>
-    <div
-        class="form-check mt-2"
-        *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA"
-    >
-        <input
-            class="form-check-input"
-            type="checkbox"
-            name="withDependencies"
-            id="field_with_dependencies"
-            [(ngModel)]="languageStepInputs.withDependencies"
-            (ngModelChange)="languageStepInputs.onWithDependenciesChanged($event)"
-            checked
-        />
-        <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
-        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
+    <div class="form-group">
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
+        <select
+            #select
+            required
+            class="form-select"
+            [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
+            (ngModelChange)="select.value = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
+            name="programmingLanguage"
+            id="field_programmingLanguage"
+            [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+        >
+            <option *ngFor="let supportedLanguage of programmingExerciseCreationConfig.supportedLanguages" [value]="supportedLanguage">
+                {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
+            </option>
+        </select>
     </div>
-</div>
 
-<div class="form-group" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE">
-    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
-    <input
-        required
-        type="text"
-        [pattern]="languageStepInputs.packageNamePattern"
-        class="form-control"
-        name="packageName"
-        id="field_packageName"
-        [(ngModel)]="programmingExercise.packageName"
-        [readonly]="programmingExercise.id"
-        #packageName="ngModel"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
-    />
-    <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
-        <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+    <div
+        class="form-group mt-2"
+        *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0"
+    >
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+        <jhi-mode-picker
+            required
+            [options]="programmingExerciseCreationConfig.modePickerOptions"
+            [value]="programmingExerciseCreationConfig.selectedProjectType"
+            (valueChange)="programmingExerciseCreationConfig.onProjectTypeChange($event!)"
+            [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
+            name="projectType"
+            id="field_projectType"
+        ></jhi-mode-picker>
+        <div
+            class="form-check mt-2"
+            *ngIf="
+                !programmingExerciseCreationConfig.isImportFromExistingExercise &&
+                !programmingExerciseCreationConfig.isImportFromFile &&
+                !programmingExercise.id &&
+                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA
+            "
+        >
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="withDependencies"
+                id="field_with_dependencies"
+                [(ngModel)]="programmingExerciseCreationConfig.withDependencies"
+                (ngModelChange)="programmingExerciseCreationConfig.onWithDependenciesChanged($event)"
+                checked
+            />
+            <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
         </div>
-    </ng-container>
-</div>
+    </div>
 
-<div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE">
-    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
-    <input
-        required
-        type="text"
-        [pattern]="languageStepInputs.appNamePatternForSwift"
-        class="form-control"
-        name="packageName"
-        id="field_appName"
-        [(ngModel)]="programmingExercise.packageName"
-        [readonly]="programmingExercise.id"
-        #packageName="ngModel"
-        [disabled]="isImportFromExistingExercise || !!programmingExercise.id || isImportFromFile"
-    />
-    <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
-        <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+    <div
+        class="form-group"
+        *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE"
+    >
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
+        <input
+            required
+            type="text"
+            [pattern]="programmingExerciseCreationConfig.packageNamePattern"
+            class="form-control"
+            name="packageName"
+            id="field_packageName"
+            [(ngModel)]="programmingExercise.packageName"
+            [readonly]="programmingExercise.id"
+            #packageName="ngModel"
+            [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+        />
+        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
+            <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+            </div>
+        </ng-container>
+    </div>
+
+    <div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE">
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName">App Name</label>
+        <input
+            required
+            type="text"
+            [pattern]="programmingExerciseCreationConfig.appNamePatternForSwift"
+            class="form-control"
+            name="packageName"
+            id="field_appName"
+            [(ngModel)]="programmingExercise.packageName"
+            [readonly]="programmingExercise.id"
+            #packageName="ngModel"
+            [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+        />
+        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
+            <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
+                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+            </div>
+        </ng-container>
+    </div>
+
+    <!-- Static code analysis checkbox -->
+    <div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed">
+        <div class="form-check mb-0 custom-control custom-checkbox">
+            <input
+                type="checkbox"
+                class="form-check-input custom-control-input"
+                id="field_staticCodeAnalysisEnabled"
+                name="staticCodeAnalysisEnabled"
+                [disabled]="!!programmingExercise.sequentialTestRuns || (!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id)"
+                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
+                (change)="programmingExerciseCreationConfig.onStaticCodeAnalysisChanged()"
+            />
+            <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
+                Enable Static Code Analysis</label
+            >
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                placement="auto"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
+            ></fa-icon>
         </div>
-    </ng-container>
-</div>
+    </div>
+
+    <!-- Sequential Test Runs checkbox
+It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
+    <div class="form-group mb-0" *ngIf="programmingExerciseCreationConfig.sequentialTestRunsAllowed">
+        <div class="form-check">
+            <label class="form-check-label" for="field_sequentialTestRuns">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="sequentialTestRuns"
+                    id="field_sequentialTestRuns"
+                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.testwiseCoverageEnabled"
+                    [(ngModel)]="programmingExercise.sequentialTestRuns"
+                    checked
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+            </label>
+        </div>
+    </div>
+
+    <!-- Testwise Coverage checkbox-->
+    <div class="form-group" *ngIf="programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported">
+        <div class="form-check">
+            <label class="form-check-label" for="field_testwiseCoverageEnabled">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="testwiseCoverageEnabled"
+                    id="field_testwiseCoverageEnabled"
+                    [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
+                    [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
+                    checked
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record Testwise Coverage</span>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    class="text-secondary"
+                    placement="auto"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
+                ></fa-icon>
+            </label>
+        </div>
+    </div>
+</section>

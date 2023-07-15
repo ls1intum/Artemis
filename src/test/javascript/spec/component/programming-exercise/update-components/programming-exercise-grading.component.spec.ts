@@ -21,6 +21,7 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -60,11 +61,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseGradingComponent);
                 comp = fixture.componentInstance;
 
-                comp.gradingInputs = {
-                    staticCodeAnalysisAllowed: true,
-                    onStaticCodeAnalysisChanged(): void {},
-                    maxPenaltyPattern: '',
-                };
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
                 const exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.maxPoints = 10;
