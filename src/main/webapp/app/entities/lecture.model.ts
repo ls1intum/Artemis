@@ -11,6 +11,7 @@ export class Lecture implements BaseEntity {
     description?: string;
     startDate?: dayjs.Dayjs;
     endDate?: dayjs.Dayjs;
+    visibleDate?: dayjs.Dayjs;
     attachments?: Attachment[];
     posts?: Post[];
     lectureUnits?: LectureUnit[];

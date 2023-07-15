@@ -90,6 +90,7 @@
                     <th><span jhiTranslate="global.field.id">ID</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.title">Title</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.lecture.visibleDate">Visible from</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.course">Course</span></th>
@@ -105,6 +106,7 @@
                         <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
                     </td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                    <td>{{ lecture.visibleDate | artemisDate }}</td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
                     <td>
