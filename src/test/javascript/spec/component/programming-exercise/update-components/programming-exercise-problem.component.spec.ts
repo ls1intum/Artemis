@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { NgModel } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -37,7 +38,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
                 comp = fixture.componentInstance;
 
-                comp.validIdeSelection = () => true;
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });
     });
