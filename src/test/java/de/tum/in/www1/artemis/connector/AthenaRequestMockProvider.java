@@ -13,9 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.test.web.client.ResponseActions;
+import org.springframework.test.web.client.*;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,15 +68,21 @@ public class AthenaRequestMockProvider {
     /**
      * Mocks the /submissions API from Athena used to submit all submissions of an exercise
      */
-    public void mockSendSubmissions() {
+    public void mockSendSubmissionsAndExpect(RequestMatcher... expectedContents) {
         final ObjectNode node = mapper.createObjectNode();
         node.set("data", null);
         node.set("module_name", mapper.valueToTree("module_example"));
         node.set("status", mapper.valueToTree(200));
         final String json = node.toString();
 
-        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions")).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        responseActions.andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
     /**
@@ -98,5 +102,9 @@ public class AthenaRequestMockProvider {
         else {
             responseActions.andRespond(withException(new SocketTimeoutException()));
         }
+    }
+
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
     }
 }

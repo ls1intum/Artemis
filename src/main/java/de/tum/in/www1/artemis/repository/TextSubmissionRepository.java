@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -57,24 +57,15 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     Optional<TextSubmission> findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(long resultId);
 
     /**
-     * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
-     *
-     * @param exerciseId the Id of the exercise
-     * @return List of Text Submissions
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "blocks", "results", "participation", "participation.submissions" })
-    List<TextSubmission> findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(long exerciseId);
-
-    /**
      * Gets all TextSubmissions which are submitted and loads all blocks
      *
      * @param exerciseId the Id of the exercise
-     * @return List of Text Submissions
+     * @return Set of Text Submissions
      */
     @EntityGraph(type = LOAD, attributePaths = { "blocks" })
-    List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
+    Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
-    default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(long exerciseId) {
+    default Set<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(long exerciseId) {
         return findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
     }
 

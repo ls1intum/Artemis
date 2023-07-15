@@ -42,7 +42,7 @@ public class AthenaSubmissionSendingService {
 
         public List<TextSubmissionDTO> submissions;
 
-        RequestDTO(@NotNull TextExercise exercise, @NotNull List<TextSubmission> submissions) {
+        RequestDTO(@NotNull TextExercise exercise, @NotNull Set<TextSubmission> submissions) {
             this.exercise = TextExerciseDTO.of(exercise);
             this.submissions = submissions.stream().map(submission -> TextSubmissionDTO.of(exercise.getId(), submission)).toList();
         }
@@ -73,7 +73,7 @@ public class AthenaSubmissionSendingService {
         log.debug("Start Athena Submission Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all text submissions for exercise (later we will support others)
-        List<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exercise.getId());
+        Set<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exercise.getId());
 
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
