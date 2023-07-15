@@ -135,7 +135,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         if (this.typingTeamStudents.length > 0) {
             const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
             const minTypingDate = dayjs.min(lastTypingDates);
-            if (minTypingDate != undefined) {
+            if (minTypingDate) {
                 const earliestExpiration = minTypingDate.add(this.showTypingDuration, 'ms');
                 const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
                 setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
