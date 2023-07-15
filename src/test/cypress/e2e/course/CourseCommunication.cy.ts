@@ -49,7 +49,7 @@ describe('Course communication', () => {
             courseCommunication.newPost();
             courseCommunication.selectContextInModal(CourseWideContext.ORGANIZATION);
             courseCommunication.setTitleInModal('Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInModal(text);
             });
             courseCommunication.save();
@@ -257,7 +257,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within exercises', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -373,7 +373,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within lectures', () => {
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -494,7 +494,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within exercises', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();
@@ -565,7 +565,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within lecture', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();

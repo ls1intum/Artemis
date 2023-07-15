@@ -35,7 +35,7 @@ describe('Text exercise assessment', () => {
                 exercise = textResponse.body;
                 cy.login(studentOne);
                 courseManagementRequest.startExerciseParticipation(exercise.id!);
-                cy.fixture('loremIpsum.txt').then((submission) => {
+                cy.fixture('loremIpsum-short.txt').then((submission) => {
                     courseManagementRequest.makeTextExerciseSubmission(exercise.id!, submission);
                 });
             });
@@ -53,8 +53,8 @@ describe('Text exercise assessment', () => {
         textExerciseAssessment.getInstructionsRootElement().contains(exercise.exampleSolution!).should('be.visible');
         textExerciseAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions!).should('be.visible');
         // Assert the correct word and character count without relying on translations
-        textExerciseAssessment.getWordCountElement().should('contain.text', 100).and('be.visible');
-        textExerciseAssessment.getCharacterCountElement().should('contain.text', 591).and('be.visible');
+        textExerciseAssessment.getWordCountElement().should('contain.text', 16).and('be.visible');
+        textExerciseAssessment.getCharacterCountElement().should('contain.text', 83).and('be.visible');
         textExerciseAssessment.provideFeedbackOnTextSection(1, tutorTextFeedbackPoints, tutorTextFeedback);
         textExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
         textExerciseAssessment.submit().then((request: Interception) => {
