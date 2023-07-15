@@ -69,12 +69,6 @@ public class AthenaRequestMockProvider {
      * Mocks the /submissions API from Athena used to submit all submissions of an exercise
      */
     public void mockSendSubmissionsAndExpect(RequestMatcher... expectedContents) {
-        final ObjectNode node = mapper.createObjectNode();
-        node.set("data", null);
-        node.set("module_name", mapper.valueToTree("module_example"));
-        node.set("status", mapper.valueToTree(200));
-        final String json = node.toString();
-
         ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -82,7 +76,33 @@ public class AthenaRequestMockProvider {
             responseActions.andExpect(matcher);
         }
 
-        responseActions.andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        // Response: {"status":200,"data":null,"module_name":"module_example"}
+        final ObjectNode node = mapper.createObjectNode();
+        node.set("data", null);
+        node.set("module_name", mapper.valueToTree("module_example"));
+        node.set("status", mapper.valueToTree(200));
+        responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Mocks the /select_submission API from Athena used to select a submission for manual assessment
+     *
+     * @param submissionIdResponse The submission id to return from the endpoint. An ID of -1 means "no selection".
+     */
+    public void mockSelectSubmissionsAndExpect(long submissionIdResponse, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        // Response: {"status":200,"data":<submissionIdResponse>,"module_name":"module_example"}
+        final ObjectNode node = mapper.createObjectNode();
+        node.set("data", mapper.valueToTree(submissionIdResponse));
+        node.set("module_name", mapper.valueToTree("module_example"));
+        node.set("status", mapper.valueToTree(200));
+        responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
     /**
@@ -91,10 +111,8 @@ public class AthenaRequestMockProvider {
      * @param exampleModuleHealthy Example module health status (in addition to the general status)
      */
     public void mockHealthStatusSuccess(boolean exampleModuleHealthy) {
-        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
-
-        final ObjectNode node = mapper.createObjectNode();
         // Response: {"status":"ok","modules":{"module_example":{"url":"http://localhost:5001","type":"programming","healthy":true}}
+        final ObjectNode node = mapper.createObjectNode();
         node.set("status", mapper.valueToTree("ok"));
         final ObjectNode modules = mapper.createObjectNode();
         final ObjectNode moduleExample = mapper.createObjectNode();
@@ -103,8 +121,9 @@ public class AthenaRequestMockProvider {
         moduleExample.set("healthy", mapper.valueToTree(exampleModuleHealthy));
         modules.set("module_example", moduleExample);
         node.set("modules", modules);
-        final String json = node.toString();
-        responseActions.andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
+
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(withSuccess().body(node.toString()).contentType(MediaType.APPLICATION_JSON));
     }
 
     /**

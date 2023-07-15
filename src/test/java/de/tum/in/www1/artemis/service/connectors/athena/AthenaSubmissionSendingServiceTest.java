@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -44,6 +46,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBamboo
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = new TextExercise();
+        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC); // needed for feedback suggestions
         textExercise.setId(1L);
         textExercise.setTitle("Test Exercise");
         textExercise.setMaxPoints(10.0);
@@ -60,7 +63,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    void sendSubmissionsSuccess() {
+    void testSendSubmissionsSuccess() {
         athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.title").value(textExercise.getTitle()),
                 jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()), jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
@@ -68,5 +71,11 @@ class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBamboo
                 jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()), jsonPath("$.submissions[0].text").value(textSubmission.getText()),
                 jsonPath("$.submissions[0].language").value(textSubmission.getLanguage()));
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+    }
+
+    @Test
+    void testSendSubmissionsFeedbackSuggestionsDisabled() {
+        textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
+        assertThrows(IllegalArgumentException.class, () -> athenaSubmissionSendingService.sendSubmissions(textExercise));
     }
 }
