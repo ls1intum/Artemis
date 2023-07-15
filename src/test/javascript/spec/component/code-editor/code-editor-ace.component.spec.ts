@@ -55,6 +55,14 @@ describe('CodeEditorAceComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should know the lines in which inline feedback is shown', () => {
+        expect(comp.linesWithInlineFeedbackShown).toEqual([]);
+        comp.linesWithNewFeedback = [15, 5];
+        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15]);
+        comp.fileFeedbackPerLine = { 50: {}, 1050: {} };
+        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15, 50, 1050]);
+    });
+
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
@@ -119,6 +127,14 @@ describe('CodeEditorAceComponent', () => {
 
         expect(comp.isLoading).toBeFalse();
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+    });
+
+    it('should discard all new feedback after a re-init because of a file change', () => {
+        const getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeStub.mockReturnValue(undefined);
+        comp.addLineWidgetWithFeedback(16);
+        comp.initEditorAfterFileChange();
+        expect(comp.linesWithNewFeedback).toEqual([]);
     });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
@@ -231,5 +247,47 @@ describe('CodeEditorAceComponent', () => {
         comp.tabSize = 4;
         fixture.detectChanges();
         expect(editorTabSize()).toBe(4);
+    });
+
+    it('should temporarily show new feedbacks which have not been updated yet', () => {
+        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
+        comp.addLineWidgetWithFeedback(16);
+        expect(comp.linesWithNewFeedback).toEqual([16]);
+    });
+
+    it('should not show an updated feedback as new', () => {
+        comp.feedbacks = [];
+        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
+        const adjustLineWidgetHeightStub = jest.spyOn(comp, 'adjustLineWidgetHeight');
+        adjustLineWidgetHeightStub.mockImplementation(() => {});
+        comp.addLineWidgetWithFeedback(16);
+        comp.addLineWidgetWithFeedback(17);
+        comp.updateFeedback({ reference: 'line:16' });
+        expect(comp.linesWithNewFeedback).toEqual([17]);
+    });
+
+    it('should not show new feedback that is cancelled anymore', () => {
+        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
+        comp.editorSession = { lineWidgets: [], widgetManager: { removeLineWidget: () => {} } } as any;
+        const removeLineWidget = jest.spyOn(comp.editorSession.widgetManager, 'removeLineWidget');
+        comp.addLineWidgetWithFeedback(1);
+        comp.addLineWidgetWithFeedback(16);
+        comp.cancelFeedback(16);
+        expect(comp.linesWithNewFeedback).toEqual([1]);
+        expect(removeLineWidget).toHaveBeenCalled();
+    });
+
+    it('should explicitly remove all ACE line widgets when being destroyed', () => {
+        const getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
+        getInlineFeedbackNodeStub.mockReturnValue(undefined);
+        comp.editorSession = { lineWidgets: [], widgetManager: { removeLineWidget: () => {} } } as any;
+        const removeLineWidget = jest.spyOn(comp.editorSession.widgetManager, 'removeLineWidget');
+        comp.addLineWidgetWithFeedback(1);
+        comp.addLineWidgetWithFeedback(16);
+        comp.ngOnDestroy();
+        expect(removeLineWidget).toHaveBeenCalledTimes(2);
     });
 });
