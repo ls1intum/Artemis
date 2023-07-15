@@ -56,7 +56,7 @@ export class ExamParticipation {
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
-        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             programmingExerciseEditor.submitPractice(exerciseID);
         } else {
@@ -99,6 +99,23 @@ export class ExamParticipation {
 
     checkExamTitle(title: string) {
         cy.get('#exam-title').contains(title);
+    }
+
+    getResultScore() {
+        cy.reloadUntilFound('#result-score');
+        return cy.get('#result-score');
+    }
+
+    checkExamFinishedTitle(title: string) {
+        cy.get('#exam-finished-title').contains(title, { timeout: 40000 });
+    }
+
+    checkExamFullnameInputExists() {
+        cy.get('#fullname', { timeout: 20000 }).should('exist');
+    }
+
+    checkYourFullname(name: string) {
+        cy.get('#your-name', { timeout: 20000 }).contains(name);
     }
 
     handInEarly() {

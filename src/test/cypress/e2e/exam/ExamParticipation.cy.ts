@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/exercise/programming/all_successful/submission.json';
 import { Course } from 'app/entities/course.model';
@@ -12,11 +12,11 @@ import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users }
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
-const textFixtureAlternative = 'loremIpsum-alternative.txt';
-let exerciseArray: Array<Exercise> = [];
+const textFixtureShort = 'loremIpsum-short.txt';
 
 describe('Exam participation', () => {
     let course: Course;
+    let exerciseArray: Array<Exercise> = [];
     let studentOneName: string;
     let studentTwoName: string;
     let studentThreeName: string;
@@ -24,7 +24,7 @@ describe('Exam participation', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);
             courseManagementRequest.addStudentToCourse(course, studentThree);
@@ -179,11 +179,11 @@ describe('Exam participation', () => {
             examStartEnd.clickContinue();
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             textExerciseEditor.clearSubmission(textExercise.id);
-            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureAlternative);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureShort);
             examParticipation.clickSaveAndContinue();
 
             examParticipation.handInEarly();
-            examParticipation.verifyTextExerciseOnFinalPage(textFixtureAlternative);
+            examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
@@ -236,12 +236,17 @@ describe('Exam participation', () => {
 
     describe('Normal Hand-in', () => {
         let exam: Exam;
+        let studentOneName: string;
         const examTitle = 'exam' + generateUUID();
 
         before('Create exam', () => {
             exerciseArray = [];
 
             cy.login(admin);
+            users.getUserInfo(studentOne.username, (userInfo) => {
+                studentOneName = userInfo.name;
+            });
+
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'minutes'))
@@ -269,7 +274,8 @@ describe('Exam participation', () => {
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
             examParticipation.clickSaveAndContinue();
-            cy.get('#fullname', { timeout: 20000 }).should('be.visible');
+            examParticipation.checkExamFullnameInputExists();
+            examParticipation.checkYourFullname(studentOneName);
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
@@ -282,9 +288,6 @@ describe('Exam participation', () => {
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
