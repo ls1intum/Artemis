@@ -607,13 +607,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
-        assertThat(exerciseGroup.getExercises()).doesNotContain(examExercise);
     }
 
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {

@@ -737,6 +737,7 @@ public class ProgrammingExerciseService {
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
+
         boolean projectExists = versionControlService.orElseThrow().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
@@ -755,20 +756,21 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
      * @param courseShortName     the shortName of the course the programming exercise should be imported in
-     * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
+     * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
         String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);
+
         boolean projectExists = versionControlService.orElseThrow().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
             return true;
         }
         String errorMessageCis = continuousIntegrationService.orElseThrow().checkIfProjectExists(projectKey, projectName);
-        return errorMessageCis != null;
         // means the project does not exist in version control server and does not exist in continuous integration server
+        return errorMessageCis != null;
     }
 
     /**
