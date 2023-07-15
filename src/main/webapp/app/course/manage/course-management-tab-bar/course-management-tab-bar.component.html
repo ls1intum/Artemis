@@ -42,7 +42,13 @@
             <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
-        <a class="tab-link" [routerLink]="['/course-management', course.id, 'assessment-dashboard']" routerLinkActive="active" [class.active]="shouldHighlightAssessmentLink()">
+        <a
+            class="tab-link"
+            [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
+            id="assessment-dashboard"
+            routerLinkActive="active"
+            [class.active]="shouldHighlightAssessmentLink()"
+        >
             <fa-icon [icon]="faUserCheck"></fa-icon>
             <span jhiTranslate="entity.action.assessmentDashboard">Assessment</span>
         </a>
