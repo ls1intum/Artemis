@@ -73,7 +73,7 @@ describe('Test exam participation', () => {
             examParticipation.handInEarly();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
+                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
                 if (exercise.type === EXERCISE_TYPE.Text) {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
