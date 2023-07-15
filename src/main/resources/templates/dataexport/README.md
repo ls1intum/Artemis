@@ -7,7 +7,7 @@ Teaching and examinations as a legal duty that is assigned to us by the legislat
 Only general personal data, no special categories.
 
 ## Recipients or categories of recipients to whom the personal data have been or will be disclosed, in particular recipients in third countries or international organisations
-Teaching assistants and instructors who are involved in the teaching and examination process.
+Teaching assistants and instructors who are involved in the teaching and examination process as well as administrators of the instance.
 
 ## Data storage period
 The data is stored for the duration of the legal retention period.
