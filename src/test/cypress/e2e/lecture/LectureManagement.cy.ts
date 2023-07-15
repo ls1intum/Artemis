@@ -27,6 +27,7 @@ describe('Lecture management', () => {
         cy.fixture('loremIpsum.txt').then((text) => {
             lectureCreation.typeDescription(text);
         });
+        lectureCreation.setVisibleDate(dayjs());
         lectureCreation.setStartDate(dayjs());
         lectureCreation.setEndDate(dayjs().add(1, 'hour'));
         lectureCreation.save().then((lectureResponse) => {

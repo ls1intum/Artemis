@@ -23,16 +23,23 @@ export class ComplaintsFormComponent implements OnInit {
     // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() submit: EventEmitter<void> = new EventEmitter();
     maxComplaintsPerCourse = 1;
+    maxComplaintTextLimit: number;
     complaintText?: string;
-    ComplaintType = ComplaintType;
     course?: Course;
+
+    readonly ComplaintType = ComplaintType;
 
     constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise);
+        this.maxComplaintTextLimit = this.course?.maxComplaintTextLimit ?? 0;
         if (this.exercise.course) {
+            // only set the complaint limit for course exercises, there are unlimited complaints for exams
             this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
+        } else {
+            // Complaints for exams should always allow at least 2000 characters. If the course limit is higher, the custom limit gets used.
+            this.maxComplaintTextLimit = Math.max(2000, this.maxComplaintTextLimit);
         }
     }
 
@@ -47,8 +54,8 @@ export class ComplaintsFormComponent implements OnInit {
         complaint.complaintType = this.complaintType;
 
         // TODO: Rethink global client error handling and adapt this line accordingly
-        if (complaint.complaintText !== undefined && this.course!.maxComplaintTextLimit! < complaint.complaintText!.length) {
-            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.course!.maxComplaintTextLimit! });
+        if (complaint.complaintText !== undefined && this.maxComplaintTextLimit < complaint.complaintText!.length) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.maxComplaintTextLimit! });
             return;
         }
 
