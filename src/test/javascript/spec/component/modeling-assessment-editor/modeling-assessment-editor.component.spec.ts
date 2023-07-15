@@ -417,7 +417,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
         expect(component.totalScore).toBe(3);
-        expect(handleFeedbackSpy).toHaveBeenCalled(); // It's fine if this is called multiple times
+        expect(handleFeedbackSpy).toHaveBeenCalledOnce();
     }));
 
     describe('test assessNext', () => {

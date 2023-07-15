@@ -425,7 +425,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.isApollonModelLoaded) {
             this.isApollonModelLoaded = true;
             this.calculateTotalScore();
-            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
         }
 
         this.validateFeedback();
