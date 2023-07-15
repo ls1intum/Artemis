@@ -14,6 +14,10 @@ import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 
 class AthenaHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle
+
     @Autowired
     private AthenaRequestMockProvider athenaRequestMockProvider;
 
@@ -32,14 +36,23 @@ class AthenaHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     void healthUp() {
-        athenaRequestMockProvider.mockHealthStatus(true);
+        athenaRequestMockProvider.mockHealthStatusSuccess(true);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
+        assertThat(health.getDetails().get("module_example").toString()).contains(GREEN_CIRCLE);
+    }
+
+    @Test
+    void healthUpExampleModuleDown() {
+        athenaRequestMockProvider.mockHealthStatusSuccess(false);
+        final Health health = athenaHealthIndicator.health();
+        assertThat(health.getStatus()).isEqualTo(Status.UP);
+        assertThat(health.getDetails().get("module_example").toString()).contains(RED_CIRCLE);
     }
 
     @Test
     void healthDown() {
-        athenaRequestMockProvider.mockHealthStatus(false);
+        athenaRequestMockProvider.mockHealthStatusFailure();
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
     }

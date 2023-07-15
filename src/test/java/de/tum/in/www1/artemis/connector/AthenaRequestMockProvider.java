@@ -86,30 +86,33 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks /health API from Athena used to check if the service is up and running
+     * Mocks /health API success from Athena used to check if the service is up and running
      *
-     * @param success Successful response or timeout.
+     * @param exampleModuleHealthy Example module health status (in addition to the general status)
      */
-    public void mockHealthStatus(boolean success) {
+    public void mockHealthStatusSuccess(boolean exampleModuleHealthy) {
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
 
-        if (success) {
-            final ObjectNode node = mapper.createObjectNode();
-            // Response: {"status":"ok","modules":{"module_example":{"url":"http://localhost:5001","type":"programming","healthy":true}}
-            node.set("status", mapper.valueToTree("ok"));
-            final ObjectNode modules = mapper.createObjectNode();
-            final ObjectNode moduleExample = mapper.createObjectNode();
-            moduleExample.set("url", mapper.valueToTree("http://localhost:5001"));
-            moduleExample.set("type", mapper.valueToTree("programming"));
-            moduleExample.set("healthy", mapper.valueToTree(true));
-            modules.set("module_example", moduleExample);
-            node.set("modules", modules);
-            final String json = node.toString();
-            responseActions.andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
-        }
-        else {
-            responseActions.andRespond(withException(new SocketTimeoutException()));
-        }
+        final ObjectNode node = mapper.createObjectNode();
+        // Response: {"status":"ok","modules":{"module_example":{"url":"http://localhost:5001","type":"programming","healthy":true}}
+        node.set("status", mapper.valueToTree("ok"));
+        final ObjectNode modules = mapper.createObjectNode();
+        final ObjectNode moduleExample = mapper.createObjectNode();
+        moduleExample.set("url", mapper.valueToTree("http://localhost:5001"));
+        moduleExample.set("type", mapper.valueToTree("programming"));
+        moduleExample.set("healthy", mapper.valueToTree(exampleModuleHealthy));
+        modules.set("module_example", moduleExample);
+        node.set("modules", modules);
+        final String json = node.toString();
+        responseActions.andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Mocks /health API failure from Athena used to check if the service is up and running
+     */
+    public void mockHealthStatusFailure() {
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(withException(new SocketTimeoutException()));
     }
 
     public RestTemplate getRestTemplate() {

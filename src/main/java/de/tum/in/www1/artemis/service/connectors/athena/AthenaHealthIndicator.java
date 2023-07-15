@@ -19,6 +19,10 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 @Profile("athena")
 public class AthenaHealthIndicator implements HealthIndicator {
 
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle
+
     private final RestTemplate shortTimeoutRestTemplate;
 
     @Value("${artemis.athena.url}")
@@ -34,10 +38,10 @@ public class AthenaHealthIndicator implements HealthIndicator {
     private static String moduleHealthToString(AthenaModuleHealth moduleHealth) {
         var healthString = "";
         if (moduleHealth.healthy) {
-            healthString += "\uD83D\uDFE2"; // green circle
+            healthString += GREEN_CIRCLE; // green circle
         }
         else {
-            healthString += "\uD83D\uDD34"; // red circle
+            healthString += RED_CIRCLE; // red circle
         }
         healthString += " " + moduleHealth.url + " (" + moduleHealth.type + ")";
         return healthString;
@@ -51,20 +55,25 @@ public class AthenaHealthIndicator implements HealthIndicator {
         ConnectorHealth health;
         try {
             final var response = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", JsonNode.class);
-            var isUp = response.get("status").asText().equals("ok");
+            var isUp = response != null && response.get("status").asText().equals("ok");
             health = new ConnectorHealth(isUp);
             var additionalInfo = new HashMap<String, Object>();
             additionalInfo.put("url", athenaUrl);
-            additionalInfo.put("assessment module manager", response.get("status").asText());
-            // add health of all modules
-            if (response.has("modules")) {
-                JsonNode modules = response.get("modules");
-                // keys are module names, values are description maps
-                modules.fields().forEachRemaining(module -> {
-                    var moduleHealth = new AthenaModuleHealth(module.getValue().get("type").asText(), module.getValue().get("healthy").asBoolean(),
-                            module.getValue().get("url").asText());
-                    additionalInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
-                });
+            if (response != null) {
+                additionalInfo.put("assessment module manager", response.get("status").asText());
+                // add health of all modules
+                if (response.has("modules")) {
+                    JsonNode modules = response.get("modules");
+                    // keys are module names, values are description maps
+                    modules.fields().forEachRemaining(module -> {
+                        var moduleHealth = new AthenaModuleHealth(module.getValue().get("type").asText(), module.getValue().get("healthy").asBoolean(),
+                                module.getValue().get("url").asText());
+                        additionalInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
+                    });
+                }
+            }
+            else {
+                additionalInfo.put("assessment module manager", "not available");
             }
             health.setAdditionalInfo(additionalInfo);
         }
