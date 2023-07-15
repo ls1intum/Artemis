@@ -84,20 +84,21 @@
         type="button"
         [attr.data-mode]="archiveMode"
         id="archiveButton"
-        class="btn btn-warning mb-1"
+        class="btn btn-warning"
         (click)="openModal(archiveWarningPopup)"
     >
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
         <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary me-1 mb-1" (click)="downloadArchive()">
+    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-primary" (click)="downloadArchive()">
         <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
     <button
         *ngIf="canCleanupCourse()"
         [disabled]="isBeingArchived"
+        [attr.data-mode]="archiveMode"
         jhiDeleteButton
         [buttonSize]="ButtonSize.MEDIUM"
         [actionType]="ActionType.Cleanup"
@@ -106,6 +107,7 @@
         (delete)="cleanupCourse()"
         [dialogError]="dialogError$"
         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+        style="margin-right: 0 !important"
     >
         <fa-icon [icon]="faEraser"></fa-icon>
     </button>
