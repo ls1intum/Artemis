@@ -163,14 +163,17 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
-            if (state.serverResponseTimeout && (castedAction.errorType == IrisErrorMessageKey.SEND_MESSAGE_FAILED || castedAction.errorType == IrisErrorMessageKey.IRIS_DISABLED)) {
+            if (
+                state.serverResponseTimeout &&
+                (castedAction.errorObject?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED || castedAction.errorObject?.key == IrisErrorMessageKey.IRIS_DISABLED)
+            ) {
                 clearTimeout(state.serverResponseTimeout);
                 state.serverResponseTimeout = null;
             }
             return {
                 ...state,
                 isLoading: false,
-                error: castedAction.errorType == null ? null : errorMessages[castedAction.errorType],
+                error: castedAction.errorObject,
             };
         }
         if (isSessionReceivedAction(action)) {
