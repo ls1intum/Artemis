@@ -32,14 +32,14 @@ class AthenaHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     void healthUp() {
-        athenaRequestMockProvider.mockQueueStatus(true);
+        athenaRequestMockProvider.mockHealthStatus(true);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
     }
 
     @Test
     void healthDown() {
-        athenaRequestMockProvider.mockQueueStatus(false);
+        athenaRequestMockProvider.mockHealthStatus(false);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
     }

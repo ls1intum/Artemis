@@ -86,16 +86,24 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks /queueStatus api from Athena used to retrieve metadata on processed jobs. Currently used as a health check endpoint.
+     * Mocks /health API from Athena used to check if the service is up and running
      *
      * @param success Successful response or timeout.
      */
-    public void mockQueueStatus(boolean success) {
-        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/queueStatus")).andExpect(method(HttpMethod.GET));
+    public void mockHealthStatus(boolean success) {
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
 
         if (success) {
             final ObjectNode node = mapper.createObjectNode();
-            node.set("total", mapper.valueToTree(42));
+            // Response: {"status":"ok","modules":{"module_example":{"url":"http://localhost:5001","type":"programming","healthy":true}}
+            node.set("status", mapper.valueToTree("ok"));
+            final ObjectNode modules = mapper.createObjectNode();
+            final ObjectNode moduleExample = mapper.createObjectNode();
+            moduleExample.set("url", mapper.valueToTree("http://localhost:5001"));
+            moduleExample.set("type", mapper.valueToTree("programming"));
+            moduleExample.set("healthy", mapper.valueToTree(true));
+            modules.set("module_example", moduleExample);
+            node.set("modules", modules);
             final String json = node.toString();
             responseActions.andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
         }
