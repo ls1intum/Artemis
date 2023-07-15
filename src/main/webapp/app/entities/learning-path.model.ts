@@ -46,3 +46,15 @@ export enum NodeType {
     EXERCISE,
     LECTURE_UNIT,
 }
+
+export class LearningPathRecommendation {
+    public learningObjectId: number;
+    public lectureId?: number;
+    public type: RecommendationType;
+}
+
+export enum RecommendationType {
+    EMPTY = 'EMPTY',
+    LECTURE_UNIT = 'LECTURE_UNIT',
+    EXERCISE = 'EXERCISE',
+}

@@ -12,11 +12,12 @@ import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-p
 import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph-node.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { ArtemisLearningPathLectureUnitViewModule } from 'app/course/learning-paths/participate/lectureunit/learning-path-lecture-unit-view.module';
+import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 
 const routes: Routes = [
     {
         path: '',
-        pathMatch: 'prefix',
+        component: LearningPathContainerComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.learningPath',
@@ -26,20 +27,23 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                component: LearningPathContainerComponent,
-                children: [
-                    {
-                        path: '',
-                        pathMatch: 'full',
-                        loadChildren: () => import('app/overview/discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-                    },
-                ],
+                loadChildren: () => import('app/overview/discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
             },
         ],
     },
 ];
+
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, ArtemisSharedComponentModule, RouterModule, NgxGraphModule, ArtemisLearningPathLectureUnitViewModule],
+    imports: [
+        ArtemisSharedModule,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisSharedComponentModule,
+        NgxGraphModule,
+        ArtemisLearningPathLectureUnitViewModule,
+        RouterModule.forChild(routes),
+        ArtemisLectureUnitsModule,
+    ],
     declarations: [LearningPathContainerComponent, LearningPathManagementComponent, LearningPathGraphSidebarComponent, LearningPathGraphComponent, LearningPathGraphNodeComponent],
     exports: [LearningPathContainerComponent],
 })

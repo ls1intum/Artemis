@@ -167,6 +167,11 @@
                 "hide": "Hide Learning Path",
                 "show": "Show Learning Path",
                 "header": "Learning Path"
+            },
+            "participate": {
+                "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
+                "prev": "Previous",
+                "next": "Next"
             }
         }
     }

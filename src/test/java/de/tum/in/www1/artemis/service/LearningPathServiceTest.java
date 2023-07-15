@@ -270,4 +270,31 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         return new NgxLearningPathDTO.Node(LearningPathService.getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
                 exercise.getTitle());
     }
+
+    @Nested
+    class RecommendationTest {
+
+        @BeforeEach
+        void setAuthorizationForRepositoryRequests() {
+            SecurityUtils.setAuthorizationObject();
+        }
+
+        @Test
+        void testGetRecommendationEmpty() {
+            competencyUtilService.createCompetency(course);
+            LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
+            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPath.getId());
+            assertThat(learningPathService.getRecommendation(learningPath)).isNull();
+        }
+
+        @Test
+        void testGetRecommendationNotEmpty() {
+            var competency = competencyUtilService.createCompetency(course);
+            final var lectureUnit = lectureUtilService.createTextUnit();
+            competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
+            LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
+            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPath.getId());
+            assertThat(learningPathService.getRecommendation(learningPath)).isNotNull();
+        }
+    }
 }

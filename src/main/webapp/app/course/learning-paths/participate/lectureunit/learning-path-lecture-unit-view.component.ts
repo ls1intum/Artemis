@@ -16,11 +16,8 @@ export interface LectureUnitCompletionEvent {
     templateUrl: './learning-path-lecture-unit-view.component.html',
 })
 export class LearningPathLectureUnitViewComponent {
-    @Input()
-    lecture: Lecture;
-    @Input()
-    lectureUnit: LectureUnit;
-
+    @Input() lecture: Lecture;
+    @Input() lectureUnit: LectureUnit;
     readonly LectureUnitType = LectureUnitType;
 
     constructor(private lectureUnitService: LectureUnitService, private alertService: AlertService) {}

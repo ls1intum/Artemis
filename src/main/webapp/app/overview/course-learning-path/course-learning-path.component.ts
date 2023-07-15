@@ -13,8 +13,8 @@ export class CourseLearningPathComponent implements OnInit {
     constructor(private activatedRoute: ActivatedRoute) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+        this.activatedRoute.parent!.parent!.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
         });
     }
 }

@@ -168,6 +168,11 @@
                 "hide": "Lernpfad ausbleden",
                 "show": "Lernpfad einblenden",
                 "header": "Lernpfad"
+            },
+            "participate": {
+                "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
+                "prev": "Zurück",
+                "next": "Nächste"
             }
         }
     }

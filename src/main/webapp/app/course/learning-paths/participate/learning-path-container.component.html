@@ -3,16 +3,30 @@
         <jhi-learning-path-sidebar></jhi-learning-path-sidebar>
     </div>
     <div class="col pe-0 flex-grow-1" style="min-width: 200px">
-        content more content far more content
-        <!--<iframe src="http://localhost:9000/courses/2/exercises/1" height="100%" width="100%"></iframe>-->
-        <jhi-learning-path-lecture-unit-view *ngIf="lectureUnit" [lectureUnit]="lectureUnit!"></jhi-learning-path-lecture-unit-view>
-        <!-- todo exercise -->
+        <div class="row mt-2">
+            <div class="col pe-0 flex-grow-1">
+                <jhi-learning-path-lecture-unit-view *ngIf="lectureUnit" [lecture]="lecture!" [lectureUnit]="lectureUnit!"></jhi-learning-path-lecture-unit-view>
+                <!-- todo exercise -->
+                <div *ngIf="!lectureUnit && !exercise">
+                    <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
+                </div>
+            </div>
+            <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+                <router-outlet
+                    *ngIf="
+                        (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) ||
+                        (exercise && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course)))
+                    "
+                    class="ms-3"
+                    (activate)="onChildActivate($event)"
+                ></router-outlet>
+            </div>
+        </div>
     </div>
-    <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">discussions discussions discussions</div>
 </div>
 <button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()">
-    <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span>
+    <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="artemisApp.learningPath.participate.prev">Previous</span>
 </button>
 <button type="button" class="btn btn-primary next-button" (click)="onNextTask()">
-    <span jhiTranslate="health.refresh.button">Refresh</span> <fa-icon [icon]="faChevronRight"></fa-icon>
+    <span jhiTranslate="artemisApp.learningPath.participate.next">Next</span> <fa-icon [icon]="faChevronRight"></fa-icon>
 </button>

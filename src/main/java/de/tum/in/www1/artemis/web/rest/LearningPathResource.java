@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.learningpath.LearningPathRecommendation;
 import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
 
 @RestController
@@ -114,6 +116,26 @@ public class LearningPathResource {
     }
 
     /**
+     * GET /courses/:courseId/learning-path-id : Gets the id of the learning path.
+     *
+     * @param courseId the id of the course from which the learning path id should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
+     */
+    @GetMapping("/courses/{courseId}/learning-path-id")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
+        log.debug("REST request to get learning path id for course with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.isStudentInCourse(course, user);
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths are not enabled for this course.");
+        }
+        LearningPath learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), user.getId());
+        return ResponseEntity.ok(learningPath.getId());
+    }
+
+    /**
      * GET /learning-path/:learningPathId/recommendation : Gets the next recommended learning object for the learning path.
      *
      * @param learningPathId the id of the learning path from which the recommendation should be fetched
@@ -121,9 +143,19 @@ public class LearningPathResource {
      */
     @GetMapping("/learning-path/{learningPathId}/recommendation")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearningObject> getRecommendation(@PathVariable Long learningPathId) {
+    public ResponseEntity<LearningPathRecommendation> getRecommendation(@PathVariable Long learningPathId) {
         log.debug("REST request to get recommendation for learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPathId);
-        return ResponseEntity.ok(learningPathService.getRecommendation(learningPath));
+        LearningObject recommendation = learningPathService.getRecommendation(learningPath);
+        if (recommendation == null) {
+            return ResponseEntity.ok(new LearningPathRecommendation(-1, -1, LearningPathRecommendation.RecommendationType.EMPTY));
+        }
+        else if (recommendation instanceof LectureUnit lectureUnit) {
+            return ResponseEntity
+                    .ok(new LearningPathRecommendation(recommendation.getId(), lectureUnit.getLecture().getId(), LearningPathRecommendation.RecommendationType.LECTURE_UNIT));
+        }
+        else {
+            return ResponseEntity.ok(new LearningPathRecommendation(recommendation.getId(), -1, LearningPathRecommendation.RecommendationType.EXERCISE));
+        }
     }
 }

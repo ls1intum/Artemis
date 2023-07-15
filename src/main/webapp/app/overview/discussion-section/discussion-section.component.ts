@@ -66,11 +66,16 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             params: this.activatedRoute.params,
             queryParams: this.activatedRoute.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+            console.log(routeParams.params);
             this.currentPostId = +routeParams.queryParams.postId;
             this.course = this.exercise?.course ?? this.lecture?.course;
             this.metisService.setCourse(this.course);
             this.metisService.setPageType(this.pageType);
-            this.setChannel(routeParams.params.courseId);
+            if (routeParams.params.courseId) {
+                this.setChannel(routeParams.params.courseId);
+            } else if (this.course?.id) {
+                this.setChannel(this.course.id);
+            }
             this.createEmptyPost();
             this.resetFormGroup();
         });

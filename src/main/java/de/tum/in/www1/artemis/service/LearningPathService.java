@@ -389,6 +389,6 @@ public class LearningPathService {
                                 .filter(lectureUnit -> !lectureUnitRepository.findWithEagerCompletedUsersByIdElseThrow(lectureUnit.getId()).isCompletedFor(learningPath.getUser())),
                         competency.getExercises().stream()
                                 .filter(exercise -> !exerciseRepository.findByIdWithStudentParticipationsElseThrow(exercise.getId()).isCompletedFor(learningPath.getUser()))))
-                .findFirst().orElseThrow();
+                .findFirst().orElse(null);
     }
 }
