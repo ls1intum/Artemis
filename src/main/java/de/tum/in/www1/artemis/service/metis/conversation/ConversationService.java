@@ -458,15 +458,16 @@ public class ConversationService {
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
-            if (channel.getExercise() != null) {
+            if (channel.getLecture() != null) {
+                return channel.getLecture().isVisibleToStudents();
+            }
+            else if (channel.getExercise() != null) {
                 return channel.getExercise().isVisibleToStudents();
             }
             else if (channel.getExam() != null) {
                 return channel.getExam().isVisibleToStudents();
             }
-            else {
-                return true;
-            }
+            return true;
         });
     }
 }

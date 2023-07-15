@@ -79,6 +79,11 @@ $modal-content-bg: $white;
 
 // === END BOOTSTRAP ===
 
+// Navigation Tab Bar
+$tab-bar-color: $gray-700;
+$tab-bar-color-hover: $gray-600;
+$tab-bar-color-active: $primary;
+
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);

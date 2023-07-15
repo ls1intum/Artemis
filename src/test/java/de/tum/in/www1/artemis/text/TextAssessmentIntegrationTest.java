@@ -144,7 +144,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         int submissionCount = 2;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
-        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
+        var textBlocks = TextExerciseFactory.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
 
         // Create Exercise to save blocks & submissions
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
@@ -207,8 +207,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
-        StudentParticipation participationWithoutAssessment = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
+        StudentParticipation participationWithoutAssessment = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
                 StudentParticipation.class);
 
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
@@ -225,16 +224,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepo.save(result);
-        StudentParticipation participation = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.LOCKED,
-                StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForNonExistingSubmission() throws Exception {
-        StudentParticipation participation = request.get("/api/participations/1/submissions/345395769256365/for-text-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-submissions/345395769256365/for-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
     }
 
@@ -275,9 +272,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        StudentParticipation participation = request.get(
-                "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class, params);
+        StudentParticipation participation = request.get("/api/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class, params);
 
         assertThat(participation.getResults()).isNotNull().contains(storedResult);
     }
@@ -291,24 +286,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        request.get("/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.FORBIDDEN,
-                TextSubmission.class, params);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
-        TextSubmission submission = ParticipationFactory.generateTextSubmission("asdf", null, true);
-        submission = (TextSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1",
-                TEST_PREFIX + "tutor1");
-        Result storedResult = submission.getResultForCorrectionRound(0);
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("resultId", String.valueOf(storedResult.getId()));
-        long randomId = 12534;
-
-        TextSubmission returnedSubmission = request.get("/api/participations/" + randomId + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.BAD_REQUEST,
-                TextSubmission.class, params);
-        assertThat(returnedSubmission).isNull();
+        request.get("/api/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, TextSubmission.class, params);
     }
 
     @Test
@@ -371,8 +349,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
 
         // Get Text Submission and Complaint
-        request.get("/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class);
+        request.get("/api/participations/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
@@ -1038,9 +1015,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 "/api/participations/" + submission1stRequest.getParticipation().getId() + "/results/" + submission1stRequest.getLatestResult().getId() + "/submit-text-assessment",
                 textAssessmentDTO, Result.class, HttpStatus.OK);
 
-        Participation participation2ndRequest = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
-                Participation.class, params);
+        Participation participation2ndRequest = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
         TextSubmission submission2ndRequest = (TextSubmission) (participation2ndRequest).getSubmissions().iterator().next();
         var blocksFrom2ndRequest = submission2ndRequest.getBlocks();
         assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
@@ -1061,9 +1036,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        Participation participation = request.get(
-                "/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/for-text-assessment",
-                HttpStatus.OK, Participation.class, params);
+        Participation participation = request.get("/api/text-submissions/" + textSubmissions.get(0).getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
         final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
         final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
 

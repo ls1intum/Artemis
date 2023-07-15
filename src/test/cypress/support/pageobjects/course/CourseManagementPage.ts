@@ -1,4 +1,5 @@
-import { POST } from '../../constants';
+import { Course } from 'app/entities/course.model';
+import { BASE_API, DELETE, POST, PUT } from '../../constants';
 import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 import { CypressCredentials } from '../../users';
 
@@ -18,15 +19,15 @@ export class CourseManagementPage {
      * @returns Returns the cypress chainable containing the root element of the course card of our created course.
      * This can be used to find specific elements within this course card.
      */
-    getCourseCard(courseShortName: string) {
-        return cy.get('#course-card-' + courseShortName);
+    getCourse(courseID: number) {
+        return cy.get(`#course-${courseID}`);
     }
 
     /**
      * Opens the exercises (of the first found course).
      */
-    openExercisesOfCourse(courseShortName: string) {
-        this.getCourseCard(courseShortName).find('#course-card-open-exercises').click();
+    openExercisesOfCourse(courseID: number) {
+        this.getCourse(courseID).find('#course-card-open-exercises').click();
         cy.url().should('include', '/exercises');
     }
 
@@ -40,10 +41,19 @@ export class CourseManagementPage {
 
     /**
      * Opens a course.
-     * @param courseShortName
+     * @param courseID
      */
-    openCourse(courseShortName: string) {
-        return this.getCourseCard(courseShortName).find('#course-card-header').click();
+    openCourse(courseID: number) {
+        return this.getCourse(courseID).find('#course-card-header').click();
+    }
+
+    deleteCourse(course: Course) {
+        cy.get('#delete-course').click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(course.title!);
+        cy.intercept(DELETE, BASE_API + 'admin/courses/' + course.id).as('deleteCourse');
+        cy.get('#delete').click();
+        cy.wait('@deleteCourse');
     }
 
     /**
@@ -90,6 +100,32 @@ export class CourseManagementPage {
         cy.wait('@addInstructorQuery');
     }
 
+    removeFirstUser() {
+        cy.get('#registered-students button[jhideletebutton]').click();
+        cy.get('.modal #delete').click();
+    }
+
+    clickEditCourse() {
+        cy.get('#edit-course').click();
+    }
+
+    updateCourse(course: Course) {
+        cy.intercept(PUT, BASE_API + 'courses/' + course.id).as('updateCourseQuery');
+        cy.get('#save-entity').click();
+        return cy.wait('@updateCourseQuery');
+    }
+
+    checkCourseHasNoIcon() {
+        cy.get('#delete-course-icon').should('not.exist');
+        cy.get('.no-image').should('exist');
+    }
+
+    removeIconFromCourse() {
+        cy.get('#delete-course-icon').click();
+        cy.get('#delete-course-icon').should('not.exist');
+        cy.get('.no-image').should('exist');
+    }
+
     /**
      * helper method to avoid code duplication
      * */
@@ -104,23 +140,24 @@ export class CourseManagementPage {
     /**
      * Opens the exams of a course.
      */
-    openExamsOfCourse(courseShortName: string) {
-        this.getCourseCard(courseShortName).find('#course-card-open-exams').click();
+    openExamsOfCourse(courseID: number) {
+        this.getCourse(courseID).find('#course-card-open-exams').click();
         cy.url().should('include', '/exams');
     }
 
-    openAssessmentDashboardOfCourse(courseShortName: string) {
-        this.getCourseCard(courseShortName).find('#course-card-open-assessment-dashboard').click();
+    openAssessmentDashboardOfCourse(courseID: number) {
+        this.getCourse(courseID).find('#course-card-open-assessment-dashboard').click();
         cy.url().should('include', '/assessment-dashboard');
-    }
-
-    openAssessmentDashboard() {
-        cy.get('#assessment-dashboard').click();
     }
 
     /**
      * helper methods to get information about the course
      * */
+
+    getRegisteredStudents() {
+        return cy.get('#registered-students');
+    }
+
     getCourseHeaderTitle() {
         return cy.get('#course-header-title');
     }

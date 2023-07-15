@@ -1,98 +1,70 @@
 <div *ngIf="course">
     <jhi-header-course [course]="course"></jhi-header-course>
     <div class="tab-bar">
-        <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1" routerLinkActive="active">
-            <fa-icon [icon]="faListAlt"></fa-icon>
-            <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
-        </a>
-        <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item btn btn-primary btn-md ms-1" routerLinkActive="active">
+        <a class="tab-link" [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
             <fa-icon [icon]="faGraduationCap"></fa-icon>
             <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
         </a>
-        <a
-            *ngIf="course.isAtLeastEditor"
-            [routerLink]="['/course-management', course.id, 'lectures']"
-            class="tab-item btn btn-primary btn-md ms-1"
-            id="lectures"
-            routerLinkActive="active"
-        >
+        <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active">
+            <fa-icon [icon]="faListAlt"></fa-icon>
+            <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
+        </a>
+        <a class="tab-link" *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
             <fa-icon [icon]="faFilePdf"></fa-icon>
             <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
         </a>
-        <a
-            *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor"
-            [routerLink]="['/courses', course.id, 'discussion']"
-            class="tab-item btn btn-primary btn-md ms-1"
-            routerLinkActive="active"
-        >
-            <fa-icon [icon]="faComments"></fa-icon>
-            <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
-        </a>
-        <a
-            *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'competency-management']"
-            class="tab-item btn btn-primary btn-md ms-1"
-            routerLinkActive="active"
-        >
+        <a class="tab-link" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
             <fa-icon [icon]="faFlag"></fa-icon>
-            <span jhiTranslate="artemisApp.competency.competencyButton">Competency</span>
+            <span jhiTranslate="artemisApp.competency.competencyButton">Competencies</span>
+        </a>
+        <a class="tab-link" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
+            <fa-icon [icon]="faChartBar"></fa-icon>
+            <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
         </a>
         <a
+            class="tab-link"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-            class="tab-item btn btn-primary btn-md ms-1"
             routerLinkActive="active"
-            [class.active]="shouldHighlightTutorialGroupsButton()"
+            [class.active]="shouldHighlightTutorialsLink()"
         >
             <fa-icon [icon]="faPersonChalkboard"></fa-icon>
             <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
         </a>
-        <div class="btn-group tab-item">
-            <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1 my-0" routerLinkActive="active">
-                <fa-icon [icon]="faUserCheck"></fa-icon>
-                <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
-            </a>
-            <div ngbDropdown *ngIf="course.isAtLeastInstructor" class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                <button type="button" class="btn btn-info btn-md dropdown-toggle-split" ngbDropdownToggle></button>
-                <div class="dropdown-menu" ngbDropdownMenu>
-                    <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn my-0" routerLinkActive="active">
-                        <fa-icon [icon]="faTable"></fa-icon>
-                        <span jhiTranslate="entity.action.scores">Scores</span>
-                    </a>
-                    <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn my-0" routerLinkActive="active">
-                        <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
-                    </a>
-                    <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn my-0" routerLinkActive="active">
-                        <fa-icon [icon]="faHeartBroken"></fa-icon>
-                        <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1" routerLinkActive="active">
-            <fa-icon [icon]="faChartBar"></fa-icon>
-            <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+        <a class="tab-link" *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
+            <fa-icon [icon]="faComment"></fa-icon>
+            <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
+            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
-        <div class="ms-auto">
-            <a
+        <a class="tab-link" *ngIf="isMessagingEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
+            <fa-icon [icon]="faComments"></fa-icon>
+            <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
+            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
+        </a>
+        <a
+            class="tab-link"
+            [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
+            id="assessment-dashboard"
+            routerLinkActive="active"
+            [class.active]="shouldHighlightAssessmentLink()"
+        >
+            <fa-icon [icon]="faUserCheck"></fa-icon>
+            <span jhiTranslate="entity.action.assessmentDashboard">Assessment</span>
+        </a>
+        <div class="controls" *ngIf="shouldShowControlButtons()">
+            <button
                 *ngIf="course.isAtLeastInstructor"
                 id="edit-course"
                 [routerLink]="['/course-management', course.id, 'edit']"
-                class="tab-item btn btn-warning btn-md"
+                class="btn btn-warning btn-md"
                 routerLinkActive="active"
             >
                 <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-            </a>
-            <jhi-course-exam-archive-button
-                *ngIf="course.isAtLeastInstructor"
-                [archiveMode]="'Course'"
-                [course]="course"
-                class="archive-button ms-1"
-            ></jhi-course-exam-archive-button>
+            </button>
+            <jhi-course-exam-archive-button *ngIf="course.isAtLeastInstructor" [archiveMode]="'Course'" [course]="course" class="archive-button"></jhi-course-exam-archive-button>
             <button
                 id="delete-course"
-                class="tab-item btn btn-md ms-1 me-1"
                 *jhiHasAnyAuthority="['ROLE_ADMIN']"
                 [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton
@@ -101,6 +73,7 @@
                 deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
                 (delete)="deleteCourse(course.id!)"
                 [dialogError]="dialogError$"
+                style="margin-right: 0 !important"
             >
                 <fa-icon [icon]="faTimes"></fa-icon>
             </button>
