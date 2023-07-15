@@ -311,7 +311,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.annotationChange.unsubscribe();
         }
         // remove all line widgets so that no old ones are displayed when the editor is opened again
-        if (this.editorSession && this.editorSession.widgetManager) {
+        if (this.editorSession?.widgetManager && this.editorSession?.lineWidgets) {
             for (const line of this.linesWithInlineFeedbackShown) {
                 const widget = this.editorSession.lineWidgets.find((w: any) => w?.el === this.getInlineFeedbackNode(line));
                 this.editorSession.widgetManager.removeLineWidget(widget);

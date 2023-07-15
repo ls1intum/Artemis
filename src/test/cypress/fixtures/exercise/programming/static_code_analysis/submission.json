@@ -25,5 +25,6 @@
             "path": "exercise/programming/all_successful/SortStrategy.txt"
         }
     ],
-    "expectedResult": "50%"
+    "expectedResult": "50%",
+    "packageName": "de.test"
 }
