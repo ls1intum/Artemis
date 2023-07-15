@@ -450,7 +450,7 @@ public class ExamService {
             // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
             exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
             exercise.getExerciseGroup().setExercises(null);
-            exercise.getExerciseGroup().getExam().setCourse(null);
+            exercise.getExerciseGroup().setExam(null);
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
