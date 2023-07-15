@@ -59,7 +59,7 @@ describe('Quiz Exercise Management', () => {
         before('Create quiz Exercise', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
-                quizExercise = convertModelAfterMultiPart(quizResponse);
+                quizExercise = quizResponse.body;
             });
         });
 

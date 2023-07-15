@@ -194,6 +194,7 @@
                     "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}",
                     "exam": "Alle Klausurkanäle im Kurs {{ courseTitle }}"
                 },
+                "otherChannels": "Andere Kanäle",
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",

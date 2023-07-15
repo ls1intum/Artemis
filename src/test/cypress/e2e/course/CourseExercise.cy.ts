@@ -22,13 +22,13 @@ describe('Course Exercise', () => {
 
         before('Create Exercises', () => {
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1').then((response) => {
-                exercise1 = convertModelAfterMultiPart(response);
+                exercise1 = response.body;
             });
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2').then((response) => {
-                exercise2 = convertModelAfterMultiPart(response);
+                exercise2 = response.body;
             });
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3').then((response) => {
-                exercise3 = convertModelAfterMultiPart(response);
+                exercise3 = response.body;
             });
         });
 
@@ -44,9 +44,9 @@ describe('Course Exercise', () => {
         });
 
         after('Delete Exercises', () => {
-            courseManagementRequest.deleteQuizExercise(exercise1!.id!);
-            courseManagementRequest.deleteQuizExercise(exercise2!.id!);
-            courseManagementRequest.deleteQuizExercise(exercise3!.id!);
+            courseManagementRequest.deleteQuizExercise(exercise1.id!);
+            courseManagementRequest.deleteQuizExercise(exercise2.id!);
+            courseManagementRequest.deleteQuizExercise(exercise3.id!);
         });
     });
 

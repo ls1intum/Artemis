@@ -42,7 +42,7 @@ describe('Import exercises', () => {
                 textExercise = response.body;
             });
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
-                quizExercise = convertModelAfterMultiPart(response) as QuizExercise;
+                quizExercise = response.body;
             });
             courseManagementRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;

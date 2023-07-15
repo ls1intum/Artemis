@@ -23,7 +23,7 @@
     "assessmentType": "MANUAL",
     "title": "Text Exercise 1",
     "maxPoints": 10,
-    "problemStatement": "Cypress Problem Statement",
-    "exampleSolution": "Cypress Example Solution",
-    "gradingInstructions": "Cypress Assessment Instructions"
+    "problemStatement": "Problem Statement",
+    "exampleSolution": "Example Solution",
+    "gradingInstructions": "Assessment Instructions"
 }
