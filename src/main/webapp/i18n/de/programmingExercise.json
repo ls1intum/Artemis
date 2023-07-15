@@ -99,6 +99,7 @@
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Setze die Build-Pläne zurück, um einen Build-Plan zu erstellen.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
