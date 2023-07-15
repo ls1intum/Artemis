@@ -75,7 +75,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    void testSubmissionSelectionFeedbackSuggestionsDisabled() {
+    void testSubmissionSelectionWithFeedbackSuggestionsDisabled() {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
         assertThrows(IllegalArgumentException.class, () -> athenaSubmissionSelectionService.getProposedSubmission(textExercise, List.of(textSubmission1)));
     }

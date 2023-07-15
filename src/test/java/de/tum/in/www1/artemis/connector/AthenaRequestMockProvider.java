@@ -106,6 +106,25 @@ public class AthenaRequestMockProvider {
     }
 
     /**
+     * Mocks the /feedbacks API from Athena used to submit feedbacks for a submission
+     */
+    public void mockSendFeedbackAndExpect(RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedbacks"))
+                .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        for (RequestMatcher matcher : expectedContents) {
+            responseActions.andExpect(matcher);
+        }
+
+        // Response: {"status":200,"data":null,"module_name":"module_text_cofee"}
+        final ObjectNode node = mapper.createObjectNode();
+        node.set("data", null);
+        node.set("module_name", mapper.valueToTree("module_text_cofee"));
+        node.set("status", mapper.valueToTree(200));
+        responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    /**
      * Mocks /health API success from Athena used to check if the service is up and running
      *
      * @param exampleModuleHealthy Example module health status (in addition to the general status)

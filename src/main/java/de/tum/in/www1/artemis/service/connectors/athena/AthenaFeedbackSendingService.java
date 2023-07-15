@@ -32,7 +32,7 @@ public class AthenaFeedbackSendingService {
 
     private final TextBlockRepository textBlockRepository;
 
-    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
+    public AthenaFeedbackSendingService(TextBlockRepository textBlockRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
         this.textBlockRepository = textBlockRepository;
     }
@@ -82,8 +82,11 @@ public class AthenaFeedbackSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks, int maxRetries) {
-        log.debug("Start Athena Feedback Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        if (!exercise.isFeedbackSuggestionsEnabled()) {
+            throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
+        }
 
+        log.debug("Start Athena Feedback Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
         log.info("Calling Remote Service with given feedback.");
 
         try {
