@@ -55,7 +55,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractSpringIntegrationBamb
 
     @Test
     void testSubmissionSelectionFromEmpty() {
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissions").isEmpty());
+        athenaRequestMockProvider.ensureNoRequest();
         var submission = athenaSubmissionSelectionService.getProposedSubmission(textExercise, List.of());
         assertThat(submission).isEmpty();
     }
@@ -65,6 +65,13 @@ class AthenaSubmissionSelectionServiceTest extends AbstractSpringIntegrationBamb
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect(1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmission(textExercise, List.of(textSubmission1));
         assertThat(submission).contains(textSubmission1);
+    }
+
+    @Test
+    void testNoSubmissionSelectionFromOne() {
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
+        var submission = athenaSubmissionSelectionService.getProposedSubmission(textExercise, List.of(textSubmission1));
+        assertThat(submission).isEmpty();
     }
 
     @Test

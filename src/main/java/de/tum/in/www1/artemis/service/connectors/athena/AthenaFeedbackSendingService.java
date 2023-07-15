@@ -87,6 +87,12 @@ public class AthenaFeedbackSendingService {
         }
 
         log.debug("Start Athena Feedback Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+
+        if (feedbacks.isEmpty()) {
+            log.info("No feedback given for submission #{}.", submission.getId());
+            return;
+        }
+
         log.info("Calling Remote Service with given feedback.");
 
         try {

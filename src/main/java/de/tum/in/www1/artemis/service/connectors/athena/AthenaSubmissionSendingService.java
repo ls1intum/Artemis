@@ -79,6 +79,11 @@ public class AthenaSubmissionSendingService {
         // Find all text submissions for exercise (later we will support others)
         Set<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exercise.getId());
 
+        if (textSubmissions.isEmpty()) {
+            log.info("No text submissions found for exercise '{}'.", exercise.getTitle());
+            return;
+        }
+
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {

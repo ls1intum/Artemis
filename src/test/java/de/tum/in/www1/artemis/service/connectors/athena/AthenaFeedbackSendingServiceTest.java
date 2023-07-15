@@ -94,6 +94,12 @@ class AthenaFeedbackSendingServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    void testEmptyFeedbackNotSending() {
+        athenaRequestMockProvider.ensureNoRequest();
+        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of());
+    }
+
+    @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
         assertThrows(IllegalArgumentException.class, () -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(feedback)));

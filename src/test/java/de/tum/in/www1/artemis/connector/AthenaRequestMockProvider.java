@@ -153,6 +153,13 @@ public class AthenaRequestMockProvider {
         responseActions.andRespond(withException(new SocketTimeoutException()));
     }
 
+    /**
+     * Ensures that there is no request to Athena
+     */
+    public void ensureNoRequest() {
+        mockServer.verify();
+    }
+
     public RestTemplate getRestTemplate() {
         return restTemplate;
     }

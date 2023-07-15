@@ -74,6 +74,13 @@ class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    void testSendNoSubmissions() {
+        athenaRequestMockProvider.ensureNoRequest();
+        when(textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId())).thenReturn(Set.of());
+        athenaSubmissionSendingService.sendSubmissions(textExercise);
+    }
+
+    @Test
     void testSendSubmissionsWithFeedbackSuggestionsDisabled() {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
         assertThrows(IllegalArgumentException.class, () -> athenaSubmissionSendingService.sendSubmissions(textExercise));
