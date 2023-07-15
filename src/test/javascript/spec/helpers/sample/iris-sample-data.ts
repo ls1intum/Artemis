@@ -40,7 +40,8 @@ export const mockConversation = {
 export const mockState = {
     messages: [],
     isLoading: false,
-    error: '',
+    error: null,
     numNewMessages: 0,
     sessionId: 0,
+    serverResponseTimeout: null,
 };

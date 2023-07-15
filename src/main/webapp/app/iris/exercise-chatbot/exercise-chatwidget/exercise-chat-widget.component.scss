@@ -2,14 +2,32 @@
     position: relative;
 }
 
+.header-start {
+    text-align: start;
+    padding-left: 5px;
+}
+
+.button-container {
+    display: flex;
+    align-items: center;
+}
+
 .chat-widget {
     position: fixed;
     bottom: 100px;
     right: 60px;
-    width: 300px;
-    height: 400px;
+    width: 330px;
+    height: 430px;
     background-color: var(--iris-chat-widget-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+}
+
+.ng-draggable {
+    cursor: grab;
+}
+
+.ng-dragging {
+    cursor: grabbing;
 }
 
 .chat-header {
@@ -26,6 +44,15 @@
     border: none;
     background: transparent;
     color: var(--secondary);
+    font-size: 16px;
+}
+
+.info-button {
+    cursor: pointer;
+    vertical-align: middle;
+    padding-left: 3px;
+    font-size: 13px;
+    color: var(--blue);
 }
 
 .chat-body {
@@ -36,12 +63,43 @@
     flex-direction: column;
 }
 
-.client-chat {
-    background-color: var(--iris-client-chat-background);
+.bubble-left,
+.bubble-right {
+    --r: 13px; /* the radius */
+    --t: 10px; /* the size of the tail */
+
+    max-width: 100%;
+    margin-bottom: 5px;
     color: var(--bs-body-color);
     padding: 10px;
-    border-radius: 10px;
-    margin-top: 10px;
+    // prettier-ignore
+    -webkit-mask:
+        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    ::ng-deep p {
+        margin-bottom: 0;
+    }
+}
+
+.bubble-left {
+    --_d: 0%;
+    border-left: var(--t) solid #0000;
+    background-color: var(--iris-client-chat-background);
+    margin-right: var(--t);
+    place-self: start;
+}
+
+.bubble-right {
+    --_d: 100%;
+    border-right: var(--t) solid #0000;
+    margin-left: var(--t);
+    place-self: end;
+    float: right;
+    background-color: var(--iris-my-chat-background);
 }
 
 .client-chat-error {
@@ -53,42 +111,29 @@
     margin-top: 10px;
 }
 
-.my-chat {
-    width: fit-content;
-    margin-left: auto;
-    background-color: var(--iris-my-chat-background);
-    color: var(--bs-body-color);
-    padding: 10px;
-    border-radius: 10px;
+pre {
+    background: transparent;
+    white-space: pre-wrap;
+    padding: 0;
+    margin: 0;
+    border: transparent;
+    font-family: inherit;
+    font-size: inherit;
 }
 
 .chat-input {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+    padding: 7px;
     background-color: var(--iris-client-chat-input);
 }
 
-.chat-input input {
+.chat-input textarea {
     flex: 1;
-    margin-right: 10px;
-    padding: 5px 15px;
-    border: 1px solid var(--gray-300);
-    border-radius: 20px;
-}
-
-.btn-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--green);
-    border: none;
-}
-
-.btn-circle:hover,
-.btn-circle:active {
-    background-color: var(--iris-btn-circle-hover);
+    padding: 5px 13px;
+    margin-right: 5px;
+    resize: none;
 }
 
 @keyframes blink {
@@ -117,6 +162,57 @@
     padding-bottom: 8px;
 }
 
+.p-chat {
+    background-color: var(--iris-client-chat-background);
+    color: var(--bs-body-color);
+    padding: 0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 1.5px solid var(--iris-client-chat-background);
+}
+
+.message-text {
+    padding: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom: 1px solid var(--iris-client-chat-background);
+}
+
+.button {
+    flex: 1;
+    padding: 10px 0;
+    background-color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.button:first-child {
+    border-right: 1px solid var(--iris-client-chat-background);
+}
+
+.button:hover {
+    background-color: #f5f5f5;
+}
+
+.scroll-to-bottom {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--secondary);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
+}
+
 .rate-message-buttons {
     margin-bottom: 10px;
     display: flex;
@@ -133,4 +229,33 @@
 
 .rate-button-not-clicked {
     color: var(--secondary);
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-10px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(10px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.shake-animation {
+    animation: shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }

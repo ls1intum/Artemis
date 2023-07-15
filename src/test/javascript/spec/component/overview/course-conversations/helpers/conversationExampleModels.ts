@@ -27,6 +27,7 @@ export const generateExampleChannelDTO = ({
     tutorialGroupTitle = undefined,
     tutorialGroupId = undefined,
     subType = ChannelSubType.GENERAL,
+    subTypeReferenceId = undefined,
 }: ChannelDTO) => {
     const exampleChannelDto = new ChannelDTO();
     exampleChannelDto.id = id;
@@ -51,6 +52,7 @@ export const generateExampleChannelDTO = ({
     exampleChannelDto.tutorialGroupTitle = tutorialGroupTitle;
     exampleChannelDto.tutorialGroupId = tutorialGroupId;
     exampleChannelDto.subType = subType;
+    exampleChannelDto.subTypeReferenceId = subTypeReferenceId;
 
     return exampleChannelDto;
 };

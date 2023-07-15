@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.textexercise;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -93,28 +92,6 @@ public class TextExerciseUtilService {
         for (int i = 0; i < count; i++) {
             textBlock = new TextBlock();
             textBlock.setText("TextBlock" + i);
-            textBlocks.add(textBlock);
-        }
-        return textBlocks;
-    }
-
-    /**
-     * Generate a set of specified size containing TextBlocks with the same text
-     *
-     * @param count expected size of TextBlock set
-     * @return Set of TextBlocks with identical texts
-     */
-    public Set<TextBlock> generateTextBlocksWithIdenticalTexts(int count) {
-        Set<TextBlock> textBlocks = new HashSet<>();
-        TextBlock textBlock;
-        String text = "TextBlock";
-
-        for (int i = 0; i < count; i++) {
-            String blockId = sha1Hex("id" + i + text);
-            textBlock = new TextBlock();
-            textBlock.setText(text);
-            textBlock.setId(blockId);
-            textBlock.automatic();
             textBlocks.add(textBlock);
         }
         return textBlocks;
@@ -356,8 +333,8 @@ public class TextExerciseUtilService {
     }
 
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
-        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId,
-                userId, exerciseId, participationId, submissionId);
+        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId);
     }
 
     public Course addCourseWithOneFinishedTextExercise() {

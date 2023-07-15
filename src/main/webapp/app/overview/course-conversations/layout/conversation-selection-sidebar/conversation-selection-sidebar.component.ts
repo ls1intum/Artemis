@@ -62,6 +62,11 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     canCreateChannel = canCreateChannel;
     channelSubType = ChannelSubType;
 
+    displayedGeneralChannels: ChannelDTO[] = [];
+    displayedExerciseChannels: ChannelDTO[] = [];
+    displayedLectureChannels: ChannelDTO[] = [];
+    displayedExamChannels: ChannelDTO[] = [];
+
     constructor(
         private modalService: NgbModal,
         private cdr: ChangeDetectorRef,
@@ -90,7 +95,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 }),
                 tap(() => {
                     this.displayedStarredConversations = [];
-                    this.displayedChannelConversations = [];
+                    this.setDisplayedChannels([]);
                     this.displayedOneToOneChats = [];
                     this.displayedGroupChats = [];
                 }),
@@ -108,9 +113,11 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                     this.displayedStarredConversations = this.starredConversations.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
-                    this.displayedChannelConversations = this.channelConversations.filter((conversation) => {
-                        return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
-                    });
+                    this.setDisplayedChannels(
+                        this.channelConversations.filter((conversation) => {
+                            return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
+                        }),
+                    );
                     this.displayedOneToOneChats = this.oneToOneChats.filter((conversation) => {
                         return this.conversationService.getConversationName(conversation).toLowerCase().includes(searchTerm);
                     });
@@ -336,7 +343,15 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.onConversationsUpdate([...this.allConversations]);
     }
 
-    filterChannelsOfType(subType: ChannelSubType): ChannelDTO[] {
+    private setDisplayedChannels(channels: ChannelDTO[]): void {
+        this.displayedChannelConversations = channels;
+        this.displayedGeneralChannels = this.filterChannelsOfType(ChannelSubType.GENERAL);
+        this.displayedExerciseChannels = this.filterChannelsOfType(ChannelSubType.EXERCISE);
+        this.displayedLectureChannels = this.filterChannelsOfType(ChannelSubType.LECTURE);
+        this.displayedExamChannels = this.filterChannelsOfType(ChannelSubType.EXAM);
+    }
+
+    private filterChannelsOfType(subType: ChannelSubType): ChannelDTO[] {
         return this.displayedChannelConversations.filter((channel) => channel.subType === subType);
     }
 }

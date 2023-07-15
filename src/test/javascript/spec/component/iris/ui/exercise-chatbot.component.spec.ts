@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { ChatbotPopupComponent } from 'app/iris/exercise-chatbot/chatbot-popup/chatbot-popup.component';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -56,7 +55,7 @@ describe('ExerciseChatbotComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [ExerciseChatbotComponent, ChatbotPopupComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpSessionService,
                 { provide: MatDialog, useValue: mockDialog },
@@ -79,15 +78,6 @@ describe('ExerciseChatbotComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should open dialog when chat not accepted', () => {
-        jest.spyOn(component, 'openDialog');
-
-        component.chatAccepted = false;
-        component.handleButtonClick();
-
-        expect(component.openDialog).toHaveBeenCalled();
-    });
-
     it('should open chat when chat accepted', () => {
         jest.spyOn(component, 'openChat');
 
@@ -105,12 +95,16 @@ describe('ExerciseChatbotComponent', () => {
 
         expect(mockDialog.open).toHaveBeenCalledWith(ExerciseChatWidgetComponent, {
             hasBackdrop: false,
+            disableClose: true,
             position: { bottom: '0px', right: '0px' },
             data: expect.objectContaining({
                 stateStore: stateStore,
+                fullSize: false,
+                widgetHeight: '430px',
+                widgetWidth: '330px',
             }),
+            scrollStrategy: {},
         });
-        expect(component.buttonDisabled).toBeTrue();
     });
 
     it('should subscribe to route.params and call sessionService.getCurrentSessionOrCreate', waitForAsync(async () => {
@@ -169,21 +163,7 @@ describe('ExerciseChatbotComponent', () => {
 
         // when
         component.handleButtonClick();
-
-        // then
-        expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
-    });
-
-    it('should call action to reset number of new messages when press escape key', () => {
-        // given
-        const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
-        jest.spyOn(stateStore, 'dispatch');
-        stateStore.dispatch(new SessionReceivedAction(0, []));
-        component.openChat();
-
-        // when
-        component.onEscapeKeyDown(eventMock);
-
+        fixture.detectChanges();
         // then
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });

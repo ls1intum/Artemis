@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,6 +33,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     highlightDifferences: boolean;
     @Input()
     course?: Course;
+    @ViewChild('detailText') textareaRef: ElementRef;
 
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
@@ -46,6 +47,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
+    public elementRef: ElementRef;
+
     viewOnly: boolean;
     oldFeedback: Feedback;
 
@@ -57,7 +60,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService, elementRef: ElementRef) {
+        this.elementRef = elementRef;
+    }
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
@@ -95,12 +100,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Checks if component is in view mode
+     * Checks if component is in view mode and focuses feedback text area
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
         this.viewOnly = false;
         this.onEditFeedback.emit(line);
+        setTimeout(() => (this.textareaRef.nativeElement as HTMLTextAreaElement).focus());
     }
 
     /**
