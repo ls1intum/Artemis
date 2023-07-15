@@ -91,7 +91,7 @@ describe('Test exam participation', () => {
                 if (exercise.type == EXERCISE_TYPE.Programming) {
                     examNavigation.openExerciseAtIndex(j + 1);
                 } else {
-                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].title);
+                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].exerciseGroup!.title!);
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                     examParticipation.clickSaveAndContinue();
                 }
