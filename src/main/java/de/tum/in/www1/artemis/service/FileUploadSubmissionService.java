@@ -60,7 +60,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
-            throws IOException, EmptyFileException {
+        throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
@@ -145,34 +145,36 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new EmptyFileException(file.getOriginalFilename());
         }
 
-        final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-        final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
+        final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(savePath)));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
-        Optional<FileUploadSubmission> lastSubmission = participation.findLatestSubmission();
-        if (lastSubmission.isPresent() && lastSubmission.get().getFilePath() != null) {
-            FileUploadSubmission submission = lastSubmission.get();
-            // check if we already had a file associated with this submission
-            if (!submission.getFilePath().equals(newFilePath)) { // different name
-                // IMPORTANT: only delete the file when it has changed the name
-                submission.onDelete();
-            }
-            else { // same name
-                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                fileService.resetOnPath(newLocalFilePath);
-            }
-        }
+        Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
+
+        previousFileUploadSubmission
+            .filter(previousSubmission -> previousSubmission.getFilePath() != null)
+            .ifPresent(previousSubmission -> {
+                final String oldFilePath = previousSubmission.getFilePath();
+                // check if we already had a file associated with this submission
+                if (!oldFilePath.equals(newFilePath)) { // different name
+                    // IMPORTANT: only delete the file when it has changed the name
+                    previousSubmission.onDelete();
+                } else { // same name
+                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                    fileService.resetOnPath(savePath);
+                }
+            });
         return newFilePath;
     }
 
