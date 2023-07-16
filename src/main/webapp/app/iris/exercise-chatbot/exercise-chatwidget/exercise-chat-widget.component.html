@@ -103,7 +103,12 @@
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
                 <fa-icon [icon]="faArrowDown"></fa-icon>
             </div>
-            <div class="client-chat-error" *ngIf="error && isEmptyMessageError()" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationEnd($event)">
+            <div
+                class="client-chat-error"
+                *ngIf="shouldShowEmptyMessageError && error && isEmptyMessageError()"
+                [@fadeAnimation]="fadeState"
+                (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)"
+            >
                 {{ error.key | artemisTranslate }}
             </div>
             <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()" [ngClass]="{ 'shake-animation': shakeErrorField }">

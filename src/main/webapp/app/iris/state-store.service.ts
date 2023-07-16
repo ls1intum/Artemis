@@ -149,7 +149,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isActiveConversationMessageLoadedAction(action)) {
             const castedAction = action as ActiveConversationMessageLoadedAction;
-            if (state.serverResponseTimeout) {
+            if (state.serverResponseTimeout !== null) {
                 clearTimeout(state.serverResponseTimeout);
             }
             return {
@@ -163,7 +163,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
-            if (state.serverResponseTimeout && (castedAction.errorObject?.fatal || castedAction.errorObject?.key === IrisErrorMessageKey.SEND_MESSAGE_FAILED)) {
+            if (state.serverResponseTimeout !== null && (castedAction.errorObject?.fatal || castedAction.errorObject?.key === IrisErrorMessageKey.SEND_MESSAGE_FAILED)) {
                 clearTimeout(state.serverResponseTimeout);
                 state.serverResponseTimeout = null;
             }
