@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './submission-result-status.component.html',
 })
 export class SubmissionResultStatusComponent implements OnChanges {
+    private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
     readonly dayjs = dayjs;
@@ -37,6 +38,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
     exerciseMissedDueDate: boolean;
     uninitialized: boolean;
     notSubmitted: boolean;
+    shouldShowResult: boolean;
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -52,7 +54,22 @@ export class SubmissionResultStatusComponent implements OnChanges {
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else {
             this.uninitialized = !afterDueDate && !this.studentParticipation;
-            this.notSubmitted = !!this.studentParticipation && !this.studentParticipation.submissions?.length;
+            this.notSubmitted = afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
+        }
+
+        this.setShouldShowResult(afterDueDate);
+    }
+
+    private setShouldShowResult(afterDueDate: boolean) {
+        if (this.exercise.type === ExerciseType.QUIZ) {
+            this.shouldShowResult = !!this.studentParticipation?.results?.length;
+        } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.shouldShowResult =
+                (!!this.studentParticipation?.results?.length || !afterDueDate) &&
+                !!this.studentParticipation?.initializationState &&
+                this.initializationStatesToShowProgrammingResult.includes(this.studentParticipation.initializationState);
+        } else {
+            this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
         }
     }
 }

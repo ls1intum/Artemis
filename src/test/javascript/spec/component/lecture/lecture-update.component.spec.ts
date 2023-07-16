@@ -297,7 +297,7 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     }));
 
-    it('should set lecture start date and end date correctly', fakeAsync(() => {
+    it('should set lecture visible date, start date and end date correctly', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
@@ -306,6 +306,7 @@ describe('LectureUpdateComponent', () => {
 
         const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
+        lectureUpdateComponent.lecture.visibleDate = dayjs().year(2022).month(3).date(7);
         lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(3).date(5);
         lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(3).date(1);
 
@@ -313,28 +314,33 @@ describe('LectureUpdateComponent', () => {
 
         expect(setDatesSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.endDate);
+        expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.visibleDate);
 
         lectureUpdateComponentFixture.detectChanges();
         tick();
 
         lectureUpdateComponent.lecture.startDate = undefined;
         lectureUpdateComponent.lecture.endDate = undefined;
+        lectureUpdateComponent.lecture.visibleDate = undefined;
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(2);
         expect(lectureUpdateComponent.lecture.startDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture.endDate).toBeUndefined();
+        expect(lectureUpdateComponent.lecture.visibleDate).toBeUndefined();
 
         lectureUpdateComponentFixture.detectChanges();
         tick();
 
-        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(1);
+        lectureUpdateComponent.lecture.visibleDate = dayjs().year(2022).month(1).date(1);
+        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(2);
         lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(1).date(3);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
+        expect(lectureUpdateComponent.lecture.visibleDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.startDate.toDate());
         expect(lectureUpdateComponent.lecture.startDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.endDate.toDate());
     }));
 });

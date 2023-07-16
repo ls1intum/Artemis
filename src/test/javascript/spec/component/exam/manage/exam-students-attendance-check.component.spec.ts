@@ -21,7 +21,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
     const course = { id: 1 } as Course;

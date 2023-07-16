@@ -1,11 +1,11 @@
 <div class="col-auto">
-    <ng-container *ngIf="studentParticipation && studentParticipation.results?.length; else noResult">
+    <ng-container *ngIf="shouldShowResult; else showNoResult">
         <!-- Updating result -->
         <span>
             <jhi-updating-result
                 id="submission-result-graded"
                 [exercise]="exercise"
-                [participation]="studentParticipation"
+                [participation]="studentParticipation!"
                 [class]="updatingResultClass"
                 [showUngradedResults]="showUngradedResults"
                 [showBadge]="showBadge"
@@ -15,7 +15,7 @@
             ></jhi-updating-result>
         </span>
     </ng-container>
-    <ng-template #noResult>
+    <ng-template #showNoResult>
         <!-- On desktop -->
         <div class="d-none d-sm-inline">
             <span class="text-body-secondary" *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId">{{
@@ -27,12 +27,6 @@
             <span class="text-body-secondary" *ngIf="!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate
             }}</span>
-            <span
-                class="text-body-secondary"
-                *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED && !studentParticipation?.submissions?.[0]?.plagiarismDetected"
-            >
-                {{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}
-            </span>
             <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
                 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate
             }}</span>

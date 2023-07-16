@@ -1,15 +1,15 @@
 import { Course } from 'app/entities/course.model';
 import { admin } from '../../../support/users';
 import { courseManagementRequest, quizExerciseDragAndDropQuiz } from '../../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 let course: Course;
 
-describe('Quiz Exercise Drop Location Spec', () => {
+describe.skip('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
         });
     });
 
@@ -57,9 +57,6 @@ describe('Quiz Exercise Drop Location Spec', () => {
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

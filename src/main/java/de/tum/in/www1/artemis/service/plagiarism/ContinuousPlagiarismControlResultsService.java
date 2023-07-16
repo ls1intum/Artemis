@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.lang.String.format;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.jvnet.hk2.annotations.Service;
@@ -31,13 +33,24 @@ class ContinuousPlagiarismControlResultsService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlResultsService.class);
 
-    private static final String PLAGIARISM_RESULT_FEEDBACK_EN = "Suspicion of plagiarism! Score reduced to 0.";
+    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN = "ContinuousPlagiarismControl:";
 
-    private static final String PLAGIARISM_RESULT_FEEDBACK_DE = "Verdacht auf Plagiat! Punktestand auf 0 reduziert.";
+    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_TEXT_EN = format(
+            "%s Suspicion of plagiarism! Score reduced to 0. To fix this issue modify your submission before the due date of the exercise.",
+            CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN);
+
+    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE = "Kontinuierliche Plagiatskontrolle:";
+
+    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_TEXT_DE = format(
+            "%s Verdacht auf Plagiat! Punktestand auf 0 reduziert. Ändere deine Lösung vor Ablauf der Einreichungsfrist um dieses Problem zu beheben",
+            CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE);
 
     private final SubmissionRepository submissionRepository;
 
     private final ResultRepository resultRepository;
+
+    private static final Predicate<Result> isPlagiarismResult = result -> result.getFeedbacks().stream().map(Feedback::getText)
+            .anyMatch(it -> it.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN) || it.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE));
 
     ContinuousPlagiarismControlResultsService(SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
@@ -83,20 +96,20 @@ class ContinuousPlagiarismControlResultsService {
         feedback.setVisibility(Visibility.ALWAYS);
         feedback.setCredits(0.0);
 
-        var feedbackText = participation.getStudent().map(User::getLangKey).map(Locale::forLanguageTag).filter(isEqual(Locale.ENGLISH)).map(it -> PLAGIARISM_RESULT_FEEDBACK_EN)
-                .orElse(PLAGIARISM_RESULT_FEEDBACK_DE);
+        var feedbackText = getFeedbackTextForStudent(participation);
         feedback.setText(feedbackText);
 
         result.setFeedbacks(List.of(feedback));
-
         resultRepository.save(result);
+    }
+
+    private static String getFeedbackTextForStudent(StudentParticipation participation) {
+        return participation.getStudent().map(User::getLangKey).map(Locale::forLanguageTag).filter(isEqual(Locale.ENGLISH))
+                .map(it -> CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_TEXT_EN).orElse(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_TEXT_DE);
     }
 
     private void deletePastResultsWithPlagiarismFeedback(long submissionId) {
         log.debug("Removing cpc results for submission: submissionId={}.", submissionId);
-        resultRepository.findAllWithFeedbackBySubmissionId(submissionId).stream()
-                .filter(result -> result.getFeedbacks().stream()
-                        .anyMatch(it -> it.getText().contains(PLAGIARISM_RESULT_FEEDBACK_EN) || it.getText().contains(PLAGIARISM_RESULT_FEEDBACK_DE)))
-                .forEach(resultRepository::delete);
+        resultRepository.findAllWithFeedbackBySubmissionId(submissionId).stream().filter(isPlagiarismResult).forEach(resultRepository::delete);
     }
 }

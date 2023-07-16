@@ -9,22 +9,20 @@
         [isImportFromExistingExercise]="isImportFromExistingExercise"
         [isExamMode]="isExamMode"
         [(exercise)]="programmingExercise"
-        [infoStepInputs]="getInfoStepInputs()"
-        [languageStepInputs]="getLanguageStepInputs()"
-        [gradingStepInputs]="getGradingStepInputs()"
-        [problemStepInputs]="getProblemStepInputs()"
-        [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
     ></jhi-programming-exercise-update-wizard>
+
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
-            <div class="flex-grow-1 align-items-center">
-                <h4
+            <div class="d-flex flex flex-row align-items-center">
+                <h3
+                    class="fw-medium"
                     *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
                     id="jhi-programming-exercise-heading-create"
                     jhiTranslate="artemisApp.programmingExercise.home.createLabel"
                 >
                     Create Programming Exercise
-                </h4>
+                </h3>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
@@ -43,37 +41,27 @@
         <h4 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
             Import Programming Exercise
         </h4>
-        <div class="update-programming-exercise">
+        <div class="update-programming-exercise mt-5">
             <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
-            <jhi-programming-exercise-info
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isEdit]="isEdit"
-                [isExamMode]="isExamMode"
-                [programmingExercise]="programmingExercise"
-                [infoInputs]="getInfoStepInputs()"
-                [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-            >
+            <jhi-programming-exercise-info [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
                 [programmingExercise]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-difficulty>
-            <jhi-programming-exercise-language
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isImportFromFile]="isImportFromFile"
-                [programmingExercise]="programmingExercise"
-                [languageStepInputs]="getLanguageStepInputs()"
-            >
+            <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()">
             </jhi-programming-exercise-language>
+            <jhi-programming-exercise-problem
+                [(exercise)]="programmingExercise"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+            ></jhi-programming-exercise-problem>
             <jhi-programming-exercise-grading
                 class="form-step"
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
-                [gradingInputs]="getGradingStepInputs()"
+                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-grading>
             <div class="form-group">
                 <div class="row">
@@ -114,8 +102,8 @@
                                 min="0"
                                 max="100"
                                 id="plagiarism-minimum-score"
-                                name="textExercise.plagiarismChecksConfig.minimumScore"
-                                #textExercise.plagiarismChecksConfig.minimumScore="ngModel"
+                                name="programmingExercise.plagiarismChecksConfig.minimumScore"
+                                #programmingExercise.plagiarismChecksConfig.minimumScore="ngModel"
                                 [(ngModel)]="programmingExercise.plagiarismChecksConfig!.minimumScore"
                             />
                         </div>
@@ -157,34 +145,14 @@
                             type="checkbox"
                             id="continuous_plagiarism_control_enabled"
                             class="plagiarism-option-checkbox form-check-input"
-                            name="modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
-                            #modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
+                            name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
+                            #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
                             [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
                         />
                         <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
                     </div>
                 </div>
             </div>
-            <jhi-programming-exercise-problem
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isImportFromFile]="isImportFromFile"
-                [isExamMode]="isExamMode"
-                [(exercise)]="programmingExercise"
-                [problemStatementLoaded]="problemStatementLoaded"
-                [templateParticipationResultLoaded]="templateParticipationResultLoaded"
-                [hasUnsavedChanges]="hasUnsavedChanges"
-                [rerenderSubject]="rerenderSubject"
-                [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
-                [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
-                [publishBuildPlanUrlAllowed]="publishBuildPlanUrlAllowed"
-                [testwiseCoverageAnalysisSupported]="testwiseCoverageAnalysisSupported"
-                [validIdeSelection]="validIdeSelection"
-                [inProductionEnvironment]="inProductionEnvironment"
-                [recreateBuildPlans]="recreateBuildPlans"
-                [recreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
-                [updateTemplate]="updateTemplate"
-                [selectedProjectType]="selectedProjectType"
-            ></jhi-programming-exercise-problem>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">
