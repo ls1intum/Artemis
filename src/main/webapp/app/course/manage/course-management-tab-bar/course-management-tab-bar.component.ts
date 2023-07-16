@@ -2,19 +2,20 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import {
+    faArrowUpRightFromSquare,
     faChartBar,
     faClipboard,
+    faComment,
     faComments,
     faEye,
     faFilePdf,
     faFlag,
     faGraduationCap,
-    faHeartBroken,
     faListAlt,
     faPersonChalkboard,
     faTable,
@@ -44,6 +45,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
@@ -53,13 +55,14 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
+    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
-    faHeartBroken = faHeartBroken;
     faPersonChalkboard = faPersonChalkboard;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     constructor(
         private eventManager: EventManager,
@@ -125,10 +128,18 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/course-management']);
     }
 
-    shouldHighlightTutorialGroupsButton(): boolean {
-        let shouldHighlightTutorialGroups = false;
-        shouldHighlightTutorialGroups ||= this.router.url.includes('/tutorial-groups-checklist');
-        shouldHighlightTutorialGroups ||= this.router.url.includes('/create-tutorial-groups-configuration');
-        return shouldHighlightTutorialGroups;
+    shouldHighlightTutorialsLink(): boolean {
+        const tutorialsRegex = /tutorial-groups/;
+        return tutorialsRegex.test(this.router.url);
+    }
+
+    shouldHighlightAssessmentLink(): boolean {
+        const assessmentLinkRegex = /scores|grading-system|plagiarism-cases/;
+        return assessmentLinkRegex.test(this.router.url);
+    }
+
+    shouldShowControlButtons(): boolean {
+        const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
+        return courseManagementRegex.test(this.router.url);
     }
 }
