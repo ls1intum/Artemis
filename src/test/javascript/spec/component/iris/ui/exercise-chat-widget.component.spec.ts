@@ -17,18 +17,19 @@ import {
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { UserService } from 'app/core/user/user.service';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -36,6 +37,7 @@ describe('ExerciseChatWidgetComponent', () => {
     let stateStore: IrisStateStore;
     let mockHttpMessageService: IrisHttpMessageService;
     let mockDialog: MatDialog;
+    let mockUserService: UserService;
 
     beforeEach(async () => {
         mockDialog = {
@@ -50,6 +52,15 @@ describe('ExerciseChatWidgetComponent', () => {
             createMessage: jest.fn(),
         } as any;
 
+        mockUserService = {
+            acceptIris: jest.fn().mockReturnValue({
+                subscribe: jest.fn(),
+            }),
+            getIrisAcceptedAt: jest.fn().mockReturnValue({
+                subscribe: jest.fn(),
+            }),
+        } as any;
+
         stateStore = new IrisStateStore();
 
         await TestBed.configureTestingModule({
@@ -61,6 +72,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
+                { provide: UserService, useValue: mockUserService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: HttpClient, useClass: MockHttpService },
@@ -79,6 +91,28 @@ describe('ExerciseChatWidgetComponent', () => {
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
             });
+    });
+
+    it('should set userAccepted to true if user has accepted the policy', () => {
+        jest.spyOn(component.userService, 'getIrisAcceptedAt').mockReturnValue(of('2023-07-16T13:11:36+02:00'));
+
+        component.ngOnInit();
+        expect(component.userAccepted).toBeTrue();
+    });
+
+    it('should set userAccepted to false if user has not accepted the policy', () => {
+        component.ngOnInit();
+        expect(component.userAccepted).toBeFalse();
+    });
+
+    it('should call API when user accept the policy', () => {
+        const stub = jest.spyOn(component.userService, 'acceptIris');
+        stub.mockReturnValue(of(new HttpResponse({ body: null })));
+
+        component.acceptPermission();
+
+        expect(stub).toHaveBeenCalledOnce();
+        expect(component.userAccepted).toBeTrue();
     });
 
     it('should add user message on send', waitForAsync(async () => {

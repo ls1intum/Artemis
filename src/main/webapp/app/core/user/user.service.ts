@@ -58,4 +58,19 @@ export class UserService {
     initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
         return this.http.put<{ password: string }>(`${this.resourceUrl}/initialize`, null, { observe: 'response' });
     }
+
+    /**
+     * Accept Iris policy.
+     */
+    acceptIris(): Observable<User> {
+        return this.http.put<User>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    }
+
+    /**
+     * Get the timestamp that Iris is accepted.
+     * @return Observable<string> with the accepted date.
+     */
+    getIrisAcceptedAt(): Observable<string> {
+        return this.http.get<string>(`${this.resourceUrl}/accept-iris`);
+    }
 }
