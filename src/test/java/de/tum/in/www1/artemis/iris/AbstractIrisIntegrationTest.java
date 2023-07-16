@@ -125,8 +125,8 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, String message) {
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.IRIS_MESSAGE
-                        && websocketDTO.getMessage().getContent().size() == 1 && Objects.equals(websocketDTO.getMessage().getContent().get(0).getTextContent(), message)));
+                        && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE && websocketDTO.getMessage().getContent().size() == 1
+                        && Objects.equals(websocketDTO.getMessage().getContent().get(0).getTextContent(), message)));
     }
 
     /**
@@ -139,8 +139,8 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, IrisMessage message) {
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.IRIS_MESSAGE
-                        && websocketDTO.getMessage().getContent().size() == 1 && Objects.equals(websocketDTO.getMessage(), message)));
+                        && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE && websocketDTO.getMessage().getContent().size() == 1
+                        && Objects.equals(websocketDTO.getMessage(), message)));
     }
 
     /**

@@ -72,7 +72,7 @@ public class IrisWebsocketService {
         private final Map<String, Object> translationParams;
 
         public IrisWebsocketDTO(IrisMessage message) {
-            this.type = IrisWebsocketMessageType.IRIS_MESSAGE;
+            this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
             this.errorTranslationKey = null;
@@ -104,11 +104,11 @@ public class IrisWebsocketService {
         }
 
         public Map<String, Object> getTranslationParams() {
-            return Collections.unmodifiableMap(translationParams);
+            return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
         }
 
         public enum IrisWebsocketMessageType {
-            IRIS_MESSAGE, ERROR;
+            MESSAGE, ERROR
         }
     }
 }
