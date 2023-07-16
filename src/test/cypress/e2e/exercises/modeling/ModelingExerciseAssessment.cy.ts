@@ -39,7 +39,6 @@ describe('Modeling Exercise Assessment', () => {
 
     it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
-        courseManagement.openCourse(course.id!);
         courseManagement.openAssessmentDashboardOfCourse(course.id!);
         cy.wait(500);
         courseAssessment.clickExerciseDashboardButton();
