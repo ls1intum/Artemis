@@ -110,13 +110,18 @@ export class ExamImportComponent implements OnInit {
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     // Case: Server-Site Validation of the Programming Exercises failed
-                    if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidKey') {
+                    const errorKey = httpErrorResponse.error?.errorKey;
+                    if (errorKey === 'invalidKey') {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
                         this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
                         // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
-                        this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+                        this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToInvalidProjectKey();
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
+                    } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
+                        this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                        this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+                        this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {
                         onError(this.alertService, httpErrorResponse);
                     }
