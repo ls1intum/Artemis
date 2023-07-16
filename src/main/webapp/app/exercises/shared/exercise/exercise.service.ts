@@ -521,10 +521,7 @@ export class ExerciseService {
             exampleSolutionPublicationDate = exercise.exampleSolutionPublicationDate;
         }
 
-        if (!exampleSolutionPublicationDate || dayjs().isBefore(exampleSolutionPublicationDate)) {
-            return false;
-        }
-        return true;
+        return exampleSolutionPublicationDate && !dayjs().isBefore(exampleSolutionPublicationDate);
     }
 
     /**

@@ -90,7 +90,7 @@
                     </ng-container>
                 </span>
                 <!-- prettier-ignore -->
-                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title}}
+                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
                 [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge
