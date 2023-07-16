@@ -163,7 +163,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
-            if (state.serverResponseTimeout && castedAction.errorObject?.fatal) {
+            if (state.serverResponseTimeout && (castedAction.errorObject?.fatal || castedAction.errorObject?.key === IrisErrorMessageKey.SEND_MESSAGE_FAILED)) {
                 clearTimeout(state.serverResponseTimeout);
                 state.serverResponseTimeout = null;
             }
