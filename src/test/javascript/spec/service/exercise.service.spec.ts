@@ -7,7 +7,6 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { EntityResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import day from 'dayjs/esm';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
