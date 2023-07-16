@@ -220,7 +220,7 @@
                 [buttonIcon]="faFolderOpen"
                 [buttonLabel]="
                     'artemisApp.exerciseActions.' +
-                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || (beforeDueDate && !hasRatedGradedResult)
+                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || (beforeDueDate && (!hasRatedGradedResult || gradedParticipation?.submissions?.[0]?.plagiarismDetected))
                             ? editorLabel
                             : hasRatedGradedResult
                             ? 'viewResults'
