@@ -663,8 +663,9 @@ public class AuthorizationCheckService {
      * - OR if the exam has not ended
      * - OR if the exam has already ended and the results were published
      *
-     * @param exercise - Exercise that the result is requested for
-     * @param user     - User that requests the result
+     * @param exercise             - Exercise that the result is requested for
+     * @param studentParticipation - participation that the result is requested for
+     * @param user                 - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
     public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
@@ -672,10 +673,14 @@ public class AuthorizationCheckService {
             return true;
         }
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
-        if (exam.isTestExam()) {
-            return examDateService.testExamEnded(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
+        if (exam.getEndDate().isAfter(ZonedDateTime.now())) {
+            // students can always see their results during the exam.
+            return true;
         }
-        return exam.resultsPublished() || exam.getEndDate().isAfter(ZonedDateTime.now());
+        if (exam.isTestExam()) {
+            return examDateService.isTestExamWorkingPeriodOver(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
+        }
+        return exam.resultsPublished();
     }
 
     /**

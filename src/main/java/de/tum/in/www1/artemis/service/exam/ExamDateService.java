@@ -75,12 +75,21 @@ public class ExamDateService {
         }
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         if (exam.isTestExam()) {
-            return testExamEnded(exam, studentParticipation);
+            return isTestExamWorkingPeriodOver(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);
     }
 
-    public boolean testExamEnded(Exam exam, StudentParticipation studentParticipation) {
+    /**
+     * Returns <code>true</code> if the exercise working period is over for a test exam participation.
+     * This is the case as soon as the students hand in their results.
+     *
+     * @param exam                 the test exam
+     * @param studentParticipation used to find the related student exam
+     * @return <code>true</code> if the exercise is over, <code>false</code> otherwise
+     * @throws IllegalArgumentException if the method is called with a normal exam (no test exam)
+     */
+    public boolean isTestExamWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
         if (!exam.isTestExam()) {
             throw new IllegalArgumentException("This function should only be used for test exams");
         }
