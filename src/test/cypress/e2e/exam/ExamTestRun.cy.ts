@@ -11,7 +11,7 @@ import { courseManagementRequest, examExerciseGroupCreation, examManagement, exa
 import { admin, instructor } from '../../support/users';
 
 // Common primitives
-const textFixture = 'loremIpsum.txt';
+const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
 
 describe('Exam test run', () => {

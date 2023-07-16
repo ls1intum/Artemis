@@ -12,7 +12,7 @@ import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users }
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
-const textFixtureAlternative = 'loremIpsum-alternative.txt';
+const textFixtureShort = 'loremIpsum-short.txt';
 
 describe('Exam participation', () => {
     let course: Course;
@@ -179,11 +179,11 @@ describe('Exam participation', () => {
             examStartEnd.clickContinue();
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             textExerciseEditor.clearSubmission(textExercise.id);
-            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureAlternative);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureShort);
             examParticipation.clickSaveAndContinue();
 
             examParticipation.handInEarly();
-            examParticipation.verifyTextExerciseOnFinalPage(textFixtureAlternative);
+            examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);

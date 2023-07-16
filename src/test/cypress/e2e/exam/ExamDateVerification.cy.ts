@@ -84,7 +84,7 @@ describe('Exam date verification', () => {
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
                         examNavigation.openExerciseAtIndex(0);
-                        cy.fixture('loremIpsum.txt').then((submission) => {
+                        cy.fixture('loremIpsum-short.txt').then((submission) => {
                             textExerciseEditor.typeSubmission(exercise.id, submission);
                         });
                         examNavigation.clickSave();
@@ -111,7 +111,7 @@ describe('Exam date verification', () => {
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
                         examNavigation.openExerciseAtIndex(0);
-                        cy.fixture('loremIpsum.txt').then((submissionText) => {
+                        cy.fixture('loremIpsum-short.txt').then((submissionText) => {
                             textExerciseEditor.typeSubmission(exercise.id, submissionText);
                         });
                         examNavigation.clickSave();

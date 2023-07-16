@@ -56,7 +56,7 @@ export class ExamParticipation {
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
-        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             programmingExerciseEditor.submitPractice(exerciseID);
         } else {
