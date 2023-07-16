@@ -272,7 +272,7 @@ describe('IrisStateStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                nonce: 5,
+                messageDifferentiator: 5,
             },
             timeoutId: null,
         };
@@ -300,7 +300,7 @@ describe('IrisStateStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                nonce: 5,
+                messageDifferentiator: 5,
             },
             timeoutId: null,
         };
@@ -321,7 +321,7 @@ describe('IrisStateStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                nonce: undefined,
+                messageDifferentiator: undefined,
             },
             timeoutId: null,
         };
@@ -349,7 +349,7 @@ describe('IrisStateStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                nonce: 7,
+                messageDifferentiator: 7,
             },
             timeoutId: null,
         };

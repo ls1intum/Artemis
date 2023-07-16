@@ -186,12 +186,12 @@ export class IrisStateStore implements OnDestroy {
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
             let newMessage = true;
-            if (castedAction.message.nonce !== undefined) {
+            if (castedAction.message.messageDifferentiator !== undefined) {
                 for (let i = state.messages.length - 1; i >= 0; i--) {
                     const message = state.messages[i];
                     if (!isStudentSentMessage(message)) continue;
-                    if (message.nonce === undefined) continue;
-                    if (message.nonce === castedAction.message.nonce) {
+                    if (message.messageDifferentiator === undefined) continue;
+                    if (message.messageDifferentiator === castedAction.message.messageDifferentiator) {
                         newMessage = false;
                     }
                 }

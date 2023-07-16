@@ -29,7 +29,7 @@ export class IrisClientMessage implements BaseEntity {
     content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
-    nonce?: number;
+    messageDifferentiator?: number;
 }
 
 export type IrisMessage = IrisServerMessage | IrisClientMessage | IrisArtemisClientMessage;
