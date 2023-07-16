@@ -1039,14 +1039,12 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Removes illegal characters for filenames from the string.
-     * <p>
-     * S<a href="ee:">https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#1507</a>5907
+     * <a href="https://stackoverflow.com/a/15075907">Removes illegal characters for filenames from the string</a>
      *
      * @param string the string with the characters
      * @return stripped string
      */
-    public String removeIllegalCharacters(String string) {
+    public static String removeIllegalCharacters(String string) {
         return string.replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\.+", ".");
     }
 
