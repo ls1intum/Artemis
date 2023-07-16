@@ -104,8 +104,6 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final FileService fileService;
-
     private final ZipFileService zipFileService;
 
     private TransportConfigCallback sshCallback;
@@ -118,14 +116,13 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, ProfileService profileService, FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
         this.profileService = profileService;
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.environment = environment;
-        this.fileService = fileService;
         this.zipFileService = zipFileService;
     }
 
@@ -1268,7 +1265,7 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String zipRepoName = FileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }

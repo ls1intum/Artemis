@@ -12,6 +12,7 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -45,28 +46,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
                 comp = fixture.componentInstance;
 
-                comp.infoInputs = {
-                    auxiliaryRepositoryDuplicateDirectories: false,
-                    auxiliaryRepositoryDuplicateNames: false,
-                    exerciseCategories: [],
-                    existingCategories: [],
-                    invalidDirectoryNamePattern: new RegExp(''),
-                    invalidRepositoryNamePattern: new RegExp(''),
-                    refreshAuxiliaryRepositoryChecks(): void {},
-                    shortNamePattern: new RegExp(''),
-                    updateCategories(): void {},
-                    updateCheckoutDirectory(): (newValue: any) => string | undefined {
-                        return function () {
-                            return undefined;
-                        };
-                    },
-                    updateRepositoryName(): (newValue: any) => string | undefined {
-                        return function () {
-                            return undefined;
-                        };
-                    },
-                    titleNamePattern: '',
-                };
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });

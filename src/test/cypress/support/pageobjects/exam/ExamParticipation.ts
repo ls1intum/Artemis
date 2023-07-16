@@ -1,5 +1,6 @@
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { EXERCISE_TYPE } from '../../constants';
 import { getExercise } from '../../utils';
 import {
@@ -56,7 +57,7 @@ export class ExamParticipation {
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
-        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             programmingExerciseEditor.submitPractice(exerciseID);
         } else {
@@ -101,6 +102,23 @@ export class ExamParticipation {
         cy.get('#exam-title').contains(title);
     }
 
+    getResultScore() {
+        cy.reloadUntilFound('#result-score');
+        return cy.get('#result-score');
+    }
+
+    checkExamFinishedTitle(title: string) {
+        cy.get('#exam-finished-title').contains(title, { timeout: 40000 });
+    }
+
+    checkExamFullnameInputExists() {
+        cy.get('#fullname', { timeout: 20000 }).should('exist');
+    }
+
+    checkYourFullname(name: string) {
+        cy.get('#your-name', { timeout: 20000 }).contains(name);
+    }
+
     handInEarly() {
         examNavigation.handInEarly();
         examStartEnd.finishExam().then((request: Interception) => {
@@ -133,4 +151,5 @@ export type Exercise = {
     type: EXERCISE_TYPE;
     id: number;
     additionalData?: AdditionalData;
+    exerciseGroup?: ExerciseGroup;
 };

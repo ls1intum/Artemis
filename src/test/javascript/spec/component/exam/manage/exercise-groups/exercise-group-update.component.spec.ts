@@ -18,6 +18,7 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { NgbAlertsMocksModule } from '../../../../helpers/mocks/directive/ngbAlertsMocks.module';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
@@ -41,7 +42,7 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientModule, FormsModule],
+            imports: [HttpClientModule, FormsModule, NgbAlertsMocksModule],
             declarations: [ExerciseGroupUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
