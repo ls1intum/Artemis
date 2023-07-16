@@ -30,7 +30,7 @@
         "entities": {
             "tutorialGroup": {
                 "locationTime": "Location and Time",
-                "plural": "Tutorial Groups",
+                "plural": "Tutorials",
                 "course": "Course",
                 "title": "Title",
                 "additionalInformation": "Additional Information",
