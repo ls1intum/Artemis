@@ -84,8 +84,6 @@ export class IrisWebsocketService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
-            console.log(websocketResponse);
-            console.log(websocketResponse.type);
             if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
                 if (!websocketResponse.errorTranslationKey) {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
@@ -96,7 +94,15 @@ export class IrisWebsocketService implements OnDestroy {
                 const message = websocketResponse.message;
                 if (!message) return;
                 if (isStudentSentMessage(message)) {
-                    this.stateStore.dispatch(new StudentMessageSentAction(message, null));
+                    this.stateStore.dispatch(
+                        new StudentMessageSentAction(
+                            message,
+                            setTimeout(() => {
+                                // will be cleared by the store automatically
+                                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+                            }, 20000),
+                        ),
+                    );
                 } else if (isServerSentMessage(message)) {
                     this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(message));
                 }

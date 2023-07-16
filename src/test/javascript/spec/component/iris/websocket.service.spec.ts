@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
@@ -7,8 +7,15 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ActiveConversationMessageLoadedAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage, mockWebsocketMessage } from '../../helpers/sample/iris-sample-data';
+import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, SessionReceivedAction, StudentMessageSentAction } from 'app/iris/state-store.model';
+import {
+    mockServerMessage,
+    mockWebsocketClientMessage,
+    mockWebsocketKnownError,
+    mockWebsocketServerMessage,
+    mockWebsocketUnknownError,
+} from '../../helpers/sample/iris-sample-data';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
@@ -16,7 +23,7 @@ describe('IrisWebsocketService', () => {
     let irisStateStore: IrisStateStore;
 
     const channel = '/user/topic/iris/sessions/0';
-    const newMessageObservable = of(mockWebsocketMessage);
+    const newMessageObservable = of(mockWebsocketServerMessage);
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -61,5 +68,70 @@ describe('IrisWebsocketService', () => {
         irisStateStore.dispatch(new SessionReceivedAction(2, []));
         tick();
         expect(jhiWebsocketService.unsubscribe).toHaveBeenCalledWith(channel);
+    }));
+
+    it('should receive an unknown error type from the server and dispatch a technical error', fakeAsync(() => {
+        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockWebsocketUnknownError));
+        const dispatchSpy = jest.spyOn(irisStateStore, 'dispatch');
+
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
+
+        tick();
+
+        expect(websocketReceiveMock).toHaveBeenCalledOnce();
+        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
+
+        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+        expect(dispatchSpy).toHaveBeenCalledTimes(2); // Include the existing dispatch count
+    }));
+
+    it('should receive a new server exception message and dispatch corresponding action', fakeAsync(() => {
+        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockWebsocketKnownError));
+        const dispatchSpy = jest.spyOn(irisStateStore, 'dispatch');
+
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
+
+        tick();
+
+        expect(websocketReceiveMock).toHaveBeenCalledOnce();
+        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
+
+        expect(dispatchSpy).toHaveBeenCalledWith(
+            new ConversationErrorOccurredAction(IrisErrorMessageKey.NO_MODEL_AVAILABLE, {
+                model: 'gpt-4',
+            } as Map<string, any>),
+        );
+        expect(dispatchSpy).toHaveBeenCalledTimes(2); // Include the existing dispatch count
+    }));
+
+    it('should receive a new server response message and add it to the store', fakeAsync(() => {
+        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockWebsocketServerMessage));
+        const dispatchSpy = jest.spyOn(irisStateStore, 'dispatch');
+
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
+
+        tick();
+
+        expect(websocketReceiveMock).toHaveBeenCalledOnce();
+        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
+
+        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new ActiveConversationMessageLoadedAction(mockWebsocketServerMessage.message));
+        expect(dispatchSpy).toHaveBeenCalledTimes(2);
+        flush();
+    }));
+
+    it('should receive a new student message and emit an action', fakeAsync(() => {
+        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockWebsocketClientMessage));
+        const dispatchSpy = jest.spyOn(irisStateStore, 'dispatch');
+
+        irisStateStore.dispatch(new SessionReceivedAction(0, []));
+
+        tick();
+
+        expect(websocketReceiveMock).toHaveBeenCalledOnce();
+        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
+
+        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new StudentMessageSentAction(mockWebsocketClientMessage.message, 1));
+        flush();
     }));
 });

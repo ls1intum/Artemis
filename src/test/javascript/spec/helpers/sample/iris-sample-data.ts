@@ -5,6 +5,7 @@ import { IrisClientMessage, IrisSender, IrisServerMessage } from 'app/entities/i
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisWebsocketDTO, IrisWebsocketMessageType } from 'app/iris/websocket.service';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 export const mockMessageContent = {
     textContent: 'Hello, world!',
@@ -20,16 +21,33 @@ export const mockServerMessage = {
     sentAt: dayjs(),
 } as IrisServerMessage;
 
-export const mockWebsocketMessage = {
-    type: IrisWebsocketMessageType.MESSAGE,
-    message: mockServerMessage,
-} as IrisWebsocketDTO;
-
 export const mockClientMessage = {
     sender: IrisSender.USER,
     content: [mockMessageContent],
     sentAt: dayjs(),
 } as IrisClientMessage;
+
+export const mockWebsocketServerMessage = {
+    type: IrisWebsocketMessageType.MESSAGE,
+    message: mockServerMessage,
+} as IrisWebsocketDTO;
+
+export const mockWebsocketClientMessage = {
+    type: IrisWebsocketMessageType.MESSAGE,
+    message: mockClientMessage,
+} as IrisWebsocketDTO;
+
+export const mockWebsocketKnownError = {
+    type: IrisWebsocketMessageType.ERROR,
+    errorTranslationKey: IrisErrorMessageKey.NO_MODEL_AVAILABLE,
+    translationParams: {
+        model: 'gpt-4',
+    },
+} as IrisWebsocketDTO;
+
+export const mockWebsocketUnknownError = {
+    type: IrisWebsocketMessageType.ERROR,
+} as IrisWebsocketDTO;
 
 export const mockConversation = {
     id: 1,

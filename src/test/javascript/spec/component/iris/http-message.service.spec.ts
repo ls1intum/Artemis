@@ -20,8 +20,8 @@ describe('Iris Http Message Service', () => {
 
     describe('Service methods', () => {
         it('should create a message', fakeAsync(() => {
-            const returnedFromService = { ...mockClientMessage };
-            const expected = { ...returnedFromService };
+            const returnedFromService = { ...mockClientMessage, id: 0 };
+            const expected = { ...returnedFromService, id: 0 };
             service
                 .createMessage(2, new IrisClientMessage())
                 .pipe(take(1))
