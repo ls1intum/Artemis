@@ -4,6 +4,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
  * The IrisWebsocketMessageType defines the type of a message sent over the websocket.
@@ -79,7 +80,8 @@ export class IrisWebsocketService implements OnDestroy {
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
             if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey!));
+                // TODO: Use websocketResponse.errorTranslationKey and websocketResponse.translationParams
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
             } else if (websocketResponse.type === IrisWebsocketMessageType.MESSAGE) {
                 this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(websocketResponse.message!));
             }

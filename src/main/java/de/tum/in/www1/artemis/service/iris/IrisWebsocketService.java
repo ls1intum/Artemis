@@ -39,7 +39,7 @@ public class IrisWebsocketService {
         Long irisSessionId = irisMessage.getSession().getId();
         String userLogin = ((IrisChatSession) irisMessage.getSession()).getUser().getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, irisMessage);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage));
     }
 
     /**
@@ -72,7 +72,7 @@ public class IrisWebsocketService {
         private final Map<String, Object> translationParams;
 
         public IrisWebsocketDTO(IrisMessage message) {
-            this.type = IrisWebsocketMessageType.IRIS_MESSAGE;
+            this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
             this.errorTranslationKey = null;
@@ -104,11 +104,11 @@ public class IrisWebsocketService {
         }
 
         public Map<String, Object> getTranslationParams() {
-            return Collections.unmodifiableMap(translationParams);
+            return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
         }
 
         public enum IrisWebsocketMessageType {
-            IRIS_MESSAGE, ERROR;
+            MESSAGE, ERROR
         }
     }
 }
