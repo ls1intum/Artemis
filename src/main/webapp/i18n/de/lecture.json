@@ -29,6 +29,7 @@
             "description": "Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
+            "visibleDate": "Sichtbar ab",
             "course": "Kurs",
             "detail": {
                 "title": "Vorlesung"

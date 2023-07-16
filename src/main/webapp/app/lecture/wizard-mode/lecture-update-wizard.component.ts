@@ -19,8 +19,6 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() validateDatesFunction: () => void;
     @Input() lecture: Lecture;
     @Input() isSaving: boolean;
-    @Input() startDate: string;
-    @Input() endDate: string;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardCompetenciesComponent, { static: false }) competenciesComponent: LectureUpdateWizardCompetenciesComponent;
