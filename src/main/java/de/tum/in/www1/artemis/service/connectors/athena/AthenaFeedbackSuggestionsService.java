@@ -36,6 +36,9 @@ public class AthenaFeedbackSuggestionsService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
+    /**
+     * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
+     */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }

@@ -54,12 +54,16 @@ public class AthenaSubmissionSelectionService {
     ) {
     }
 
+    /**
+     * Create a new AthenaSubmissionSelectionService, which uses a custom timeout for requests to Athena
+     */
     public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
-        // configure rest template to use the given timeout
+        // Configure rest template to use the given timeout
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(REQUEST_TIMEOUT_MS);
         requestFactory.setReadTimeout(REQUEST_TIMEOUT_MS);
         athenaRestTemplate.setRequestFactory(requestFactory);
+        // Create connector
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }
 

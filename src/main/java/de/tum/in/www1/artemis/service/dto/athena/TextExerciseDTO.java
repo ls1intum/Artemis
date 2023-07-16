@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.domain.TextExercise;
  */
 public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement) {
 
+    /**
+     * Create a new TextExerciseDTO from a TextExercise
+     */
     public static TextExerciseDTO of(@NotNull TextExercise exercise) {
         return new TextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getProblemStatement());
