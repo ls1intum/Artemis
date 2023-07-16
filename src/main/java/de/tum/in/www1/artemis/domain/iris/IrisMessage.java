@@ -45,7 +45,7 @@ public class IrisMessage extends DomainObject {
     private IrisMessageSender sender;
 
     @Transient
-    private Integer nonce;
+    private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
 
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -94,13 +94,13 @@ public class IrisMessage extends DomainObject {
     }
 
     @JsonProperty
-    public Integer getNonce() {
-        return nonce;
+    public Integer getMessageDifferentiator() {
+        return messageDifferentiator;
     }
 
     @JsonProperty
-    public void setNonce(Integer nonce) {
-        this.nonce = nonce;
+    public void setMessageDifferentiator(Integer messageDifferentiator) {
+        this.messageDifferentiator = messageDifferentiator;
     }
 
     @Override

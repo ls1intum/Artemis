@@ -4,8 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.BadRequestException;
 
@@ -82,10 +80,8 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
-        savedMessage.setNonce(message.getNonce());
-        CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> {
-            irisWebsocketService.sendMessage(savedMessage);
-        });
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
+        irisWebsocketService.sendMessage(savedMessage);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
