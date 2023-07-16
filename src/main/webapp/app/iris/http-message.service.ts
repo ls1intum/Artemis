@@ -17,6 +17,8 @@ export class IrisHttpMessageService {
 
     constructor(private httpClient: HttpClient) {}
 
+    private readonly MAX_INT_JAVA = 2147483647;
+
     /**
      * creates a message for a session
      * @param {number} sessionId
@@ -24,7 +26,7 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>}
      */
     createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
-        message.nonce = Math.floor(Math.random());
+        message.nonce = Math.floor(Math.random() * this.MAX_INT_JAVA);
         return this.httpClient
             .post<IrisServerMessage>(
                 `${this.resourceUrl}/${sessionId}/messages`,

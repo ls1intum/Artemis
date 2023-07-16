@@ -112,7 +112,7 @@
                 {{ error.key | artemisTranslate }}
             </div>
             <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()" [ngClass]="{ 'shake-animation': shakeErrorField }">
-                {{ error.key | artemisTranslate }}
+                {{ error.key | artemisTranslate : getConvertedErrorMap() }}
             </div>
         </div>
 

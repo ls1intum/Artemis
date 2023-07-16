@@ -96,7 +96,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     isFirstMessage = false;
     resendAnimationActive = false;
     shakeErrorField = false;
-    isGreetingMessage = false;
     shouldLoadGreetingMessage = true;
     fadeState = '';
     shouldShowEmptyMessageError = false;
@@ -158,6 +157,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.shouldShowEmptyMessageError = true;
                 this.fadeState = 'start';
             }
+            if (this.error) this.getConvertedErrorMap();
         });
 
         // Set initializing flag to false and focus on message textarea
@@ -213,10 +213,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isGreetingMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
-        } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
-            this.isGreetingMessage = true;
         }
     }
 
@@ -238,6 +235,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
+        if (this.error?.fatal) return;
         if (this.newMessageTextContent.trim() === '') {
             this.stateStore.dispatchAndThen(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE)).catch(() => this.scrollToBottom('smooth'));
             return;
@@ -570,5 +568,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         if (event.fromState === 'start' && event.toState === 'end') {
             this.shouldShowEmptyMessageError = false;
         }
+    }
+
+    getConvertedErrorMap() {
+        if (this.error?.paramsMap) {
+            return Object.fromEntries(this.error.paramsMap.entries());
+        }
+        return null;
     }
 }

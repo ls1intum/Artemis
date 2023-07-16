@@ -197,6 +197,9 @@ export class IrisStateStore implements OnDestroy {
                 }
             }
             if (!newMessage) {
+                if (castedAction.timeoutId !== null) {
+                    clearTimeout(castedAction.timeoutId);
+                }
                 return {
                     ...state,
                     isLoading: true,
