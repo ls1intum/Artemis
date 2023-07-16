@@ -998,45 +998,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         return asList(textSubmission1, textSubmission2);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTextBlockSavePreservesClusteringInformation() throws Exception {
-        // TODO: check if this test is still useful
-
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
-
-        assertThat(textSubmissionWithoutAssessment.getBlocks()).isNotEmpty()
-                .allSatisfy(block -> assertThat(block).isEqualToIgnoringGivenFields(blocksSubmission1.get(block.getId()), "submission"));
-
-        assertThat(textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId())).isNotEmpty()
-                .allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-
-        final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
-            var newBlock = new TextBlock();
-            newBlock.setText(oldBlock.getText());
-            newBlock.setStartIndex(oldBlock.getStartIndex());
-            newBlock.setEndIndex(oldBlock.getEndIndex());
-            newBlock.setId(oldBlock.getId());
-            return newBlock;
-        }).collect(Collectors.toSet());
-
-        final TextAssessmentDTO dto = new TextAssessmentDTO();
-        dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
-        dto.setFeedbacks(new ArrayList<>());
-
-        request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
-
-        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-    }
-
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = AssessmentType.class, names = { "SEMI_AUTOMATIC", "MANUAL" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
