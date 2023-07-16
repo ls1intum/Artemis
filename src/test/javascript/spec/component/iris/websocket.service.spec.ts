@@ -16,6 +16,7 @@ import {
     mockWebsocketUnknownError,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
 
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
@@ -96,11 +97,10 @@ describe('IrisWebsocketService', () => {
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
 
-        expect(dispatchSpy).toHaveBeenCalledWith(
-            new ConversationErrorOccurredAction(IrisErrorMessageKey.NO_MODEL_AVAILABLE, {
-                model: 'gpt-4',
-            } as Map<string, any>),
-        );
+        const map = new Map<string, any>();
+        map.set('model', 'gpt-4');
+
+        expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.NO_MODEL_AVAILABLE, map));
         expect(dispatchSpy).toHaveBeenCalledTimes(2); // Include the existing dispatch count
     }));
 
@@ -115,7 +115,7 @@ describe('IrisWebsocketService', () => {
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
 
-        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new ActiveConversationMessageLoadedAction(mockWebsocketServerMessage.message));
+        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new ActiveConversationMessageLoadedAction(mockWebsocketServerMessage.message!));
         expect(dispatchSpy).toHaveBeenCalledTimes(2);
         flush();
     }));
@@ -131,7 +131,7 @@ describe('IrisWebsocketService', () => {
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
 
-        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new StudentMessageSentAction(mockWebsocketClientMessage.message, 1));
+        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new StudentMessageSentAction(mockWebsocketClientMessage.message as IrisClientMessage, 1));
         flush();
     }));
 });

@@ -155,7 +155,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
             if (state.error?.key == IrisErrorMessageKey.EMPTY_MESSAGE) {
-                console.log('aa');
                 this.shouldShowEmptyMessageError = true;
                 this.fadeState = 'start';
             }

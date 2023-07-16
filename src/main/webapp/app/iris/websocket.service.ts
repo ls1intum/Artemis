@@ -9,7 +9,7 @@ import {
     StudentMessageSentAction,
     isSessionReceivedAction,
 } from 'app/iris/state-store.model';
-import { IrisClientMessage, IrisServerMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
@@ -26,7 +26,7 @@ export enum IrisWebsocketMessageType {
  */
 export class IrisWebsocketDTO {
     type: IrisWebsocketMessageType;
-    message?: IrisServerMessage | IrisClientMessage;
+    message?: IrisMessage;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
 }

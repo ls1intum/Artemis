@@ -7,6 +7,9 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisWebsocketDTO, IrisWebsocketMessageType } from 'app/iris/websocket.service';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
+const map = new Map<string, any>();
+map.set('model', 'gpt-4');
+
 export const mockMessageContent = {
     textContent: 'Hello, world!',
     type: IrisMessageContentType.TEXT,
@@ -40,9 +43,7 @@ export const mockWebsocketClientMessage = {
 export const mockWebsocketKnownError = {
     type: IrisWebsocketMessageType.ERROR,
     errorTranslationKey: IrisErrorMessageKey.NO_MODEL_AVAILABLE,
-    translationParams: {
-        model: 'gpt-4',
-    },
+    translationParams: map,
 } as IrisWebsocketDTO;
 
 export const mockWebsocketUnknownError = {
