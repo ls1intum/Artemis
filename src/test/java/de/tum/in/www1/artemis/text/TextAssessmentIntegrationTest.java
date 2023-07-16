@@ -88,9 +88,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ExamRepository examRepository;
 
     @Autowired
-    private FeedbackConflictRepository feedbackConflictRepository;
-
-    @Autowired
     private AutomaticTextFeedbackService automaticTextFeedbackService;
 
     @Autowired
@@ -147,7 +144,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         int submissionCount = 2;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
-        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
+        var textBlocks = TextExerciseFactory.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
 
         // Create Exercise to save blocks & submissions
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
@@ -210,8 +207,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
-        StudentParticipation participationWithoutAssessment = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
+        StudentParticipation participationWithoutAssessment = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
                 StudentParticipation.class);
 
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
@@ -228,16 +224,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepo.save(result);
-        StudentParticipation participation = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.LOCKED,
-                StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForNonExistingSubmission() throws Exception {
-        StudentParticipation participation = request.get("/api/participations/1/submissions/345395769256365/for-text-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-submissions/345395769256365/for-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
     }
 
@@ -278,9 +272,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        StudentParticipation participation = request.get(
-                "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class, params);
+        StudentParticipation participation = request.get("/api/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class, params);
 
         assertThat(participation.getResults()).isNotNull().contains(storedResult);
     }
@@ -294,24 +286,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        request.get("/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.FORBIDDEN,
-                TextSubmission.class, params);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
-        TextSubmission submission = ParticipationFactory.generateTextSubmission("asdf", null, true);
-        submission = (TextSubmission) participationUtilService.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, TEST_PREFIX + "student1",
-                TEST_PREFIX + "tutor1");
-        Result storedResult = submission.getResultForCorrectionRound(0);
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("resultId", String.valueOf(storedResult.getId()));
-        long randomId = 12534;
-
-        TextSubmission returnedSubmission = request.get("/api/participations/" + randomId + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.BAD_REQUEST,
-                TextSubmission.class, params);
-        assertThat(returnedSubmission).isNull();
+        request.get("/api/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, TextSubmission.class, params);
     }
 
     @Test
@@ -374,8 +349,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
 
         // Get Text Submission and Complaint
-        request.get("/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class);
+        request.get("/api/participations/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
 
         // Accept Complaint and update Assessment
@@ -1041,9 +1015,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 "/api/participations/" + submission1stRequest.getParticipation().getId() + "/results/" + submission1stRequest.getLatestResult().getId() + "/submit-text-assessment",
                 textAssessmentDTO, Result.class, HttpStatus.OK);
 
-        Participation participation2ndRequest = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
-                Participation.class, params);
+        Participation participation2ndRequest = request.get("/api/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
         TextSubmission submission2ndRequest = (TextSubmission) (participation2ndRequest).getSubmissions().iterator().next();
         var blocksFrom2ndRequest = submission2ndRequest.getBlocks();
         assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
@@ -1064,9 +1036,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        Participation participation = request.get(
-                "/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/for-text-assessment",
-                HttpStatus.OK, Participation.class, params);
+        Participation participation = request.get("/api/text-submissions/" + textSubmissions.get(0).getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
         final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
         final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
 
@@ -1147,119 +1117,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void retrieveConflictingTextSubmissions() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
-        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/"
-                + textSubmissions.get(0).getId() + "/feedbacks/" + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.OK,
-                TextSubmission.class);
-
-        assertThat(conflictingTextSubmissions).hasSize(1);
-        TextSubmission conflictingTextSubmission = conflictingTextSubmissions.get(0);
-        assertThat(conflictingTextSubmission).isEqualTo(textSubmissions.get(1));
-        assertThat(conflictingTextSubmission.getParticipation()).isNotNull();
-        assertThat(conflictingTextSubmission.getLatestResult()).isEqualTo(textSubmissions.get(1).getLatestResult());
-        assertThat(conflictingTextSubmission.getBlocks()).isNotNull();
-        assertThat(conflictingTextSubmission.getLatestResult().getFeedbacks().get(0)).isEqualTo(textSubmissions.get(1).getLatestResult().getFeedbacks().get(0));
-        assertThat(conflictingTextSubmission.getLatestResult().getFeedbacks().get(0).getResult()).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void retrieveConflictingTextSubmissions_wrongParticipationId() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
-        long randomId = 54234;
-        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + randomId + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
-                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
-
-        assertThat(conflictingTextSubmissions).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
-        textExercise.setAssessmentType(AssessmentType.MANUAL);
-        exerciseRepo.save(textExercise);
-        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/"
-                + textSubmissions.get(0).getId() + "/feedbacks/" + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts",
-                HttpStatus.BAD_REQUEST, TextSubmission.class);
-        assertThat(conflictingTextSubmissions).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
-        request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
-                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.FORBIDDEN, TextSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void retrieveConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
-        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/123/feedbacks/"
-                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
-        assertThat(conflictingTextSubmissions).as("passed submission should not be found").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void solveFeedbackConflict_tutor() throws Exception {
-        FeedbackConflict feedbackConflict = solveFeedbackConflict(HttpStatus.OK);
-        assertThat(feedbackConflict).isNotNull();
-        assertThat(feedbackConflict.getSolvedAt()).isNotNull();
-        assertThat(feedbackConflict.getConflict()).isFalse();
-        assertThat(feedbackConflict.getDiscard()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void solveFeedbackConflict_otherTutor() throws Exception {
-        solveFeedbackConflict(HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void solveFeedbackConflict_instructor() throws Exception {
-        solveFeedbackConflict(HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
-    void solveFeedbackConflict_forbiddenTutor() throws Exception {
-        solveFeedbackConflict(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void solveFeedbackConflict_forNonExistingConflict() throws Exception {
-        prepareTextSubmissionsWithFeedbackAndConflict();
-
-        FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/2/solve", null, FeedbackConflict.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void solveFeedbackConflict_wrongExerciseId() throws Exception {
-        prepareTextSubmissionsWithFeedbackAndConflict();
-        long randomId = 57456;
-        FeedbackConflict feedbackConflict = request.postWithResponseBody(
-                "/api/exercises/" + randomId + "/feedback-conflicts/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve", null, FeedbackConflict.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
-    }
-
-    private FeedbackConflict solveFeedbackConflict(HttpStatus expectedStatus) throws Exception {
-        FeedbackConflict feedbackConflict = prepareTextSubmissionsWithFeedbackAndConflictGetConflict();
-        return request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/" + feedbackConflict.getId() + "/solve", null, FeedbackConflict.class,
-                expectedStatus);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1448,54 +1305,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
         verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
-    }
-
-    @NotNull
-    private List<TextSubmission> prepareTextSubmissionsWithFeedbackAndConflict() {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedback();
-        TextSubmission textSubmission1 = textSubmissions.get(0);
-        TextSubmission textSubmission2 = textSubmissions.get(1);
-        prepareFeedbackConflict(textSubmission1, textSubmission2);
-        return asList(textSubmission1, textSubmission2);
-    }
-
-    @NotNull
-    private FeedbackConflict prepareTextSubmissionsWithFeedbackAndConflictGetConflict() {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedback();
-        TextSubmission textSubmission1 = textSubmissions.get(0);
-        TextSubmission textSubmission2 = textSubmissions.get(1);
-        return prepareFeedbackConflict(textSubmission1, textSubmission2);
-    }
-
-    @NotNull
-    private List<TextSubmission> prepareTextSubmissionsWithFeedback() {
-        TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is first submission's first sentence.", Language.ENGLISH, true);
-        TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("This is second submission's first sentence.", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
-        textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
-
-        final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(42).automatic();
-        final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(43).automatic();
-        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
-        textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
-
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D).reference(textBlock2.getId());
-        textSubmission1 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1",
-                TEST_PREFIX + "tutor1", List.of(feedback1));
-        textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
-                TEST_PREFIX + "tutor2", List.of(feedback2));
-
-        return asList(textSubmission1, textSubmission2);
-    }
-
-    @NotNull
-    private FeedbackConflict prepareFeedbackConflict(TextSubmission textSubmission1, TextSubmission textSubmission2) {
-        FeedbackConflict feedbackConflict = ParticipationFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission1.getLatestResult().getFeedbacks().get(0),
-                textSubmission2.getLatestResult().getFeedbacks().get(0));
-        feedbackConflictRepository.save(feedbackConflict);
-
-        return feedbackConflict;
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,

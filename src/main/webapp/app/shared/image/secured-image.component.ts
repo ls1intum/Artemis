@@ -119,7 +119,7 @@ export class SecuredImageComponent implements OnChanges, OnInit {
                 } else {
                     this.endLoadingProcess.emit(ImageLoadingStatus.ERROR);
                 }
-                return error;
+                throw error;
             }),
         );
     }

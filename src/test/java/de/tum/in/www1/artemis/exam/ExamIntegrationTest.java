@@ -19,10 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -59,7 +56,6 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFa
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -203,9 +199,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
@@ -1305,7 +1298,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
 
-        QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(quizExercise);
 
@@ -1381,6 +1374,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithChannel() throws Exception {
+        Course course = courseUtilService.createCourse();
+        Exam exam = examUtilService.addExam(course);
+        Channel examChannel = examUtilService.addExamChannel(exam, "test");
+
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
+        assertThat(examChannelAfterDelete).isEmpty();
     }
 
     @Test
@@ -2197,7 +2203,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 if (exercise instanceof QuizExercise quizExercise) {
                     var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
                     for (var quizQuestion : quizQuestions) {
-                        var submittedAnswer = quizExerciseUtilService.generateSubmittedAnswerFor(quizQuestion, true);
+                        var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
                         quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());
@@ -2234,9 +2240,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
                 Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true, 1);
         gradingScale.setExam(exam);
-        gradingScaleRepository.save(gradingScale);
+        gradingScale = gradingScaleRepository.save(gradingScale);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        waitForParticipantScores();
 
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
@@ -2449,9 +2455,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Make sure delete also works if so many objects have been created before
-        await().until(() -> participantScoreScheduleService.isIdle());
+        waitForParticipantScores();
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam.getId())).isEmpty();
+    }
+
+    private void waitForParticipantScores() {
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(() -> participantScoreScheduleService.isIdle());
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
@@ -3405,6 +3416,23 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         final Exam examC = ExamFactory.generateTestExam(course1);
         examC.setNumberOfCorrectionRoundsInExam(1);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "A,A,B,C", "A,B,C,C", "A,A,B,B" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ProgrammingExercise exercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        ProgrammingExercise exercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+
+        exercise1.setShortName(shortName1);
+        exercise2.setShortName(shortName2);
+        exercise1.setTitle(title1);
+        exercise2.setTitle(title2);
+
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test

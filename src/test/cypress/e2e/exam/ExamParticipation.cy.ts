@@ -12,7 +12,7 @@ import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users }
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
-const textFixtureAlternative = 'loremIpsum-alternative.txt';
+const textFixtureShort = 'loremIpsum-short.txt';
 
 describe('Exam participation', () => {
     let course: Course;
@@ -85,7 +85,7 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
+                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
                 if (exercise.type === EXERCISE_TYPE.Text) {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
@@ -179,11 +179,11 @@ describe('Exam participation', () => {
             examStartEnd.clickContinue();
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             textExerciseEditor.clearSubmission(textExercise.id);
-            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureAlternative);
+            examParticipation.makeTextExerciseSubmission(textExercise.id, textFixtureShort);
             examParticipation.clickSaveAndContinue();
 
             examParticipation.handInEarly();
-            examParticipation.verifyTextExerciseOnFinalPage(textFixtureAlternative);
+            examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
