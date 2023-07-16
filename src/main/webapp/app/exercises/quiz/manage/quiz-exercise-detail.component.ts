@@ -272,10 +272,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         this.exerciseService.validateDate(this.quizExercise);
-        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
+        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? undefined : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
+            // validate release < start and start + duration > due
             const startTime = dayjs(batch.startTime);
-            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? null);
+            const endTime = startTime.add(dayjs.duration(this.duration.minutes, 'minutes')).add(dayjs.duration(this.duration.seconds, 'seconds'));
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
     }
 
@@ -506,7 +508,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     onDurationChange(): void {
         if (!this.isExamMode) {
-            const duration = dayjs.duration(this.duration);
+            const duration = dayjs.duration(this.duration.minutes, 'minutes').add(this.duration.seconds, 'seconds');
             this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
             this.updateDuration();
             this.cacheValidation();
