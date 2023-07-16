@@ -52,7 +52,7 @@ describe('Exam assessment', () => {
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(3, 'minutes');
+            examEnd = dayjs().add(1, 'minutes');
             prepareExam(course, examEnd, EXERCISE_TYPE.Programming);
         });
 
@@ -188,7 +188,7 @@ function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: EXERCISE_TY
                 additionalData = { submission: partiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
                 break;
             case EXERCISE_TYPE.Text:
-                additionalData = { textFixture: 'loremIpsum.txt' };
+                additionalData = { textFixture: 'loremIpsum-short.txt' };
                 break;
             case EXERCISE_TYPE.Quiz:
                 additionalData = { quizExerciseID: 0 };
