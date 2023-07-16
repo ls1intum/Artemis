@@ -131,7 +131,7 @@ describe('IrisWebsocketService', () => {
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
 
-        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new StudentMessageSentAction(mockWebsocketClientMessage.message as IrisClientMessage, 1));
+        expect(dispatchSpy).toHaveBeenNthCalledWith(2, new StudentMessageSentAction(mockWebsocketClientMessage.message as IrisClientMessage, setTimeout(() => {})));
         flush();
     }));
 });
