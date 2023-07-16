@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -62,10 +63,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final ExamDateService examDateService;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ExamDateService examDateService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -73,6 +76,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.plagiarismService = plagiarismService;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -307,7 +311,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, user)) {
+        if (!examDateService.isExerciseWorkingPeriodOver(modelingExercise, participation)) {
             throw new AccessForbiddenException();
         }
 

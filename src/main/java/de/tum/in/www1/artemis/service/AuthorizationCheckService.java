@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -649,23 +648,6 @@ public class AuthorizationCheckService {
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
-    }
-
-    /**
-     * Checks if the user is allowed to see the exam result. Returns true if
-     * - the current user is at least teaching assistant in the course
-     * - OR if the exercise is not part of an exam
-     * - OR if the exam has not ended
-     * - OR if the exam has already ended and the results were published
-     *
-     * @param exercise - Exercise that the result is requested for
-     * @param user     - User that requests the result
-     * @return true if user is allowed to see the result, false otherwise
-     */
-    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
-        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
-                || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
-                        || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 
     /**

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -103,6 +104,8 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final ExamDateService examDateService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -110,7 +113,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, ConversationService conversationService) {
+            ChannelService channelService, ChannelRepository channelRepository, ConversationService conversationService, ExamDateService examDateService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -135,6 +138,7 @@ public class TextExerciseResource {
         this.channelService = channelService;
         this.conversationService = conversationService;
         this.channelRepository = channelRepository;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -329,7 +333,7 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
+        if (!examDateService.isExerciseWorkingPeriodOver(textExercise, participation)) {
             throw new AccessForbiddenException();
         }
 
