@@ -63,6 +63,7 @@ public class AthenaFeedbackSuggestionsService {
      *
      * @param exercise   the exercise the suggestions are fetched for
      * @param submission the submission the suggestions are fetched for
+     * @return a list of feedback suggestions
      */
     public List<TextBlockRef> getFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingError {
         log.debug("Start Athena Feedback Suggestions Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
