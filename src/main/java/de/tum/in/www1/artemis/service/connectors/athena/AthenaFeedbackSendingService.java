@@ -49,7 +49,7 @@ public class AthenaFeedbackSendingService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    static class RequestDTO {
+    private static class RequestDTO {
 
         public TextExerciseDTO exercise;
 
@@ -57,6 +57,9 @@ public class AthenaFeedbackSendingService {
 
         public List<TextFeedbackDTO> feedbacks;
 
+        /**
+         * Connect feedback and text block to find the correct start and end indexes for transfer when constructing the DTO:
+         */
         RequestDTO(@NotNull TextExercise exercise, @NotNull TextSubmission submission, @NotNull List<Feedback> feedbacks, TextBlockRepository textBlockRepository) {
             this.exercise = TextExerciseDTO.of(exercise);
             this.submission = TextSubmissionDTO.of(exercise.getId(), submission);
