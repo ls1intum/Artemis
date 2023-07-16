@@ -29,6 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -754,9 +755,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     /**
      * checking if at least one of Online Editor or Offline Ide is selected
      */
-    validIdeSelection() {
-        return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
-    }
+    validIdeSelection = () => {
+        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+    };
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
@@ -785,14 +786,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         if (forStep >= 4) {
+            this.validateExerciseIdeSelection(validationErrorReasons);
+        }
+
+        if (forStep >= 5) {
             this.validateExercisePoints(validationErrorReasons);
             this.validateExerciseBonusPoints(validationErrorReasons);
             this.validateExerciseSCAMaxPenalty(validationErrorReasons);
             this.validateExerciseSubmissionLimit(validationErrorReasons);
-        }
-
-        if (forStep >= 5) {
-            this.validateExerciseIdeSelection(validationErrorReasons);
         }
 
         return validationErrorReasons;
@@ -1001,25 +1002,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
-    getInfoStepInputs() {
+    getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
+            isImportFromFile: this.isImportFromFile,
+            showSummary: false,
+            isEdit: this.isEdit,
+            isExamMode: this.isExamMode,
+            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
-        };
-    }
-
-    getLanguageStepInputs() {
-        return {
             appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
             withDependencies: this.withDependencies,
@@ -1032,31 +1034,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             projectTypes: this.projectTypes,
             selectedProjectType: this.selectedProjectType,
             onProjectTypeChange: this.projectTypeChanged,
-        };
-    }
-
-    getGradingStepInputs() {
-        return {
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
-        };
-    }
-
-    getProblemStepInputs() {
-        return {
             problemStatementLoaded: this.problemStatementLoaded,
             templateParticipationResultLoaded: this.templateParticipationResultLoaded,
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
-            selectedProjectType: this.selectedProjectType,
+            isImportFromExistingExercise: this.isImportFromExistingExercise,
+            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
         };
     }
 }

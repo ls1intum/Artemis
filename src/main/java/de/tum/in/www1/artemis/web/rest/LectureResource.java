@@ -192,8 +192,8 @@ public class LectureResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
+        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
         lectures.forEach(lectureService::filterActiveAttachmentUnits);
-        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -208,11 +208,13 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {
             lecture.setChannelName(lectureChannel.getName());
         }
-        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+
         return ResponseEntity.ok(lecture);
     }
 
@@ -268,7 +270,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
@@ -289,7 +291,7 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         lectureService.filterActiveAttachmentUnits(lecture);

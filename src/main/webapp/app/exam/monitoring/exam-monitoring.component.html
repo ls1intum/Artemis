@@ -1,7 +1,7 @@
 <div>
     <div *ngIf="exam">
         <!-- Exam Monitoring info bar -->
-        <div class="course-info-bar">
+        <div class="course-info-bar mt-0">
             <div class="row">
                 <div class="col general-info d-flex justify-content-between">
                     <div class="d-flex flex-row align-items-center">
@@ -52,14 +52,10 @@
         </div>
 
         <!-- Exam Monitoring sections -->
-        <div class="tab-bar tab-bar-overview ps-3" id="monitoring-tab-bar">
-            <div class="col-12">
-                <div>
-                    <div *ngFor="let section of this.sections" id="monitoring-{{ section }}-tab" class="tab-item" [routerLink]="section" routerLinkActive="active">
-                        <b jhiTranslate="artemisApp.examMonitoring.menu.{{ section }}.title">{{ section }}</b>
-                    </div>
-                </div>
-            </div>
+        <div class="tab-bar border-0 mb-0 pb-0" id="monitoring-tab-bar">
+            <a class="tab-link" *ngFor="let section of this.sections" id="monitoring-{{ section }}-tab" [routerLink]="section" routerLinkActive="active">
+                <span jhiTranslate="artemisApp.examMonitoring.menu.{{ section }}.title">{{ section }}</span>
+            </a>
         </div>
         <div *ngIf="this.examMonitoringGloballyEnabled && exam.monitoring" class="position-relative">
             <router-outlet></router-outlet>
