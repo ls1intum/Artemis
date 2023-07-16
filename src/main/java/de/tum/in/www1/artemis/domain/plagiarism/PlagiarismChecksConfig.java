@@ -27,10 +27,13 @@ public class PlagiarismChecksConfig extends DomainObject {
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
 
+    @Column(name = "similarity_threshold")
     private float similarityThreshold;
 
+    @Column(name = "minimum_score")
     private int minimumScore;
 
+    @Column(name = "minimum_size")
     private int minimumSize;
 
     public Exercise getExercise() {

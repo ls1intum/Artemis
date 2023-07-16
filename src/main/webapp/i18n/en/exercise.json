@@ -134,7 +134,8 @@
             },
             "categories": "Categories",
             "noCategory": "No Category",
-            "participations": "Participation",
+            "participation": "Participation",
+            "participations": "Participations",
             "submissions": "Submissions",
             "teams": "Teams",
             "export": {

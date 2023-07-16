@@ -19,7 +19,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { faAngleDown, faAngleUp, faFilter, faMagnifyingGlass, faPlayCircle, faSortNumericDown, faSortNumericUp, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';

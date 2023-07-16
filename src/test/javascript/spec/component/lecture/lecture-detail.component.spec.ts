@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
@@ -36,6 +37,9 @@ describe('LectureDetailComponent', () => {
         const mockLecture = new Lecture();
         mockLecture.title = 'Test Lecture';
         mockLecture.description = 'Test Description';
+        mockLecture.visibleDate = dayjs();
+        mockLecture.startDate = dayjs();
+        mockLecture.endDate = dayjs();
 
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
 
