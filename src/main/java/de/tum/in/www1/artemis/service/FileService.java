@@ -1040,11 +1040,15 @@ public class FileService implements DisposableBean {
 
     /**
      * <a href="https://stackoverflow.com/a/15075907">Removes illegal characters for filenames from the string</a>
+     * This method will make sure that path traversal is not possible, because illegal characters or character sequences such as '/', '\\' and '..' will be removed
+     * Escaping such sequences is also not possible, because only a-z, A-Z, 0-9, '-', '.', and '_' are allowed
      *
      * @param string the string with the characters
      * @return stripped string
      */
     public static String removeIllegalCharacters(String string) {
+        // First replace all characters that are not (^) a-z, A-Z, 0-9, '-', '.' with '_'
+        // Then replace multiple points, e.g. '...' with one point '.'
         return string.replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\.+", ".");
     }
 
