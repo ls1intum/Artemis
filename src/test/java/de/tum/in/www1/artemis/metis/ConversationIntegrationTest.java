@@ -2,23 +2,51 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "cvtest";
+
+    private final TextExerciseUtilService textExerciseUtilService;
+
+    private final ExerciseUtilService exerciseUtilService;
+
+    private final ExamUtilService examUtilService;
+
+    private final LectureUtilService lectureUtilService;
+
+    @Autowired
+    public ConversationIntegrationTest(TextExerciseUtilService textExerciseUtilService, ExerciseUtilService exerciseUtilService, ExamUtilService examUtilService,
+            LectureUtilService lectureUtilService) {
+        this.textExerciseUtilService = textExerciseUtilService;
+        this.exerciseUtilService = exerciseUtilService;
+        this.examUtilService = examUtilService;
+        this.lectureUtilService = lectureUtilService;
+    }
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -107,6 +135,31 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
         conversationRepository.deleteById(channel2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnChannelIfExerciseOrLectureOrExamHidden_asTutor() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "tutor1");
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "tutor1");
+
+        List<ConversationDTO> channelsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        assertThat(channelsOfUser).hasSize(6);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnChannelIfExerciseOrLectureOrExamHidden_asStudent() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
+        List<Long> visibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
+
+        List<ConversationDTO> channelsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        assertThat(channelsOfUser).hasSize(3);
+        channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleChannelIds));
     }
 
     @Test
@@ -323,6 +376,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
         assertThat(participant.orElseThrow().getIsHidden()).isEqualTo(expectedHiddenStatus);
+    }
+
+    private List<Long> createExerciseAndExamAndLectureChannels(Course course, ZonedDateTime visibleFrom, String userLoginWithoutPrefix) {
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, visibleFrom, visibleFrom, visibleFrom);
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+        addUsersToConversation(exerciseChannel.getId(), userLoginWithoutPrefix);
+
+        Exam exam = examUtilService.addExam(course, visibleFrom, visibleFrom, visibleFrom);
+        Channel examChannel = examUtilService.addExamChannel(exam, "test");
+        addUsersToConversation(examChannel.getId(), userLoginWithoutPrefix);
+
+        Lecture lecture = lectureUtilService.createLecture(course, visibleFrom);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+        addUsersToConversation(lectureChannel.getId(), userLoginWithoutPrefix);
+
+        return List.of(exerciseChannel.getId(), examChannel.getId(), lectureChannel.getId());
     }
 
 }

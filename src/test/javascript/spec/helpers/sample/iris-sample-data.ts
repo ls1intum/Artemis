@@ -24,6 +24,11 @@ export const mockServerMessage = {
     sentAt: dayjs(),
 } as IrisServerMessage;
 
+export const mockWebsocketMessage = {
+    type: IrisWebsocketMessageType.MESSAGE,
+    message: mockServerMessage,
+} as IrisWebsocketDTO;
+
 export const mockClientMessage = {
     sender: IrisSender.USER,
     content: [mockMessageContent],

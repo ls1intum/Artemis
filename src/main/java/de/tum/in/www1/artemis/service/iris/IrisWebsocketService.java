@@ -76,7 +76,7 @@ public class IrisWebsocketService {
             this.message = message;
             this.errorMessage = null;
             this.errorTranslationKey = null;
-            this.translationParams = Collections.emptyMap();
+            this.translationParams = null;
         }
 
         public IrisWebsocketDTO(Throwable throwable) {
@@ -84,7 +84,7 @@ public class IrisWebsocketService {
             this.message = null;
             this.errorMessage = throwable.getMessage();
             this.errorTranslationKey = throwable instanceof IrisException irisException ? irisException.getTranslationKey() : null;
-            this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : Collections.emptyMap();
+            this.translationParams = throwable instanceof IrisException irisException ? irisException.getTranslationParams() : null;
         }
 
         public IrisWebsocketMessageType getType() {

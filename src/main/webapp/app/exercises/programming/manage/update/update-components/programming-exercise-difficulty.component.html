@@ -1,7 +1,63 @@
-<div class="form-group">
-    <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
-    <div>
-        <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+<section class="mb-5">
+    <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle">Difficulty</span></h1>
+    <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepMessage">Set difficulty.</span></p>
+
+    <div class="form-group">
+        <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+        <div>
+            <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+        </div>
     </div>
-</div>
-<jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="isImportFromExistingExercise"></jhi-team-config-form-group>
+
+    <div class="form-group">
+        <jhi-team-config-form-group
+            class="form-element"
+            [exercise]="programmingExercise"
+            [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise"
+        ></jhi-team-config-form-group>
+    </div>
+
+    <div class="form-group">
+        <div class="form-check">
+            <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
+                <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
+                <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
+                <fa-icon
+                    *ngIf="!programmingExerciseCreationConfig.validIdeSelection()"
+                    [icon]="faQuestionCircle"
+                    class="text-danger"
+                    [placement]="'top'"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
+                ></fa-icon>
+            </label>
+        </div>
+
+        <div class="form-check" *ngIf="ProjectType.XCODE !== programmingExerciseCreationConfig.selectedProjectType">
+            <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
+                <input class="form-check-input" type="checkbox" name="allowOnlineEditor" id="field_allowOnlineEditor" [(ngModel)]="programmingExercise.allowOnlineEditor" checked />
+                <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
+                <fa-icon
+                    *ngIf="!programmingExerciseCreationConfig.validIdeSelection()"
+                    [icon]="faQuestionCircle"
+                    class="text-danger"
+                    [placement]="'top'"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
+                ></fa-icon>
+            </label>
+        </div>
+
+        <div class="form-check" *ngIf="programmingExerciseCreationConfig.publishBuildPlanUrlAllowed">
+            <label class="form-check-label" for="field_publishBuildPlanUrl">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="publishBuildPlanUrl"
+                    id="field_publishBuildPlanUrl"
+                    [(ngModel)]="programmingExercise.publishBuildPlanUrl"
+                    checked
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
+            </label>
+        </div>
+    </div>
+</section>
