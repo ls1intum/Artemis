@@ -2,8 +2,29 @@ import { Subscription } from 'rxjs';
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
+import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+
+/**
+ * The IrisWebsocketMessageType defines the type of a message sent over the websocket.
+ */
+export enum IrisWebsocketMessageType {
+    MESSAGE = 'MESSAGE',
+    ERROR = 'ERROR',
+}
+
+/**
+ * The IrisWebsocketDTO is the data transfer object for messages sent over the websocket.
+ * It either contains an IrisMessage or an error message.
+ */
+export class IrisWebsocketDTO {
+    type: IrisWebsocketMessageType;
+    message?: IrisServerMessage;
+    errorMessage?: string;
+    errorTranslationKey?: string;
+    translationParams?: Map<string, any>;
+}
 
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
@@ -57,8 +78,13 @@ export class IrisWebsocketService implements OnDestroy {
 
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisServerMessage) => {
-            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
+            if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
+                // TODO: Use websocketResponse.errorTranslationKey and websocketResponse.translationParams
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+            } else if (websocketResponse.type === IrisWebsocketMessageType.MESSAGE) {
+                this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(websocketResponse.message!));
+            }
         });
     }
 }

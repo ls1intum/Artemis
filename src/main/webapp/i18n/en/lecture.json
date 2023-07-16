@@ -29,6 +29,7 @@
             "description": "Description",
             "startDate": "Start Date",
             "endDate": "End Date",
+            "visibleDate": "Visible from",
             "course": "Course",
             "detail": {
                 "title": "Lecture"
