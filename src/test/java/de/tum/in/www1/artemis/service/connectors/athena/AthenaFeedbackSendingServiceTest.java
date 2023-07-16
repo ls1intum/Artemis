@@ -7,28 +7,20 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-class AthenaFeedbackSendingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
-
-    @Autowired
-    private AthenaRequestMockProvider athenaRequestMockProvider;
+class AthenaFeedbackSendingServiceTest extends AthenaTest {
 
     @Mock
     private TextBlockRepository textBlockRepository;
@@ -50,35 +42,17 @@ class AthenaFeedbackSendingServiceTest extends AbstractSpringIntegrationBambooBi
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = new TextExercise();
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC); // needed for feedback suggestions
-        textExercise.setId(1L);
-        textExercise.setTitle("Test Exercise");
-        textExercise.setMaxPoints(10.0);
+        textExercise = createTextExercise();
 
-        textSubmission = new TextSubmission();
-        textSubmission.setId(2L);
-        textSubmission.setText("Test - This is what the feedback references - Submission");
+        textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
-        textBlock = new TextBlock();
-        textBlock.setId("4");
-        textBlock.setStartIndex(7);
-        textBlock.setEndIndex(46);
-        textBlock.setText("This is what the feedback references");
-        textBlock.setSubmission(textSubmission);
+        textBlock = new TextBlock().startIndex(7).endIndex(46).text("This is what the feedback references").submission(textSubmission);
+        textBlock.computeId();
 
-        feedback = new Feedback();
+        feedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         feedback.setId(3L);
-        feedback.setType(FeedbackType.MANUAL);
-        feedback.setCredits(5.0);
-        feedback.setReference(textBlock.getId());
 
         when(textBlockRepository.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        athenaRequestMockProvider.reset();
     }
 
     @Test

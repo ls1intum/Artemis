@@ -5,23 +5,16 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
-class AthenaFeedbackSuggestionsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private AthenaRequestMockProvider athenaRequestMockProvider;
+class AthenaFeedbackSuggestionsServiceTest extends AthenaTest {
 
     @Autowired
     private AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
@@ -34,20 +27,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractSpringIntegrationBamb
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = new TextExercise();
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC); // needed for feedback suggestions
-        textExercise.setId(1L);
-        textExercise.setTitle("Test Exercise");
-        textExercise.setMaxPoints(10.0);
-
-        textSubmission = new TextSubmission();
-        textSubmission.setId(2L);
-        textSubmission.setText("This is a text submission");
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        athenaRequestMockProvider.reset();
+        textExercise = createTextExercise();
+        textSubmission = new TextSubmission(2L).text("This is a text submission");
     }
 
     @Test

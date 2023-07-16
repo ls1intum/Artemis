@@ -6,28 +6,17 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
-class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
-
-    @Autowired
-    private AthenaRequestMockProvider athenaRequestMockProvider;
+class AthenaSubmissionSendingServiceTest extends AthenaTest {
 
     @Mock
     private TextSubmissionRepository textSubmissionRepository;
@@ -45,21 +34,10 @@ class AthenaSubmissionSendingServiceTest extends AbstractSpringIntegrationBamboo
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = new TextExercise();
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC); // needed for feedback suggestions
-        textExercise.setId(1L);
-        textExercise.setTitle("Test Exercise");
-        textExercise.setMaxPoints(10.0);
-
-        textSubmission = new TextSubmission();
-        textSubmission.setId(2L);
+        textExercise = createTextExercise();
+        textSubmission = new TextSubmission(2L);
 
         when(textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId())).thenReturn(Set.of(textSubmission));
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        athenaRequestMockProvider.reset();
     }
 
     @Test
