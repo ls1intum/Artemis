@@ -82,7 +82,10 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
-        CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> irisWebsocketService.sendMessage(savedMessage));
+        savedMessage.setNonce(message.getNonce());
+        CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> {
+            irisWebsocketService.sendMessage(savedMessage);
+        });
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);

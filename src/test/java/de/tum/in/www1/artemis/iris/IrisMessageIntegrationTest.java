@@ -66,6 +66,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.setSentAt(ZonedDateTime.now());
+        messageToSend.setNonce(1453);
         messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
 
         irisRequestMockProvider.mockResponse("Hello World");
@@ -77,6 +78,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getHelpful()).isNull();
+        assertThat(irisMessage.getNonce()).isEqualTo(1453);
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());

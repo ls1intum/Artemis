@@ -267,12 +267,12 @@ describe('IrisStateStore', () => {
         expect(state2.error?.fatal).toBeTruthy();
     });
 
-    it('should not dispatch 2 StudentMessageSentActions with unique id', async () => {
+    it('should not dispatch 2 StudentMessageSentActions with unique nonce', async () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                id: 0,
+                nonce: 5,
             },
             timeoutId: null,
         };
@@ -291,7 +291,7 @@ describe('IrisStateStore', () => {
             messages: [
                 {
                     ...action1.message,
-                    id: 0,
+                    nonce: 5,
                 },
             ],
         });
@@ -300,7 +300,7 @@ describe('IrisStateStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
                 ...mockClientMessage,
-                id: 0,
+                nonce: 5,
             },
             timeoutId: null,
         };
@@ -314,6 +314,55 @@ describe('IrisStateStore', () => {
         const state2 = (await promise2) as MessageStoreState;
 
         expect(state2.messages).toHaveLength(1);
+    });
+
+    it('should  dispatch 2 StudentMessageSentActions with different nonces', async () => {
+        const action1: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                nonce: undefined,
+            },
+            timeoutId: null,
+        };
+
+        const obs1 = stateStore.getState();
+
+        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action1);
+
+        const state1 = (await promise1) as MessageStoreState;
+
+        expect(state1).toEqual({
+            ...mockState,
+            isLoading: true,
+            messages: [
+                {
+                    ...action1.message,
+                    nonce: undefined,
+                },
+            ],
+        });
+
+        const action2: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                nonce: 7,
+            },
+            timeoutId: null,
+        };
+
+        const obs2 = stateStore.getState();
+
+        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action2);
+
+        const state2 = (await promise2) as MessageStoreState;
+
+        expect(state2.messages).toHaveLength(2);
     });
 });
 

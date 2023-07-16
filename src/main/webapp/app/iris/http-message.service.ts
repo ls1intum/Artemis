@@ -24,6 +24,7 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityResponseType>}
      */
     createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
+        message.nonce = Math.floor(Math.random());
         return this.httpClient
             .post<IrisServerMessage>(
                 `${this.resourceUrl}/${sessionId}/messages`,
