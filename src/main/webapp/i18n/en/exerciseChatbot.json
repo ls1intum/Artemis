@@ -31,7 +31,7 @@
             "clearSession": {
                 "title": "Clear chat history",
                 "text": "Are you sure you want to clear the chat history?",
-                "submit": "Submit"
+                "submit": "Confirm"
             },
             "errors": {
                 "invalidSessionState": "Iris session state is invalid. It is impossible to send messages in this state.",
