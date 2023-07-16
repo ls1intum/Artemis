@@ -105,7 +105,7 @@ describe('Test exam participation', () => {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type == EXERCISE_TYPE.Programming) {
+                if (exercise.type === EXERCISE_TYPE.Programming) {
                     continue;
                 } else {
                     examNavigation.openExerciseOverview();
