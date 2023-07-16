@@ -169,9 +169,9 @@ public class UserResource {
      */
     @PutMapping("users/accept-iris")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setIrisAcceptedToTrue() {
+    public ResponseEntity<Void> setIrisAcceptedToTimestamp() {
         User user = userRepository.getUser();
-        if (user.isIrisAccepted() != null) {
+        if (user.getIrisAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();
         }
         userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
@@ -183,10 +183,10 @@ public class UserResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the flag's value as ZonedDateTime, or with status 404 (Not Found)
      */
-    @PutMapping("users/accept-iris")
+    @GetMapping("users/accept-iris")
     @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
         User user = userRepository.getUser();
-        return ResponseEntity.ok().body(user.isIrisAccepted());
+        return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
     }
 }

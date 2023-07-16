@@ -466,7 +466,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime isIrisAccepted() {
+    public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
     }
 }
