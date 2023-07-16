@@ -136,8 +136,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     ngOnInit() {
         this.userService.getIrisAcceptedAt().subscribe((res) => {
-            return (this.userAccepted = !!res);
+            this.userAccepted = !!res;
         });
+        console.log('initial accept: ', this.userAccepted);
         this.animateDots();
 
         // Set initializing flag to true and load the first message
@@ -156,12 +157,19 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.fadeState = 'start';
             }
         });
+        if (this.userAccepted) {
+            this.loadFirstMessage();
+        }
+        console.log('Init isFirst: ', this.isFirstMessage);
+        console.log('IMsg: ', this.messages);
 
         // Set initializing flag to false and focus on message textarea
         setTimeout(() => {
             this.isInitializing = false;
             this.messageTextarea.nativeElement.focus();
         }, 150);
+        console.log('user accept: ', this.userAccepted);
+        console.log('initial: ', this.isInitializing);
     }
 
     ngAfterViewInit() {
@@ -210,11 +218,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
         } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
         }
+        console.log(this.isFirstMessage);
+        console.log(this.messages);
     }
 
     /**
@@ -289,9 +299,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.userService.acceptIris().subscribe(() => {
             this.userAccepted = true;
         });
-        if (this.shouldLoadGreetingMessage) {
-            this.loadFirstMessage();
-        }
+        this.loadFirstMessage();
+        console.log('Permission: ', this.isFirstMessage);
+        console.log('PM: ', this.messages);
     }
 
     /**
