@@ -27,12 +27,6 @@
             <span class="text-body-secondary" *ngIf="!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED">{{
                 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate
             }}</span>
-            <span
-                class="text-body-secondary"
-                *ngIf="studentParticipation?.initializationState === InitializationState.FINISHED && !studentParticipation?.submissions?.[0]?.plagiarismDetected"
-            >
-                {{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}
-            </span>
             <span class="text-body-secondary" *ngIf="studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ">{{
                 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate
             }}</span>
