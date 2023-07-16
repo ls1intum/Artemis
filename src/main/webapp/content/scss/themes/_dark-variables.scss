@@ -151,6 +151,11 @@ $tooltip-color: $white;
 
 // === END BOOTSTRAP ===
 
+// Navigation Tab Bar
+$tab-bar-color: $gray-500;
+$tab-bar-color-hover: $gray-300;
+$tab-bar-color-active: lighten($primary, 20);
+
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
