@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
@@ -36,6 +36,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String TEST_PREFIX = "tutorialgroup";
 
+    private User instructor1;
+
+    private User tutor1;
+
+    private User student1;
+
+    private User student2;
+
+    private User student3;
+
+    private User student4;
+
     Long exampleOneTutorialGroupId;
 
     Long exampleTwoTutorialGroupId;
@@ -47,13 +59,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+
+        instructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
+        tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
+        User tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
+        student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
+        student2 = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow();
+        student3 = userRepository.findOneByLogin(testPrefix + "student3").orElseThrow();
+        student4 = userRepository.findOneByLogin(testPrefix + "student4").orElseThrow();
+
         // Add registration number to student 3
-        User student3 = userRepository.findOneByLogin(testPrefix + "student3").get();
         student3.setRegistrationNumber("3");
         userRepository.save(student3);
 
         // Add registration number to student 4
-        User student4 = userRepository.findOneByLogin(testPrefix + "student4").get();
         student4.setRegistrationNumber("4");
         userRepository.save(student4);
 
@@ -65,11 +84,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
-        exampleOneTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
-                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
+        exampleOneTutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
 
-        exampleTwoTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum2", 10, true, "LoremIpsum2",
-                Language.GERMAN.name(), userRepository.findOneByLogin(testPrefix + "tutor2").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student2").get())).getId();
+        exampleTwoTutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN.name(), tutor2, Set.of(student2)).getId();
+
         tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleOneTutorialGroupId));
         tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroupRepository.findByIdElseThrow(exampleTwoTutorialGroupId));
 
@@ -83,8 +103,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void testJustForInstructorEndpoints() throws Exception {
         request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
-                new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get(),
-                        "Lorem Ipsum", true),
+                new TutorialGroupResource.TutorialGroupUpdateDTO(
+                        tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow(), "Lorem Ipsum", true),
                 TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
         request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class,
@@ -124,7 +144,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var tutorialGroupTitle = request.get("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/title", HttpStatus.OK, String.class);
         // then
-        var title = tutorialGroupRepository.findById(exampleOneTutorialGroupId).get().getTitle();
+        var title = tutorialGroupRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         assertThat(tutorialGroupTitle).isEqualTo(title);
     }
 
@@ -156,10 +176,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
         var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, TEST_PREFIX + "tutor1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
-        var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().get();
+        var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(groupWhereTutor);
 
-        var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().get();
+        var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsHidden(groupWhereNotTutor);
     }
 
@@ -171,9 +191,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
-        var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().get();
+        var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(group1);
-        var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().get();
+        var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleTwoTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(group2);
     }
 
@@ -298,8 +318,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      */
     void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage, boolean useSingleEndpoint) throws Exception {
         // given
-        var tutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of()).getId();
+        var tutorialGroupId = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of()).getId();
         var sessionToSave = new ArrayList<TutorialGroupSession>();
         var date = firstAugustMonday;
         for (Integer att : attendance) {
@@ -317,7 +337,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
         else {
             tutorialGroup = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
-                    .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().get();
+                    .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().orElseThrow();
         }
 
         // then
@@ -358,7 +378,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
-        var existingTitle = tutorialGroupRepository.findById(exampleOneTutorialGroupId).get().getTitle();
+        var existingTitle = tutorialGroupRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         // given
         var tutorialGroup = buildTutorialGroupWithoutSchedule("tutor1");
         tutorialGroup.setTitle(existingTitle);
@@ -403,7 +423,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_asInstructor_shouldUpdateTutorialGroup() throws Exception {
         // given
-        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         var newRandomTitle = generateRandomTitle();
         existingTutorialGroup.setTitle(newRandomTitle);
 
@@ -420,7 +440,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAssignedTeachingAssistant_asInstructor_shouldUpdateTutorialGroupAndChannel() throws Exception {
         // given
-        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor2"));
 
         // when
@@ -443,15 +463,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
-        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         var originalTitle = existingTutorialGroup.getTitle() + "";
-        var existingGroupTwo = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleTwoTutorialGroupId).get();
+        var existingGroupTwo = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleTwoTutorialGroupId).orElseThrow();
         existingTutorialGroup.setTitle("  " + existingGroupTwo.getTitle() + " ");
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId,
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get().getTitle()).isEqualTo(originalTitle);
+        assertThat(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle()).isEqualTo(originalTitle);
         asserTutorialGroupChannelIsCorrectlyConfigured(existingTutorialGroup);
     }
 
@@ -504,13 +524,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerStudent_studentRegistered_shouldReturnNoContent() throws Exception {
-        // given
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         // when
         request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student1.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         // then
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student1);
 
     }
@@ -548,13 +566,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_studentNotRegistered_shouldReturnNoContent() throws Exception {
-        // given
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         // when
         request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student3.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         // then
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student3);
     }
 
@@ -569,8 +585,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
         // given
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         student3.setRegistrationNumber("number3");
         userRepository.saveAndFlush(student3);
 
@@ -590,16 +604,16 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         List<StudentDTO> notFoundStudents = request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register-multiple",
                 studentsToAdd, StudentDTO.class, HttpStatus.OK);
         // then
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, instructor1);
+        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, instructor1);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
         // remove registration of student 6 again
         // remove registration again
         var registration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, student3, INSTRUCTOR_REGISTRATION)
-                .get();
+                .orElseThrow();
         tutorialGroupRegistrationRepository.delete(registration);
     }
 
@@ -610,7 +624,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var freshTitleOne = "freshTitleOne";
         var freshTitleTwo = "freshTitleTwo";
 
-        var existingTitle = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get().getTitle();
+        var existingTitle = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle();
         var regNullStudent = new TutorialGroupRegistrationImportDTO(freshTitleOne, null);
         var regBlankStudent = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO("", "", "", ""));
         var regStudentPropertiesNull = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null));
@@ -634,7 +648,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null));
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
 
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
         assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), instructor1);
         assertTutorialGroupWithTitleExistsInDb(existingTitle);
@@ -644,28 +657,24 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importRegistrations_tutorialGroupTitleAndStudents_shouldCreateTutorialAndRegisterStudents() throws Exception {
         // given
-        var group1Id = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
+        var group1Id = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
 
-        var group2Id = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student2").get())).getId();
+        var group2Id = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student2)).getId();
 
-        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).get();
-        var group2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).get();
+        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
+        var group2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).orElseThrow();
 
         // we test with student1 that the student will be deregistered from the old tutorial group
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
         // we test with student3 that a previously unregistered student will be registered to an existing tutorial group
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         assertUserIsNotRegisteredInATutorialGroup(student3);
         // we test with student4 that a previously unregistered student will be registered to a fresh tutorial group
         var freshTitle = "freshTitle";
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
-        var student4 = userRepository.findOneByLogin(TEST_PREFIX + "student4").get();
         assertUserIsNotRegisteredInATutorialGroup(student4);
         // we test with student2 that a previously registered student will be registered to a fresh tutorial group
-        var student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
         assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student2);
 
         // student 1 from existing group1 to existing group 2
@@ -700,7 +709,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student1);
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student3);
 
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(student4, student2), instructor1);
     }
 
@@ -709,10 +717,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void importRegistrations_withoutTitle_shouldNotCreateTutorialGroup() throws Exception {
 
         // given
-        var group1Id = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
-        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).get();
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var group1Id = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
+        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
 
         // given
@@ -747,7 +754,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(1);
         var importResultDTO = importResult.get(0);
@@ -763,22 +769,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var freshTitle = generateRandomTitle();
         var freshTitleTwo = generateRandomTitle();
         // given
-        var group1Id = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
+        var group1Id = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
 
-        var group2Id = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student2").get())).getId();
+        var group2Id = tutorialGroupUtilService
+                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student2)).getId();
 
-        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).get();
-        tutorialGroupRegistrationRepository.deleteAllByStudent(userRepository.findOneByLogin(testPrefix + "student3").get());
-        tutorialGroupRegistrationRepository.deleteAllByStudent(userRepository.findOneByLogin(testPrefix + "student4").get());
-        var group2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).get();
+        var group1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
+        tutorialGroupRegistrationRepository.deleteAllByStudent(student3);
+        tutorialGroupRegistrationRepository.deleteAllByStudent(student4);
+        var group2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).orElseThrow();
         tutorialGroupChannelManagementService.createChannelForTutorialGroup(group1);
         tutorialGroupChannelManagementService.createChannelForTutorialGroup(group2);
 
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         assertUserIsNotRegisteredInATutorialGroup(student3);
 
         var reg1 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1));
@@ -796,7 +800,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        var instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(4);
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
@@ -821,7 +824,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private void assertTutorialGroupWithTitleExistsInDb(String title) {
         assertThat(tutorialGroupRepository.existsByTitleAndCourseId(title, exampleCourseId)).isTrue();
-        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupRepository.findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(title, exampleCourseId).get());
+        asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupRepository.findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(title, exampleCourseId).orElseThrow());
     }
 
     private void assertUserIsRegisteredInTutorialWithTitle(String expectedTitle, User expectedStudent) {
@@ -880,8 +883,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
         if (loadFromService) {
-            var user = userRepository.findOneByLogin(userLogin).get();
-            var course = courseRepository.findById(exampleCourseId).get();
+            var user = userRepository.findOneByLogin(userLogin).orElseThrow();
+            var course = courseRepository.findById(exampleCourseId).orElseThrow();
             return tutorialGroupService.getOneOfCourse(course, user, exampleOneTutorialGroupId);
         }
         else {
@@ -891,8 +894,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
         if (loadFromService) {
-            var user = userRepository.findOneByLogin(userLogin).get();
-            var course = courseRepository.findById(exampleCourseId).get();
+            var user = userRepository.findOneByLogin(userLogin).orElseThrow();
+            var course = courseRepository.findById(exampleCourseId).orElseThrow();
             return tutorialGroupService.findAllForCourse(course, user).stream().toList();
         }
         else {
@@ -902,45 +905,42 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private void registerStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         if (expectTutorNotification) {
-            verify(singleUserNotificationService, times(1)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+            verify(singleUserNotificationService).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         }
         else {
-            verify(singleUserNotificationService, times(0)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
+            verify(singleUserNotificationService, never()).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
         }
 
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
         // remove registration again
         var registration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, student3, INSTRUCTOR_REGISTRATION)
-                .get();
+                .orElseThrow();
         tutorialGroupRegistrationRepository.delete(registration);
     }
 
     private void registerStudentForbiddenTest() throws Exception {
-        var student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/register/" + student3.getLogin(), HttpStatus.FORBIDDEN,
                 new LinkedMultiValueMap<>());
     }
 
     private void deregisterStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
-        verify(singleUserNotificationService, times(1)).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        verify(singleUserNotificationService).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         if (expectTutorNotification) {
-            verify(singleUserNotificationService, times(1)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+            verify(singleUserNotificationService).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         }
         else {
-            verify(singleUserNotificationService, times(0)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+            verify(singleUserNotificationService, never()).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
         }
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
@@ -953,8 +953,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void deregisterStudentForbiddenTest() throws Exception {
-        var student1 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
-        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.FORBIDDEN);
+        request.delete(getTutorialGroupsPath(exampleCourseId) + exampleOneTutorialGroupId + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
     }
 
 }

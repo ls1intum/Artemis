@@ -122,7 +122,7 @@ public class ProgrammingExerciseExportImportResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
@@ -411,7 +411,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // Only instructors or higher may override the anonymization setting
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
-            repositoryExportOptions.setAnonymizeStudentCommits(true);
+            repositoryExportOptions.setAnonymizeRepository(true);
         }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {

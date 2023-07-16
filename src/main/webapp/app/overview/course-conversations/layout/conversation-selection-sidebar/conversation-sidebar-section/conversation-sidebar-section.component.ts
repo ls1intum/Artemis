@@ -23,6 +23,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
     @Input() activeConversation?: ConversationDto;
     @Input() headerKey: string;
     @Input() searchTerm: string;
+    @Input() hideIfEmpty = true;
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
@@ -106,5 +107,11 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     get storageKey() {
         return this.prefix + this.headerKey;
+    }
+
+    hide() {
+        const noMatchesInSearch = this.searchTerm && this.searchTerm.length > 0 && !this.allConversations?.length;
+        const emptyConversations = this.hideIfEmpty && !this.allConversations.length;
+        return noMatchesInSearch || emptyConversations;
     }
 }

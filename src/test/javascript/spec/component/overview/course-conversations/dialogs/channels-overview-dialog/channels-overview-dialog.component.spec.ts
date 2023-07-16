@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { EMPTY, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
@@ -17,6 +17,8 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
 @Component({
     selector: 'jhi-channel-item',
@@ -57,7 +59,14 @@ examples.forEach((exampleChannel) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [ChannelsOverviewDialogComponent, LoadingIndicatorContainerStubComponent, ChannelItemStubComponent, MockPipe(ArtemisTranslatePipe)],
+                imports: [NgbCollapseMocksModule],
+                declarations: [
+                    ChannelsOverviewDialogComponent,
+                    LoadingIndicatorContainerStubComponent,
+                    ChannelItemStubComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(FaIconComponent),
+                ],
                 providers: [MockProvider(ChannelService), MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), MockProvider(NgbActiveModal)],
             }).compileComponents();
         }));
@@ -75,7 +84,7 @@ examples.forEach((exampleChannel) => {
             getChannelsOfCourseSpy = jest.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: [channelOne, channelTwo],
+                        body: [channelOne, channelTwo, ...examples],
                         status: 200,
                     }),
                 ),
@@ -98,10 +107,10 @@ examples.forEach((exampleChannel) => {
             expect(component).toBeTruthy();
             expect(getChannelsOfCourseSpy).toHaveBeenCalledWith(course.id);
             expect(getChannelsOfCourseSpy).toHaveBeenCalledOnce();
-            expect(component.channels).toEqual([channelOne, channelTwo]);
-            expect(component.noOfChannels).toBe(2);
-            expect(fixture.nativeElement.querySelectorAll('jhi-channel-item')).toHaveLength(2);
-            expect(channelItems).toHaveLength(2);
+            expect(component.noOfChannels).toBe(3);
+            expect(component.otherChannels).toHaveLength(3);
+            expect(fixture.nativeElement.querySelectorAll('jhi-channel-item')).toHaveLength(6);
+            expect(channelItems).toHaveLength(6);
             expect(channelItems[0].channel).toEqual(channelOne);
             expect(channelItems[1].channel).toEqual(channelTwo);
         });
@@ -179,5 +188,14 @@ examples.forEach((exampleChannel) => {
                 expect(createChannelButton).toBeNull();
             });
         }
+
+        it('should toggle other channels on click', () => {
+            expect(component.otherChannelsAreCollapsed).toBeTrue();
+
+            const otherChannels = fixture.debugElement.nativeElement.querySelector('.other-channels');
+            otherChannels.click();
+
+            expect(component.otherChannelsAreCollapsed).toBeFalse();
+        });
     });
 });
