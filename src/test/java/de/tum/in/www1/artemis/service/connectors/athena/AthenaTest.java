@@ -10,6 +10,9 @@ import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
+/**
+ * Base class for Athena tests providing common functionality
+ */
 abstract public class AthenaTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.athena.url}")
