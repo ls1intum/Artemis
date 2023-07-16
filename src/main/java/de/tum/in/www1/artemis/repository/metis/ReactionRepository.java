@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Reaction entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 

@@ -736,7 +736,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // even though the test case weights are all zero, the solution should receive a score
         // => every test case is weighted with 1.0 in that case
-        final var updatedSolution = updatedResults.stream().filter(result -> result.getParticipation() instanceof SolutionProgrammingExerciseParticipation).findFirst().get();
+        final var updatedSolution = updatedResults.stream().filter(result -> result.getParticipation() instanceof SolutionProgrammingExerciseParticipation).findFirst()
+                .orElseThrow();
         assertThat(updatedSolution.getScore()).isCloseTo(66.7, Offset.offset(offsetByTenThousandth));
 
         final var updatedStudentResults = updatedResults.stream().filter(result -> result.getParticipation() instanceof StudentParticipation).toList();
@@ -780,7 +781,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private void verifyStudentScoreCalculation(final Participation[] testParticipations, int student) {
-        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).get();
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).orElseThrow();
         var results = participation.getResults();
 
         if (student == 1) {
@@ -980,7 +981,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
         // check results without category penalty limits
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -988,7 +989,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -1017,7 +1018,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
         // check results without any limits
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -1025,7 +1026,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -1054,7 +1055,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // check results
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -1083,7 +1084,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // check result without limits
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -1133,7 +1134,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).orElseThrow();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -218,6 +219,17 @@ public class ChannelService {
     }
 
     /**
+     * Deletes the channel if it exists
+     *
+     * @param channel the channel to delete
+     */
+    public void deleteChannel(@Nullable Channel channel) {
+        if (channel != null) {
+            conversationService.deleteConversation(channel);
+        }
+    }
+
+    /**
      * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
      *
      * @param userToAddToGroup the user to be added
@@ -263,16 +275,21 @@ public class ChannelService {
         if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
-        Optional<Channel> channelWithSameName;
+
+        if (this.allowDuplicateChannelName(channel)) {
+            return;
+        }
+
+        Set<Channel> channelsWithSameName;
         if (channel.getId() != null) {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
         }
         else {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
         }
-        channelWithSameName.ifPresent(existingChannel -> {
-            throw new ChannelNameDuplicateException(existingChannel.getName());
-        });
+        if (!channelsWithSameName.isEmpty()) {
+            throw new ChannelNameDuplicateException(channel.getName());
+        }
     }
 
     /**
@@ -438,5 +455,14 @@ public class ChannelService {
         defaultChannel.setIsAnnouncementChannel(false);
         defaultChannel.setIsArchived(false);
         return defaultChannel;
+    }
+
+    /**
+     * Determines whether duplicate channel names are allowed for the given channel
+     *
+     * @return true if the channel does belong to a lecture/exercise/exam
+     */
+    private boolean allowDuplicateChannelName(Channel channel) {
+        return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
     }
 }

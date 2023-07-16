@@ -1,7 +1,7 @@
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Injectable } from '@angular/core';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
@@ -119,6 +119,6 @@ export class FeedbackChartService {
 
     private calculatePercentage = (node: FeedbackNode, exercise: Exercise) => {
         const appliedCredits = this.capCredits(node.credits ?? 0, node.maxCredits);
-        return roundScorePercentSpecifiedByCourseSettings(appliedCredits / exercise.maxPoints!, exercise.course);
+        return roundScorePercentSpecifiedByCourseSettings(appliedCredits / exercise.maxPoints!, getCourseFromExercise(exercise));
     };
 }

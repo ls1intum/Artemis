@@ -86,30 +86,31 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
         idOfStudent2 = student2.getId();
-        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
+        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
         idOfStudent3 = student3.getId();
-        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").get();
+        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
         idOfTeam2 = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         // Creating result for student1
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
         // Creating result for team1
-        Team team1 = teamRepository.findById(idOfTeam1).get();
+        Team team1 = teamRepository.findById(idOfTeam1).orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team1, 10.0, 10.0, 50, true);
         // Creating result for student2
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student2, 10.0, 10.0, 40, true);
         // Creating result for student3
         participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student3, 10.0, 10.0, 30, true);
         // Creating result for team2
-        Team team2 = teamRepository.findById(idOfTeam2).get();
+        Team team2 = teamRepository.findById(idOfTeam2).orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
 
+        participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
     }
@@ -125,10 +126,11 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores).hasSize(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
-                .get();
-        ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst().get();
+                .orElseThrow();
+        ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst()
+                .orElseThrow();
         ExerciseScoresDTO individualTextExerciseWithoutParticipants = exerciseScores.stream()
-                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().get();
+                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().orElseThrow();
 
         assertThat(individualTextExercise.scoreOfStudent).isEqualTo(50.0);
         assertThat(individualTextExercise.averageScoreAchieved).isEqualTo(40.0);
