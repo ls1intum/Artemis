@@ -71,10 +71,10 @@ export class TextSubmissionService {
 
         return this.http.get<TextSubmission | undefined>(url, { observe: 'response', params }).pipe(
             map((response) => {
-                if (!response.body) {
+                const submission = response.body;
+                if (!submission) {
                     return undefined;
                 }
-                const submission = response.body;
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
 
                 submission.participation!.submissions = [submission];

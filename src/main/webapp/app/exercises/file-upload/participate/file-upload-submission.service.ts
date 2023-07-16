@@ -89,12 +89,12 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http.get<FileUploadSubmission>(url, { params }).pipe(
+        return this.http.get<FileUploadSubmission | undefined>(url, { params }).pipe(
             map((res?: FileUploadSubmission) => {
-                if (res) {
-                    return this.submissionService.convertSubmissionFromServer(res);
+                if (!res) {
+                    return undefined;
                 }
-                return undefined;
+                return this.submissionService.convertSubmissionFromServer(res);
             }),
         );
     }

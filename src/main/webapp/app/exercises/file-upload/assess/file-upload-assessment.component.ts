@@ -41,8 +41,8 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: StudentParticipation;
-    submission: FileUploadSubmission;
-    unassessedSubmission: FileUploadSubmission;
+    submission?: FileUploadSubmission;
+    unassessedSubmission?: FileUploadSubmission;
     result?: Result;
     unreferencedFeedback: Feedback[] = [];
     exercise?: FileUploadExercise;
@@ -149,7 +149,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
-            next: (submission: FileUploadSubmission) => {
+            next: (submission?: FileUploadSubmission) => {
                 if (!submission) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
@@ -265,12 +265,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.unreferencedFeedback = [];
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe({
-            next: (submission: FileUploadSubmission) => {
+            next: (submission?: FileUploadSubmission) => {
                 this.isLoading = false;
                 this.unassessedSubmission = submission;
                 if (!submission) {
                     // there are no unassessed submissions
-                    this.submission = submission;
+                    this.submission = undefined;
                     return;
                 }
 
@@ -281,8 +281,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     ExerciseType.FILE_UPLOAD,
                     this.courseId,
                     this.exerciseId,
-                    this.unassessedSubmission.participation!.id!,
-                    this.unassessedSubmission.id!,
+                    this.unassessedSubmission!.participation!.id!,
+                    this.unassessedSubmission!.id!,
                     this.examId,
                     this.exerciseGroupId,
                 );
@@ -298,7 +298,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onSaveAssessment() {
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission.id!)
+            .saveAssessment(this.assessments, this.submission!.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
@@ -321,7 +321,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, this.submission.id!, true)
+            .saveAssessment(this.assessments, this.submission!.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (result: Result) => {
@@ -343,7 +343,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         if (confirmCancel) {
             this.isLoading = true;
             this.fileUploadAssessmentService
-                .cancelAssessment(this.submission.id!)
+                .cancelAssessment(this.submission!.id!)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
                     this.navigateBack();
@@ -360,7 +360,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+        this.complaintService.findBySubmissionId(this.submission!.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
@@ -399,7 +399,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         this.calculateTotalScore();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     /**
@@ -474,7 +474,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission.id!)
+            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, this.submission!.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {

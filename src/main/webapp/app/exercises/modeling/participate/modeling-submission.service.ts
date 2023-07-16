@@ -81,12 +81,12 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http.get<ModelingSubmission>(url, { params }).pipe(
+        return this.http.get<ModelingSubmission | undefined>(url, { params }).pipe(
             map((res?: ModelingSubmission) => {
-                if (res) {
-                    return this.submissionService.convertSubmissionFromServer(res);
+                if (!res) {
+                    return undefined;
                 }
-                return undefined;
+                return this.submissionService.convertSubmissionFromServer(res);
             }),
         );
     }

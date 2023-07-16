@@ -164,7 +164,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     tap({
                         next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
-                                // there are no unassessed submissions, nothing we have to worry about
+                                // there are no unassessed submissions
                                 this.submission = submission;
                                 return;
                             }
@@ -358,13 +358,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingParticipation = true;
         this.submission = undefined;
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
-            next: (response: ProgrammingSubmission) => {
-                // there are no unassessed submission, nothing we have to worry about
+            next: (response?: ProgrammingSubmission) => {
+                this.loadingParticipation = false;
+
+                // there are no unassessed submissions
                 if (!response) {
+                    this.submission = undefined;
                     return;
                 }
-
-                this.loadingParticipation = false;
 
                 // if override set, skip navigation
                 if (this.overrideNextSubmission) {
