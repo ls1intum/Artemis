@@ -1,34 +1,39 @@
 package de.tum.in.www1.artemis.service.iris.exception;
 
-public class IrisException extends Exception {
+import java.util.HashMap;
+import java.util.Map;
+
+import org.zalando.problem.Status;
+
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
+import de.tum.in.www1.artemis.web.rest.errors.HttpStatusException;
+
+public class IrisException extends HttpStatusException {
 
     protected String translationKey;
 
-    public IrisException(String translationKey) {
-        this.translationKey = translationKey;
-    }
+    protected Map<String, Object> translationParams;
 
-    public IrisException(String message, String translationKey) {
-        super(message);
+    public IrisException(String translationKey, Map<String, Object> translationParams) {
+        super(ErrorConstants.DEFAULT_TYPE, "An error within Iris has occured", Status.INTERNAL_SERVER_ERROR, "Iris", translationKey,
+                getAlertParameters(translationKey, translationParams));
         this.translationKey = translationKey;
-    }
-
-    public IrisException(String message, Throwable cause, String translationKey) {
-        super(message, cause);
-        this.translationKey = translationKey;
-    }
-
-    public IrisException(Throwable cause, String translationKey) {
-        super(cause);
-        this.translationKey = translationKey;
-    }
-
-    public IrisException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, String translationKey) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        this.translationKey = translationKey;
+        this.translationParams = translationParams;
     }
 
     public String getTranslationKey() {
         return translationKey;
+    }
+
+    public Map<String, Object> getTranslationParams() {
+        return translationParams;
+    }
+
+    protected static Map<String, Object> getAlertParameters(String translationKey, Map<String, Object> translationParams) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("message", translationKey);
+        parameters.put("params", translationParams);
+        parameters.put("skipAlert", true);
+        return parameters;
     }
 }
