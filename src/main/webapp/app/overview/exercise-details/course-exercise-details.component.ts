@@ -51,7 +51,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
+    styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
