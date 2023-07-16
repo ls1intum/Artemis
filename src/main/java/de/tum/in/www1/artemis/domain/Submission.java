@@ -78,7 +78,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @Column(name = "plagiarism_detected")
     @JsonView(QuizView.Before.class)
-    private Boolean plagiarismDetected;
+    private boolean plagiarismDetected;
 
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
@@ -337,8 +337,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
     }
 
-    @Nullable
-    public Boolean getPlagiarismDetected() {
+    public boolean getPlagiarismDetected() {
         return plagiarismDetected;
     }
 
