@@ -2,8 +2,14 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextBlockRef;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 
+/**
+ * A DTO representing a Feedback, for transferring data to Athena
+ */
 public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String text, String detailText, double credits, Integer indexStart, Integer indexEnd) {
 
     /**
@@ -21,6 +27,9 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
         return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), startIndex, endIndex);
     }
 
+    /**
+     * Creates a TextBlockRef (feedback + text block combined) from this DTO and a TextSubmission
+     */
     public TextBlockRef toTextBlockRef(TextSubmission onSubmission) {
         Feedback feedback = new Feedback();
         feedback.setId(id());

@@ -12,13 +12,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextBlockRef;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
+/**
+ * Service for receiving feedback suggestions from the Athena service.
+ * Assumes that submissions and already given feedback have already been sent to Athena.
+ */
 @Service
 @Profile("athena")
 public class AthenaFeedbackSuggestionsService {
@@ -46,9 +52,7 @@ public class AthenaFeedbackSuggestionsService {
         }
     }
 
-    private static class ResponseDTO {
-
-        public List<TextFeedbackDTO> data;
+    private record ResponseDTO(List<TextFeedbackDTO> data) {
     }
 
     /**

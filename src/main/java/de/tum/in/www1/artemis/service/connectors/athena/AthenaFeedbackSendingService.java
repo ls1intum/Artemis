@@ -12,13 +12,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
+/**
+ * Service for sending feedback to the Athena service for further processing
+ * so that Athena can later give feedback suggestions on new submissions.
+ */
 @Service
 @Profile("athena")
 public class AthenaFeedbackSendingService {
@@ -32,6 +38,12 @@ public class AthenaFeedbackSendingService {
 
     private final TextBlockRepository textBlockRepository;
 
+    /**
+     * Creates a new service to send feedback to the Athena service
+     *
+     * @param textBlockRepository Needed to get start and end indexes of feedbacks
+     * @param athenaRestTemplate  The rest template to use for sending requests to Athena
+     */
     public AthenaFeedbackSendingService(TextBlockRepository textBlockRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
         this.textBlockRepository = textBlockRepository;
@@ -57,9 +69,7 @@ public class AthenaFeedbackSendingService {
         }
     }
 
-    static class ResponseDTO {
-
-        public String data;
+    private record ResponseDTO(String data) {
     }
 
     /**

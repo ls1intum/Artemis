@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -13,10 +14,16 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 
+/**
+ * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
+ * Assumes that submissions have already been sent to Athena (it only sends submission IDs to choose from).
+ * The default choice if Athena does not respond is to choose a random submission.
+ */
 @Service
 @Profile("athena")
 public class AthenaSubmissionSelectionService {
@@ -24,7 +31,7 @@ public class AthenaSubmissionSelectionService {
     // pretty short timeout, because this should be fast, and it's not too bad if it fails
     private static final int REQUEST_TIMEOUT_MS = 1000;
 
-    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
+    private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
@@ -43,9 +50,8 @@ public class AthenaSubmissionSelectionService {
         }
     }
 
-    private static class ResponseDTO {
-
-        public long data; // will contain the submission ID to choose, or -1 if no submission was explicitly chosen
+    private record ResponseDTO(long data // will contain the submission ID to choose, or -1 if no submission was explicitly chosen
+    ) {
     }
 
     public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -12,12 +13,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
+/**
+ * Service for sending submissions to the Athena service for further processing
+ * so that Athena can later give feedback suggestions on new submissions.
+ */
 @Service
 @Profile("athena")
 public class AthenaSubmissionSendingService {
@@ -48,9 +54,7 @@ public class AthenaSubmissionSendingService {
         }
     }
 
-    private static class ResponseDTO {
-
-        public String data;
+    private record ResponseDTO(String data) {
     }
 
     /**

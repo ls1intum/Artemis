@@ -5,7 +5,7 @@ import javax.validation.constraints.NotNull;
 import de.tum.in.www1.artemis.domain.TextExercise;
 
 /**
- * Data Transfer Object used for communication with Athena.
+ * A DTO representing a TextExercise, for transferring data to Athena
  */
 public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement) {
 

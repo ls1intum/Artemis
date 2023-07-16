@@ -16,6 +16,9 @@ public class TextBlockRef implements Serializable {
 
     private Feedback feedback;
 
+    /**
+     * Create a TextBlockRef from a TextBlock and a Feedback.
+     */
     public TextBlockRef(TextBlock block, Feedback feedback) {
         this.block = block;
         this.feedback = feedback;

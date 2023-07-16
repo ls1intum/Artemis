@@ -5,4 +5,8 @@ public class NetworkingError extends Exception {
     public NetworkingError(String message) {
         super(message);
     }
+
+    public NetworkingError(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

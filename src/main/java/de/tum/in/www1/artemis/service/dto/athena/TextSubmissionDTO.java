@@ -4,6 +4,9 @@ import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
 
+/**
+ * A DTO representing a TextSubmission, for transferring data to Athena
+ */
 public record TextSubmissionDTO(long id, long exerciseId, String text, String language) {
 
     public static TextSubmissionDTO of(long exerciseId, @NotNull TextSubmission submission) {

@@ -3,14 +3,17 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 /**
- * This class is a connector to Athena, a remote Artemis service.
+ * Connector to Athena, a remote Artemis service.
  * As parameters, this class required DTO classes to serialize and deserialize POJOs to JSON and back.
  *
  * @param <RequestType>  DTO class, describing the body of the network request.
@@ -76,7 +79,7 @@ class AthenaConnector<RequestType, ResponseType> {
             }
             catch (NetworkingError | ResourceAccessException error) {
                 if (retries >= maxRetries) {
-                    throw new NetworkingError("An Error occurred while calling Athena: " + error.getMessage());
+                    throw new NetworkingError("An Error occurred while calling Athena: " + error.getMessage(), error);
                 }
             }
         }

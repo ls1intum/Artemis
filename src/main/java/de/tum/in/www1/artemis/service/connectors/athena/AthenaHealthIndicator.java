@@ -15,6 +15,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
+/**
+ * Service determining the health of the Athena service and its assessment modules.
+ */
 @Component
 @Profile("athena")
 public class AthenaHealthIndicator implements HealthIndicator {
@@ -61,16 +64,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
             additionalInfo.put("url", athenaUrl);
             if (response != null) {
                 additionalInfo.put("assessment module manager", response.get("status").asText());
-                // add health of all modules
-                if (response.has("modules")) {
-                    JsonNode modules = response.get("modules");
-                    // keys are module names, values are description maps
-                    modules.fields().forEachRemaining(module -> {
-                        var moduleHealth = new AthenaModuleHealth(module.getValue().get("type").asText(), module.getValue().get("healthy").asBoolean(),
-                                module.getValue().get("url").asText());
-                        additionalInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
-                    });
-                }
+                additionalInfo.putAll(getAdditionalInfoForModules(response));
             }
             else {
                 additionalInfo.put("assessment module manager", "not available");
@@ -83,5 +77,22 @@ public class AthenaHealthIndicator implements HealthIndicator {
         }
 
         return health.asActuatorHealth();
+    }
+
+    /**
+     * Get additional information about the health of the assessment modules.
+     */
+    private Map<String, Object> getAdditionalInfoForModules(JsonNode athenaHealthResponse) {
+        var additionalModuleInfo = new HashMap<String, Object>();
+        if (athenaHealthResponse.has("modules")) {
+            JsonNode modules = athenaHealthResponse.get("modules");
+            // keys are module names, values are description maps
+            modules.fields().forEachRemaining(module -> {
+                var moduleHealth = new AthenaModuleHealth(module.getValue().get("type").asText(), module.getValue().get("healthy").asBoolean(),
+                        module.getValue().get("url").asText());
+                additionalModuleInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
+            });
+        }
+        return additionalModuleInfo;
     }
 }
