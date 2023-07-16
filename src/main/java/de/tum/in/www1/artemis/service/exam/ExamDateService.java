@@ -75,13 +75,21 @@ public class ExamDateService {
         }
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         if (exam.isTestExam()) {
-            var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
-            if (optionalStudentExam.isPresent()) {
-                StudentExam studentExam = optionalStudentExam.get();
-                return studentExam.isSubmitted() || studentExam.isEnded();
-            }
+            return testExamEnded(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);
+    }
+
+    public boolean testExamEnded(Exam exam, StudentParticipation studentParticipation) {
+        if (!exam.isTestExam()) {
+            throw new IllegalArgumentException("This function should only be used for test exams");
+        }
+        var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+        if (optionalStudentExam.isPresent()) {
+            StudentExam studentExam = optionalStudentExam.get();
+            return studentExam.isSubmitted() || studentExam.isEnded();
+        }
+        return false;
     }
 
     /**
