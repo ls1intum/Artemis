@@ -17,20 +17,18 @@ public class ExamConfigurationException extends BadRequestAlertException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String ERROR_KEY = "examContainsProgrammingExercisesWithInvalidKey";
-
-    public ExamConfigurationException(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises) {
-        super(ErrorConstants.EXAM_PROGRAMMING_EXERCISE_SHORT_NAME_INVALID, "Exam contains programming exercise(s) with invalid short name.", "ExamResource", ERROR_KEY,
-                getParameters(exerciseGroupList, numberOfInvalidProgrammingExercises));
+    public ExamConfigurationException(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
+        super(ErrorConstants.EXAM_PROGRAMMING_EXERCISE_SHORT_NAME_INVALID, "Exam contains programming exercise(s) with invalid short name.", "ExamResource", errorKey,
+                getParameters(exerciseGroupList, numberOfInvalidProgrammingExercises, errorKey));
     }
 
-    private static Map<String, Object> getParameters(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises) {
+    private static Map<String, Object> getParameters(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
         Map<String, List<ExerciseGroup>> params = new HashMap<>();
         params.put("exerciseGroups", exerciseGroupList);
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("numberOfInvalidProgrammingExercises", numberOfInvalidProgrammingExercises);
         parameters.put("skipAlert", true);
-        parameters.put("message", "exam.examManagement.import." + ERROR_KEY);
+        parameters.put("message", "exam.examManagement.import." + errorKey);
         parameters.put("params", params);
         return parameters;
     }

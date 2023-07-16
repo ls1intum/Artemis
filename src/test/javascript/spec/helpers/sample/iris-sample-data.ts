@@ -4,6 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
+import { IrisWebsocketDTO, IrisWebsocketMessageType } from 'app/iris/websocket.service';
 
 export const mockMessageContent = {
     textContent: 'Hello, world!',
@@ -24,6 +25,11 @@ export const mockArtemisClientMessage = {
     content: [mockMessageContent],
     sentAt: dayjs(),
 } as IrisArtemisClientMessage;
+
+export const mockWebsocketMessage = {
+    type: IrisWebsocketMessageType.MESSAGE,
+    message: mockServerMessage,
+} as IrisWebsocketDTO;
 
 export const mockClientMessage = {
     sender: IrisSender.USER,
