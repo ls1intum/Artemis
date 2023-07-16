@@ -136,7 +136,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     async ngOnInit() {
         this.userAccepted = !!(await this.userService.getIrisAcceptedAt());
+        const temp = await this.userService.getIrisAcceptedAt();
         console.log('initial accept: ', this.userAccepted);
+        console.log(temp);
         this.animateDots();
 
         // Set initializing flag to true and load the first message
@@ -158,16 +160,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         if (this.userAccepted) {
             this.loadFirstMessage();
         }
-        console.log('Init isFirst: ', this.isFirstMessage);
-        console.log('IMsg: ', this.messages);
 
         // Set initializing flag to false and focus on message textarea
         setTimeout(() => {
             this.isInitializing = false;
             this.messageTextarea.nativeElement.focus();
         }, 150);
-        console.log('user accept: ', this.userAccepted);
-        console.log('initial: ', this.isInitializing);
     }
 
     ngAfterViewInit() {
@@ -221,8 +219,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
             this.isFirstMessage = true;
         }
-        console.log(this.isFirstMessage);
-        console.log(this.messages);
     }
 
     /**
@@ -298,8 +294,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.userAccepted = true;
         });
         this.loadFirstMessage();
-        console.log('Permission: ', this.isFirstMessage);
-        console.log('PM: ', this.messages);
     }
 
     /**
