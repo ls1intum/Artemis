@@ -149,6 +149,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isActiveConversationMessageLoadedAction(action)) {
             const castedAction = action as ActiveConversationMessageLoadedAction;
+            console.log(state.serverResponseTimeout);
             if (state.serverResponseTimeout !== null) {
                 clearTimeout(state.serverResponseTimeout);
             }
