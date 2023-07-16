@@ -243,24 +243,27 @@ describe('Exercise Service', () => {
     });
 
     it('should fill & empty example modeling solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example text solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
 
@@ -268,15 +271,17 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example file upload solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
 
@@ -284,23 +289,25 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example programming exercise solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeTrue();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublished: false }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().add(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should determine is included in score string', () => {
@@ -471,7 +478,7 @@ describe('Exercise Service', () => {
 
         const expectedReturnedExercise = {
             id: exerciseId,
-            exampleSolutionPublished: true,
+            exampleSolutionPublicationDate: dayjs().subtract(1, 'm'),
             exampleSolution: 'Example solution',
         } as TextExercise;
 
