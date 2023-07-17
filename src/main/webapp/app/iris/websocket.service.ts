@@ -16,7 +16,7 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
  * The IrisWebsocketMessageType defines the type of message sent over the websocket.
  */
 export enum IrisWebsocketMessageType {
-    MESSAGE = 'IRIS_MESSAGE',
+    MESSAGE = 'MESSAGE',
     ERROR = 'ERROR',
 }
 
