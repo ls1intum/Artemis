@@ -39,7 +39,7 @@ export class AssessmentDetailComponent {
      * Emits the deletion of an assessment
      */
     public delete() {
-        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.assessment.id ?? '' });
+        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { text: this.assessment.detailText ? `"${this.assessment.detailText}"` : '' });
         const confirmation = confirm(text);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);

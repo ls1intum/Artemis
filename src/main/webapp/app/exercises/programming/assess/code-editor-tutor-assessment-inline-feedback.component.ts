@@ -92,7 +92,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Deletes feedback after confirmation and emits to parent component
      */
     deleteFeedback() {
-        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
+        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { text: this.feedback.detailText ? `"${this.feedback.detailText}"` : '' });
         const confirmation = confirm(text);
         if (confirmation) {
             this.onDeleteFeedback.emit(this.feedback);
