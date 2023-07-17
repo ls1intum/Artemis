@@ -14,10 +14,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -38,12 +36,15 @@ public class ConversationDTOService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final CourseRepository courseRepository;
+
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository) {
+            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -101,8 +102,10 @@ public class ConversationDTOService {
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
+        channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsAutoJoin());
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
-        channelDTO.setNumberOfMembers(conversationParticipantRepository.countByConversationId(channel.getId()));
+        channelDTO.setNumberOfMembers(channel.getIsAutoJoin() ? courseRepository.countCourseMembers(channel.getCourse().getId())
+                : conversationParticipantRepository.countByConversationId(channel.getId()));
         var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
         tutorialGroup.ifPresent(tg -> {
             channelDTO.setTutorialGroupId(tg.getId());

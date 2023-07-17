@@ -98,7 +98,12 @@ public class ConversationService {
      * @return true if the user is a member of the conversation, false otherwise
      */
     public boolean isMember(Long conversationId, Long userId) {
-        return conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId);
+        if (conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId)) {
+            return true;
+        }
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+        return conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin();
     }
 
     /**
