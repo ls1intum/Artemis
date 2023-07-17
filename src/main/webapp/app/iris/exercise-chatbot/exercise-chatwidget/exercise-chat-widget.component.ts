@@ -573,7 +573,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            return Object.fromEntries(this.error.paramsMap.entries());
+            return Object.fromEntries(Object.entries(this.error.paramsMap as Map<string, any>));
         }
         return null;
     }
