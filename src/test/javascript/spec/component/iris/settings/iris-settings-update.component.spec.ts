@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { IrisSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
+import { IrisModel } from 'app/entities/iris/settings/iris-model';
 
 function baseSettings() {
     const mockTemplate = new IrisTemplate();
@@ -28,6 +29,21 @@ function baseSettings() {
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisHestiaSettings = mockHestiaSettings;
     return irisSettings;
+}
+
+function models() {
+    return [
+        {
+            id: '1',
+            name: 'Model 1',
+            description: 'Model 1 Description',
+        },
+        {
+            id: '2',
+            name: 'Model 2',
+            description: 'Model 2 Description',
+        },
+    ] as IrisModel[];
 }
 
 describe('IrisSettingsUpdateComponent Component', () => {
@@ -56,9 +72,11 @@ describe('IrisSettingsUpdateComponent Component', () => {
     it('Loads global settings correctly', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
+        const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
         comp.settingType = IrisSettingsType.GLOBAL;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
+        expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(comp.irisSettings).toEqual(irisSettings);
         expect(fixture.debugElement.nativeElement.querySelector('#inheritHestia')).toBeFalsy();
     });
@@ -66,10 +84,12 @@ describe('IrisSettingsUpdateComponent Component', () => {
     it('Loads course settings correctly', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
+        const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
         comp.settingType = IrisSettingsType.COURSE;
         comp.courseId = 1;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
+        expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(comp.irisSettings).toEqual(irisSettings);
         expect(fixture.debugElement.nativeElement.querySelector('#inheritHestia')).toBeFalsy();
     });
@@ -77,10 +97,12 @@ describe('IrisSettingsUpdateComponent Component', () => {
     it('Loads programming exercise settings correctly', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
+        const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
         comp.settingType = IrisSettingsType.PROGRAMMING_EXERCISE;
         comp.programmingExerciseId = 1;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
+        expect(getModelsSpy).toHaveBeenCalledOnce();
         expect(comp.irisSettings).toEqual(irisSettings);
         expect(fixture.debugElement.nativeElement.querySelector('#inheritHestia')).toBeTruthy();
     });
