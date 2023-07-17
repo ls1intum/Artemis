@@ -135,12 +135,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
     }
 
-    async ngOnInit() {
-        await this.userService.getIrisAcceptedAt().subscribe((res) => {
-            console.log(res);
+    ngOnInit() {
+        this.userService.getIrisAcceptedAt().subscribe((res) => {
             this.userAccepted = !!res;
+            if (this.userAccepted) {
+                this.loadFirstMessage();
+            }
         });
-        console.log(this.userAccepted);
+
         this.animateDots();
 
         // Set initializing flag to true and load the first message
@@ -159,9 +161,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.fadeState = 'start';
             }
         });
-        if (this.userAccepted) {
-            this.loadFirstMessage();
-        }
 
         // Set initializing flag to false and focus on message textarea
         setTimeout(() => {
