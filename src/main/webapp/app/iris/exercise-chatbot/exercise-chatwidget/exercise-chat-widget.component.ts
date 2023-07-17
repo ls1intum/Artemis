@@ -32,6 +32,7 @@ import { SharedService } from 'app/iris/shared.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
+import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -558,4 +559,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.fadeState = 'end';
         }
     }
+
+    protected readonly IrisLogoSize = IrisLogoSize;
 }
