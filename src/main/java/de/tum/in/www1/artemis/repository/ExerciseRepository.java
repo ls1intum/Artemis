@@ -179,7 +179,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                      ELSE exercise.title
                 END AS title
             FROM Exercise exercise
-            LEFT JOIN fetch exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
             WHERE exercise.id = :exerciseId
             """)
     @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
