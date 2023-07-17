@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 
@@ -99,6 +100,13 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
             var combinedId = hint.getExercise().getId() + "-" + hint.getId();
             evictIdFromCache("exerciseHintTitle", combinedId);
+        }
+        else if (entity instanceof ExerciseGroup exerciseGroup) {
+            // TODO check for Hibernate.isInitialized and handle this case
+            var exercises = exerciseGroup.getExercises();
+            for (Exercise exercise : exercises) {
+                evictIdFromCache("exerciseTitle", exercise.getId());
+            }
         }
     }
 

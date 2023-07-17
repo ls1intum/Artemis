@@ -174,8 +174,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("""
             SELECT
-                CASE WHEN exercise.exerciseGroup IS NOT NULL
-                     THEN exercise.exerciseGroup.title
+                CASE WHEN exerciseGroup IS NOT NULL
+                     THEN exerciseGroup.title
                      ELSE exercise.title
                 END AS title
             FROM Exercise exercise

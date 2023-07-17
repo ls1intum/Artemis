@@ -716,7 +716,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         // course exercise
@@ -733,7 +733,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
-        exercise.setExerciseGroup(null);
         exercise = exerciseRepository.save(exercise);
 
         final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
