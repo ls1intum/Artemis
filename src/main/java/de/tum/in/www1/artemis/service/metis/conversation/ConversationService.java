@@ -458,7 +458,7 @@ public class ConversationService {
         if (unreadConversationsOnly) {
             return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
         }
-        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+        return conversationRepository.findAllWhereUserIsParticipantOrIsAutoJoined(user.getId());
     }
 
     /**

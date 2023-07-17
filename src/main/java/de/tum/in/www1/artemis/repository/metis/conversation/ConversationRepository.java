@@ -37,14 +37,20 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     }
 
     @Query("""
-            SELECT DISTINCT c
-            FROM Conversation c
-                LEFT JOIN FETCH c.conversationParticipants cp
-                LEFT JOIN FETCH cp.user user
-                LEFT JOIN c.course
-            WHERE user.id = :userId
+            SELECT DISTINCT conv
+            FROM Conversation conv
+            JOIN conv.course course
+            JOIN UserGroup ug ON (course.studentGroupName = ug.group
+                OR course.teachingAssistantGroupName = ug.group
+                OR course.editorGroupName = ug.group
+                OR course.instructorGroupName = ug.group
+            )
+            LEFT JOIN conv.conversationParticipants cp
+            LEFT JOIN Channel ch on conv.id = ch.id
+            WHERE cp.user.id = :userId
+            OR (ug.userId = :userId and ch.isAutoJoin = true)
             """)
-    List<Conversation> findAllWhereUserIsParticipant(@Param("userId") Long userId);
+    List<Conversation> findAllWhereUserIsParticipantOrIsAutoJoined(@Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT c

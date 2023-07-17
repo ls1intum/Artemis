@@ -9,6 +9,9 @@ public class UserGroup {
     @EmbeddedId
     private UserGroupKey id;
 
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
+
     @Column(name = "`groups`", insertable = false, updatable = false)
     private String group;
 }
