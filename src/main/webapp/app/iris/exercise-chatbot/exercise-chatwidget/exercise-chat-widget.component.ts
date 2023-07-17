@@ -155,6 +155,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.fadeState = 'start';
             }
         });
+
+        // Focus on message textarea
+        setTimeout(() => {
+            this.messageTextarea.nativeElement.focus();
+        }, 150);
     }
 
     ngAfterViewInit() {
