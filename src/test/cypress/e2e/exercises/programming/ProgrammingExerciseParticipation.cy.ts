@@ -27,7 +27,7 @@ describe('Programming exercise participation', () => {
     it('Makes a failing submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
         const submission = buildError;
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });
     });
@@ -35,7 +35,7 @@ describe('Programming exercise participation', () => {
     it('Makes a partially successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentTwo);
         const submission = partiallySuccessful;
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });
     });
@@ -43,7 +43,7 @@ describe('Programming exercise participation', () => {
     it('Makes a successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentThree);
         const submission = allSuccessful;
-        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });
     });
