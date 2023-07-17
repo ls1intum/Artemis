@@ -37,16 +37,11 @@
             <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
-        <button
-            *ngIf="course?.isAtLeastInstructor && irisEnabled"
-            type="button"
-            (click)="showIrisSettings()"
-            class="tab-item btn btn-warning btn-md ms-1"
-            ngbTooltip="{{ 'artemisApp.iris.settings.button.course.tooltip' | artemisTranslate }}"
-        >
+        <a class="tab-link" *ngIf="course?.isAtLeastInstructor && irisEnabled" (click)="showIrisSettings()" routerLinkActive="active">
             <fa-icon [icon]="faRobot"></fa-icon>
             <span jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
-        </button>
+            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
+        </a>
         <a class="tab-link" *ngIf="isMessagingEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
             <fa-icon [icon]="faComments"></fa-icon>
             <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
