@@ -1,13 +1,22 @@
 <div>
     <div>
-        <div class="card-title ms-2" style="display: flex; align-items: center">
-            <fa-icon size="lg" [icon]="faRobot" style="padding-right: 7px"></fa-icon>
-            <h2 class="mb-3 mt-3 font-weight-bold">
-                {{ 'artemisApp.exerciseChatbot.title' | artemisTranslate }}
-            </h2>
-        </div>
-        <div class="card-title ms-2">
-            <p class="mb-3 mt-3 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+        <div class="card-title about-iris-header mb-2">
+            <div class="row">
+                <div class="col-auto">
+                    <jhi-iris-logo [size]="IrisLogoSize.BIG"></jhi-iris-logo>
+                </div>
+                <div class="col-8">
+                    <h2 class="mt-2 font-weight-bold">
+                        {{ 'artemisApp.exerciseChatbot.title' | artemisTranslate }}
+                    </h2>
+                    <div class="ms-2 d-none d-md-block">
+                        <p class="mt-1 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row d-md-none">
+                <p class="mt-1 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+            </div>
         </div>
     </div>
 
