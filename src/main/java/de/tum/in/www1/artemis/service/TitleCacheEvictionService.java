@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import javax.persistence.EntityManagerFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.hibernate.Hibernate;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.*;
 import org.hibernate.internal.SessionFactoryImpl;
@@ -102,7 +103,10 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
             evictIdFromCache("exerciseHintTitle", combinedId);
         }
         else if (entity instanceof ExerciseGroup exerciseGroup) {
-            // TODO check for Hibernate.isInitialized and handle this case
+            if (!Hibernate.isInitialized(exerciseGroup.getExercises())) {
+                log.warn("Unable to clear title of exercises from exercise group {}: Exercises not initialized", exerciseGroup.getId());
+                return;
+            }
             var exercises = exerciseGroup.getExercises();
             for (Exercise exercise : exercises) {
                 evictIdFromCache("exerciseTitle", exercise.getId());
