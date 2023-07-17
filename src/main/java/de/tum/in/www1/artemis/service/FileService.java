@@ -1052,6 +1052,20 @@ public class FileService implements DisposableBean {
         return string.replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\.+", ".");
     }
 
+    public static String removeIllegalPathCharacters(String string) {
+        // First replace all characters that are not (^) a-z, A-Z, 0-9, '-', '.' with '_'
+        // Then replace multiple points, e.g. '...' with one point '.'
+        String output = string;
+        if(output.startsWith("\\") || output.startsWith("/")) {
+            output = output.substring(1);
+        }
+        return output
+            .replaceAll("[^a-zA-Z0-9.\\-\\\\/]", "_")
+            .replaceAll("\\.+", ".")
+            .replaceAll("\\\\+", "\\")
+            .replaceAll("/+", "/");
+    }
+
     /**
      * create a directory at a given path
      *
