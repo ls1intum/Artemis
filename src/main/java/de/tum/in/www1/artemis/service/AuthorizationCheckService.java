@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -36,8 +35,6 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    private final ExamDateService examDateService;
-
     // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
@@ -46,10 +43,9 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.examDateService = examDateService;
 
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
@@ -659,16 +655,15 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to see the exam result. Returns true if
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
-     * - OR if the exam is a test exam and the student has submitted their own exam
+     * - OR if the exam is a test exam
      * - OR if the exam has not ended
      * - OR if the exam has already ended and the results were published
      *
-     * @param exercise             - Exercise that the result is requested for
-     * @param studentParticipation - participation that the result is requested for
-     * @param user                 - User that requests the result
+     * @param exercise - Exercise that the result is requested for
+     * @param user     - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
-    public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
+    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
         if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
             return true;
         }
@@ -678,7 +673,8 @@ public class AuthorizationCheckService {
             return true;
         }
         if (exam.isTestExam()) {
-            return examDateService.isTestExamWorkingPeriodOver(exercise.getExamViaExerciseGroupOrCourseMember(), studentParticipation);
+            // results for test exams are always visible
+            return true;
         }
         return exam.resultsPublished();
     }

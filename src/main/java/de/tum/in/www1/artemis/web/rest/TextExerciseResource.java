@@ -329,7 +329,7 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
+        if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
             throw new AccessForbiddenException();
         }
 
