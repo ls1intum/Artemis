@@ -9,6 +9,20 @@
             <fa-icon [icon]="faListAlt"></fa-icon>
             <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
         </a>
+        <a class="tab-link" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
+            <fa-icon [icon]="faChartBar"></fa-icon>
+            <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+        </a>
+        <a class="tab-link" *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
+            <fa-icon [icon]="faComment"></fa-icon>
+            <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
+            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
+        </a>
+        <a class="tab-link" *ngIf="isMessagingEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
+            <fa-icon [icon]="faComments"></fa-icon>
+            <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
+            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
+        </a>
         <a class="tab-link" *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
             <fa-icon [icon]="faFilePdf"></fa-icon>
             <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
@@ -16,10 +30,6 @@
         <a class="tab-link" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
             <fa-icon [icon]="faFlag"></fa-icon>
             <span jhiTranslate="artemisApp.competency.competencyButton">Competencies</span>
-        </a>
-        <a class="tab-link" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
-            <fa-icon [icon]="faChartBar"></fa-icon>
-            <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
         </a>
         <a
             class="tab-link"
@@ -31,16 +41,6 @@
         >
             <fa-icon [icon]="faPersonChalkboard"></fa-icon>
             <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
-        </a>
-        <a class="tab-link" *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
-            <fa-icon [icon]="faComment"></fa-icon>
-            <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
-            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
-        </a>
-        <a class="tab-link" *ngIf="isMessagingEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
-            <fa-icon [icon]="faComments"></fa-icon>
-            <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
-            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
         <a
             class="tab-link"

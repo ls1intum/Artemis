@@ -10,29 +10,9 @@
                 <fa-icon [icon]="faListAlt"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
             </a>
-            <a class="tab-link" *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" routerLink="lectures" routerLinkActive="active">
-                <fa-icon [icon]="faFilePdf"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
-            </a>
-            <a class="tab-link" *ngIf="hasCompetencies()" jhiOrionFilter [showInOrionWindow]="false" routerLink="competencies" routerLinkActive="active">
-                <fa-icon [icon]="faFlag"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>
-            </a>
             <a class="tab-link guided-tour" jhiOrionFilter [showInOrionWindow]="false" routerLink="statistics" routerLinkActive="active">
                 <fa-icon [icon]="faChartBar"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
-            </a>
-            <a
-                class="tab-link"
-                *ngIf="hasTutorialGroups()"
-                [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
-                jhiOrionFilter
-                [showInOrionWindow]="false"
-                routerLink="tutorial-groups"
-                routerLinkActive="active"
-            >
-                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
             </a>
             <a class="tab-link" *ngIf="isCommunicationEnabled(course)" jhiOrionFilter [showInOrionWindow]="false" routerLink="discussion" routerLinkActive="active">
                 <fa-icon [icon]="faComment"></fa-icon>
@@ -49,6 +29,26 @@
             >
                 <fa-icon [icon]="faComments"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
+            </a>
+            <a class="tab-link" *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" routerLink="lectures" routerLinkActive="active">
+                <fa-icon [icon]="faFilePdf"></fa-icon>
+                <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
+            </a>
+            <a class="tab-link" *ngIf="hasCompetencies()" jhiOrionFilter [showInOrionWindow]="false" routerLink="competencies" routerLinkActive="active">
+                <fa-icon [icon]="faFlag"></fa-icon>
+                <span jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>
+            </a>
+            <a
+                class="tab-link"
+                *ngIf="hasTutorialGroups()"
+                [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
+                jhiOrionFilter
+                [showInOrionWindow]="false"
+                routerLink="tutorial-groups"
+                routerLinkActive="active"
+            >
+                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                <span jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
             </a>
             <div class="controls">
                 <ng-container #controlsViewContainer></ng-container>
