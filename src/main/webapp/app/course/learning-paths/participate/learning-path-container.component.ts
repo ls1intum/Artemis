@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { RecommendationType } from 'app/entities/learning-path.model';
@@ -10,8 +10,9 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -33,14 +34,13 @@ export class LearningPathContainerComponent implements OnInit {
     faChevronLeft = faChevronLeft;
     faChevronRight = faChevronRight;
 
-    discussionComponent?: DiscussionSectionComponent;
-
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
+        private alertService: AlertService,
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
-        private alertService: AlertService,
+        private exerciseService: ExerciseService,
     ) {}
 
     ngOnInit() {
@@ -96,7 +96,6 @@ export class LearningPathContainerComponent implements OnInit {
                 this.loadLectureUnit();
             }
         }
-        console.log('request previous task');
     }
 
     loadLectureUnit() {
@@ -110,28 +109,45 @@ export class LearningPathContainerComponent implements OnInit {
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
+        this.router.navigate(['lecture-unit'], { relativeTo: this.activatedRoute });
     }
 
     loadExercise() {
         console.log('load exercise');
+        this.exerciseService.getExerciseDetails(this.learningObjectId).subscribe({
+            next: (exerciseResponse) => {
+                this.exercise = exerciseResponse.body!;
+            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
+        this.router.navigate(['exercise'], { relativeTo: this.activatedRoute });
     }
 
     /**
      * This function gets called if the router outlet gets activated. This is
-     * used only for the DiscussionComponent
+     * used only for the LearningPathLectureUnitViewComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: DiscussionSectionComponent) {
+    onChildActivate(instance: LearningPathLectureUnitViewComponent | CourseExerciseDetailsComponent) {
         console.log(instance);
-        this.discussionComponent = instance; // save the reference to the component instance
-        if (this.lecture) {
-            instance.lecture = this.lecture;
-            instance.isCommunicationPage = false;
+        if (instance instanceof LearningPathLectureUnitViewComponent) {
+            this.setupLectureUnitView(instance);
+        } else {
+            this.setupExerciseView(instance);
         }
-        // todo exercise
     }
 
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly isCommunicationEnabled = isCommunicationEnabled;
-    protected readonly LectureUnitType = LectureUnitType;
+    setupLectureUnitView(instance: LearningPathLectureUnitViewComponent) {
+        if (this.lecture) {
+            instance.lecture = this.lecture;
+            instance.lectureUnit = this.lectureUnit!;
+        }
+    }
+
+    setupExerciseView(instance: CourseExerciseDetailsComponent) {
+        if (this.exercise) {
+            instance.courseId = this.courseId;
+            instance.exerciseId = this.learningObjectId;
+        }
+    }
 }

@@ -11,7 +11,6 @@ import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/par
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph-node.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
-import { ArtemisLearningPathLectureUnitViewModule } from 'app/course/learning-paths/participate/lectureunit/learning-path-lecture-unit-view.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 
 const routes: Routes = [
@@ -25,25 +24,36 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
-                path: '',
+                path: 'lecture-unit',
                 pathMatch: 'full',
-                loadChildren: () => import('app/overview/discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
+                children: [
+                    {
+                        path: '',
+                        pathMatch: 'full',
+                        loadChildren: () =>
+                            import('app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.module').then(
+                                (m) => m.ArtemisLearningPathLectureUnitViewModule,
+                            ),
+                    },
+                ],
+            },
+            {
+                path: 'exercise',
+                pathMatch: 'full',
+                children: [
+                    {
+                        path: '',
+                        pathMatch: 'full',
+                        loadChildren: () => import('app/overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
+                    },
+                ],
             },
         ],
     },
 ];
 
 @NgModule({
-    imports: [
-        ArtemisSharedModule,
-        FormsModule,
-        ReactiveFormsModule,
-        ArtemisSharedComponentModule,
-        NgxGraphModule,
-        ArtemisLearningPathLectureUnitViewModule,
-        RouterModule.forChild(routes),
-        ArtemisLectureUnitsModule,
-    ],
+    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, ArtemisSharedComponentModule, NgxGraphModule, RouterModule.forChild(routes), ArtemisLectureUnitsModule],
     declarations: [LearningPathContainerComponent, LearningPathManagementComponent, LearningPathGraphSidebarComponent, LearningPathGraphComponent, LearningPathGraphNodeComponent],
     exports: [LearningPathContainerComponent],
 })

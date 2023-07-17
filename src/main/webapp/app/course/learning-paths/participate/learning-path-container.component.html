@@ -4,23 +4,10 @@
     </div>
     <div class="col pe-0 flex-grow-1" style="min-width: 200px">
         <div class="row">
-            <div class="col pe-0 flex-grow-1">
-                <jhi-learning-path-lecture-unit-view *ngIf="lectureUnit" [lecture]="lecture!" [lectureUnit]="lectureUnit!"></jhi-learning-path-lecture-unit-view>
-                <!-- todo exercise -->
-                <div *ngIf="!lectureUnit && !exercise">
-                    <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
-                </div>
+            <div *ngIf="!lectureUnit && !exercise">
+                <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
             </div>
-            <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-                <router-outlet
-                    *ngIf="
-                        (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) ||
-                        (exercise && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course)))
-                    "
-                    class="ms-3"
-                    (activate)="onChildActivate($event)"
-                ></router-outlet>
-            </div>
+            <router-outlet *ngIf="lectureUnit || exercise" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
 </div>
