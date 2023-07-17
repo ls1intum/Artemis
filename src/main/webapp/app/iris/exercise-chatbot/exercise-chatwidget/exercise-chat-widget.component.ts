@@ -136,9 +136,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     async ngOnInit() {
-        this.userAccepted = !!(await this.userService.getIrisAcceptedAt().subscribe((res) => {
-            return res;
-        }));
+        await this.userService.getIrisAcceptedAt().subscribe((res) => {
+            console.log(res);
+            this.userAccepted = !!res;
+        });
         console.log(this.userAccepted);
         this.animateDots();
 
