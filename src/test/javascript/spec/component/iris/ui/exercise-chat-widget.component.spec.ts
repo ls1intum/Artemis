@@ -101,6 +101,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should set userAccepted to false if user has not accepted the policy', () => {
+        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of(null));
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
