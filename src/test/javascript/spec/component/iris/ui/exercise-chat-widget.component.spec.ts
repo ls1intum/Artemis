@@ -314,7 +314,18 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'false');
     });
 
+    it('should disable enter key if deactivateSubmitButton is true', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(true);
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
+        jest.spyOn(component, 'onSend');
+
+        component.handleKey(event);
+
+        expect(component.onSend).not.toHaveBeenCalled();
+    });
+
     it('should call onSend if Enter key is pressed without Shift key', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(false);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
         jest.spyOn(component, 'onSend');
 
@@ -327,6 +338,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should remove selected text and move cursor position if Enter key is pressed with Shift key', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(false);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: true });
         const textAreaElement = document.createElement('textarea');
         const selectionStart = 6;
@@ -451,25 +463,54 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.isEmptyMessageError()).toBeFalsy();
     });
 
-    it('should return true if isLoading is true', () => {
+    it('should disable submit button if isLoading is true', () => {
         component.isLoading = true;
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return true if error exists and it is fatal', () => {
+    it('should disable submit button if error exists and it is fatal', () => {
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: true };
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return false if isLoading is false and no error exists', () => {
+    it('should disable submit button if userAccepted is false', () => {
+        component.userAccepted = false;
         component.isLoading = false;
         component.error = null;
-        expect(component.deactivateSubmitButton()).toBeFalsy();
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return false if isLoading is false and error is not fatal', () => {
+    it('should not disable submit button if isLoading is false and no error exists', () => {
+        component.userAccepted = true;
+        component.isLoading = false;
+        component.error = null;
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
+        expect(component.deactivateSubmitButton()).toBeFalsy();
+        expect(sendButton.disabled).toBeFalsy();
+    });
+
+    it('should not disable submit button if isLoading is false and error is not fatal', () => {
+        component.userAccepted = true;
         component.isLoading = false;
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeFalsy();
+        expect(sendButton.disabled).toBeFalsy();
     });
 });

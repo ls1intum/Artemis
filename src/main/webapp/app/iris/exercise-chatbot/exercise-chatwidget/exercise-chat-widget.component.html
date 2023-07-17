@@ -126,7 +126,7 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button id="sendButton" (click)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
+            <jhi-button id="sendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
             </jhi-button>
         </div>
     </div>

@@ -351,7 +351,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      */
     handleKey(event: KeyboardEvent): void {
         if (event.key === 'Enter') {
-            if (!this.isLoading) {
+            if (!this.deactivateSubmitButton()) {
                 if (!event.shiftKey) {
                     event.preventDefault();
                     this.onSend();
@@ -545,7 +545,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     deactivateSubmitButton(): boolean {
-        return this.isLoading || (!!this.error && this.error.fatal);
+        return !this.userAccepted || this.isLoading || (!!this.error && this.error.fatal);
     }
 
     isEmptyMessageError(): boolean {
