@@ -1,0 +1,25 @@
+<ng-container *ngIf="!this.linkPreview && !this.loaded && this.showLoadingsProgress; then fetch; else preview"> </ng-container>
+<ng-template #preview>
+    <div *ngIf="linkPreview && linkPreview.shouldPreviewBeShown" class="preview-container">
+        <!-- Link preview template -->
+        <div class="preview-card">
+            <div class="preview-content">
+                <h2 class="preview-title">{{ linkPreview.title }}</h2>
+                <p class="preview-description">{{ linkPreview.description }}</p>
+            </div>
+
+            <div class="preview-image" *ngIf="linkPreview.image">
+                <img [src]="linkPreview.image" alt="Preview Image" />
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #fetch>
+    <div *ngIf="!hasError" class="loading-container">
+        <!-- Loading template -->
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</ng-template>
