@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 
@@ -100,7 +96,7 @@ public class ExamImportService {
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
-        preCheckProgrammingExercisesForShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
 
         // 1st: Save the exam without exercises to the database and create a new channel for the exam
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
@@ -124,10 +120,9 @@ public class ExamImportService {
      * @return a List of all Exercise Groups of the target exam
      */
     public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
-
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
-        preCheckProgrammingExercisesForShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
+        preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
 
         Exam targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 
@@ -138,33 +133,90 @@ public class ExamImportService {
     }
 
     /**
-     * Checks the programming exercises of the given exercise groups for the uniqueness of the projectKey chosen by the user.
-     * If a non-unique project key is discovered, the short name is resettet, so that the user can input a new one
+     * Checks if programming exercises passed to the method have duplicated titles or short names. When a duplication is found,
+     * the title / short name is removed from the corresponding exercises. After this method has been called, no programming exercise in
+     * exerciseGroups has a duplicated title / short name.
      *
-     * @param exerciseGroupList the list of all exercises (not only programming) to be checked
-     * @throws ExamConfigurationException in case one or more programming exercise project keys are not unique
+     * @param programmingExercises programming exercises we have to check for duplications
+     * @param checkTitle           if the title should be checked for duplications. In case it is set to false, the short names are checked
+     * @return true if any duplications were found and taken care of
      */
-    private void preCheckProgrammingExercisesForShortNameUniqueness(List<ExerciseGroup> exerciseGroupList, String targetCourseShortName) {
-        // Flag to determine, if a programming exercise with an invalid shortName was found
-        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
-        // Iterate over all exercises
-        exerciseGroupList.forEach(exerciseGroup -> {
-            exerciseGroup.getExercises().forEach(exercise -> {
-                if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
-                    // Method to check, if the project already exists.
-                    boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, targetCourseShortName);
-                    if (invalidShortName) {
-                        // If the project already exists and thus the short name isn't valid, it is removed
-                        exercise.setShortName("");
+    private boolean checkForAndRemoveDuplicatedTitlesAndShortNames(List<Exercise> programmingExercises, boolean checkTitle) {
+        List<String> titlesOrShortNames = programmingExercises.stream().map(checkTitle ? BaseExercise::getTitle : BaseExercise::getShortName).toList();
+        Set<String> uniqueTitlesOrShortNames = new HashSet<>(titlesOrShortNames);
+
+        // check if there are duplications
+        if (titlesOrShortNames.size() != uniqueTitlesOrShortNames.size()) {
+            // go through all exercises and use the uniqueTitlesOrShortNames set to see which ones are duplicated. When an
+            // exercise is found, the title / shortName is removed and the corresponding entry is removed from the set
+            programmingExercises.forEach(exercise -> {
+                String searchFor = checkTitle ? exercise.getTitle() : exercise.getShortName();
+                if (!uniqueTitlesOrShortNames.contains(searchFor)) {
+                    if (checkTitle) {
                         exercise.setTitle("");
-                        numberOfInvalidProgrammingExercises.getAndIncrement();
+                    }
+                    else {
+                        exercise.setShortName("");
                     }
                 }
+                else {
+                    uniqueTitlesOrShortNames.remove(searchFor);
+                }
             });
-        });
-        if (numberOfInvalidProgrammingExercises.get() > 0) {
-            // In case of an invalid configuration, the exam is sent back to the client with the short names removed, wherever a new one must be chosen
-            throw new ExamConfigurationException(exerciseGroupList, numberOfInvalidProgrammingExercises.get());
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a project with the same key and name already exists on VCS / CI. The number of such occurrences is counted
+     *
+     * @param programmingExercises that are checked for an existing project
+     * @param courseShortName      the short name of the course the exercises will be imported into
+     * @return the number of exercises that need to be renamed in the client
+     */
+    private int checkForExistingProjectAndRemoveTitleShortName(List<Exercise> programmingExercises, String courseShortName) {
+        // Count how many programming exercises have conflicts with VCS / CI due to the project with the same key / name already existing
+        // Iterate over all programming exercises
+        return programmingExercises.stream().mapToInt(exercise -> {
+            // Method to check, if the project already exists.
+            boolean projectExists = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
+            if (projectExists) {
+                // If the project already exists the short name and title are removed. It has to be set in the client again
+                exercise.setShortName("");
+                exercise.setTitle("");
+            }
+            return projectExists ? 1 : 0;
+        }).sum();
+    }
+
+    /**
+     * Checks that all programming exercises of the given exercise group have a unique title and short name.
+     * Additionally, checks if an exercise with the same project key or name already exists on the VCS / CI.
+     * In case of an invalid configuration, the exam is sent back to the client with the title / short name removed, wherever a new one must be chosen
+     *
+     * @param exerciseGroups  the list of all exercises (not only programming) to be checked
+     * @param courseShortName the short name of the course the exercises will be imported into
+     * @throws ExamConfigurationException in case of duplicated titles / short names or if one or more programming exercise project keys are not unique
+     */
+    private void preCheckProgrammingExercisesForTitleAndShortNameUniqueness(List<ExerciseGroup> exerciseGroups, String courseShortName) {
+        List<Exercise> programmingExercises = exerciseGroups.stream().flatMap(group -> group.getExercises().stream())
+                .filter(exercise -> exercise.getExerciseType() == ExerciseType.PROGRAMMING).toList();
+
+        // check for duplicated titles
+        boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, true);
+        if (duplicatedTitles) {
+            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseTitle");
+        }
+        // check for duplicated short names
+        boolean duplicatedShortNames = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, false);
+        if (duplicatedShortNames) {
+            throw new ExamConfigurationException(exerciseGroups, 0, "duplicatedProgrammingExerciseShortName");
+        }
+        // check for existing project on VCS / CI
+        int numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
+        if (numberOfInvalidProgrammingExercises > 0) {
+            throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises, "invalidKey");
         }
     }
 

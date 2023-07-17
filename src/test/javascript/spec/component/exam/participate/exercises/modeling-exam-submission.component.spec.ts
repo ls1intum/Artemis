@@ -16,6 +16,7 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -67,10 +68,10 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(ModelingExamSubmissionComponent).not.toBeNull();
         });
 
-        it('should show exercise title if any', () => {
-            comp.exercise.title = 'Test Title';
+        it('should show exercise group title', () => {
+            comp.exercise.exerciseGroup = { title: 'Test Group' } as ExerciseGroup;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.exerciseGroup?.title);
             expect(el).not.toBeNull();
         });
 

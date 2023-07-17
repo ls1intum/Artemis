@@ -300,31 +300,25 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET participations/:participationId/submissions/:submissionId/for-text-assessment
-     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
+     * GET text-submissions/:submissionId/for-assessment
+     * Given a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
-     * @param participationId the id of the participation the submissions belongs to
      * @param submissionId    the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId        if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
+    @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
-
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
-                    "participationIdMismatch");
-        }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
