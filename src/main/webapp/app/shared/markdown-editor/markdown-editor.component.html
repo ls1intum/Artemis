@@ -73,7 +73,7 @@
                     </button>
                     <!--style command -->
                     <div *ngIf="headerCommands.length > 0" class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                        <button class="btn btn-sm" type="button" id="dropdownBasic1" ngbDropdownToggle>
+                        <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
                             {{ 'artemisApp.multipleChoiceQuestion.editor.style' | artemisTranslate }}
                         </button>
                         <div class="dropdown-menu" ngbDropdownMenu>
@@ -170,19 +170,19 @@
                     </ng-container>
                     <!--color picker command -->
                     <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
-                        <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>
+                        <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>
                         <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
                     </div>
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
                         <ng-container *ngFor="let command of domainCommands | typeCheck : DomainTagCommand">
-                            <div *ngIf="command.displayCommandButton" class="btn btn-sm" (click)="command.execute()">
+                            <div *ngIf="command.displayCommandButton" class="btn btn-sm px-2 py-0" (click)="command.execute()">
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </div>
                         </ng-container>
                         <ng-container *ngFor="let command of domainCommands | typeCheck : DomainMultiOptionCommand">
-                            <div ngbDropdown class="d-inline-block">
-                                <button class="btn btn-sm" type="button" ngbDropdownToggle>
+                            <div ngbDropdown class="btn-group">
+                                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
                                     {{ command.buttonTranslationString | artemisTranslate }}
                                 </button>
                                 <div ngbDropdownMenu>
@@ -201,7 +201,7 @@
                         <button
                             *ngFor="let command of metaCommands"
                             type="button"
-                            class="btn btn-sm"
+                            class="btn btn-sm px-2 py-0"
                             (click)="command.execute()"
                             [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                         >

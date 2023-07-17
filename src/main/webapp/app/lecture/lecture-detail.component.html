@@ -10,6 +10,10 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
                 <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
+                <dt><span jhiTranslate="artemisApp.lecture.visibleDate">Visible from</span></dt>
+                <dd>
+                    <span>{{ lecture.visibleDate | artemisDate }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
                 <dd>
                     <span>{{ lecture.startDate | artemisDate }}</span>
