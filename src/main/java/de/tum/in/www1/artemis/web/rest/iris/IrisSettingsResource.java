@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,18 +34,18 @@ public class IrisSettingsResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final Optional<IrisConnectorService> irisConnectorService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final IrisConnectorService irisConnectorService;
-
     public IrisSettingsResource(UserRepository userRepository, CourseRepository courseRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository, IrisConnectorService irisConnectorService) {
+            AuthorizationCheckService authCheckService, Optional<IrisConnectorService> irisConnectorService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisConnectorService = irisConnectorService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -68,7 +69,7 @@ public class IrisSettingsResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisModelDTO>> getAllModels() {
         try {
-            var models = irisConnectorService.getOfferedModels();
+            var models = irisConnectorService.orElseThrow().getOfferedModels();
             return ResponseEntity.ok(models);
         }
         catch (IrisConnectorException e) {
