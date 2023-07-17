@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.io.File;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -13,10 +11,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.jplag.JPlagComparison;
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
@@ -75,27 +70,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @Column(name = "status")
     private PlagiarismStatus status = PlagiarismStatus.NONE;
-
-    /**
-     * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
-     *
-     * @param jplagComparison     JPlag comparison to map to the new PlagiarismComparison instance
-     * @param exercise            the exercise to which the comparison belongs, either Text or Programming
-     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
-     * @return a new instance with the content of the JPlagComparison
-     */
-    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
-        PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
-
-        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission(), exercise, submissionDirectory));
-        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission(), exercise, submissionDirectory));
-        comparison.setMatches(jplagComparison.matches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
-        // Note: JPlag returns a value between 0 and 1, we assume and store a value between 0 and 100 (percentage) in the database
-        comparison.setSimilarity(jplagComparison.similarity() * 100);
-        comparison.setStatus(PlagiarismStatus.NONE);
-
-        return comparison;
-    }
 
     /**
      * Maintain the bidirectional relationship manually
