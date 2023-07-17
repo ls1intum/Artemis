@@ -257,7 +257,7 @@ public class UserDTO extends AuditingEntityDTO {
         isInternal = internal;
     }
 
-    public ZonedDateTime isIrisAccepted() {
+    public ZonedDateTime getIrisAccepted() {
         return irisAccepted;
     }
 
