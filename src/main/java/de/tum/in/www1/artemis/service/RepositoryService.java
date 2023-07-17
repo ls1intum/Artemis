@@ -28,13 +28,10 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final FileService fileService;
-
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, FileService fileService) {
+    public RepositoryService(GitService gitService) {
         this.gitService = gitService;
-        this.fileService = fileService;
     }
 
     /**
@@ -186,7 +183,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
-        File file = checkIfFileExistsInRepository(repository, fileService.removeIllegalCharacters(filename));
+        File file = checkIfFileExistsInRepository(repository, FileService.removeIllegalCharacters(filename));
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -197,7 +194,7 @@ public class RepositoryService {
             throw new FileAlreadyExistsException("file already exists");
         }
 
-        File file = new File(Path.of(repository.getLocalPath().toString(), fileService.removeIllegalCharacters(filename)).toFile(), repository);
+        File file = new File(Path.of(repository.getLocalPath().toString(), FileService.removeIllegalCharacters(filename)).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
@@ -213,10 +210,10 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        checkIfFileExistsInRepository(repository, fileService.removeIllegalCharacters(folderName));
-        Files.createDirectory(repository.getLocalPath().resolve(fileService.removeIllegalCharacters(folderName)));
+        checkIfFileExistsInRepository(repository, FileService.removeIllegalCharacters(folderName));
+        Files.createDirectory(repository.getLocalPath().resolve(FileService.removeIllegalCharacters(folderName)));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(fileService.removeIllegalCharacters(folderName)).resolve(".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(FileService.removeIllegalCharacters(folderName)).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -232,14 +229,14 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> existingFile = gitService.getFileByName(repository, fileService.removeIllegalCharacters(fileMove.currentFilePath()));
+        Optional<File> existingFile = gitService.getFileByName(repository, FileService.removeIllegalCharacters(fileMove.currentFilePath()));
         if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
         if (!repository.isValidFile(existingFile.get())) {
             throw new IllegalArgumentException();
         }
-        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileService.removeIllegalCharacters(fileMove.newFilename())), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(FileService.removeIllegalCharacters(fileMove.newFilename())), repository);
         if (!repository.isValidFile(newFile)) {
             throw new IllegalArgumentException();
         }
@@ -265,7 +262,7 @@ public class RepositoryService {
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
 
-        Optional<File> file = gitService.getFileByName(repository, fileService.removeIllegalCharacters(filename));
+        Optional<File> file = gitService.getFileByName(repository, FileService.removeIllegalCharacters(filename));
 
         if (file.isEmpty()) {
             throw new FileNotFoundException();
