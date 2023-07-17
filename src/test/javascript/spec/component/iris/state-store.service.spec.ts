@@ -267,7 +267,7 @@ describe('IrisStateStore', () => {
         expect(state2.error?.fatal).toBeTruthy();
     });
 
-    it('should not dispatch 2 StudentMessageSentActions with unique nonce', async () => {
+    it('should not dispatch 2 StudentMessageSentActions with unique messageDifferentiator', async () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
@@ -291,7 +291,7 @@ describe('IrisStateStore', () => {
             messages: [
                 {
                     ...action1.message,
-                    nonce: 5,
+                    messageDifferentiator: 5,
                 },
             ],
         });
@@ -316,7 +316,7 @@ describe('IrisStateStore', () => {
         expect(state2.messages).toHaveLength(1);
     });
 
-    it('should  dispatch 2 StudentMessageSentActions with different nonces', async () => {
+    it('should  dispatch 2 StudentMessageSentActions with different messageDifferentiators', async () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: {
@@ -340,7 +340,7 @@ describe('IrisStateStore', () => {
             messages: [
                 {
                     ...action1.message,
-                    nonce: undefined,
+                    messageDifferentiator: undefined,
                 },
             ],
         });
