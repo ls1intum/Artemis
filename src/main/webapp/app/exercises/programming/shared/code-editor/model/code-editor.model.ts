@@ -39,6 +39,7 @@ export type FileSubmission = { [fileName: string]: string | undefined };
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
+    SUBMISSION = 'SUBMISSION',
 }
 
 /**
@@ -83,8 +84,9 @@ export enum ResizeType {
 }
 
 export type DomainParticipationChange = [DomainType.PARTICIPATION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
+export type DomainSubmissionChange = [DomainType.SUBMISSION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
-export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
+export type DomainChange = DomainParticipationChange | DomainSubmissionChange | DomainTestRepositoryChange;
 
 /**
  * Enumeration defining the state of git.

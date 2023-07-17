@@ -141,6 +141,14 @@ public abstract class RepositoryResource {
     }
 
     /**
+     * Get a map of files for the given submission id.
+     *
+     * @param submissionId that serves as an abstract identifier for retrieving the repository.
+     * @return the map of files with an indicator if the file is a file or a folder.
+     */
+    abstract ResponseEntity<Map<String, FileType>> getFilesBySubmissionId(long submissionId);
+
+    /**
      * Get the content of a file.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
@@ -159,6 +167,15 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
         });
     }
+
+    /**
+     * Get the content of a file by submission id.
+     *
+     * @param submissionId that serves as an abstract identifier for retrieving the repository.
+     * @param filename     of the file to retrieve.
+     * @return the file if available.
+     */
+    public abstract ResponseEntity<byte[]> getFileBySubmissionId(long submissionId, String filename);
 
     /**
      * Create new file.
