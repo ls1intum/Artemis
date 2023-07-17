@@ -133,7 +133,7 @@ public class LectureUnitProcessingService {
     }
 
     private boolean isSolutionSlide(String slideText) {
-        return slideText.contains("Example solution") || slideText.contains("Example solution (with comments)") || slideText.contains("Example solution: model");
+        return slideText.contains("Example solution");
     }
 
     /**
