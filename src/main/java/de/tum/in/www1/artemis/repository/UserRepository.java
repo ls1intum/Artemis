@@ -196,7 +196,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 userGroup IN :#{#groupNames}
                 AND (user.login LIKE :#{#loginOrName}% OR concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%)
              )
-             ORDER BY concat_ws(' ', user.firstName, user.lastName)
             """)
     Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
@@ -227,6 +226,22 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrNameInConversationWithCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
             @Param("groupName") String groupName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN user.groups userGroup
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE user.isDeleted = false AND (
+                conversation.id = :#{#conversationId}
+                AND (:#{#loginOrName} = '' OR (user.login LIKE :#{#loginOrName}% OR concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%))
+                AND userGroup IN :#{#groupNames}
+             )
+            """)
+    Page<User> searchAllByLoginOrNameInConversationWithCourseGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupNames") Set<String> groupNames);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""

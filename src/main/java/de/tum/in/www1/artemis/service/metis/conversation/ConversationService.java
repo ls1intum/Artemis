@@ -347,24 +347,27 @@ public class ConversationService {
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
+            var groups = new HashSet<String>();
             switch (filter.get()) {
-                case INSTRUCTOR -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getInstructorGroupName());
-                }
+                case INSTRUCTOR -> groups.add(course.getInstructorGroupName());
                 case TUTOR -> {
-                    // searches for both tutors and editors
-                    return userRepository.searchAllByLoginOrNameInConversationWithEitherCourseGroup(pageable, searchTerm, conversation.getId(), course.getEditorGroupName(),
-                            course.getTeachingAssistantGroupName());
+                    groups.add(course.getTeachingAssistantGroupName());
+                    // searching for tutors also searches for editors
+                    groups.add(course.getEditorGroupName());
                 }
-                case STUDENT -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getStudentGroupName());
-                }
+                case STUDENT -> groups.add(course.getStudentGroupName());
                 case CHANNEL_MODERATOR -> {
                     assert conversation instanceof Channel : "The filter CHANNEL_MODERATOR is only allowed for channels!";
                     return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
+
+            if (conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin()) {
+                return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
+            }
+
+            return userRepository.searchAllByLoginOrNameInConversationWithCourseGroups(pageable, searchTerm, conversation.getId(), groups);
         }
 
     }
