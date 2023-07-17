@@ -94,7 +94,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should set userAccepted to true if user has accepted the policy', () => {
-        jest.spyOn(component.userService, 'getIrisAcceptedAt').mockReturnValue(of('2023-07-16T13:11:36+02:00'));
+        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of('2023-07-16T13:11:36+02:00'));
 
         component.ngOnInit();
         expect(component.userAccepted).toBeTrue();
@@ -106,7 +106,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = jest.spyOn(component.userService, 'acceptIris');
+        const stub = jest.spyOn(mockUserService, 'acceptIris');
         stub.mockReturnValue(of(new HttpResponse({ body: null })));
 
         component.acceptPermission();
