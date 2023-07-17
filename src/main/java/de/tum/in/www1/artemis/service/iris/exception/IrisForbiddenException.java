@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisForbiddenException extends IrisException {
 
     public IrisForbiddenException() {
-        super("artemisApp.iris.error.forbidden", Map.of());
+        super("artemisApp.exerciseChatbot.errors.forbidden", Map.of());
     }
 }

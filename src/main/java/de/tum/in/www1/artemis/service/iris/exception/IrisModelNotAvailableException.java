@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisModelNotAvailableException extends IrisException {
 
     public IrisModelNotAvailableException(String model, String pyrisErrorMessage) {
-        super("artemisApp.iris.error.noModelAvailable", Map.of("model", model, "pyrisErrorMessage", pyrisErrorMessage));
+        super("artemisApp.exerciseChatbot.errors.noModelAvailable", Map.of("model", model, "pyrisErrorMessage", pyrisErrorMessage));
     }
 }
