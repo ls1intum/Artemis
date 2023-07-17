@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -68,9 +69,9 @@ export class UserService {
 
     /**
      * Get the timestamp that Iris is accepted.
-     * @return Observable<string> with the accepted date.
+     * @return Observable<dayjs.Dayjs> with the accepted date.
      */
-    getIrisAcceptedAt(): Observable<string> {
-        return this.http.get<string>(`${this.resourceUrl}/accept-iris`);
+    getIrisAcceptedAt(): Observable<dayjs.Dayjs> {
+        return this.http.get<dayjs.Dayjs>(`${this.resourceUrl}/accept-iris`);
     }
 }
