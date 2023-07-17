@@ -109,11 +109,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT COUNT(e.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
             """)
-    Integer countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countExercisesWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
@@ -121,11 +121,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
             """)
-    Integer countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countStudentsInExercisesWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
@@ -133,23 +133,23 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
             """)
-    Integer countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countActiveStudentsInExercisesWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
             SELECT COUNT(e.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
             """)
-    Integer countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
@@ -157,11 +157,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
             """)
-    Integer countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countStudentsInExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
@@ -169,12 +169,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
                 AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
             """)
-    Integer countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+    Integer countActiveStudentsInExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""

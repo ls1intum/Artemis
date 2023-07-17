@@ -29,10 +29,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MultiGauge;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 
 @Component
 public class MetricsBean {
@@ -166,8 +163,8 @@ public class MetricsBean {
     }
 
     private void registerExerciseAndExamMetrics() {
-        int[] ranges = { 5, 15, 30, 45, 60, 120 };
-        for (int range : ranges) {
+        int[] minuteRanges = { 5, 15, 30, 45, 60, 120 };
+        for (int range : minuteRanges) {
             registerExerciseMetrics(range);
             registerExamMetrics(range);
         }
@@ -175,31 +172,29 @@ public class MetricsBean {
 
     private void registerExerciseMetrics(int range) {
         for (var exerciseType : ExerciseType.values()) {
-            Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true)
-                    .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes")
-                    .register(meterRegistry);
+            final List<Tag> sharedTags = List.of(Tag.of("range", String.valueOf(range)), Tag.of("exerciseType", exerciseType.toString()));
+
+            Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true).tags(sharedTags)
+                    .description("Number of exercises ending within the next minutes").register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.due.student_multiplier", () -> this.getUpcomingDueExercisesCountWithStudentMultiplier(range, exerciseType))
-                    .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
-                    .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
+                    .strongReference(true).tags(sharedTags).description("Number of exercises ending within the next minutes multiplied with students in the course")
+                    .register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14",
-                    () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString())
+                    () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tags(sharedTags)
                     .description("Number of exercises ending within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
 
-            Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
-                    .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes")
-                    .register(meterRegistry);
+            Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true).tags(sharedTags)
+                    .description("Number of exercises starting within the next minutes").register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.release.student_multiplier", () -> this.getUpcomingReleasedExercisesCountWithStudentMultiplier(range, exerciseType))
-                    .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
-                    .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
+                    .strongReference(true).tags(sharedTags).description("Number of exercises starting within the next minutes multiplied with students in the course")
+                    .register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14",
-                    () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString())
+                    () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tags(sharedTags)
                     .description("Number of exercises starting within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
         }
@@ -253,14 +248,14 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
+        return exerciseRepository.countExercisesWithEndDateBetween(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingDueExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
+        return exerciseRepository.countStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingDueExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
@@ -272,21 +267,21 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toCollection(ArrayList::new));
 
-        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        return exerciseRepository.countActiveStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
 
     private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
+        return exerciseRepository.countExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingReleasedExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass());
+        return exerciseRepository.countStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
     }
 
     private double getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
@@ -298,35 +293,35 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toCollection(ArrayList::new));
 
-        return exerciseRepository.countActiveStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        return exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
 
     private double getUpcomingEndingExamCount(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamsWithEndDateBetween(now, endDate);
     }
 
     private double getUpcomingEndingExamCountWithStudentMultiplier(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamUsersInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamUsersInExamsWithEndDateBetween(now, endDate);
     }
 
     private double getUpcomingStartingExamCount(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamsWithStartDateBetween(now, endDate);
     }
 
     private double getUpcomingStartingExamCountWithStudentMultiplier(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
+        return examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
     }
 
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
@@ -343,21 +338,9 @@ public class MetricsBean {
 
         var courses = courseRepository.findAll();
         // We set the number of students once to prevent multiple queries for the same date
-        courses.forEach(course -> course.setNumberOfStudents((long) userRepository.getStudents(course).size()));
+        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
 
-        courses.forEach(course -> {
-            if (course.getSemester() == null) {
-                course.setSemester("No semester");
-            }
-            if (course.getTitle() == null) {
-                if (course.getShortName() != null) {
-                    course.setTitle("Course" + course.getShortName());
-                }
-                else {
-                    course.setTitle("Course" + course.getId().toString());
-                }
-            }
-        });
+        ensureCourseInformationIsSet(courses);
 
         var activeCourses = courses.stream()
                 .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
@@ -369,10 +352,10 @@ public class MetricsBean {
                 true);
 
         activeCoursesGauge.set(activeCourses.size());
-        coursesGauge.set(courseRepository.findAll().size());
+        coursesGauge.set(courses.size());
 
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
-        examsGauge.set(examRepository.findAll().size());
+        examsGauge.set((int) examRepository.count());
 
         List<Exam> examsInActiveCourses = new ArrayList<>();
         activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
@@ -388,6 +371,22 @@ public class MetricsBean {
 
         exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
                 exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toCollection(ArrayList::new)), true);
+    }
+
+    private void ensureCourseInformationIsSet(List<Course> courses) {
+        courses.forEach(course -> {
+            if (course.getSemester() == null) {
+                course.setSemester("No semester");
+            }
+            if (course.getTitle() == null) {
+                if (course.getShortName() != null) {
+                    course.setTitle("Course" + course.getShortName());
+                }
+                else {
+                    course.setTitle("Course" + course.getId().toString());
+                }
+            }
+        });
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

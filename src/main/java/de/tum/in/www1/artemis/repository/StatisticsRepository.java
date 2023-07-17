@@ -82,11 +82,17 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            COUNT (DISTINCT u.id)
-            from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
-            and (s.participation.exercise.exerciseGroup IS NOT NULL or exists (select c from Course c where s.participation.exercise.course.testCourse = false))
+            SELECT COUNT (DISTINCT u.id)
+            FROM User u, Submission s, StudentParticipation p
+            WHERE s.participation.id = p.id
+                AND p.student.id = u.id
+                AND s.submissionDate >= :#{#startDate}
+                AND s.submissionDate <= :#{#endDate}
+                AND u.login not like '%test%'
+                AND (
+                    p.exercise.exerciseGroup IS NOT NULL
+                    OR p.exercise.course.testCourse = false
+                )
             """)
     Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 

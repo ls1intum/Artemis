@@ -102,7 +102,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.testCourse = false
                 AND exam.visibleDate >= :#{#now}
-                AND exam.visibleDate <= :#{#now}
+                AND exam.endDate <= :#{#now}
             """)
     Integer countAllActiveExams(@Param("now") ZonedDateTime now);
 
@@ -113,7 +113,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND exam.endDate >= :#{#minDate}
                 AND exam.endDate <= :#{#maxDate}
             """)
-    Integer countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT COUNT(DISTINCT examUsers.user.id)
@@ -123,7 +123,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND exam.endDate >= :#{#minDate}
                 AND exam.endDate <= :#{#maxDate}
             """)
-    Integer countExamUsersInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamUsersInExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT COUNT(exam)
@@ -132,7 +132,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND exam.startDate >= :#{#minDate}
                 AND exam.startDate <= :#{#maxDate}
             """)
-    Integer countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT COUNT(DISTINCT examUsers.user.id)
@@ -142,7 +142,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                 AND exam.startDate >= :#{#minDate}
                 AND exam.startDate <= :#{#maxDate}
             """)
-    Integer countExamUsersInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamUsersInExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);
