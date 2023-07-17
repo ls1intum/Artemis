@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 
 export enum IrisLogoSize {
     SMALL = 'small',
@@ -14,16 +14,16 @@ export class IrisLogoComponent implements OnInit {
     @Input()
     size: IrisLogoSize = IrisLogoSize.BIG;
 
-    @Input()
-    maxWidthPct: number;
-
     logoUrl: string;
+    classList: string;
 
     ngOnInit() {
         if (this.size === IrisLogoSize.SMALL) {
             this.logoUrl = 'public/images/iris/iris-logo-small.png';
+            this.classList = 'small';
         } else {
             this.logoUrl = 'public/images/iris/iris-logo-big.png';
+            this.classList = 'big img-fluid';
         }
     }
 }

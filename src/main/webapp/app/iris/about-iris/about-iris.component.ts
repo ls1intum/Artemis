@@ -5,7 +5,7 @@ import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 @Component({
     selector: 'jhi-about-iris',
     templateUrl: './about-iris.component.html',
-    styleUrls: [],
+    styleUrls: ['about-iris.component.scss'],
 })
 export class AboutIrisComponent {
     faRobot = faRobot;
