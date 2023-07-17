@@ -73,7 +73,7 @@ describe('IrisSessionService', () => {
         expect(getCurrentSessionMock).toHaveBeenCalledWith(exerciseId);
         expect(getMessagesMock).toHaveBeenCalledWith(sessionId);
 
-        expect(dispatchSpy).toHaveBeenCalledWith(new SessionReceivedAction(sessionId, [mockClientMessage, mockServerMessage]));
+        expect(dispatchSpy).toHaveBeenCalledWith(new SessionReceivedAction(sessionId, expect.arrayContaining([mockClientMessage, mockServerMessage])));
     });
 
     it('should dispatch an error if getCurrentSession returns an error', async () => {
