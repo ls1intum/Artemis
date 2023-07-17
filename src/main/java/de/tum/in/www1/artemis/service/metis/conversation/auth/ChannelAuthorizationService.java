@@ -139,7 +139,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @return true if the user is a member of the channel, false otherwise
      */
     public boolean isMember(Long channelId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
+        if (conversationParticipantRepository.existsByConversationIdAndUserId(channelId, userId)) {
+            return true;
+        }
+
+        Channel channel = channelRepository.findByIdElseThrow(channelId);
+        return channel.getIsAutoJoin();
     }
 
     /**
