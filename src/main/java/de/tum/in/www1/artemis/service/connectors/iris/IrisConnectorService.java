@@ -71,7 +71,7 @@ public class IrisConnectorService {
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
             throw new IrisConnectorException("Could not fetch offered models");
         }
-        return Arrays.asList((IrisModelDTO[]) parseResponse(response, IrisModelDTO.class.arrayType()));
+        return Arrays.asList((IrisModelDTO[]) parseResponse(response.getBody(), IrisModelDTO.class.arrayType()));
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {

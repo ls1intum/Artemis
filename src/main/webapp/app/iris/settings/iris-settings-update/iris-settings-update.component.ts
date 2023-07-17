@@ -7,6 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisModel } from 'app/entities/iris/settings/iris-model';
 
 export enum IrisSettingsType {
     GLOBAL = 'GLOBAL',
@@ -27,6 +28,7 @@ export class IrisSettingsUpdateComponent implements OnInit {
     public programmingExerciseId?: number;
 
     public irisSettings?: IrisSettings;
+    public irisModels?: IrisModel[];
 
     // Loading bools
     isLoading = false;
@@ -47,10 +49,17 @@ export class IrisSettingsUpdateComponent implements OnInit {
         this.loadIrisSettings();
     }
 
+    loadIrisModels(): void {
+        this.irisSettingsService.getIrisModels().subscribe((models) => {
+            this.irisModels = models;
+            this.isLoading = false;
+        });
+    }
+
     loadIrisSettings(): void {
         this.isLoading = true;
         this.loadIrisSettingsObservable().subscribe((settings) => {
-            this.isLoading = false;
+            this.loadIrisModels();
             if (!settings) {
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
