@@ -294,6 +294,28 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
+    /**
+     * Searches for users in a course by their login or full name.
+     *
+     * @param page        Pageable related info (e.g. for page size)
+     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
+     * @param courseId    Id of the course the user has to be a member of
+     * @return list of found users that match the search criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            SELECT user FROM User user
+            JOIN Course course ON course.id = :#{#courseId}
+            WHERE user.isDeleted = false
+            AND (user.login like :#{#loginOrName}% OR concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%)
+            AND (course.studentGroupName MEMBER OF user.groups
+                OR course.teachingAssistantGroupName MEMBER OF user.groups
+                OR course.editorGroupName MEMBER OF user.groups
+                OR course.instructorGroupName MEMBER OF user.groups
+            )
+            """)
+    Page<User> searchAllByLoginOrNameInCourse(Pageable page, @Param("loginOrName") String loginOrName, @Param("courseId") Long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("SELECT user FROM User user WHERE user.isDeleted = false")
     Page<User> findAllWithGroups(Pageable pageable);

@@ -341,6 +341,9 @@ public class ConversationService {
     public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
+            if (conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin()) {
+                return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
+            }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
