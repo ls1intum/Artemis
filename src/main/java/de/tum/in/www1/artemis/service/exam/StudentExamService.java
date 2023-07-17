@@ -257,10 +257,18 @@ public class StudentExamService {
                             quizSubmissionRepository.save((QuizSubmission) submission);
                         }
                         else if (exercise instanceof TextExercise) {
-                            textSubmissionRepository.save((TextSubmission) submission);
+                            TextSubmission existingSubmission = (TextSubmission) existingParticipation.findLatestSubmission().get();
+                            TextSubmission textSubmission = (TextSubmission) submission;
+                            if (!textSubmission.getText().equals(existingSubmission.getText())) {
+                                textSubmissionRepository.save(textSubmission);
+                            }
                         }
                         else if (exercise instanceof ModelingExercise) {
-                            modelingSubmissionRepository.save((ModelingSubmission) submission);
+                            ModelingSubmission existingSubmission = (ModelingSubmission) existingParticipation.findLatestSubmission().get();
+                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                            if (!modelingSubmission.getModel().equals(existingSubmission.getModel())) {
+                                modelingSubmissionRepository.save(modelingSubmission);
+                            }
                         }
 
                         // versioning of submission
