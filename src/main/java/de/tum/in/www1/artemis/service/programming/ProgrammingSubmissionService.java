@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
-     * This constant determines how many seconds after the exercise due dates submissions will stil be considered rated.
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
      *
      * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
