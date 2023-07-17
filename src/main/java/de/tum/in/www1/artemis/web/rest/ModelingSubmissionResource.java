@@ -307,7 +307,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, user)) {
+        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
             throw new AccessForbiddenException();
         }
 
