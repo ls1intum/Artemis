@@ -578,8 +578,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                var failedLockOperationsFuture = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
-                failedLockOperationsFuture.thenAccept(failedLockOperations -> stashStudentChangesAndNotifyInstructor(exercise, failedLockOperations.size(), condition));
+                var failedLockOperations = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
+                failedLockOperations.thenAccept(failures -> stashStudentChangesAndNotifyInstructor(exercise, failures.size(), condition));
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
@@ -638,14 +638,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             var failedStashOperationsFuture = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
             failedStashOperationsFuture.thenAccept(failedStashOperations -> {
                 long numberOfFailedStashOperations = failedStashOperations.size();
+                String notificationText;
                 if (numberOfFailedStashOperations > 0) {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
-                            Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
+                    notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
                 }
                 else {
-                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
+                    notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION;
                 }
+                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise, notificationText);
             });
         }
     }
@@ -883,7 +883,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             Supplier<ProgrammingExerciseStudentParticipation> action = () -> {
                 // We need to set the authorization object for every thread
                 SecurityUtils.setAuthorizationObject();
-                ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+                var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
 
                 if (condition.test(programmingExerciseStudentParticipation)) {
                     operation.accept(programmingExercise, programmingExerciseStudentParticipation);

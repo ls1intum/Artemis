@@ -241,7 +241,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingExerciseStudentParticipation.setTestRun(true);
         programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, submission);
 
