@@ -155,7 +155,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFiles(participationId);
     }
 
-    @Override
     @GetMapping(value = "/repository/submissions/{submissionId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFilesBySubmissionId(@PathVariable long submissionId) {
@@ -192,7 +191,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
-    @Override
     @GetMapping(value = "/repository/submissions/{submissionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileBySubmissionId(@PathVariable long submissionId, @RequestParam("file") String filename) {
