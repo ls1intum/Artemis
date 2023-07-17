@@ -93,7 +93,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     unreadMessageIndex: number;
     error: IrisErrorType | null;
     dots = 1;
-    isInitializing = false;
     isFirstMessage = false;
     resendAnimationActive = false;
     shakeErrorField = false;
@@ -102,7 +101,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     fadeState = '';
 
     // User preferences
-    userAccepted = false;
+    userAccepted: boolean;
     isScrolledToBottom = true;
     rows = 1;
     initialWidth = 330;
@@ -144,11 +143,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         });
         this.animateDots();
 
-        // Set initializing flag to true and load the first message
-        setTimeout(() => {
-            this.isInitializing = true;
-        }, 50);
-
         // Subscribe to state changes
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
@@ -160,12 +154,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.fadeState = 'start';
             }
         });
-
-        // Set initializing flag to false and focus on message textarea
-        setTimeout(() => {
-            this.isInitializing = false;
-            this.messageTextarea.nativeElement.focus();
-        }, 150);
     }
 
     ngAfterViewInit() {
@@ -292,10 +280,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     acceptPermission() {
         this.userService.acceptIris().subscribe(() => {
             this.userAccepted = true;
+            if (this.shouldLoadGreetingMessage) {
+                this.loadFirstMessage();
+            }
         });
-        if (this.shouldLoadGreetingMessage) {
-            this.loadFirstMessage();
-        }
     }
 
     /**
