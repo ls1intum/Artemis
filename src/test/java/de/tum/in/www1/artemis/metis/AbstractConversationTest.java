@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -169,13 +167,11 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
-    @NotNull
-    Course setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+    void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
         var persistedCourse = courseRepository.findByIdElseThrow(exampleCourseId);
         persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
-        return persistedCourse;
     }
 
     ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {

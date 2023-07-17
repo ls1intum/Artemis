@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 
 /**
  * REST controller for managing Files.
@@ -96,6 +97,44 @@ public class FileResource {
     }
 
     /**
+     * POST /fileUpload : Upload a new file.
+     *
+     * @param file         The file to save
+     * @param keepFileName specifies if original file name should be kept
+     * @return The path of the file
+     * @throws URISyntaxException if response path can't be converted into URI
+     * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
+     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
+     */
+    @Deprecated
+    @PostMapping("fileUpload")
+    @EnforceAtLeastTutor
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
+        log.debug("REST request to upload file : {}", file.getOriginalFilename());
+        String responsePath = fileService.handleSaveFile(file, keepFileName, false);
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+
+    }
+
+    /**
+     * GET /files/temp/:filename : Get the temporary file with the given filename
+     *
+     * @param filename The filename of the file to get
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/temp/{filename:.+}")
+    @EnforceAtLeastTutor
+    public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
+        return responseEntityForFilePath(FilePathService.getTempFilePath(), filename);
+    }
+
+    /**
      * POST /markdown-file-upload : Upload a new file for markdown.
      *
      * @param file         The file to save
@@ -126,6 +165,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
     }
 
@@ -142,6 +182,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable Optional<ProjectType> projectType,
             @PathVariable String filename) {
         log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);
+        sanitizeFilenameElseThrow(filename);
         try {
             String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
             String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
@@ -175,6 +216,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         return responseEntityForFilePath(FilePathService.getDragAndDropBackgroundFilePath(), filename);
     }
 
@@ -189,6 +231,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         return responseEntityForFilePath(FilePathService.getDragItemFilePath(), filename);
     }
 
@@ -204,6 +247,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
 
         FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -238,6 +282,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
     }
 
@@ -252,6 +297,7 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
         return buildFileResponse(FilePathService.getExamUserSignatureFilePath(), filename);
@@ -268,6 +314,7 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
         return buildFileResponse(FilePathService.getStudentImageFilePath(), filename, true);
@@ -284,6 +331,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
@@ -347,6 +395,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -384,7 +433,7 @@ public class FileResource {
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
-        Pattern pattern = Pattern.compile(".*\\/([^/]+\\.png)$");
+        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
@@ -479,6 +528,7 @@ public class FileResource {
      * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
     private ResponseEntity<byte[]> responseEntityForFilePath(String path, String filename) {
+        sanitizeFilenameElseThrow(filename);
         try {
             var actualPath = Path.of(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
@@ -490,6 +540,19 @@ public class FileResource {
         catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * removes illegal characters and compares the resulting with the original file name
+     * If both are not equal, it throws an exception
+     *
+     * @param filename the filename which is validated
+     */
+    private static void sanitizeFilenameElseThrow(String filename) {
+        String sanitizedFileName = FileService.removeIllegalCharacters(filename);
+        if (!sanitizedFileName.equals(filename)) {
+            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
 

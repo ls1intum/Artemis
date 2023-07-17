@@ -27,13 +27,13 @@ export class QuizQuestionListEditComponent {
     @Output() onQuestionDeleted = new EventEmitter<QuizQuestion>();
 
     @ViewChildren('editMultipleChoice')
-    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent> = new QueryList<MultipleChoiceQuestionEditComponent>();
+    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
 
     @ViewChildren('editDragAndDrop')
-    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent> = new QueryList<DragAndDropQuestionEditComponent>();
+    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent>;
 
     @ViewChildren('editShortAnswer')
-    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent> = new QueryList<ShortAnswerQuestionEditComponent>();
+    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -42,8 +42,6 @@ export class QuizQuestionListEditComponent {
     faPlus = faPlus;
 
     showExistingQuestions = false;
-
-    fileMap = new Map<string, { path?: string; file: File }>();
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.
@@ -74,32 +72,6 @@ export class QuizQuestionListEditComponent {
         for (const quizQuestion of quizQuestions) {
             this.addQuestion(quizQuestion);
         }
-    }
-
-    /**
-     * Add the given file to the fileMap for later upload.
-     * @param event the event containing the file and its name. The name provided may be different from the actual file name but has to correspond to the name set in the entity object.
-     */
-    handleFileAdded(event: { fileName: string; path?: string; file: File }) {
-        this.fileMap.set(event.fileName, { file: event.file, path: event.path });
-    }
-
-    /**
-     * Remove the given file from the fileMap.
-     * @param fileName the name of the file to be removed
-     */
-    handleFileRemoved(fileName: string) {
-        this.fileMap.delete(fileName);
-    }
-
-    /**
-     * Add all files from the given map to the fileMap.
-     * @param filesMap the map of files to be added
-     */
-    handleFilesAdded(filesMap: Map<string, { path: string; file: File }>) {
-        filesMap.forEach((value, fileName) => {
-            this.fileMap.set(fileName, value);
-        });
     }
 
     /**

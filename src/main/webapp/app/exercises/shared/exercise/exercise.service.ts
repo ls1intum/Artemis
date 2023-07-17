@@ -30,8 +30,9 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export type ExampleSolutionInfo = {
     modelingExercise?: ModelingExercise;
     exampleSolution?: SafeHtml;
-    exampleSolutionUML: any;
+    exampleSolutionUML?: any;
     programmingExercise?: ProgrammingExercise;
+    exampleSolutionPublished: boolean;
 };
 
 export interface ExerciseServicable<T extends Exercise> {
@@ -512,6 +513,17 @@ export class ExerciseService {
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
     }
 
+    private static isExampleSolutionPublished(exercise: Exercise) {
+        let exampleSolutionPublicationDate;
+        if (exercise.exerciseGroup) {
+            exampleSolutionPublicationDate = exercise.exerciseGroup.exam?.exampleSolutionPublicationDate;
+        } else {
+            exampleSolutionPublicationDate = exercise.exampleSolutionPublicationDate;
+        }
+
+        return exampleSolutionPublicationDate && !dayjs().isBefore(exampleSolutionPublicationDate);
+    }
+
     /**
      * Returns an ExampleSolutionInfo object containing the processed example solution and related fields
      * if exampleSolution exists on the exercise. The example solution is processed (parsed, sanitized, etc.)
@@ -524,6 +536,10 @@ export class ExerciseService {
         // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
         // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
         // it exceeded maximum budget.
+
+        if (!ExerciseService.isExampleSolutionPublished(exercise)) {
+            return { exampleSolutionPublished: false };
+        }
 
         let modelingExercise = undefined;
         let exampleSolution = undefined;
@@ -554,6 +570,7 @@ export class ExerciseService {
             exampleSolution,
             exampleSolutionUML,
             programmingExercise,
+            exampleSolutionPublished: true,
         };
     }
 }

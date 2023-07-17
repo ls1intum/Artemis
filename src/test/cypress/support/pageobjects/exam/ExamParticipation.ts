@@ -1,5 +1,6 @@
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { EXERCISE_TYPE } from '../../constants';
 import { getExercise } from '../../utils';
 import {
@@ -56,7 +57,7 @@ export class ExamParticipation {
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
-        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             programmingExerciseEditor.submitPractice(exerciseID);
         } else {
@@ -150,4 +151,5 @@ export type Exercise = {
     type: EXERCISE_TYPE;
     id: number;
     additionalData?: AdditionalData;
+    exerciseGroup?: ExerciseGroup;
 };
