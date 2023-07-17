@@ -257,16 +257,20 @@ public class StudentExamService {
                             quizSubmissionRepository.save((QuizSubmission) submission);
                         }
                         else if (exercise instanceof TextExercise) {
-                            TextSubmission existingSubmission = (TextSubmission) existingParticipation.findLatestSubmission().get();
+                            TextSubmission existingSubmission = (TextSubmission) existingParticipation.findLatestSubmission().orElse(new TextSubmission());
                             TextSubmission textSubmission = (TextSubmission) submission;
-                            if (!textSubmission.getText().equals(existingSubmission.getText())) {
+                            var text = Optional.ofNullable(textSubmission.getText()).orElse("");
+                            var existingText = Optional.ofNullable(existingSubmission.getText()).orElse("");
+                            if (!text.equals(existingText)) {
                                 textSubmissionRepository.save(textSubmission);
                             }
                         }
                         else if (exercise instanceof ModelingExercise) {
-                            ModelingSubmission existingSubmission = (ModelingSubmission) existingParticipation.findLatestSubmission().get();
+                            ModelingSubmission existingSubmission = (ModelingSubmission) existingParticipation.findLatestSubmission().orElse(new ModelingSubmission());
                             ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                            if (!modelingSubmission.getModel().equals(existingSubmission.getModel())) {
+                            var model = Optional.ofNullable(modelingSubmission.getModel()).orElse("");
+                            var existingModel = Optional.ofNullable(existingSubmission.getModel()).orElse("");
+                            if (!model.equals(existingModel)) {
                                 modelingSubmissionRepository.save(modelingSubmission);
                             }
                         }
