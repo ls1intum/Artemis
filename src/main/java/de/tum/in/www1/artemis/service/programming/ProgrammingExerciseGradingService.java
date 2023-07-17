@@ -166,8 +166,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Determines if the result should be rated based on the submission type:
-     * - Illegal submissions are never rated
+     * Determines if the result should be rated based on the participation and submission type:
+     * - Illegal submissions and test runs are never rated
      * - Test, Instructor, and manual types are rated.
      * - Otherwise, the result is rated if its submission date is before the individual due date.
      *
@@ -175,10 +175,14 @@ public class ProgrammingExerciseGradingService {
      * @see ProgrammingSubmissionService#checkForIllegalSubmission(ProgrammingExerciseParticipation, ProgrammingSubmission)
      */
     private void setRatedBySubmissionType(Result newResult) {
+        if (newResult.getParticipation().isTestRun()) {
+            newResult.setRated(false);
+            return;
+        }
         switch (newResult.getSubmission().getType()) {
             case ILLEGAL -> newResult.setRated(false);
             case TEST, INSTRUCTOR, MANUAL -> newResult.setRated(true);
-            default -> newResult.setRatedIfNotAfterDueDate(newResult.getSubmission(), newResult.getParticipation());
+            default -> newResult.setRatedIfNotAfterDueDate(newResult.getSubmission().getSubmissionDate());
         }
     }
 

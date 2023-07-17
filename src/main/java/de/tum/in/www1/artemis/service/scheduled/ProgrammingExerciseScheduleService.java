@@ -635,9 +635,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // in the case they still have saved changes on the Artemis server which have not been committed / pushed
         // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
         if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
-            var failedStashOperationsFuture = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
-            failedStashOperationsFuture.thenAccept(failedStashOperations -> {
-                long numberOfFailedStashOperations = failedStashOperations.size();
+            var failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
+            failedStashOperations.thenAccept(failures -> {
+                long numberOfFailedStashOperations = failures.size();
                 String notificationText;
                 if (numberOfFailedStashOperations > 0) {
                     notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
@@ -696,20 +696,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
                     unlockOperation.accept(programmingExercise, participation);
                 };
-                var failedUnlockOperationsFuture = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, unlockAndCollectOperation, condition,
+                var failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, unlockAndCollectOperation, condition,
                         "add write permissions to all student repositories");
 
-                failedUnlockOperationsFuture.thenAccept(failedUnlockOperations -> {
+                failedUnlockOperations.thenAccept(failures -> {
                     // We send a notification to the instructor about the success of the repository unlocking operation.
-                    long numberOfFailedUnlockOperations = failedUnlockOperations.size();
+                    long numberOfFailedUnlockOperations = failures.size();
+                    String notificationText;
                     if (numberOfFailedUnlockOperations > 0) {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
-                                Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
+                        notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failures.size();
                     }
                     else {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise,
-                                Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
+                        notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION;
                     }
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
                 });
                 // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
                 // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
