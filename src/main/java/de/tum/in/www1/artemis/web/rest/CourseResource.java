@@ -863,7 +863,7 @@ public class CourseResource {
             groups.add(course.getInstructorGroupName());
         }
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+        var originalPage = userRepository.searchAllByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {

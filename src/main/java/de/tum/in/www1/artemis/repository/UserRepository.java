@@ -176,8 +176,29 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
              )
              ORDER BY concat_ws(' ', user.firstName, user.lastName)
             """)
-    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
+    Page<User> searchAllByLoginOrNameInGroupsNotUserId(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
             @Param("idOfUser") Long idOfUser);
+
+    /**
+     * Search for all users by login or name within the provided groups
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @param groupNames  Names of groups in which to search for users
+     * @return All users matching search criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT user
+             FROM User user
+             LEFT JOIN user.groups userGroup
+             WHERE user.isDeleted = false AND (
+                userGroup IN :#{#groupNames}
+                AND (user.login LIKE :#{#loginOrName}% OR concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#loginOrName}%)
+             )
+             ORDER BY concat_ws(' ', user.firstName, user.lastName)
+            """)
+    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
