@@ -263,9 +263,7 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            if (!exercise.exerciseGroup) {
-                exercise.exerciseGroup = { exam: studentExam.exam } as ExerciseGroup;
-            }
+            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam } as ExerciseGroup;
             return exercise;
         });
         return studentExam;

@@ -73,7 +73,7 @@ describe('Test exam participation', () => {
             examParticipation.handInEarly();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
+                examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
                 if (exercise.type === EXERCISE_TYPE.Text) {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
@@ -91,7 +91,7 @@ describe('Test exam participation', () => {
                 if (exercise.type == EXERCISE_TYPE.Programming) {
                     examNavigation.openExerciseAtIndex(j + 1);
                 } else {
-                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].title);
+                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].exerciseGroup!.title!);
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                     examParticipation.clickSaveAndContinue();
                 }
@@ -105,12 +105,12 @@ describe('Test exam participation', () => {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
                 // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type == EXERCISE_TYPE.Programming) {
+                if (exercise.type === EXERCISE_TYPE.Programming) {
                     continue;
                 } else {
                     examNavigation.openExerciseOverview();
                     examParticipation.selectExerciseOnOverview(j + 1);
-                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].title);
+                    examParticipation.checkExerciseTitle(exerciseArray[j].id, exerciseArray[j].exerciseGroup!.title!);
                     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
                 }
             }

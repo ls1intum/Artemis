@@ -508,6 +508,7 @@
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
+                "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."

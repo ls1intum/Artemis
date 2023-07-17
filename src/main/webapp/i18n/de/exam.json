@@ -506,6 +506,7 @@
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
+                "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
