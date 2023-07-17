@@ -72,7 +72,7 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         topic.addMessageListener(o -> lock.countDown());
 
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
         quizExercise = quizExerciseRepository.save(quizExercise);
@@ -92,7 +92,7 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
         }
 
-        QuizSubmission quizSubmission = quizExerciseUtilService.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
         assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + exerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
                 .hasBeenCalledTimes(quizMode == QuizMode.SYNCHRONIZED ? 0 : 1);

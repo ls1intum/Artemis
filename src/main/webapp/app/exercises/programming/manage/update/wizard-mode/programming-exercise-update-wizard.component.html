@@ -1,44 +1,38 @@
 <form name="editForm" role="form" novalidate>
-    <jhi-programming-exercise-update-wizard-info
+    <jhi-programming-exercise-info
         class="form-step"
         *ngIf="currentStep >= 1"
-        [isImport]="isImportFromExistingExercise"
-        [isExamMode]="isExamMode"
         [programmingExercise]="programmingExercise"
-        [infoStepInputs]="infoStepInputs"
-        [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-    ></jhi-programming-exercise-update-wizard-info>
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-info>
 
-    <jhi-programming-exercise-update-wizard-difficulty
+    <jhi-programming-exercise-difficulty
         class="form-step"
         *ngIf="currentStep >= 2"
-        [isImport]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
-    ></jhi-programming-exercise-update-wizard-difficulty>
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-difficulty>
 
-    <jhi-programming-exercise-update-wizard-language
+    <jhi-programming-exercise-language
         class="form-step"
         *ngIf="currentStep >= 3"
-        [isImport]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
-        [languageStepInputs]="languageStepInputs"
-    ></jhi-programming-exercise-update-wizard-language>
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-language>
 
-    <jhi-programming-exercise-update-wizard-grading
+    <jhi-programming-exercise-problem
         class="form-step"
         *ngIf="currentStep >= 4"
-        [isImportFromExistingExercise]="isImportFromExistingExercise"
-        [programmingExercise]="programmingExercise"
-        [gradingStepInputs]="gradingStepInputs"
-    ></jhi-programming-exercise-update-wizard-grading>
+        [(exercise)]="exercise"
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-problem>
 
-    <jhi-programming-exercise-update-wizard-problem
+    <jhi-programming-exercise-grading
         class="form-step"
         *ngIf="currentStep >= 5"
-        [isImportFromExistingExercise]="isImportFromExistingExercise"
-        [(exercise)]="exercise"
-        [problemStepInputs]="problemStepInputs"
-    ></jhi-programming-exercise-update-wizard-problem>
+        [programmingExercise]="programmingExercise"
+        [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-grading>
 
     <!-- Bottom Navigation Bar -->
     <jhi-programming-exercise-update-wizard-bottom-bar

@@ -138,12 +138,17 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(httpErrorResponse: HttpErrorResponse) {
-        if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidKey') {
+        const errorKey = httpErrorResponse.error?.errorKey;
+        if (errorKey === 'invalidKey') {
             this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             // The update() Method is called to update the exercises
-            this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+            this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToInvalidProjectKey();
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
+        } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
+            this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
         } else {
             if (httpErrorResponse.error && httpErrorResponse.error.title) {
                 this.alertService.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
