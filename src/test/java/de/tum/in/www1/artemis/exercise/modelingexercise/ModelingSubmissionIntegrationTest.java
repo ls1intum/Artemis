@@ -751,6 +751,35 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getModelingResult_testExam() throws Exception {
+        // create test exam
+        Exam exam = examUtilService.addTestExamWithExerciseGroup(course, true);
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
+        exerciseGroup.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+
+        examRepository.save(exam);
+
+        ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission("Some text", true);
+        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        // students can always view their submissions for test exams
+        var submission = request.get("/api/participations/" + modelingSubmission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(submission).isNotNull();
+        assertThat(submission.getId()).isEqualTo(modelingSubmission.getId());
+        assertThat(submission.getParticipation().getExercise().getExerciseGroup().getExam()).as("The exam object should not be send to students").isNull();
+
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionForModelingEditor_emptySubmission() throws Exception {
         StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");

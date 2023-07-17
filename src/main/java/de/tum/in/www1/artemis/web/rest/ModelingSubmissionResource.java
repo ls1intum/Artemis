@@ -281,7 +281,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ModelingExercise modelingExercise;
 
         if (participation.getExercise() == null) {
             return ResponseEntity.badRequest()
@@ -289,13 +288,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                     .body(null);
         }
 
-        if (participation.getExercise() instanceof ModelingExercise) {
-            modelingExercise = (ModelingExercise) participation.getExercise();
-
-            // make sure sensitive information are not sent to the client
-            modelingExercise.filterSensitiveInformation();
-        }
-        else {
+        if (!(participation.getExercise() instanceof ModelingExercise modelingExercise)) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
                     .body(null);
@@ -335,6 +328,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             modelingSubmission.getLatestResult().setAssessor(null);
+        }
+
+        // make sure sensitive information are not sent to the client
+        modelingExercise.filterSensitiveInformation();
+        if (modelingExercise.isExamExercise()) {
+            modelingExercise.getExerciseGroup().setExam(null);
         }
 
         return ResponseEntity.ok(modelingSubmission);

@@ -341,7 +341,6 @@ public class TextExerciseResource {
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
-        participation.getExercise().filterSensitiveInformation();
 
         if (optionalSubmission.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
@@ -374,7 +373,12 @@ public class TextExerciseResource {
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
-            participation.setParticipant(null);
+            participation.filterSensitiveInformation();
+        }
+
+        textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExerciseGroup().setExam(null);
         }
 
         return ResponseEntity.ok(participation);
