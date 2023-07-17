@@ -704,6 +704,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitleIfAtLeastTutor();
     }
 
     @Test
@@ -711,23 +712,39 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitleIfAtLeastTutor();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetExerciseTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
+        // course exercise
         testGetExerciseTitle();
+
+        // exam exercise
+        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final String expectedTitle = textExercise.getExerciseGroup().getTitle();
+        final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(expectedTitle);
     }
 
     private void testGetExerciseTitle() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
-        exerciseRepository.save(exercise);
+        exercise.setExerciseGroup(null);
+        exercise = exerciseRepository.save(exercise);
 
         final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    private void testGetExamExerciseTitleIfAtLeastTutor() throws Exception {
+        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final String expectedTitle = textExercise.getTitle();
+        final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(expectedTitle);
     }
 
     @Test
