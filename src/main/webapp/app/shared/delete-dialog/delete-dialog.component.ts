@@ -22,6 +22,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     buttonType: ButtonType;
 
     deleteQuestion: string;
+    translateValues: { [key: string]: unknown } = {};
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;
     additionalChecks?: { [key: string]: string };
