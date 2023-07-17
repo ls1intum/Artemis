@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +10,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorException;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * REST controller for managing {@link IrisSettings}.
@@ -34,17 +27,14 @@ public class IrisSettingsResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<IrisConnectorService> irisConnectorService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public IrisSettingsResource(UserRepository userRepository, CourseRepository courseRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, Optional<IrisConnectorService> irisConnectorService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
-        this.irisConnectorService = irisConnectorService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -58,23 +48,6 @@ public class IrisSettingsResource {
     public ResponseEntity<IrisSettings> getGlobalSettings() {
         var irisSettings = irisSettingsService.getGlobalSettings();
         return ResponseEntity.ok(irisSettings);
-    }
-
-    /**
-     * GET iris/models: Retrieve all available models offered by Pyris
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a List of the models
-     */
-    @GetMapping("iris/models")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<IrisModelDTO>> getAllModels() {
-        try {
-            var models = irisConnectorService.orElseThrow().getOfferedModels();
-            return ResponseEntity.ok(models);
-        }
-        catch (IrisConnectorException e) {
-            throw new InternalServerErrorException("Could not fetch available Iris models");
-        }
     }
 
     /**
