@@ -1,27 +1,19 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.UserRole;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -42,6 +34,8 @@ public abstract class PostingService {
 
     protected final AuthorizationCheckService authorizationCheckService;
 
+    private final ChannelRepository channelRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
@@ -50,7 +44,7 @@ public abstract class PostingService {
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -58,6 +52,7 @@ public abstract class PostingService {
         this.authorizationCheckService = authorizationCheckService;
         this.messagingTemplate = messagingTemplate;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -95,13 +90,26 @@ public abstract class PostingService {
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
-            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+            var participants = getConversationParticipants(postDTO.post().getConversation());
+
+            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getLogin(),
                     genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
         }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);
+    }
+
+    /**
+     * Determines the participants of a conversation that should receive the new message.
+     *
+     * @param conversation conversation the participants are supposed be retrieved
+     * @return users that should receive the new message
+     */
+    protected Stream<User> getConversationParticipants(Conversation conversation) {
+        return conversation instanceof Channel channel && channelRepository.findByIdElseThrow(channel.getId()).getIsAutoJoin()
+                ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
+                : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);
     }
 
     /**
