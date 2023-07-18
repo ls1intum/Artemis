@@ -18,7 +18,7 @@ import {
     isSessionReceivedAction,
     isStudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisServerMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 type ResolvableAction = { action: MessageStoreAction; resolve: () => void; reject: (error: IrisErrorType) => void };
@@ -149,7 +149,7 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isActiveConversationMessageLoadedAction(action)) {
             const castedAction = action as ActiveConversationMessageLoadedAction;
-            if (state.serverResponseTimeout) {
+            if (state.serverResponseTimeout !== null) {
                 clearTimeout(state.serverResponseTimeout);
             }
             return {
@@ -163,14 +163,14 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isConversationErrorOccurredAction(action)) {
             const castedAction = action as ConversationErrorOccurredAction;
-            if (state.serverResponseTimeout && (castedAction.errorType == IrisErrorMessageKey.SEND_MESSAGE_FAILED || castedAction.errorType == IrisErrorMessageKey.IRIS_DISABLED)) {
+            if (state.serverResponseTimeout !== null && (castedAction.errorObject?.fatal || castedAction.errorObject?.key === IrisErrorMessageKey.SEND_MESSAGE_FAILED)) {
                 clearTimeout(state.serverResponseTimeout);
                 state.serverResponseTimeout = null;
             }
             return {
                 ...state,
                 isLoading: false,
-                error: castedAction.errorType == null ? null : errorMessages[castedAction.errorType],
+                error: castedAction.errorObject,
             };
         }
         if (isSessionReceivedAction(action)) {
@@ -185,12 +185,25 @@ export class IrisStateStore implements OnDestroy {
         }
         if (isStudentMessageSentAction(action)) {
             const castedAction = action as StudentMessageSentAction;
-            if (state.messages.some((msg) => msg.id && msg.id === castedAction.message.id)) {
+            let newMessage = true;
+            if (castedAction.message.messageDifferentiator !== undefined) {
+                for (let i = state.messages.length - 1; i >= 0; i--) {
+                    const message = state.messages[i];
+                    if (!isStudentSentMessage(message)) continue;
+                    if (message.messageDifferentiator === undefined) continue;
+                    if (message.messageDifferentiator === castedAction.message.messageDifferentiator) {
+                        newMessage = false;
+                    }
+                }
+            }
+            if (!newMessage) {
+                if (castedAction.timeoutId !== null) {
+                    clearTimeout(castedAction.timeoutId);
+                }
                 return {
                     ...state,
                     isLoading: true,
                     error: null,
-                    serverResponseTimeout: castedAction.timeoutId,
                 };
             }
             return {

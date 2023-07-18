@@ -7,12 +7,21 @@ export enum IrisErrorMessageKey {
     RATE_MESSAGE_FAILED = 'artemisApp.exerciseChatbot.errors.rateMessageFailed',
     IRIS_DISABLED = 'artemisApp.exerciseChatbot.errors.irisDisabled',
     IRIS_SERVER_RESPONSE_TIMEOUT = 'artemisApp.exerciseChatbot.errors.timeout',
+    TIMEOUT = 'artemisApp.exerciseChatbot.errors.timeout',
     EMPTY_MESSAGE = 'artemisApp.exerciseChatbot.errors.emptyMessage',
+    FORBIDDEN = 'artemisApp.exerciseChatbot.errors.forbidden',
+    INTERNAL_PYRIS_ERROR = 'artemisApp.exerciseChatbot.errors.internalPyrisError',
+    INVALID_TEMPLATE = 'artemisApp.exerciseChatbot.errors.invalidTemplate',
+    NO_MODEL_AVAILABLE = 'artemisApp.exerciseChatbot.errors.noModelAvailable',
+    NO_RESPONSE = 'artemisApp.exerciseChatbot.errors.noResponse',
+    PARSE_RESPONSE = 'artemisApp.exerciseChatbot.errors.parseResponse',
+    TECHNICAL_ERROR_RESPONSE = 'artemisApp.exerciseChatbot.errors.technicalError',
 }
 
 export interface IrisErrorType {
     key: IrisErrorMessageKey;
     fatal: boolean;
+    paramsMap?: Map<string, any>;
 }
 
 const IrisErrors: IrisErrorType[] = [
@@ -25,6 +34,13 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.IRIS_DISABLED, fatal: true },
     { key: IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT, fatal: false },
     { key: IrisErrorMessageKey.EMPTY_MESSAGE, fatal: false },
+    { key: IrisErrorMessageKey.INTERNAL_PYRIS_ERROR, fatal: true },
+    { key: IrisErrorMessageKey.INVALID_TEMPLATE, fatal: true },
+    { key: IrisErrorMessageKey.NO_MODEL_AVAILABLE, fatal: true },
+    { key: IrisErrorMessageKey.NO_RESPONSE, fatal: true },
+    { key: IrisErrorMessageKey.PARSE_RESPONSE, fatal: true },
+    { key: IrisErrorMessageKey.FORBIDDEN, fatal: true },
+    { key: IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE, fatal: true },
 ];
 
 export const errorMessages: Readonly<{ [key in IrisErrorMessageKey]: IrisErrorType }> = Object.freeze(

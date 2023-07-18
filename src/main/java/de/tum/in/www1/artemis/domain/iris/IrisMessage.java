@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -42,6 +43,9 @@ public class IrisMessage extends DomainObject {
     @Column(name = "sender")
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
+
+    @Transient
+    private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
 
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -87,6 +91,16 @@ public class IrisMessage extends DomainObject {
 
     public void setContent(List<IrisMessageContent> content) {
         this.content = content;
+    }
+
+    @JsonProperty
+    public Integer getMessageDifferentiator() {
+        return messageDifferentiator;
+    }
+
+    @JsonProperty
+    public void setMessageDifferentiator(Integer messageDifferentiator) {
+        this.messageDifferentiator = messageDifferentiator;
     }
 
     @Override

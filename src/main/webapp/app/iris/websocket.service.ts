@@ -2,12 +2,18 @@ import { Subscription } from 'rxjs';
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
-import { IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import {
+    ActiveConversationMessageLoadedAction,
+    ConversationErrorOccurredAction,
+    MessageStoreAction,
+    StudentMessageSentAction,
+    isSessionReceivedAction,
+} from 'app/iris/state-store.model';
+import { IrisMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
- * The IrisWebsocketMessageType defines the type of a message sent over the websocket.
+ * The IrisWebsocketMessageType defines the type of message sent over the websocket.
  */
 export enum IrisWebsocketMessageType {
     MESSAGE = 'MESSAGE',
@@ -20,9 +26,8 @@ export enum IrisWebsocketMessageType {
  */
 export class IrisWebsocketDTO {
     type: IrisWebsocketMessageType;
-    message?: IrisServerMessage;
-    errorMessage?: string;
-    errorTranslationKey?: string;
+    message?: IrisMessage;
+    errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
 }
 
@@ -80,10 +85,27 @@ export class IrisWebsocketService implements OnDestroy {
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
             if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
-                // TODO: Use websocketResponse.errorTranslationKey and websocketResponse.translationParams
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                if (!websocketResponse.errorTranslationKey) {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+                } else {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey, websocketResponse.translationParams));
+                }
             } else if (websocketResponse.type === IrisWebsocketMessageType.MESSAGE) {
-                this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(websocketResponse.message!));
+                const message = websocketResponse.message;
+                if (!message) return;
+                if (isStudentSentMessage(message)) {
+                    this.stateStore.dispatch(
+                        new StudentMessageSentAction(
+                            message,
+                            setTimeout(() => {
+                                // will be cleared by the store automatically
+                                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+                            }, 20000),
+                        ),
+                    );
+                } else if (isServerSentMessage(message)) {
+                    this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(message));
+                }
             }
         });
     }

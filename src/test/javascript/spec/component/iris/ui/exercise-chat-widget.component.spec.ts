@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -514,4 +514,21 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.deactivateSubmitButton()).toBeFalsy();
         expect(sendButton.disabled).toBeFalsy();
     });
+
+    it('should pass parameters to the pipe when error action is dispatched', fakeAsync(() => {
+        jest.spyOn(component, 'getConvertedErrorMap');
+        // given
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
+        tick();
+
+        // when
+        const map = new Map<string, any>();
+        map.set('model', 'gpt-4');
+        stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.NO_MODEL_AVAILABLE, map));
+        tick();
+        fixture.detectChanges();
+
+        // then
+        expect(component.getConvertedErrorMap).toHaveBeenCalled();
+    }));
 });

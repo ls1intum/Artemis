@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -37,12 +38,15 @@ public class IrisMessageResource {
 
     private final IrisMessageRepository irisMessageRepository;
 
+    private final IrisWebsocketService irisWebsocketService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository) {
+            IrisMessageRepository irisMessageRepository, IrisWebsocketService irisWebsocketService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
+        this.irisWebsocketService = irisWebsocketService;
     }
 
     /**
@@ -76,6 +80,8 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
+        irisWebsocketService.sendMessage(savedMessage);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);

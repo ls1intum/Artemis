@@ -266,6 +266,104 @@ describe('IrisStateStore', () => {
 
         expect(state2.error?.fatal).toBeTruthy();
     });
+
+    it('should not dispatch 2 StudentMessageSentActions with unique messageDifferentiator', async () => {
+        const action1: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                messageDifferentiator: 5,
+            },
+            timeoutId: null,
+        };
+
+        const obs1 = stateStore.getState();
+
+        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action1);
+
+        const state1 = (await promise1) as MessageStoreState;
+
+        expect(state1).toEqual({
+            ...mockState,
+            isLoading: true,
+            messages: [
+                {
+                    ...action1.message,
+                    messageDifferentiator: 5,
+                },
+            ],
+        });
+
+        const action2: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                messageDifferentiator: 5,
+            },
+            timeoutId: null,
+        };
+
+        const obs2 = stateStore.getState();
+
+        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action2);
+
+        const state2 = (await promise2) as MessageStoreState;
+
+        expect(state2.messages).toHaveLength(1);
+    });
+
+    it('should  dispatch 2 StudentMessageSentActions with different messageDifferentiators', async () => {
+        const action1: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                messageDifferentiator: undefined,
+            },
+            timeoutId: null,
+        };
+
+        const obs1 = stateStore.getState();
+
+        const promise1 = obs1.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action1);
+
+        const state1 = (await promise1) as MessageStoreState;
+
+        expect(state1).toEqual({
+            ...mockState,
+            isLoading: true,
+            messages: [
+                {
+                    ...action1.message,
+                    messageDifferentiator: undefined,
+                },
+            ],
+        });
+
+        const action2: StudentMessageSentAction = {
+            type: ActionType.STUDENT_MESSAGE_SENT,
+            message: {
+                ...mockClientMessage,
+                messageDifferentiator: 7,
+            },
+            timeoutId: null,
+        };
+
+        const obs2 = stateStore.getState();
+
+        const promise2 = obs2.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(action2);
+
+        const state2 = (await promise2) as MessageStoreState;
+
+        expect(state2.messages).toHaveLength(2);
+    });
 });
 
 describe('IrisStateStore with an empty session state', () => {

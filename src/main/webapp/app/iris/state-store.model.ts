@@ -1,5 +1,5 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
-import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
 
 export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',
@@ -41,16 +41,25 @@ export class ActiveConversationMessageLoadedAction implements MessageStoreAction
 
 export class ConversationErrorOccurredAction implements MessageStoreAction {
     readonly type: ActionType;
+    readonly errorObject: IrisErrorType | null;
 
-    constructor(public readonly errorType: IrisErrorMessageKey | null) {
+    constructor(errorType: IrisErrorMessageKey | null, paramsMap: Map<string, any> | undefined = undefined) {
         this.type = ActionType.CONVERSATION_ERROR_OCCURRED;
+        this.errorObject = ConversationErrorOccurredAction.buildErrorObject(errorType, paramsMap);
+    }
+
+    private static buildErrorObject(errorType: IrisErrorMessageKey | null, paramsMap?: Map<string, any>): IrisErrorType | null {
+        if (!errorType) return null;
+        const errorObject = errorMessages[errorType];
+        errorObject.paramsMap = paramsMap;
+        return errorObject;
     }
 }
 
 export class StudentMessageSentAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout> | null) {
+    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout> | null = null) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
     }
 }
