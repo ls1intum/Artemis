@@ -186,10 +186,10 @@ public class StudentExamService {
     }
 
     private void submitStudentExam(StudentExam studentExam) {
-        // TODO: use a modifying query instead
+        var now = ZonedDateTime.now();
         studentExam.setSubmitted(true);
-        studentExam.setSubmissionDate(ZonedDateTime.now());
-        studentExamRepository.save(studentExam);
+        studentExam.setSubmissionDate(now);
+        studentExamRepository.submitStudentExam(studentExam.getId(), now);
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
