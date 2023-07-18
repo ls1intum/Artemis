@@ -4,6 +4,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockPipe } from 'ng-mocks';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
@@ -19,7 +20,7 @@ import {
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
 import { of, throwError } from 'rxjs';
-import { mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
+import { mockArtemisClientMessage, mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -30,6 +31,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
 
 describe('ExerciseChatWidgetComponent', () => {
@@ -37,7 +39,9 @@ describe('ExerciseChatWidgetComponent', () => {
     let fixture: ComponentFixture<ExerciseChatWidgetComponent>;
     let stateStore: IrisStateStore;
     let mockHttpMessageService: IrisHttpMessageService;
+    let mockSessionService: IrisSessionService;
     let mockDialog: MatDialog;
+    let mockModalService: NgbModal;
     let mockUserService: UserService;
 
     beforeEach(async () => {
@@ -53,6 +57,10 @@ describe('ExerciseChatWidgetComponent', () => {
             createMessage: jest.fn(),
         } as any;
 
+        mockSessionService = {
+            createNewSession: jest.fn(),
+        } as any;
+
         mockUserService = {
             acceptIris: jest.fn().mockReturnValue({
                 subscribe: jest.fn(),
@@ -63,13 +71,17 @@ describe('ExerciseChatWidgetComponent', () => {
         } as any;
 
         stateStore = new IrisStateStore();
+        mockModalService = {
+            open: jest.fn(),
+        } as any;
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
             declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
-                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore } },
+                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
+                { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
@@ -513,6 +525,57 @@ describe('ExerciseChatWidgetComponent', () => {
 
         expect(component.deactivateSubmitButton()).toBeFalsy();
         expect(sendButton.disabled).toBeFalsy();
+    });
+
+    describe('clear chat session', () => {
+        it('should call service to clear old session and create a new one', () => {
+            jest.spyOn(mockSessionService, 'createNewSession');
+            component.exerciseId = 18;
+
+            component.createNewSession();
+
+            expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
+        });
+
+        it('should open confirm modal when click on the clear button', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            button.click();
+
+            const openModalStub = jest.spyOn(mockModalService, 'open');
+            expect(openModalStub).toHaveBeenCalledOnce();
+        });
+
+        it('should not render clear chat button if the history is empty', () => {
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            expect(button).toBeNull();
+        });
+
+        it('should not render clear chat button if the history has only one message from the client', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockArtemisClientMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).toBeNull();
+        });
+
+        it('should render clear chat button if the history has one message from server', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).not.toBeNull();
+        });
+
+        it('should render clear chat button if the history has one message from user', () => {
+            stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage]));
+            fixture.detectChanges();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+
+            expect(button).not.toBeNull();
+        });
     });
 
     it('should pass parameters to the pipe when error action is dispatched', fakeAsync(() => {
