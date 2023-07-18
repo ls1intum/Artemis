@@ -26,6 +26,7 @@
                     "inheritHestiaSettings": "Inherit Hestia Settings",
                     "enabled-disabled": "Enabled/Disabled",
                     "preferredModel": "Preferred Model",
+                    "inheritModel": "Inherit Modell",
                     "template": {
                         "title": "Template",
                         "inherit": "Inherit Template"

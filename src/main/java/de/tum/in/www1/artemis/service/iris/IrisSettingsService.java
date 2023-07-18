@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.in.www1.artemis.service.connectors.iris.IrisModel;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -229,15 +228,12 @@ public class IrisSettingsService {
         combinedSettings.setEnabled(enabled);
 
         if (!reduced) {
-            IrisModel preferredModel;
+            String preferredModel = null;
             if (subSettings2 != null && subSettings2.getPreferredModel() != null) {
                 preferredModel = subSettings2.getPreferredModel();
             }
             else if (subSettings1 != null && subSettings1.getPreferredModel() != null) {
                 preferredModel = subSettings1.getPreferredModel();
-            }
-            else {
-                preferredModel = IrisModel.GPT35_TURBO;
             }
             combinedSettings.setPreferredModel(preferredModel);
 

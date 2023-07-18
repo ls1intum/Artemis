@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-sub-settings-update/iris-sub-settings-update.component';
+import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
 
 function baseSettings() {
     const mockTemplate = new IrisTemplate();
@@ -16,17 +19,33 @@ function baseSettings() {
     return irisSubSettings;
 }
 
+function models() {
+    return [
+        {
+            id: '1',
+            name: 'Model 1',
+            description: 'Model 1 Description',
+        },
+        {
+            id: '2',
+            name: 'Model 2',
+            description: 'Model 2 Description',
+        },
+    ] as IrisModel[];
+}
+
 describe('IrisSubSettingsUpdateComponent Component', () => {
     let comp: IrisSubSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisSubSettingsUpdateComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip)],
             declarations: [IrisSubSettingsUpdateComponent],
         }).compileComponents();
         fixture = TestBed.createComponent(IrisSubSettingsUpdateComponent);
         comp = fixture.componentInstance;
+        comp.models = models();
     });
 
     afterEach(() => {

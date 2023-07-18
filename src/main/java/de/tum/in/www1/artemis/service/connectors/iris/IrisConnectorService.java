@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.iris;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
@@ -50,12 +53,25 @@ public class IrisConnectorService {
      *                           not reachable)
      * @param parameters     A map of parameters to be included in the template through handlebars (if they are specified
      *                           in the template)
-     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used {@link IrisModel}
+     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used IrisModel
      */
     @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, IrisModel preferredModel, Map<String, Object> parameters) {
+    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
         return sendRequest(request);
+    }
+
+    /**
+     * Requests all available models from Pyris
+     *
+     * @return A list of available Models as IrisModelDTO
+     */
+    public List<IrisModelDTO> getOfferedModels() throws IrisConnectorException {
+        var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
+        if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+            throw new IrisConnectorException("Could not fetch offered models");
+        }
+        return Arrays.asList((IrisModelDTO[]) parseResponse(response.getBody(), IrisModelDTO.class.arrayType()));
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
