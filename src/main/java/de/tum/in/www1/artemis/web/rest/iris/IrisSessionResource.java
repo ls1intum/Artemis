@@ -108,4 +108,21 @@ public class IrisSessionResource {
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
     }
+
+    /**
+     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
+     * This checks if the used model is healthy.
+     *
+     * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
+     */
+    @GetMapping("iris/sessions/{sessionId}/active")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
+        // TODO: Call IrisSessionService to check if Iris is active
+        // 1. Get settings for session
+        // 2. Get used model from settings
+        // 3. Call Pyris Health Endpoint
+        // 4. Check if model is UP
+        return ResponseEntity.ok(true);
+    }
 }
