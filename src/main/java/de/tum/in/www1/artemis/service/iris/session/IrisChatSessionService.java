@@ -18,7 +18,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -52,8 +53,6 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final IrisSessionRepository irisSessionRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final GitService gitService;
 
     private final RepositoryService repositoryService;
@@ -62,25 +61,20 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            StudentParticipationRepository studentParticipationRepository, GitService gitService, RepositoryService repositoryService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
+            RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisWebsocketService = irisWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -128,18 +122,17 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
         parameters.put("latestSubmission", "");
-        parameters.put("buildResult", "");
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), chatSession.getUser().getId());
-        if (participations.size() >= 1) {
-            var latestSubmission = participations.get(0).getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
+        parameters.put("buildFailed", "");
+        parameters.put("buildLog", "");
+        var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), chatSession.getUser().getLogin());
+        if (participation.isPresent()) {
+            var latestSubmission = participation.get().getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
             if (latestSubmission.isPresent()) {
-                var submission = latestSubmission.get();
-                parameters.put("latestSubmission", submission);
-                if (submission.getLatestResult() != null && submission.getLatestResult().getId() != null) {
-                    var programmingSubmission = programmingSubmissionRepository.findByResultId(latestSubmission.get().getLatestResult().getId());
-                    programmingSubmission.ifPresent(result -> parameters.put("buildResult", result));
+                if (latestSubmission.get() instanceof ProgrammingSubmission programmingSubmission) {
+                    parameters.put("latestSubmission", programmingSubmission);
+                    parameters.put("buildFailed", programmingSubmission.isBuildFailed());
+                    parameters.put("buildLog", programmingSubmission.getBuildLogEntries());
                 }
-
             }
         }
         parameters.put("session", fullSession);
