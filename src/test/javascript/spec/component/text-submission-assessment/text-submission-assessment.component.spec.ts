@@ -427,7 +427,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should handle overlapping manual text blocks correctly', () => {
-        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype, 'sortAndSetTextBlockRefs');
+        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
 
         // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
         submission.blocks?.push({
@@ -439,7 +439,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             submission,
         } as TextBlock);
 
-        getLatestSubmissionResult(submission)!.feedbacks.push({
+        getLatestSubmissionResult(submission)?.feedbacks.push({
             id: 3,
             detailText: 'Third Feedback',
             credits: 0,
