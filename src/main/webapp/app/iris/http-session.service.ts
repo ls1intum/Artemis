@@ -33,4 +33,8 @@ export class IrisHttpSessionService {
     createSessionForProgrammingExercise(exerciseId: number): Observable<IrisSession> {
         return this.http.post<never>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, {});
     }
+
+    getHeartbeat(): Observable<HttpResponse<boolean>> {
+        return this.http.get<HttpResponse<boolean>>(`${this.resourceUrl}/active`, { observe: 'response' });
+    }
 }

@@ -11,12 +11,13 @@ import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
+import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
     templateUrl: './exercise-chatbot.component.html',
     styleUrls: ['./exercise-chatbot.component.scss'],
-    providers: [IrisStateStore, IrisWebsocketService, IrisSessionService],
+    providers: [IrisStateStore, IrisWebsocketService, IrisSessionService, IrisHeartbeatService],
     animations: [shakeAnimation({ anchor: 'shake', direction: '=>', duration: 700 })],
 })
 export class ExerciseChatbotComponent implements OnInit, OnDestroy {
