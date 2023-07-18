@@ -14,6 +14,7 @@ import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
@@ -21,6 +22,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -33,6 +35,7 @@ export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
+export const UPLOAD_EXERCISE_BASE = BASE_API + 'file-upload-exercises/';
 
 /**
  * A class which encapsulates all cypress requests related to course management.
@@ -418,6 +421,47 @@ export class CourseManagementRequests {
             url: TEXT_EXERCISE_BASE + exerciseId,
             method: DELETE,
         });
+    }
+
+    /**
+     * Creates a file upload exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
+     * @returns <Chainable> request response
+     */
+    createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()) {
+        const template = {
+            ...fileUploadExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+        const uploadExercise = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: UPLOAD_EXERCISE_BASE, body: uploadExercise });
+    }
+
+    deleteFileUploadExercise(exerciseID: number) {
+        return cy.request({
+            url: `${UPLOAD_EXERCISE_BASE}/${exerciseID}`,
+            method: DELETE,
+        });
+    }
+
+    makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
+            method: POST,
+            body: { submissionExerciseType: 'file-upload', file, id: null },
+        });
+    }
+
+    updateFileUploadExerciseDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.dueDate = due;
+        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
+    }
+
+    updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.assessmentDueDate = due;
+        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
     }
 
     /**

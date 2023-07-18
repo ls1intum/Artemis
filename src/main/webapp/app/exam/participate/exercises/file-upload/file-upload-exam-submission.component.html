@@ -19,7 +19,7 @@
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                         </div>
                         <div class="col-4">
-                            <button class="btn btn-primary" (click)="saveUploadedFile()">
+                            <button class="btn btn-primary" id="fileUploadSubmit" (click)="saveUploadedFile()">
                                 {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
                             </button>
                         </div>
@@ -47,7 +47,7 @@
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-    <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+    <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
 
     <!-- problem statement update & difference highlighter -->
     <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)">
