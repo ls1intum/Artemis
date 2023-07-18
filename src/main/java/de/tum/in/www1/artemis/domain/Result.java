@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.in.www1.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
@@ -212,8 +213,17 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime exerciseDueDate, @NotNull ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
+    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+        var optionalDueDate = ExerciseDateService.getDueDate(participation);
+        if (optionalDueDate.isEmpty()) {
+            this.rated = true;
+            return;
+        }
+        var dueDate = optionalDueDate.get();
+        if (getParticipation().getExercise() instanceof ProgrammingExercise) {
+            dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
+        }
+        this.rated = !submissionDate.isAfter(dueDate);
     }
 
     /**
@@ -221,11 +231,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
-     *
-     * @param dueDate    due date of the exercise or individual due date if applicable
-     * @param submission to which the result belongs.
      */
-    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull Submission submission) {
+    public void setRatedIfNotAfterDueDate() {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
@@ -233,32 +240,8 @@ public class Result extends DomainObject implements Comparable<Result> {
             this.rated = false;
         }
         else {
-            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(participation, submission.getSubmissionDate());
         }
-    }
-
-    /**
-     * Sets the rated attribute depending on the submission type and date.
-     * This method takes the individual due date specified by the participation attribute into account
-     *
-     * @param submission    to which the result belongs.
-     * @param participation to wich the submission belongs
-     */
-    public void setRatedIfNotAfterDueDate(@NotNull Submission submission, @NotNull Participation participation) {
-        ZonedDateTime dueDate = ExerciseDateService.getDueDate(participation).orElse(null);
-        setRatedIfNotAfterDueDate(dueDate, submission);
-    }
-
-    /**
-     * Sets the rated attribute depending on the submission type and date.
-     * This method takes the individual due date specified by the participation attribute into account
-     *
-     * @param submissionDate The date of the submission of this result
-     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, Submission)
-     */
-    public void setRatedIfNotAfterDueDate(@NotNull ZonedDateTime submissionDate) {
-        ZonedDateTime dueDate = ExerciseDateService.getDueDate(getParticipation()).orElse(null);
-        setRatedIfNotAfterDueDate(dueDate, submissionDate);
     }
 
     public Submission getSubmission() {

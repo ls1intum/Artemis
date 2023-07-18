@@ -36,14 +36,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 
-    /**
-     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be flagged as illegal.
-     *
-     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
-     */
-    private static final int GRACE_PERIOD_SECONDS = 60;
-
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
@@ -242,7 +234,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (dueDate.isEmpty()) {
             return true;
         }
-        return dueDate.get().plusSeconds(GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
+        return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
     }
 
     /**

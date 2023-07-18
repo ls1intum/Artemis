@@ -231,7 +231,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
 
-        result.setRatedIfNotAfterDueDate(programmingSubmission, programmingSubmission.getParticipation());
+        result.setRatedIfNotAfterDueDate();
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 
@@ -245,7 +245,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, submission);
 
-        result.setRatedIfNotAfterDueDate(submission, submission.getParticipation());
+        result.setRatedIfNotAfterDueDate();
         // The participation is a test run -> should not be rated
         assertThat(result.isRated()).isFalse();
     }

@@ -155,7 +155,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            setRatedBySubmissionType(newResult);
+            newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -163,27 +163,6 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
-    }
-
-    /**
-     * Determines if the result should be rated based on the participation and submission type:
-     * - Illegal submissions and test runs are never rated
-     * - Test, Instructor, and manual types are rated.
-     * - Otherwise, the result is rated if its submission date is before the individual due date.
-     *
-     * @param newResult the result to set the rated attribute.
-     * @see ProgrammingSubmissionService#checkForIllegalSubmission(ProgrammingExerciseParticipation, ProgrammingSubmission)
-     */
-    private void setRatedBySubmissionType(Result newResult) {
-        if (newResult.getParticipation().isTestRun()) {
-            newResult.setRated(false);
-            return;
-        }
-        switch (newResult.getSubmission().getType()) {
-            case ILLEGAL -> newResult.setRated(false);
-            case TEST, INSTRUCTOR, MANUAL -> newResult.setRated(true);
-            default -> newResult.setRatedIfNotAfterDueDate(newResult.getSubmission().getSubmissionDate());
-        }
     }
 
     /**
