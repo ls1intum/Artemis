@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -101,6 +102,10 @@ public class AthenaSubmissionSelectionService {
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
+        }
+        catch (HttpClientErrorException httpClientErrorException) {
+            // We don't want to crash because of this because it would break the assessment process
+            log.error("HTTP Client Error while calling Remote Service: {}", httpClientErrorException.getMessage());
         }
 
         return Optional.empty();
