@@ -16,7 +16,7 @@
     <!-- not in preview mode: content always shown -->
     <div *ngIf="!previewMode" [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
         <jhi-posting-content-part *ngFor="let postingContentPart of postingContentParts" [postingContentPart]="postingContentPart"> </jhi-posting-content-part>
-
         <span class="edited-text" *ngIf="isEdited">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
+        <jhi-link-preview-container [data]="content"></jhi-link-preview-container>
     </div>
 </ng-container>
