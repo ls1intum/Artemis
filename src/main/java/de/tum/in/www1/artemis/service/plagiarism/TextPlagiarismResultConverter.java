@@ -22,6 +22,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
+/**
+ * Contains logic that converts JPlagResult into a TextPlagiarismResult for text and programming exercises
+ */
 @Component
 class TextPlagiarismResultConverter {
 
