@@ -335,11 +335,6 @@ public class MetricsBean {
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
-        activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
-                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays.toString()), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
-                .collect(Collectors.toCollection(ArrayList::new)), true);
-
         var courses = courseRepository.findAll();
         // We set the number of students once to prevent multiple queries for the same date
         courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
@@ -350,29 +345,53 @@ public class MetricsBean {
                 .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
                 .toList();
 
-        studentsCourseGauge.register(
-                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
-                        .collect(Collectors.toCollection(ArrayList::new)),
-                true);
+        List<Exam> examsInActiveCourses = new ArrayList<>();
+        activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
 
+        // Update multi gauges
+        updateStudentsCourseMultiGauge(activeCourses);
+        updateStudentsExamMultiGauge(examsInActiveCourses, courses);
+        updateActiveUserMultiGauge(now);
+        updateActiveExerciseMultiGauge();
+        updateExerciseMultiGauge();
+
+        // Update normal Gauges
         activeCoursesGauge.set(activeCourses.size());
         coursesGauge.set(courses.size());
 
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set((int) examRepository.count());
+    }
 
-        List<Exam> examsInActiveCourses = new ArrayList<>();
-        activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
+    private void updateActiveUserMultiGauge(ZonedDateTime now) {
+        var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
+        activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
+                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays.toString()), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                .collect(Collectors.toCollection(ArrayList::new)), true);
+    }
+
+    private void updateStudentsCourseMultiGauge(List<Course> activeCourses) {
+        studentsCourseGauge.register(
+                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
+                        .collect(Collectors.toCollection(ArrayList::new)),
+                true);
+    }
+
+    private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
         studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
                 // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
                 "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
                 studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toCollection(ArrayList::new)), true);
+    }
 
+    private void updateActiveExerciseMultiGauge() {
         activeExerciseGauge.register(Stream.of(ExerciseType.values())
                 .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
                         exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
                 .collect(Collectors.toCollection(ArrayList::new)), true);
+    }
 
+    private void updateExerciseMultiGauge() {
         exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
                 exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toCollection(ArrayList::new)), true);
     }
