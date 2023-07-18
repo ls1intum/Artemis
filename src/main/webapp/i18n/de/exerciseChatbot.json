@@ -44,7 +44,8 @@
                 "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
-                "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein."
+                "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein.",
+                "pyrisNotAvailable": "Pyris antwortet nicht. Bitte versuche es später!"
             },
             "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren."
         }
