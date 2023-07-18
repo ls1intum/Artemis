@@ -46,7 +46,7 @@ export class LinkifyService {
             if (!isRemoved) {
                 linkableItems.push(linkableItem);
             }
-
+        }
         return linkableItems;
     }
 }
