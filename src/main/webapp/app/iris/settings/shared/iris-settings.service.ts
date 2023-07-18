@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisModel } from 'app/entities/iris/settings/iris-model';
 
 type EntityResponseType = HttpResponse<IrisSettings>;
 
@@ -88,5 +89,12 @@ export class IrisSettingsService {
      */
     setProgrammingExerciseSettings(exerciseId: number, settings: IrisSettings): Observable<EntityResponseType> {
         return this.http.put<IrisSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
+    }
+
+    /**
+     * Get the global Iris settings
+     */
+    getIrisModels(): Observable<IrisModel[] | undefined> {
+        return this.http.get<IrisModel[]>(`${this.resourceUrl}/iris/models`, { observe: 'response' }).pipe(map((res: HttpResponse<IrisModel[]>) => res.body ?? []));
     }
 }

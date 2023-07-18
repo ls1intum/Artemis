@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
+import { IrisModel } from 'app/entities/iris/settings/iris-model';
 
 @Component({
     selector: 'jhi-iris-sub-settings-update',
@@ -9,6 +10,12 @@ import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 export class IrisSubSettingsUpdateComponent {
     @Input()
     subSettings: IrisSubSettings;
+
+    @Input()
+    models: IrisModel[];
+
+    @Input()
+    modelOptional = false;
 
     @Input()
     templateOptional = false;
@@ -24,5 +31,13 @@ export class IrisSubSettingsUpdateComponent {
             irisTemplate.content = '';
             this.subSettings.template = this.previousTemplate ?? irisTemplate;
         }
+    }
+
+    getSelectedModelName(): string {
+        return this.models.find((model) => model.id === this.subSettings.preferredModel)?.name ?? this.subSettings.preferredModel ?? 'None';
+    }
+
+    setModel(model: IrisModel | undefined) {
+        this.subSettings.preferredModel = model?.id;
     }
 }
