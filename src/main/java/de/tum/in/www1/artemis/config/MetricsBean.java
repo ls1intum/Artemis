@@ -324,6 +324,10 @@ public class MetricsBean {
         return examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
     }
 
+    /**
+     * Update artemis public Artemis metrics that are exposed via Prometheus.
+     * The update (and recalculation) is performed every 15 minutes.
+     */
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
     public void updatePublicArtemisMetrics() {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
