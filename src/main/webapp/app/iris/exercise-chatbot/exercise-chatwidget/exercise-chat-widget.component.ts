@@ -137,10 +137,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     ngOnInit() {
         this.userService.getIrisAcceptedAt().subscribe((res) => {
             this.userAccepted = !!res;
-            if (this.userAccepted && this.messages.length == 0) {
+            if (this.userAccepted) {
                 this.loadFirstMessage();
             }
         });
+
         this.animateDots();
 
         // Subscribe to state changes
@@ -207,10 +208,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
         } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
         }
     }
 
@@ -285,10 +286,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     acceptPermission() {
         this.userService.acceptIris().subscribe(() => {
             this.userAccepted = true;
-            if (this.shouldLoadGreetingMessage) {
-                this.loadFirstMessage();
-            }
         });
+        this.loadFirstMessage();
     }
 
     /**
