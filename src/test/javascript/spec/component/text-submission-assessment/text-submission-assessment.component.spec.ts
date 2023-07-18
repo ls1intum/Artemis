@@ -42,6 +42,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -426,7 +427,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should handle overlapping manual text blocks correctly', () => {
-        const prepareTextBlocksAndFeedbacksSpy = jest.spyOn(component, 'sortAndSetTextBlockRefs');
+        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype, 'sortAndSetTextBlockRefs');
 
         // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
         submission.blocks?.push({
@@ -449,7 +450,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
-        expect(prepareTextBlocksAndFeedbacksSpy).toHaveBeenCalled();
+        expect(sortAndSetTextBlockRefsSpy).toHaveBeenCalled();
 
         expect(component.textBlockRefs).toEqual(
             // Checking if sortAndSetTextBlockRefs selected the right TextBlockRef (the one having a feedback)
