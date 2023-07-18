@@ -45,7 +45,7 @@
                 "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
                 "emptyMessage": "You cannot submit empty messages."
             },
-            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me here."
+            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me <a href='/about-iris' target='_blank'>here</a>."
         }
     }
 }

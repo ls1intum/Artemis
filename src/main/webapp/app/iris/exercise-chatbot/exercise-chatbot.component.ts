@@ -20,7 +20,6 @@ import { SharedService } from 'app/iris/shared.service';
     animations: [shakeAnimation({ anchor: 'shake', direction: '=>', duration: 700 })],
 })
 export class ExerciseChatbotComponent implements OnInit, OnDestroy {
-    public chatAccepted = false;
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;

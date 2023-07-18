@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -18,19 +19,20 @@ import {
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { mockArtemisClientMessage, mockClientMessage, mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
+import { UserService } from 'app/core/user/user.service';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -40,6 +42,7 @@ describe('ExerciseChatWidgetComponent', () => {
     let mockSessionService: IrisSessionService;
     let mockDialog: MatDialog;
     let mockModalService: NgbModal;
+    let mockUserService: UserService;
 
     beforeEach(async () => {
         mockDialog = {
@@ -58,6 +61,15 @@ describe('ExerciseChatWidgetComponent', () => {
             createNewSession: jest.fn(),
         } as any;
 
+        mockUserService = {
+            acceptIris: jest.fn().mockReturnValue({
+                subscribe: jest.fn(),
+            }),
+            getIrisAcceptedAt: jest.fn().mockReturnValue({
+                subscribe: jest.fn(),
+            }),
+        } as any;
+
         stateStore = new IrisStateStore();
         mockModalService = {
             open: jest.fn(),
@@ -73,6 +85,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
+                { provide: UserService, useValue: mockUserService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: HttpClient, useClass: MockHttpService },
@@ -91,6 +104,29 @@ describe('ExerciseChatWidgetComponent', () => {
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
             });
+    });
+
+    it('should set userAccepted to true if user has accepted the policy', () => {
+        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of(dayjs()));
+
+        component.ngOnInit();
+        expect(component.userAccepted).toBeTrue();
+    });
+
+    it('should set userAccepted to false if user has not accepted the policy', () => {
+        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of(null));
+        component.ngOnInit();
+        expect(component.userAccepted).toBeFalse();
+    });
+
+    it('should call API when user accept the policy', () => {
+        const stub = jest.spyOn(mockUserService, 'acceptIris');
+        stub.mockReturnValue(of(new HttpResponse<void>()));
+
+        component.acceptPermission();
+
+        expect(stub).toHaveBeenCalledOnce();
+        expect(component.userAccepted).toBeTrue();
     });
 
     it('should add user message on send', waitForAsync(async () => {
@@ -291,7 +327,18 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'false');
     });
 
+    it('should disable enter key if deactivateSubmitButton is true', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(true);
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
+        jest.spyOn(component, 'onSend');
+
+        component.handleKey(event);
+
+        expect(component.onSend).not.toHaveBeenCalled();
+    });
+
     it('should call onSend if Enter key is pressed without Shift key', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(false);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
         jest.spyOn(component, 'onSend');
 
@@ -304,6 +351,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should remove selected text and move cursor position if Enter key is pressed with Shift key', () => {
+        jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(false);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: true });
         const textAreaElement = document.createElement('textarea');
         const selectionStart = 6;
@@ -428,26 +476,55 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(component.isEmptyMessageError()).toBeFalsy();
     });
 
-    it('should return true if isLoading is true', () => {
+    it('should disable submit button if isLoading is true', () => {
         component.isLoading = true;
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return true if error exists and it is fatal', () => {
+    it('should disable submit button if error exists and it is fatal', () => {
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: true };
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return false if isLoading is false and no error exists', () => {
+    it('should disable submit button if userAccepted is false', () => {
+        component.userAccepted = false;
         component.isLoading = false;
         component.error = null;
-        expect(component.deactivateSubmitButton()).toBeFalsy();
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
+        expect(component.deactivateSubmitButton()).toBeTruthy();
+        expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should return false if isLoading is false and error is not fatal', () => {
+    it('should not disable submit button if isLoading is false and no error exists', () => {
+        component.userAccepted = true;
+        component.isLoading = false;
+        component.error = null;
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
+        expect(component.deactivateSubmitButton()).toBeFalsy();
+        expect(sendButton.disabled).toBeFalsy();
+    });
+
+    it('should not disable submit button if isLoading is false and error is not fatal', () => {
+        component.userAccepted = true;
         component.isLoading = false;
         component.error = { key: IrisErrorMessageKey.SEND_MESSAGE_FAILED, fatal: false };
+        fixture.detectChanges();
+        const sendButton: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#sendButton');
+
         expect(component.deactivateSubmitButton()).toBeFalsy();
+        expect(sendButton.disabled).toBeFalsy();
     });
 
     describe('clear chat session', () => {

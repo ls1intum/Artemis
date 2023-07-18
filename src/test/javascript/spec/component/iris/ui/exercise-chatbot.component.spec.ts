@@ -78,15 +78,6 @@ describe('ExerciseChatbotComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should open chat when chat accepted', () => {
-        jest.spyOn(component, 'openChat');
-
-        component.chatAccepted = true;
-        component.handleButtonClick();
-
-        expect(component.openChat).toHaveBeenCalled();
-    });
-
     it('should open chat and set buttonDisabled and chatOpen flags', () => {
         jest.spyOn(mockDialog, 'open');
         component.buttonDisabled = false;
