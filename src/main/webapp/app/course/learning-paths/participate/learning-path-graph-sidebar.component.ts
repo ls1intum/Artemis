@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 
 @Component({
-    selector: 'jhi-learning-path-sidebar',
+    selector: 'jhi-learning-path-graph-sidebar',
     styleUrls: ['./learning-path-graph-sidebar.component.scss'],
     templateUrl: './learning-path-graph-sidebar.component.html',
 })
