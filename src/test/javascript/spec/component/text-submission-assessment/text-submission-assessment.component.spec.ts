@@ -22,7 +22,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -112,6 +112,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 text: 'Second text.',
                 startIndex: 12,
                 endIndex: 24,
+                type: TextBlockType.MANUAL,
                 submission,
             } as TextBlock,
         ];
@@ -422,5 +423,42 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(component.textBlockRefs).toHaveLength(2);
         expect(component.unusedTextBlockRefs).toHaveLength(0);
+    });
+
+    it('should handle overlapping manual text blocks correctly', () => {
+        const prepareTextBlocksAndFeedbacksSpy = jest.spyOn(component, 'sortAndSetTextBlockRefs');
+
+        // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
+        submission.blocks?.push({
+            id: 'third text id',
+            text: 'text.',
+            startIndex: 19,
+            endIndex: 24,
+            type: TextBlockType.MANUAL,
+            submission,
+        } as TextBlock);
+
+        getLatestSubmissionResult(submission)!.feedbacks.push({
+            id: 3,
+            detailText: 'Third Feedback',
+            credits: 0,
+            reference: 'third text id',
+        } as Feedback);
+        // END: Adding a new block (with feedback) that overlaps with an existing block
+
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        expect(prepareTextBlocksAndFeedbacksSpy).toHaveBeenCalled();
+
+        expect(component.textBlockRefs).toEqual(
+            // Checking if sortAndSetTextBlockRefs selected the right TextBlockRef (the one having a feedback)
+            // Performing partial match for { block: { text: ...}, feedback: { id: ... } }
+            expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'text.' }), feedback: expect.objectContaining({ id: 3 }) })]),
+        );
+
+        // Checking if a new block was added to compensate for the loss of submitted text due to the overlap between blocks
+        // Performing partial match for { block: { text: ...} }
+        expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 });
