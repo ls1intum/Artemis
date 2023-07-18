@@ -115,7 +115,7 @@ public class IrisSessionResource {
      *
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("iris/sessions/{sessionId}/active")
+    @GetMapping("/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         // TODO: Call IrisSessionService to check if Iris is active

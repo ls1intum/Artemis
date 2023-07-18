@@ -6,7 +6,8 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 type EntityResponseType = HttpResponse<IrisSession>;
 
 /**
- * Provides a singleton root-level IrisHttpSessionService to retrieve existing or create new sessions
+ * The `IrisHttpSessionService` provides methods for retrieving existing or creating new Iris sessions.
+ * It interacts with the server-side API to perform session-related operations.
  */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpSessionService {
@@ -34,6 +35,11 @@ export class IrisHttpSessionService {
         return this.http.post<never>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, {});
     }
 
+    /**
+     * Retrieves the heartbeat status of a session.
+     * @param sessionId The ID of the session to check.
+     * @return An Observable of the HTTP response containing a boolean value indicating the session's heartbeat status.
+     */
     getHeartbeat(sessionId: number): Observable<HttpResponse<boolean>> {
         return this.http.get<boolean>(`${this.resourceUrl}/sessions/${sessionId}/active`, { observe: 'response' });
     }
