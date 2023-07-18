@@ -256,8 +256,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime dateInPast = now.minusHours(1);
         ZonedDateTime dateClosePast = now.minusSeconds(5);
         return Stream.of(
-                // The grace period should only be applied if building after the due date is activated
-                Arguments.of(false, null, SubmissionType.MANUAL, dateClosePast, now),
+                // The result was created shortly after the due date and should still be considered rated
+                Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
                 // The due date has not passed, normal student submission => rated result.
                 Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture, now),
                 // The due date is not set, normal student submission => rated result.
