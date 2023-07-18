@@ -6,7 +6,7 @@ import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobject
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
+import { BASE_API, CourseWideContext, DELETE, ExerciseType, GET, POST, PUT, ProgrammingLanguage } from '../constants';
 import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
 import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
 import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
@@ -201,22 +201,22 @@ export class CourseManagementRequests {
 
     updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
+        return this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
-    private updateExercise(exercise: Exercise, type: EXERCISE_TYPE) {
+    private updateExercise(exercise: Exercise, type: ExerciseType) {
         let url: string;
         switch (type) {
-            case EXERCISE_TYPE.Programming:
+            case ExerciseType.PROGRAMMING:
                 url = PROGRAMMING_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 url = TEXT_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Modeling:
+            case ExerciseType.MODELING:
                 url = MODELING_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Quiz:
+            case ExerciseType.QUIZ:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
@@ -527,7 +527,7 @@ export class CourseManagementRequests {
 
     updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
+        return this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
     deleteModelingExercise(exerciseID: number) {
@@ -700,12 +700,12 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
+        return this.updateExercise(exercise, ExerciseType.TEXT);
     }
 
     updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
+        return this.updateExercise(exercise, ExerciseType.TEXT);
     }
 
     deleteLecture(lectureId: number) {

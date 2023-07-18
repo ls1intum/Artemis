@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import javaBuildErrorSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
-import { EXERCISE_TYPE } from '../../support/constants';
+import { ExerciseType } from '../../support/constants';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
 import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../support/artemis';
@@ -35,10 +35,10 @@ describe('Exam test run', () => {
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 Promise.all([
-                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }),
-                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission: javaBuildErrorSubmission, practiceMode: true }),
-                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 }),
-                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Modeling),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, practiceMode: true }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
                 ]).then((responses) => {
                     exerciseArray = exerciseArray.concat(responses);
                 });
@@ -125,7 +125,7 @@ describe('Exam test run', () => {
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
             examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
-            if (exercise.type === EXERCISE_TYPE.Text) {
+            if (exercise.type === ExerciseType.TEXT) {
                 examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
             }
         }
