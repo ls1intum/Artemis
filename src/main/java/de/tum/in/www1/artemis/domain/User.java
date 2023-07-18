@@ -180,6 +180,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<DataExport> dataExports = new HashSet<>();
 
+    @Nullable
+    @Column(name = "iris_accepted")
+    private ZonedDateTime irisAccepted = null;
+
     public String getLogin() {
         return login;
     }
@@ -459,5 +463,10 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setDataExports(Set<DataExport> dataExports) {
         this.dataExports = dataExports;
+    }
+
+    @Nullable
+    public ZonedDateTime getIrisAcceptedTimestamp() {
+        return irisAccepted;
     }
 }

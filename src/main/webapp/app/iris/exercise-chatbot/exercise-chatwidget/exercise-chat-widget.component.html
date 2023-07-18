@@ -57,7 +57,7 @@
                             </button>
                         </div>
                         <div style="display: flex">
-                            <span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span>
+                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span></pre>
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
@@ -93,7 +93,7 @@
                     </div>
                 </div>
             </div>
-            <div class="p-chat" *ngIf="!userAccepted && !isInitializing">
+            <div class="p-chat" *ngIf="userAccepted === false">
                 <div class="message-text">{{ 'artemisApp.exerciseChatbot.popUpMessage' | artemisTranslate }}</div>
                 <div class="button-container">
                     <button class="button" (click)="acceptPermission()">{{ 'artemisApp.exerciseChatbot.accept' | artemisTranslate }}</button>
@@ -131,7 +131,7 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button id="sendButton" (click)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
+            <jhi-button id="sendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
             </jhi-button>
         </div>
     </div>

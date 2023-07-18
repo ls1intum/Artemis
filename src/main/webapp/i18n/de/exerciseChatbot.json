@@ -46,7 +46,7 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
                 "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein."
             },
-            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst hier mehr über mich erfahren."
+            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren."
         }
     }
 }
