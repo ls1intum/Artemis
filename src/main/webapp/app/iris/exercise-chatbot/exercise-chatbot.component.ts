@@ -110,6 +110,8 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
             disableClose: true,
             data: {
                 stateStore: this.stateStore,
+                exerciseId: this.exerciseId,
+                sessionService: this.sessionService,
                 widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
                 widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
                 fullSize: localStorage.getItem('fullSize') === 'true',

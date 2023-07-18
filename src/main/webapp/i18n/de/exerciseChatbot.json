@@ -25,9 +25,15 @@
             "text4_2": "<b>Verschieben des Widgets:</b> Du kannst das Widget verschieben. Klicke und halte das Widget und ziehe es an die gewünschte Position.",
             "text4_3": "<b>Vergrößern und Verkleinern des Widgets:</b> Klicke und ziehe die Ränder des Widgets in verschiedene Richtungen, um die Größe zu ändern.",
             "text4_4": "<b>Vollbildmodus:</b> Du kannst das Widget im Vollbildmodus öffnen, indem du auf den Vollbildmodus-Button (in der oberen rechten Ecke des Widgets) klickst.",
+            "text4_5": "<b>Chatverlauf löschen:</b> Du kannst deinen Chatverlauf löschen, indem du auf den Mülleimer klickst (oben rechts im Widget). Dadurch werden alle vorherigen Nachrichten gelöscht und du kannst einen neuen Chat starten.",
             "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
             "unreadMessages": "Ungelesene Nachrichten",
             "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "clearSession": {
+                "title": "Chatverlauf löschen",
+                "text": "Bist du sicher, dass du den Chatverlauf löschen möchtest?",
+                "submit": "Bestätigen"
+            },
             "errors": {
                 "invalidSessionState": "Der Zustand der Iris Session ist ungültig. Es ist nicht möglich, in diesem Zustand Nachrichten zu senden.",
                 "historyLoadFailed": "Der Chatverlauf konnte nicht abgerufen werden.",
