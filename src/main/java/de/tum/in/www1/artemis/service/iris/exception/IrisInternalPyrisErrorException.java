@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisInternalPyrisErrorException extends IrisException {
 
     public IrisInternalPyrisErrorException(String pyrisErrorMessage) {
-        super("artemisApp.iris.error.internalPyrisError", Map.of("pyrisErrorMessage", pyrisErrorMessage));
+        super("artemisApp.exerciseChatbot.errors.internalPyrisError", Map.of("pyrisErrorMessage", pyrisErrorMessage));
     }
 }

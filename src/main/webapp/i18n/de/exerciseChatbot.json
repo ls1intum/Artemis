@@ -43,7 +43,14 @@
                 "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
                 "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
-                "emptyMessage": "Du kannst nicht leere Nachrichten abschicken."
+                "emptyMessage": "Du kannst nicht leere Nachrichten abschicken.",
+                "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
+                "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
+                "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein."
             },
             "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren."
         }

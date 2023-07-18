@@ -36,8 +36,16 @@ export class IrisSessionService {
                 return this.httpMessageService
                     .getMessages(sessionId)
                     .toPromise()
-                    .then((messages: HttpResponse<IrisMessage[]>) => {
-                        this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages.body!));
+                    .then((messagesResponse: HttpResponse<IrisMessage[]>) => {
+                        const messages = messagesResponse.body!;
+                        messages.sort((a, b) => {
+                            if (a.sentAt && b.sentAt) {
+                                if (a.sentAt === b.sentAt) return 0;
+                                return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
+                            }
+                            return 0;
+                        });
+                        this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages));
                     })
                     .catch(() => {
                         this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);

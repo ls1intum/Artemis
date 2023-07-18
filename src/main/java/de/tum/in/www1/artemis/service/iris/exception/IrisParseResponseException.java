@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisParseResponseException extends IrisException {
 
     public IrisParseResponseException(Throwable cause) {
-        super("artemisApp.iris.error.parseResponse", Map.of("cause", cause.getMessage()));
+        super("artemisApp.exerciseChatbot.errors.parseResponse", Map.of("cause", cause.getMessage()));
     }
 }

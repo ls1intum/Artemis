@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisInvalidTemplateException extends IrisException {
 
     public IrisInvalidTemplateException(String pyrisErrorMessage) {
-        super("artemisApp.iris.error.invalidTemplate", Map.of("pyrisErrorMessage", pyrisErrorMessage));
+        super("artemisApp.exerciseChatbot.errors.invalidTemplate", Map.of("pyrisErrorMessage", pyrisErrorMessage));
     }
 }

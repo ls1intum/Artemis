@@ -20,6 +20,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -112,11 +113,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     isFirstMessage = false;
     resendAnimationActive = false;
     shakeErrorField = false;
-    isGreetingMessage = false;
     shouldLoadGreetingMessage = true;
     fadeState = '';
     exerciseId: number;
     sessionService: IrisSessionService;
+    shouldShowEmptyMessageError = false;
 
     // User preferences
     userAccepted: boolean;
@@ -173,8 +174,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.sessionId = Number(state.sessionId);
             this.numNewMessages = state.numNewMessages;
             if (state.error?.key == IrisErrorMessageKey.EMPTY_MESSAGE) {
+                this.shouldShowEmptyMessageError = true;
                 this.fadeState = 'start';
             }
+            if (this.error) this.getConvertedErrorMap();
         });
 
         // Focus on message textarea
@@ -254,6 +257,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
+        if (this.error?.fatal) return;
         if (this.newMessageTextContent.trim() === '') {
             this.stateStore.dispatchAndThen(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE)).catch(() => this.scrollToBottom('smooth'));
             return;
@@ -269,11 +273,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
-                .catch(() => {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                .catch((error: HttpErrorResponse) => {
+                    if (error.status === 403) {
+                        this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
+                    } else {
+                        this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                    }
                     this.scrollToBottom('smooth');
                 });
-            // TODO show that iris has been disabled after the corresponding PR is merged
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
@@ -330,7 +337,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const scrollHeight = chatBody.scrollHeight;
         const scrollTop = chatBody.scrollTop;
         const clientHeight = chatBody.clientHeight;
-        this.isScrolledToBottom = scrollHeight - scrollTop === clientHeight;
+        this.isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
     }
 
     /**
@@ -551,8 +558,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .then(() => {
                 this.scrollToBottom('smooth');
             })
-            .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+            .catch((error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
+                } else {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+                }
                 this.triggerShake();
             })
             .finally(() => {
@@ -588,10 +599,20 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return !!this.error && this.error.key == IrisErrorMessageKey.EMPTY_MESSAGE;
     }
 
-    onFadeAnimationEnd(event: AnimationEvent) {
-        if (event.toState === 'start') {
+    onFadeAnimationPhaseEnd(event: AnimationEvent) {
+        if (event.fromState === 'void' && event.toState === 'start') {
             this.fadeState = 'end';
         }
+        if (event.fromState === 'start' && event.toState === 'end') {
+            this.shouldShowEmptyMessageError = false;
+        }
+    }
+
+    getConvertedErrorMap() {
+        if (this.error?.paramsMap) {
+            return Object.fromEntries(Object.entries(this.error.paramsMap as Map<string, any>));
+        }
+        return null;
     }
 
     isClearChatEnabled(): boolean {

@@ -5,6 +5,6 @@ import java.util.Map;
 public class IrisNoResponseException extends IrisException {
 
     public IrisNoResponseException() {
-        super("artemisApp.iris.error.noResponse", Map.of());
+        super("artemisApp.exerciseChatbot.errors.noResponse", Map.of());
     }
 }
