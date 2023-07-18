@@ -57,7 +57,7 @@
                             </button>
                         </div>
                         <div style="display: flex">
-                            <span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span>
+                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span></pre>
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
