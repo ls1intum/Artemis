@@ -63,15 +63,15 @@ export class UserService {
     /**
      * Accept Iris policy.
      */
-    acceptIris(): Observable<User> {
-        return this.http.put<User>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    acceptIris(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
     }
 
     /**
      * Get the timestamp that Iris is accepted.
      * @return Observable<dayjs.Dayjs> with the accepted date.
      */
-    getIrisAcceptedAt(): Observable<dayjs.Dayjs> {
-        return this.http.get<dayjs.Dayjs>(`${this.resourceUrl}/accept-iris`);
+    getIrisAcceptedAt(): Observable<dayjs.Dayjs | null> {
+        return this.http.get<dayjs.Dayjs | null>(`${this.resourceUrl}/accept-iris`);
     }
 }

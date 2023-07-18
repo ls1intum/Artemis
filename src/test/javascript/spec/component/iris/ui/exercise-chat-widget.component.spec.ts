@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -94,7 +95,7 @@ describe('ExerciseChatWidgetComponent', () => {
     });
 
     it('should set userAccepted to true if user has accepted the policy', () => {
-        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of('2023-07-16T13:11:36+02:00'));
+        jest.spyOn(mockUserService, 'getIrisAcceptedAt').mockReturnValue(of(dayjs()));
 
         component.ngOnInit();
         expect(component.userAccepted).toBeTrue();
@@ -108,7 +109,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
     it('should call API when user accept the policy', () => {
         const stub = jest.spyOn(mockUserService, 'acceptIris');
-        stub.mockReturnValue(of(new HttpResponse({ body: null })));
+        stub.mockReturnValue(of(new HttpResponse<void>()));
 
         component.acceptPermission();
 
