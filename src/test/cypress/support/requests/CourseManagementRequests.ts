@@ -46,7 +46,7 @@ export class CourseManagementRequests {
      */
     deleteCourse(course: Course, admin: CypressCredentials) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
-        cy.wait(20000);
+        cy.wait(100);
         if (course) {
             cy.login(admin);
             return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}` });
