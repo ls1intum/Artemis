@@ -4,6 +4,7 @@ import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { Subscription } from 'rxjs';
 
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
