@@ -44,4 +44,15 @@ public class IrisModelsResource {
             throw new InternalServerErrorException("Could not fetch available Iris models");
         }
     }
+
+    /**
+     * GET iris/reachable: Retrieve if Iris is active
+     *
+     * @return a status {@code 200 (Ok)} and with body a boolean if Iris is active
+     */
+    @GetMapping("iris/active")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> getIrisReachable() {
+        return ResponseEntity.ok(true);
+    }
 }
