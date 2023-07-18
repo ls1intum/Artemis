@@ -22,7 +22,7 @@ export class ProgrammingExerciseCreationPage {
     /**
      * @param programmingLanguage the programming language of the programming exercise
      */
-    setProgrammingLanguage(programmingLanguage: string) {
+    setProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
         cy.get('#field_programmingLanguage').select(programmingLanguage);
     }
 
