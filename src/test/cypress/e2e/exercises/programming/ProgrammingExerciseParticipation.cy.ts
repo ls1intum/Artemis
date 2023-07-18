@@ -1,8 +1,8 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
-import partiallySuccessful from '../../../fixtures/exercise/programming/partially_successful/submission.json';
-import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
+import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
+import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, programmingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
@@ -26,7 +26,7 @@ describe('Programming exercise participation', () => {
 
     it('Makes a failing submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-        const submission = buildError;
+        const submission = javaBuildErrorSubmission;
         programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });
@@ -34,7 +34,7 @@ describe('Programming exercise participation', () => {
 
     it('Makes a partially successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentTwo);
-        const submission = partiallySuccessful;
+        const submission = javaPartiallySuccessfulSubmission;
         programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });
@@ -42,7 +42,7 @@ describe('Programming exercise participation', () => {
 
     it('Makes a successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentThree);
-        const submission = allSuccessful;
+        const submission = javaAllSuccessfulSubmission;
         programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
             programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
         });

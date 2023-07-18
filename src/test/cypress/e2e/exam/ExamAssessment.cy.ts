@@ -2,7 +2,7 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamBuilder, ProgrammingExerciseAssessmentType, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
+import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import {
     courseAssessment,
@@ -185,7 +185,7 @@ function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: EXERCISE_TY
         let additionalData = {};
         switch (exerciseType) {
             case EXERCISE_TYPE.Programming:
-                additionalData = { submission: partiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
+                additionalData = { submission: javaPartiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
                 break;
             case EXERCISE_TYPE.Text:
                 additionalData = { textFixture: 'loremIpsum-short.txt' };

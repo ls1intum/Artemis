@@ -47,6 +47,7 @@ describe('Programming exercise assessment', () => {
                     undefined,
                     undefined,
                     undefined,
+                    undefined,
                     assessmentDueDate,
                     ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
                 )

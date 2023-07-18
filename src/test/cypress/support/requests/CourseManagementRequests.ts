@@ -7,7 +7,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
-import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
+import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
@@ -15,7 +15,7 @@ import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
-import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
+import javaAssessmentSubmission from '../../fixtures/exercise/programming/java/assessment/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
@@ -141,7 +141,7 @@ export class CourseManagementRequests {
         assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
     ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const template = {
-            ...programmingExerciseTemplate,
+            ...javaProgrammingExerciseTemplate,
             title,
             shortName: programmingShortName,
             packageName,
@@ -181,7 +181,7 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${BASE_API}repository/${repositoryId}/files?commit=yes`,
             method: PUT,
-            body: assessment_submission,
+            body: javaAssessmentSubmission,
         });
     }
 

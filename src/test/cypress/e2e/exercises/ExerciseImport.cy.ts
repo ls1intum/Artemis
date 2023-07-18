@@ -17,7 +17,7 @@ import {
 import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../support/users';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
+import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -158,8 +158,8 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, partiallySuccessful, () => {
-                programmingExerciseEditor.getResultScore().contains(partiallySuccessful.expectedResult).and('be.visible');
+            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, () => {
+                programmingExerciseEditor.getResultScore().contains(javaPartiallySuccessfulSubmission.expectedResult).and('be.visible');
             });
         });
     });

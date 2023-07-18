@@ -72,6 +72,7 @@ export class ExamExerciseGroupCreationPage {
                             undefined,
                             undefined,
                             undefined,
+                            undefined,
                             additionalData.progExerciseAssessmentType,
                         )
                         .then((response) => {
