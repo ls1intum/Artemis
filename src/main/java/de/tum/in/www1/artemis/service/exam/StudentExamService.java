@@ -79,6 +79,8 @@ public class StudentExamService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
@@ -96,8 +98,9 @@ public class StudentExamService {
     private final TaskScheduler scheduler;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
-            QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
             CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
@@ -105,6 +108,7 @@ public class StudentExamService {
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
@@ -262,8 +266,13 @@ public class StudentExamService {
                                         .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
                             }
                         }
+
+                        // load quiz submissions for existing participation to be able to compare them in saveSubmission
+                        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
+
                         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(new QuizSubmission());
                         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+
                         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
                             quizSubmissionRepository.save((QuizSubmission) submissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
@@ -303,7 +312,21 @@ public class StudentExamService {
         for (var answer1 : answers1) {
             for (var answer2 : answers2) {
                 if (answer1.getQuizQuestion().getId().equals(answer2.getQuizQuestion().getId())) {
-                    var equal = isContentEqualTo(answer1, answer2);
+                    var equal = true;
+
+                    if (answer1 instanceof DragAndDropSubmittedAnswer) {
+                        equal = isContentEqualTo((DragAndDropSubmittedAnswer) answer1, (DragAndDropSubmittedAnswer) answer2);
+                    }
+                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer) {
+                        equal = isContentEqualTo((MultipleChoiceSubmittedAnswer) answer1, (MultipleChoiceSubmittedAnswer) answer2);
+                    }
+                    else if (answer1 instanceof ShortAnswerSubmittedAnswer) {
+                        equal = isContentEqualTo((ShortAnswerSubmittedAnswer) answer1, (ShortAnswerSubmittedAnswer) answer2);
+                    }
+                    else {
+                        equal = isContentEqualTo(answer1, answer2);
+                    }
+
                     if (!equal) {
                         return false;
                     }
@@ -319,11 +342,60 @@ public class StudentExamService {
         return false;
     }
 
+    private static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
+        var selections1 = answer1.getMappings();
+        var selections2 = answer2.getMappings();
+        // compare selections1 and selections2
+        // TODO: Compare based on DragItem ID and DropLocation
+        for (var selection1 : selections1) {
+            for (var selection2 : selections2) {
+                if (selection1.getDragItem().getId().equals(selection2.getDragItem().getId())) {
+                    var equal = Objects.equals(selection1.getDropLocation(), selection2.getDropLocation());
+                    if (!equal) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
         var selections1 = answer1.getSelectedOptions();
         var selections2 = answer2.getSelectedOptions();
         // compare selections1 and selections2
-        return false;
+        for (var selection1 : selections1) {
+            for (var selection2 : selections2) {
+                if (selection1.getId().equals(selection2.getId())) {
+                    var equal = Objects.equals(selection1.getText(), selection2.getText());
+                    if (!equal) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
+        var selections1 = answer1.getSubmittedTexts();
+        var selections2 = answer2.getSubmittedTexts();
+        // compare selections1 and selections2
+        // TODO: Compare based on ShortAnswerSpot ID and text
+        for (var selection1 : selections1) {
+            for (var selection2 : selections2) {
+                if (selection1.getSpot().getId().equals(selection2.getSpot().getId())) {
+                    var equal = Objects.equals(selection1.getText(), selection2.getText());
+                    if (!equal) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     private static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
