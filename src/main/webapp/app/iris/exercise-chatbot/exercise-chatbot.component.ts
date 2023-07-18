@@ -44,6 +44,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         private readonly sessionService: IrisSessionService,
         private readonly stateStore: IrisStateStore,
         private readonly websocketService: IrisWebsocketService,
+        private readonly heartbeatService: IrisHeartbeatService,
         private route: ActivatedRoute,
         private sharedService: SharedService,
     ) {}

@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { HttpResponse } from '@angular/common/http';
-import { ConversationErrorOccurredAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
@@ -10,7 +10,8 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
  */
 @Injectable()
 export class IrisHeartbeatService implements OnDestroy {
-    readonly intervalId: ReturnType<typeof setInterval>;
+    intervalId: ReturnType<typeof setInterval>;
+    private sessionIdChangedSub: Subscription;
 
     /**
      * Creates an instance of IrisWebsocketService.
@@ -18,15 +19,20 @@ export class IrisHeartbeatService implements OnDestroy {
      * @param stateStore The IrisStateStore for managing the state of the application.
      */
     constructor(private stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService) {
-        this.checkHeartbeat();
-        this.intervalId = setInterval(() => {
-            this.checkHeartbeat();
-        }, 10000);
+        // Subscribe to changes in the session ID
+        this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
+            if (!isSessionReceivedAction(newAction)) return;
+            clearInterval(this.intervalId);
+            this.checkHeartbeat(newAction.sessionId);
+            this.intervalId = setInterval(() => {
+                this.checkHeartbeat(newAction.sessionId);
+            }, 10000);
+        });
     }
 
-    private checkHeartbeat() {
+    private checkHeartbeat(sessionId: number) {
         this.httpSessionService
-            .getHeartbeat()
+            .getHeartbeat(sessionId)
             .toPromise()
             .then((response: HttpResponse<boolean>) => {
                 if (!response.body!) {
@@ -37,5 +43,7 @@ export class IrisHeartbeatService implements OnDestroy {
 
     ngOnDestroy(): void {
         clearInterval(this.intervalId);
+        // Unsubscribe from observables
+        this.sessionIdChangedSub.unsubscribe();
     }
 }

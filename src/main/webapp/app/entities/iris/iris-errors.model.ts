@@ -16,7 +16,7 @@ export enum IrisErrorMessageKey {
     NO_RESPONSE = 'artemisApp.exerciseChatbot.errors.noResponse',
     PARSE_RESPONSE = 'artemisApp.exerciseChatbot.errors.parseResponse',
     TECHNICAL_ERROR_RESPONSE = 'artemisApp.exerciseChatbot.errors.technicalError',
-    IRIS_NOT_AVAILABLE = 'artemisApp.exerciseChatbot.errors.pyrisNotAvailable',
+    IRIS_NOT_AVAILABLE = 'artemisApp.exerciseChatbot.errors.irisNotAvailable',
 }
 
 export interface IrisErrorType {
