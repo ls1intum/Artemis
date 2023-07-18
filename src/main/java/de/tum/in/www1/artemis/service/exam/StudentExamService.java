@@ -26,6 +26,9 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -97,13 +100,15 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
+    private final ObjectMapper objectMapper;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
-            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler, ObjectMapper objectMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -123,6 +128,7 @@ public class StudentExamService {
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
         this.scheduler = scheduler;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -300,55 +306,34 @@ public class StudentExamService {
         }
     }
 
-    private static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
+    private boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }
         else if (submission1 == null || submission2 == null) {
             return false;
         }
-        var answers1 = submission1.getSubmittedAnswers();
-        var answers2 = submission2.getSubmittedAnswers();
-        for (var answer1 : answers1) {
-            for (var answer2 : answers2) {
-                if (answer1.getQuizQuestion().getId().equals(answer2.getQuizQuestion().getId())) {
-                    var equal = true;
-
-                    if (answer1 instanceof DragAndDropSubmittedAnswer) {
-                        equal = isContentEqualTo((DragAndDropSubmittedAnswer) answer1, (DragAndDropSubmittedAnswer) answer2);
-                    }
-                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer) {
-                        equal = isContentEqualTo((MultipleChoiceSubmittedAnswer) answer1, (MultipleChoiceSubmittedAnswer) answer2);
-                    }
-                    else if (answer1 instanceof ShortAnswerSubmittedAnswer) {
-                        equal = isContentEqualTo((ShortAnswerSubmittedAnswer) answer1, (ShortAnswerSubmittedAnswer) answer2);
-                    }
-                    else {
-                        equal = isContentEqualTo(answer1, answer2);
-                    }
-
-                    if (!equal) {
-                        return false;
-                    }
-                }
-            }
+        try {
+            // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
+            // however directly manipulating the object is dangerous because it will be returned to the client.
+            var answers1JsonString = objectMapper.writeValueAsString(submission1.getSubmittedAnswers());
+            var answers2JsonString = objectMapper.writeValueAsString(submission2.getSubmittedAnswers());
+            return Objects.equals(answers1JsonString, answers2JsonString);
         }
-        // no previous comparison returned false, so we assume equality
-        return true;
-    }
-
-    private static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
-        // TODO: this should not be invoked
-        return false;
+        catch (JsonProcessingException e) {
+            log.error("Error when converting quiz submission1 {} or quiz submission1 {} to json value. Will assume they are not equal", submission1, submission2, e);
+            // we cannot be sure that both submissions are equal so we consider they are not
+            return false;
+        }
     }
 
     private static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
-        var selections1 = answer1.getMappings();
-        var selections2 = answer2.getMappings();
-        // compare selections1 and selections2
-        // TODO: Compare based on DragItem ID and DropLocation
-        for (var selection1 : selections1) {
-            for (var selection2 : selections2) {
+        var mappings1 = answer1.getMappings();
+        var mappings2 = answer2.getMappings();
+        // compare mappings1 and mappings2
+        // TODO: SK I am not sure this will work! Compare based on DragItem ID and DropLocation
+        for (var selection1 : mappings1) {
+            for (var selection2 : mappings2) {
                 if (selection1.getDragItem().getId().equals(selection2.getDragItem().getId())) {
                     var equal = Objects.equals(selection1.getDropLocation(), selection2.getDropLocation());
                     if (!equal) {
@@ -365,6 +350,7 @@ public class StudentExamService {
         var selections1 = answer1.getSelectedOptions();
         var selections2 = answer2.getSelectedOptions();
         // compare selections1 and selections2
+        // TODO: SK I am not sure this will work!
         for (var selection1 : selections1) {
             for (var selection2 : selections2) {
                 if (selection1.getId().equals(selection2.getId())) {
@@ -380,12 +366,12 @@ public class StudentExamService {
     }
 
     private static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
-        var selections1 = answer1.getSubmittedTexts();
-        var selections2 = answer2.getSubmittedTexts();
-        // compare selections1 and selections2
-        // TODO: Compare based on ShortAnswerSpot ID and text
-        for (var selection1 : selections1) {
-            for (var selection2 : selections2) {
+        var submittedTexts1 = answer1.getSubmittedTexts();
+        var submittedTexts2 = answer2.getSubmittedTexts();
+        // compare submittedTexts and submittedTexts2
+        // TODO: SK I am not sure this will work! Compare based on ShortAnswerSpot ID and text
+        for (var selection1 : submittedTexts1) {
+            for (var selection2 : submittedTexts2) {
                 if (selection1.getSpot().getId().equals(selection2.getSpot().getId())) {
                     var equal = Objects.equals(selection1.getText(), selection2.getText());
                     if (!equal) {
