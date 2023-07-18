@@ -327,63 +327,6 @@ public class StudentExamService {
         }
     }
 
-    private static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
-        var mappings1 = answer1.getMappings();
-        var mappings2 = answer2.getMappings();
-        // compare mappings1 and mappings2
-        // TODO: SK I am not sure this will work! Compare based on DragItem ID and DropLocation
-        for (var selection1 : mappings1) {
-            for (var selection2 : mappings2) {
-                if (selection1.getDragItem().getId().equals(selection2.getDragItem().getId())) {
-                    var equal = Objects.equals(selection1.getDropLocation(), selection2.getDropLocation());
-                    if (!equal) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
-        var selections1 = answer1.getSelectedOptions();
-        var selections2 = answer2.getSelectedOptions();
-        // compare selections1 and selections2
-        // TODO: SK I am not sure this will work!
-        for (var selection1 : selections1) {
-            for (var selection2 : selections2) {
-                if (selection1.getId().equals(selection2.getId())) {
-                    var equal = Objects.equals(selection1.getText(), selection2.getText());
-                    if (!equal) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
-        var submittedTexts1 = answer1.getSubmittedTexts();
-        var submittedTexts2 = answer2.getSubmittedTexts();
-        // compare submittedTexts and submittedTexts2
-        // TODO: SK I am not sure this will work! Compare based on ShortAnswerSpot ID and text
-        for (var selection1 : submittedTexts1) {
-            for (var selection2 : submittedTexts2) {
-                if (selection1.getSpot().getId().equals(selection2.getSpot().getId())) {
-                    var equal = Objects.equals(selection1.getText(), selection2.getText());
-                    if (!equal) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
     private static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
