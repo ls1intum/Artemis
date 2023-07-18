@@ -47,7 +47,7 @@ public class IrisModelsResource {
     }
 
     /**
-     * GET iris/reachable: Retrieve if Iris is active
+     * GET iris/active: Retrieve if Iris is active
      *
      * @return a status {@code 200 (Ok)} and with body a boolean if Iris is active
      */
