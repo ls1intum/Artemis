@@ -24,7 +24,6 @@ export class LinkPreviewComponent implements OnInit {
     constructor(private metisService: MetisService) {}
 
     ngOnInit() {
-        // determines if the current user is the author of the original post, that the answer belongs to
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting!);
     }
 
@@ -39,8 +38,6 @@ export class LinkPreviewComponent implements OnInit {
         // Regular expression pattern to match URLs
         // eslint-disable-next-line no-useless-escape
         const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
-
-        // const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*?(?=\s|[\]\)]|$)(?!>)/g;
 
         if (this.posting) {
             // Find all URL matches in the text (in the content of the post)
