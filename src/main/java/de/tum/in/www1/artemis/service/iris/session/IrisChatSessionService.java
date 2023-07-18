@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
+import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -133,6 +134,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                     parameters.put("buildFailed", programmingSubmission.isBuildFailed());
                     parameters.put("buildLog", programmingSubmission.getBuildLogEntries());
                 }
+
             }
         }
         parameters.put("session", fullSession);
@@ -143,6 +145,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);
+                        irisWebsocketService.sendException(fullSession, throwable.getCause());
                     }
                     else if (irisMessage != null) {
                         var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
@@ -150,6 +153,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                     }
                     else {
                         log.error("No response from Iris model");
+                        irisWebsocketService.sendException(fullSession, new IrisNoResponseException());
                     }
                     return null;
                 });

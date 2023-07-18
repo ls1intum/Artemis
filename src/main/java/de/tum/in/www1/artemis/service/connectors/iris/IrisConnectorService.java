@@ -6,10 +6,10 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,8 +17,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
+import de.tum.in.www1.artemis.service.iris.exception.*;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris) responsible for connecting to different
@@ -57,19 +59,48 @@ public class IrisConnectorService {
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
-        var response = restTemplate.postForEntity(irisUrl + "/api/v1/messages", objectMapper.valueToTree(request), JsonNode.class);
-        if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-            return CompletableFuture.failedFuture(new IrisConnectorException(/* parseResponse(response, IrisErrorResponseDTO.class).errorMessage() */"Could not receive response"));
+        try {
+            try {
+                var response = restTemplate.postForEntity(irisUrl + "/api/v1/messages", objectMapper.valueToTree(request), JsonNode.class);
+                if (!response.hasBody()) {
+                    return CompletableFuture.failedFuture(new IrisNoResponseException());
+                }
+                return CompletableFuture.completedFuture(parseResponse(response.getBody(), IrisMessageResponseDTO.class));
+            }
+            catch (HttpClientErrorException e) {
+                switch (e.getStatusCode()) {
+                    case BAD_REQUEST -> {
+                        var badRequestDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
+                        return CompletableFuture.failedFuture(new IrisInvalidTemplateException(badRequestDTO.errorMessage()));
+                    }
+                    case UNAUTHORIZED, FORBIDDEN -> {
+                        return CompletableFuture.failedFuture(new IrisForbiddenException());
+                    }
+                    case NOT_FOUND -> {
+                        var notFoundDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
+                        return CompletableFuture.failedFuture(new IrisModelNotAvailableException(request.preferredModel().toString(), notFoundDTO.errorMessage()));
+                    }
+                    case INTERNAL_SERVER_ERROR -> {
+                        var internalErrorDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
+                        return CompletableFuture.failedFuture(new IrisInternalPyrisErrorException(internalErrorDTO.errorMessage()));
+                    }
+                    default -> {
+                        return CompletableFuture.failedFuture(new IrisInternalPyrisErrorException(e.getMessage()));
+                    }
+                }
+            }
         }
-        return CompletableFuture.completedFuture(parseResponse(response, IrisMessageResponseDTO.class));
+        catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 
-    private <T> T parseResponse(ResponseEntity<JsonNode> response, Class<T> clazz) {
+    private <T> T parseResponse(JsonNode response, Class<T> clazz) throws IrisParseResponseException {
         try {
-            return objectMapper.treeToValue(response.getBody(), clazz);
+            return objectMapper.treeToValue(response, clazz);
         }
         catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IrisParseResponseException(e);
         }
     }
 }

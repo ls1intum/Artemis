@@ -32,6 +32,8 @@ import { SharedService } from 'app/iris/shared.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
+import { UserService } from 'app/core/user/user.service';
+import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -91,7 +93,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     unreadMessageIndex: number;
     error: IrisErrorType | null;
     dots = 1;
-    isInitializing = false;
     isFirstMessage = false;
     resendAnimationActive = false;
     shakeErrorField = false;
@@ -100,7 +101,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     fadeState = '';
 
     // User preferences
-    userAccepted = false;
+    userAccepted: boolean;
     isScrolledToBottom = true;
     rows = 1;
     initialWidth = 330;
@@ -120,6 +121,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private accountService: AccountService,
         @Inject(MAT_DIALOG_DATA) public data: any,
         private httpMessageService: IrisHttpMessageService,
+        private userService: UserService,
         private overlay: Overlay,
         private router: Router,
         private sharedService: SharedService,
@@ -133,17 +135,14 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnInit() {
-        setTimeout(() => {
-            if (this.messages.length != 0) {
-                this.userAccepted = true;
+        this.userService.getIrisAcceptedAt().subscribe((res) => {
+            this.userAccepted = !!res;
+            if (this.userAccepted) {
+                this.loadFirstMessage();
             }
-        }, 100);
-        this.animateDots();
+        });
 
-        // Set initializing flag to true and load the first message
-        setTimeout(() => {
-            this.isInitializing = true;
-        }, 50);
+        this.animateDots();
 
         // Subscribe to state changes
         this.stateSubscription = this.stateStore.getState().subscribe((state) => {
@@ -157,9 +156,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }
         });
 
-        // Set initializing flag to false and focus on message textarea
+        // Focus on message textarea
         setTimeout(() => {
-            this.isInitializing = false;
             this.messageTextarea.nativeElement.focus();
         }, 150);
     }
@@ -210,10 +208,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
         } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
-            this.isGreetingMessage = true;
+            this.isFirstMessage = true;
         }
     }
 
@@ -286,10 +284,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
-        this.userAccepted = true;
-        if (this.shouldLoadGreetingMessage) {
-            this.loadFirstMessage();
-        }
+        this.userService.acceptIris().subscribe(() => {
+            this.userAccepted = true;
+        });
+        this.loadFirstMessage();
     }
 
     /**
@@ -352,7 +350,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      */
     handleKey(event: KeyboardEvent): void {
         if (event.key === 'Enter') {
-            if (!this.isLoading) {
+            if (!this.deactivateSubmitButton()) {
                 if (!event.shiftKey) {
                     event.preventDefault();
                     this.onSend();
@@ -546,7 +544,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     deactivateSubmitButton(): boolean {
-        return this.isLoading || (!!this.error && this.error.fatal);
+        return !this.userAccepted || this.isLoading || (!!this.error && this.error.fatal);
     }
 
     isEmptyMessageError(): boolean {
@@ -558,4 +556,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.fadeState = 'end';
         }
     }
+
+    protected readonly IrisLogoSize = IrisLogoSize;
 }

@@ -40,13 +40,17 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param courseId the course id
+     * @param course the course
+     * @param admin the admin user
      * @returns <Chainable> request response
      */
-    deleteCourse(courseId: number) {
+    deleteCourse(course: Course, admin: CypressCredentials) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(20000);
-        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
+        if (course) {
+            cy.login(admin);
+            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}` });
+        }
     }
 
     /**
@@ -63,7 +67,7 @@ export class CourseManagementRequests {
     createCourse(
         customizeGroups = false,
         courseName = 'Course ' + generateUUID(),
-        courseShortName = 'cypress' + generateUUID(),
+        courseShortName = 'course' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
         fileName?: string,
@@ -438,7 +442,7 @@ export class CourseManagementRequests {
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
-    ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
+    ) {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
@@ -804,7 +808,7 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+export function convertModelAfterMultiPart(response: Cypress.Response<Course>): Course {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');
