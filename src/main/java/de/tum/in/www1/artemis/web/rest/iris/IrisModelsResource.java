@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
@@ -43,5 +44,16 @@ public class IrisModelsResource {
         catch (IrisConnectorException e) {
             throw new InternalServerErrorException("Could not fetch available Iris models");
         }
+    }
+
+    /**
+     * GET iris/active: Retrieve if Iris is active
+     *
+     * @return a status {@code 200 (Ok)} and with body a boolean if Iris is active
+     */
+    @GetMapping("iris/active")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> getIrisReachable() {
+        return ResponseEntity.ok(true);
     }
 }
