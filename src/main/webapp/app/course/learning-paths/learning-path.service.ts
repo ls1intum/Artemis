@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { LearningPathRecommendation, NgxLearningPathDTO, RecommendationType } from 'app/entities/learning-path.model';
+import { LearningPathRecommendation, NgxLearningPathDTO } from 'app/entities/learning-path.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

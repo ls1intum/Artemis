@@ -8,6 +8,7 @@ describe('LearningPathService', () => {
     let learningPathService: LearningPathService;
     let httpService: HttpClient;
     let putStub: jest.SpyInstance;
+    let getStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,6 +20,7 @@ describe('LearningPathService', () => {
                 httpService = TestBed.inject(HttpClient);
                 learningPathService = new LearningPathService(httpService);
                 putStub = jest.spyOn(httpService, 'put');
+                getStub = jest.spyOn(httpService, 'get');
             });
     });
 
@@ -26,9 +28,27 @@ describe('LearningPathService', () => {
         jest.restoreAllMocks();
     });
 
-    it('should send a request to the server to activate the user', () => {
+    it('should send a request to the server to enable learning paths for course', () => {
         learningPathService.enableLearningPaths(1).subscribe();
         expect(putStub).toHaveBeenCalledOnce();
         expect(putStub).toHaveBeenCalledWith('api/courses/1/learning-paths/enable', null, { observe: 'response' });
+    });
+
+    it('should send a request to the server to get ngx representation of learning path', () => {
+        learningPathService.getNgxLearningPath(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/courses/1/learning-path-graph', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get learning path id of the current user in the course', () => {
+        learningPathService.getLearningPathId(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/courses/1/learning-path-id', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get recommendation for learning path', () => {
+        learningPathService.getRecommendation(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/learning-path/1/recommendation', { observe: 'response' });
     });
 });
