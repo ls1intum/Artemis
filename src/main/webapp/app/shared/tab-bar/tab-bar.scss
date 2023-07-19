@@ -1,3 +1,7 @@
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+
 .tab-bar {
     display: flex;
     flex-wrap: wrap;
@@ -37,6 +41,15 @@
             top: 0;
             right: 0;
             transform: translate(50%, -50%);
+        }
+
+        @include media-breakpoint-down(sm) {
+            :not(:first-child) {
+                display: none;
+            }
+            fa-icon:first-child {
+                font-size: calc(var(--bs-body-font-size) * 1.4);
+            }
         }
     }
 
