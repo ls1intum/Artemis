@@ -68,17 +68,17 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
-    private MultiGauge activeUserMultiGauge;
-
     private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
 
     private final AtomicInteger coursesGauge = new AtomicInteger(0);
 
-    private MultiGauge studentsCourseGauge;
-
     private final AtomicInteger activeExamsGauge = new AtomicInteger(0);
 
     private final AtomicInteger examsGauge = new AtomicInteger(0);
+
+    private MultiGauge activeUserMultiGauge;
+
+    private MultiGauge studentsCourseGauge;
 
     private MultiGauge studentsExamGauge;
 
