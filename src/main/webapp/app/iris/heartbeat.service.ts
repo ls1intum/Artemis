@@ -5,6 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { Subscription } from 'rxjs';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 /**
  * The `IrisHeartbeatService` is responsible for monitoring the heartbeat of an Iris session.
@@ -15,13 +16,15 @@ import { Subscription } from 'rxjs';
 export class IrisHeartbeatService implements OnDestroy {
     intervalId: ReturnType<typeof setInterval> | undefined;
     private sessionIdChangedSub: Subscription;
+    websocketStatusSubscription: Subscription;
+    disconnected = false;
 
     /**
      * Creates an instance of IrisHeartbeatService.
      * @param stateStore The IrisStateStore for managing the state of the application.
      * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
      */
-    constructor(private stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService) {
+    constructor(private websocketService: JhiWebsocketService, private stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (!isSessionReceivedAction(newAction)) return;
@@ -31,6 +34,9 @@ export class IrisHeartbeatService implements OnDestroy {
                 this.checkHeartbeat(newAction.sessionId);
             }, 10000);
         });
+        this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
+            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
+        });
     }
 
     /**
@@ -39,6 +45,7 @@ export class IrisHeartbeatService implements OnDestroy {
      * @param sessionId The ID of the Iris session to check.
      */
     private checkHeartbeat(sessionId: number): void {
+        if (this.disconnected) return;
         this.httpSessionService
             .getHeartbeat(sessionId)
             .toPromise()
@@ -57,5 +64,6 @@ export class IrisHeartbeatService implements OnDestroy {
         if (this.intervalId !== undefined) clearInterval(this.intervalId);
         // Unsubscribe from observables
         this.sessionIdChangedSub.unsubscribe();
+        this.websocketStatusSubscription.unsubscribe();
     }
 }
