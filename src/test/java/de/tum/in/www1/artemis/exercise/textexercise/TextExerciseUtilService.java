@@ -360,4 +360,10 @@ public class TextExerciseUtilService {
         exerciseRepo.save(finishedTextExercise);
         return course;
     }
+
+    public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+        return textExercise;
+    }
 }

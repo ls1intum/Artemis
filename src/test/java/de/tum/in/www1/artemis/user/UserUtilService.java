@@ -128,6 +128,17 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(String login, String registrationNumber) {
         User user = getUserByLogin(login);
+        return setRegistrationNumberOfUserAndSave(user, registrationNumber);
+    }
+
+    /**
+     * set the registration number of the user and saves the user in the repository
+     *
+     * @param user               the user, whose registration number will be changed
+     * @param registrationNumber new registration number to use
+     * @return the user
+     */
+    public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
         return userRepo.save(user);
     }
