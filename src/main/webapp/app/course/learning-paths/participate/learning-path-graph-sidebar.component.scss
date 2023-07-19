@@ -7,6 +7,7 @@ $graph-min-width: 215px;
     .expanded-graph {
         display: flex;
         width: calc(#{$draggable-width} + #{$graph-min-width});
+        min-height: 500px;
         margin-left: auto;
 
         .scrollbar {
