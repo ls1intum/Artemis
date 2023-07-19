@@ -377,19 +377,6 @@ public class StudentExamService {
         }
         // we did not find any differences
         return true;
-
-        // try {
-        // // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
-        // // however directly manipulating the object is dangerous because it will be returned to the client.
-        // var answers1JsonString = objectMapper.writeValueAsString(submission1.getSubmittedAnswers());
-        // var answers2JsonString = objectMapper.writeValueAsString(submission2.getSubmittedAnswers());
-        // return Objects.equals(answers1JsonString, answers2JsonString);
-        // }
-        // catch (JsonProcessingException e) {
-        // log.error("Error when converting quiz submission1 {} or quiz submission1 {} to json value. Will assume they are not equal", submission1, submission2, e);
-        // // we cannot be sure that both submissions are equal so we consider they are not
-        // return false;
-        // }
     }
 
     public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
