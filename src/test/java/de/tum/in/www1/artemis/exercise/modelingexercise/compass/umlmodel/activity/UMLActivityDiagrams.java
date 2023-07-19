@@ -12,10 +12,13 @@ public final class UMLActivityDiagrams {
 
     public static final String ACTIVITY_MODEL_2;
 
+    public static final String ACTIVITY_MODEL_3;
+
     static {
         try {
             ACTIVITY_MODEL_1 = IOUtils.toString(UMLActivityDiagrams.class.getResource("activityModel1.json"), StandardCharsets.UTF_8);
             ACTIVITY_MODEL_2 = IOUtils.toString(UMLActivityDiagrams.class.getResource("activityModel2.json"), StandardCharsets.UTF_8);
+            ACTIVITY_MODEL_3 = IOUtils.toString(UMLActivityDiagrams.class.getResource("activityModel3.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

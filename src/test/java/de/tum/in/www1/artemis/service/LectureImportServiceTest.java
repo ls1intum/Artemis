@@ -81,6 +81,10 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
+        assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());
+        assertThat(lecture2.getStartDate()).isNotNull().isEqualTo(this.lecture1.getStartDate());
+        assertThat(lecture2.getEndDate()).isNotNull().isEqualTo(this.lecture1.getEndDate());
+        assertThat(lecture2.getVisibleDate()).isNotNull().isEqualTo(this.lecture1.getVisibleDate());
 
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(

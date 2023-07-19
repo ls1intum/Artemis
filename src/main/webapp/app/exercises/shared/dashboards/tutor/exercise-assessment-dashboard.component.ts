@@ -203,7 +203,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
         this.loadAll();
@@ -324,8 +323,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // exercise belongs to an exam
                 if (this.exercise?.exerciseGroup) {
                     this.isExamMode = true;
-                    this.exam = this.exercise?.exerciseGroup?.exam;
-                    this.secondCorrectionEnabled = this.exercise?.secondCorrectionEnabled;
+                    this.exam = this.exercise.exerciseGroup.exam;
+                    this.exerciseGroupId = this.exercise.exerciseGroup.id!;
+                    this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
@@ -551,7 +551,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * the server will respond with a BAD REQUEST response here.
      */
     private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
-        let submissionObservable: Observable<Submission> = of();
+        let submissionObservable: Observable<Submission | undefined> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, 'head', correctionRound);
@@ -568,9 +568,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
 
         submissionObservable.subscribe({
-            next: (submission: Submission) => {
+            next: (submission?: Submission) => {
                 if (!submission) {
-                    // there are no unassessed submission, nothing we have to worry about
+                    // there are no unassessed submissions
                     // Delete this correction round, as we are done with all
                     if (this.unassessedSubmissionByRound) {
                         this.unassessedSubmissionByRound.delete(correctionRound);
@@ -641,7 +641,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
         const tmpResult = submission.results?.[correctionRound];
-        return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
+        return !(tmpResult?.completionDate && Result.isManualResult(tmpResult));
     }
 
     /**
@@ -651,7 +651,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param toComplete Flag whether the view should be opened in to-complete mode
      */
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
-        if (!this.exercise || !this.exercise.type || !submissionId) {
+        if (!this.exercise?.type || !submissionId) {
             return;
         }
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
@@ -678,10 +678,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     getAssessmentLink(submission: Submission | 'new'): string[] {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let participationId = undefined;
-        if (submission !== 'new' && submission.participation !== undefined) {
-            participationId = submission.participation!.id;
+        if (submission !== 'new' && submission.participation) {
+            participationId = submission.participation.id;
         }
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId!, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
     }
 
     /**
