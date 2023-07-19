@@ -265,7 +265,7 @@ public class MetricsBean {
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
 
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
-        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toCollection(ArrayList::new));
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
 
         return exerciseRepository.countActiveStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
@@ -291,7 +291,7 @@ public class MetricsBean {
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
 
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
-        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toCollection(ArrayList::new));
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
 
         return exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
@@ -367,12 +367,14 @@ public class MetricsBean {
         var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
         activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
                 .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays.toString()), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
+                // A mutable list is required here because otherwise the values can not be updated correctly
                 .collect(Collectors.toCollection(ArrayList::new)), true);
     }
 
     private void updateStudentsCourseMultiGauge(List<Course> activeCourses) {
         studentsCourseGauge.register(
                 activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
+                        // A mutable list is required here because otherwise the values can not be updated correctly
                         .collect(Collectors.toCollection(ArrayList::new)),
                 true);
     }
@@ -381,19 +383,25 @@ public class MetricsBean {
         studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
                 // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
                 "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
-                studentExamRepository.findByExamId(exam.getId()).size())).collect(Collectors.toCollection(ArrayList::new)), true);
+                studentExamRepository.findByExamId(exam.getId()).size()))
+                // A mutable list is required here because otherwise the values can not be updated correctly
+                .collect(Collectors.toCollection(ArrayList::new)), true);
     }
 
     private void updateActiveExerciseMultiGauge() {
         activeExerciseGauge.register(Stream.of(ExerciseType.values())
                 .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
                         exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
+                // A mutable list is required here because otherwise the values can not be updated correctly
                 .collect(Collectors.toCollection(ArrayList::new)), true);
     }
 
     private void updateExerciseMultiGauge() {
-        exerciseGauge.register(Stream.of(ExerciseType.values()).map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass()))).collect(Collectors.toCollection(ArrayList::new)), true);
+        exerciseGauge.register(Stream.of(ExerciseType.values())
+                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
+                        exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass())))
+                // A mutable list is required here because otherwise the values can not be updated correctly
+                .collect(Collectors.toCollection(ArrayList::new)), true);
     }
 
     private void ensureCourseInformationIsSet(List<Course> courses) {
