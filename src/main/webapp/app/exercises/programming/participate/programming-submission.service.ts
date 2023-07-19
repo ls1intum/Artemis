@@ -582,7 +582,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param correctionRound for which to get the Submissions
      * @return submission is empty if none are available
      */
-    getSubmissionWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission | undefined> {
         const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
@@ -591,7 +591,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http.get<ProgrammingSubmission>(url, { params });
+        return this.http.get<ProgrammingSubmission | undefined>(url, { params });
     }
 
     /**
