@@ -111,9 +111,18 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return the path to the zip file
      */
-    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) {
         // Create export directory for programming exercises
-        var exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
+        Path exportDir;
+        try {
+            exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
+        }
+        catch (IOException e) {
+            exportErrors.add("Could not create temporary directory for export: " + e.getMessage());
+            return null;
+        }
+        // Schedule deletion of export directory directly here, so it always gets deleted, even if an exception is thrown
+        fileService.scheduleForDirectoryDeletion(exportDir, 5);
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -123,13 +132,21 @@ public class ProgrammingExerciseExportService {
         // Ignore report data
         pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, false, exportDir, exportErrors, new ArrayList<>()));
 
-        // Add problem statement as .md file
-        var problemStatementFileExtension = ".md";
-        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
-        String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
-        var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
-        pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
-        copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
+        // Add problem statement as .md file if it is not null
+        if (exercise.getProblemStatement() != null) {
+            var problemStatementFileExtension = ".md";
+            String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
+            String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
+            var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
+            pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
+            try {
+                copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
+            }
+            catch (IOException e) {
+                exportErrors.add("Failed to copy embedded files: " + e.getMessage());
+                log.warn("Could not copy embedded files for exercise with id {}", exercise.getId());
+            }
+        }
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
@@ -155,10 +172,6 @@ public class ProgrammingExerciseExportService {
             log.info(error);
             exportErrors.add(error);
             return null;
-        }
-        finally {
-            // Delete the export directory
-            fileService.scheduleForDirectoryDeletion(exportDir, 5);
         }
     }
 

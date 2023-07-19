@@ -376,6 +376,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportProgrammingExerciseInstructorMaterial_problemStatementNull() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementNull_success();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();

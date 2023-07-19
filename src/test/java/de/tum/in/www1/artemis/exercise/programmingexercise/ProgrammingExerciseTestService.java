@@ -1289,7 +1289,7 @@ public class ProgrammingExerciseTestService {
 
     // Test
     void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
@@ -1313,16 +1313,38 @@ public class ProgrammingExerciseTestService {
         }
     }
 
+    void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);
+        await().until(zipFile::exists);
+        assertThat(zipFile).isNotNull();
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+
+        // Check that the contents we created exist in the unzipped exported folder
+        try (var files = Files.walk(Path.of(extractedZipDir))) {
+            List<Path> listOfIncludedFiles = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+            assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+
+        }
+    }
+
     // Test
     void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false);
     }
 
-    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
-        generateProgrammingExerciseForExport();
+    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull) throws Exception {
+        if (problemStatementNull) {
+            generateProgrammingExerciseWithProblemStatementNullForExport();
+        }
+        else {
+            generateProgrammingExerciseForExport();
+        }
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
@@ -1340,6 +1362,15 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+    }
+
+    private void generateProgrammingExerciseWithProblemStatementNullForExport() {
+        exercise.setProblemStatement(null);
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
     private void generateProgrammingExerciseForExport() throws IOException {

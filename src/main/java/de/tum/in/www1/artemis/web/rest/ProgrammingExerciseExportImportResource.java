@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -266,7 +267,14 @@ public class ProgrammingExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
-        var path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+        Path path;
+        try {
+            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+        }
+        catch (Exception e) {
+            throw new InternalServerErrorException("Unexpected error while exporting programming exercise: " + e.getMessage());
+        }
+
         if (path == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
