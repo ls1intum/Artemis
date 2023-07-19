@@ -980,12 +980,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
         exerciseDueDatePassed();
 
-        final TextBlock textBlockSubmission1 = new TextBlock().startIndex(0).endIndex(15).automatic();
+        final Set<TextBlock> textBlocksSubmission1 = Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
+                new TextBlock().startIndex(36).endIndex(57).automatic());
         final TextBlock textBlockSubmission2 = new TextBlock().startIndex(0).endIndex(27).automatic();
 
-        textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(
-                Set.of(textBlockSubmission1, new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission1);
-
+        textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocksSubmission1, textSubmission1);
         textSubmission2 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
 
         final Feedback feedback = new Feedback().detailText("Foo Bar.").credits(2d).reference(textBlockSubmission2.getId());
