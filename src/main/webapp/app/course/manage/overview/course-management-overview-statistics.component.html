@@ -1,6 +1,6 @@
 <div class="row justify-content-center chart-title-line">
     <div class="d-inline-flex flex-nowrap justify-content-center align-items-center">
-        <a [routerLink]="['/course-management', course.id]" class="text-center">
+        <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
             <h4>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h4>
         </a>
         <jhi-help-icon class="chart-explanation-tooltip headline-margin" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
