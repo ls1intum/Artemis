@@ -163,7 +163,7 @@ public class FileService implements DisposableBean {
             responsePath = responsePath.resolve(newFile.getFileName());
 
             // copy contents of uploaded file
-            file.transferTo(newFile.toAbsolutePath());
+            Files.copy(file.getInputStream(), newFile, REPLACE_EXISTING);
 
             return responsePath.toString();
         }
