@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -144,9 +145,12 @@ public class StudentExamService {
     public ResponseEntity<StudentExam> submitStudentExam(StudentExam existingStudentExam, StudentExam studentExam, User currentUser) {
         log.debug("Submit student exam with id {}", studentExam.getId());
 
+        long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         submitStudentExam(studentExam);
+        log.info("    Set student exam to submitted in {}", TimeLogUtil.formatDurationFrom(start));
 
+        start = System.nanoTime();
         try {
             // in case there were last second changes, that have not been submitted yet.
             saveSubmissions(studentExam, currentUser);
@@ -154,7 +158,9 @@ public class StudentExamService {
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
         }
+        log.info("    Potentially save submissions in {}", TimeLogUtil.formatDurationFrom(start));
 
+        start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
         if (!studentExam.isTestRun()) {
@@ -166,6 +172,8 @@ public class StudentExamService {
                 log.error("lockStudentRepositories threw an exception", e);
             }
         }
+
+        log.info("    Lock student repositories in {}", TimeLogUtil.formatDurationFrom(start));
 
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.isTestExam()) {
