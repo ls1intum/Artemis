@@ -413,6 +413,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
+    it('should handle if no more submissions are assessable', () => {
+        comp.unassessedSubmissionByRound = new Map<number, Submission>();
+        comp.unassessedSubmissionByRound.set(0, modelingSubmission);
+        comp.unassessedSubmissionByRound.set(1, modelingSubmission);
+
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(of(undefined));
+
+        comp.loadAll();
+
+        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
+        expect(comp.unassessedSubmissionByRound.get(0)).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound.get(1)).toBeUndefined();
+    });
+
     it('should handle generic error', () => {
         const error = { errorKey: 'mock', detail: 'Mock error' };
         const errorResponse = new HttpErrorResponse({ error });
