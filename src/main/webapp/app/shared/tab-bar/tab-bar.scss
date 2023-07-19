@@ -44,7 +44,7 @@
         }
 
         @include media-breakpoint-down(sm) {
-            :not(:first-child) {
+            :nth-child(2) {
                 display: none;
             }
             fa-icon:first-child {
