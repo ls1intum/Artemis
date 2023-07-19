@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -49,12 +49,14 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
-        BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));
+        try (var inputStream = Files.newInputStream(fileService.actualPathForPublicPath(backgroundFilePath))) {
+            BufferedImage backgroundImage = ImageIO.read(inputStream);
 
-        generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer);
-        Path dndSubmissionPathPdf = outputDir.resolve(
-                "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".pdf");
-        storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
+            generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer);
+            Path dndSubmissionPathPdf = outputDir.resolve(
+                    "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".pdf");
+            storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
+        }
     }
 
     private void storeSubmissionAsPdf(BufferedImage backgroundImage, Path dndSubmissionPathPdf) throws IOException {
@@ -110,10 +112,12 @@ public class DragAndDropQuizAnswerConversionService {
                         graphics.drawString(mapping.getDragItem().getText(), dropLocationX + 2, dropLocationMidY);
                     }
                     else {
-                        BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));
-                        Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
-                                new Dimension(dropLocationWidth, dropLocationHeight));
-                        graphics.drawImage(dragItem, dropLocationX, dropLocationY, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
+                        try (var inputStream = Files.newInputStream(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath()))) {
+                            BufferedImage dragItem = ImageIO.read(inputStream);
+                            Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
+                                    new Dimension(dropLocationWidth, dropLocationHeight));
+                            graphics.drawImage(dragItem, dropLocationX, dropLocationY, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
+                        }
                     }
                     // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
                     if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {

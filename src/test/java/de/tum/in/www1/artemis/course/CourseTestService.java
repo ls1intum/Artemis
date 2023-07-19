@@ -3121,7 +3121,7 @@ public class CourseTestService {
 
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
-        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
+        assertThat(fileService.actualPathForPublicPath(iconPath)).as("course icon file was deleted correctly").doesNotExist();
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {

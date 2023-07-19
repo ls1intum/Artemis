@@ -125,7 +125,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     }
 
     /**
-     *  metis service is invoked to deliver another page of posts, filtered and sorted on the backend
+     *  metis service is invoked to deliver another page of posts, filtered and sorted on the server
      */
     private onSelectPage(): void {
         this.setFilterAndSort();
@@ -164,7 +164,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     /**
      * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
-     * sorted on the backend
+     * sorted on the server
      */
     onChangeSortDir(): void {
         // flip sort direction

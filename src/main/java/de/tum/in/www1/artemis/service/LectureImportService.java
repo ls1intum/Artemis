@@ -151,7 +151,7 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = Path.of(fileService.actualPathForPublicPath(importedAttachment.getLink()));
+        Path oldPath = fileService.actualPathForPublicPath(importedAttachment.getLink());
         Path tempPath = Path.of(FilePathService.getTempFilePath(), oldPath.getFileName().toString());
 
         try {

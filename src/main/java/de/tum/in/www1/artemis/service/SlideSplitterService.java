@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
 
@@ -46,8 +47,8 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        String attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
-        File file = new File(attachmentPath);
+        Path attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
+        File file = attachmentPath.toFile();
         try (PDDocument document = PDDocument.load(file)) {
             String pdfFilename = file.getName();
             splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);

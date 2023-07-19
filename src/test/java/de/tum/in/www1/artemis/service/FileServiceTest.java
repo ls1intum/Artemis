@@ -226,20 +226,20 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testActualPathForPublicPath() {
-        String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
+        Path actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds"));
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items"));
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons"));
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture"));
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit"));
     }
 
     @Test

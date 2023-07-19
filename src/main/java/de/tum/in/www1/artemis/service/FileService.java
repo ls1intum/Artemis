@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -157,14 +156,14 @@ public class FileService implements DisposableBean {
 
         final String filePath = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
         final String fileNameAddition = markdown ? "Markdown_" : "Temp_";
-        final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
+        Path responsePath = markdown ? Path.of(MARKDOWN_FILE_SUBPATH) : Path.of(DEFAULT_FILE_SUBPATH);
 
         try {
-            File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
-            responsePath.append(newFile.toPath().getFileName());
+            Path newFile = getFilePath(filePath, filename, fileNameAddition, fileExtension, keepFileName);
+            responsePath = responsePath.resolve(newFile.getFileName());
 
-            // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
+            // copy contents of uploaded file
+            file.transferTo(newFile.toAbsolutePath());
 
             return responsePath.toString();
         }
@@ -175,7 +174,8 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Creates a new file from given contents
+     * Creates a new path from given contents.
+     * This method does not create the file itself!
      *
      * @param filePath         the path to save the file to excluding the filename
      * @param filename         the filename of the file to save
@@ -184,33 +184,15 @@ public class FileService implements DisposableBean {
      * @param keepFileName     specifies if original file name should be kept
      * @return the created file
      */
-    private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
-        try {
-            Files.createDirectories(Paths.get(filePath));
-        }
-        catch (IOException e) {
-            log.error("Could not create directory: {}", filePath);
-            throw e;
-        }
-        boolean fileCreated;
-        File newFile;
+    private Path getFilePath(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) {
         String newFilename = filename;
-        do {
-            if (!keepFileName) {
-                // append a timestamp and some randomness to the filename to avoid conflicts
-                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                        + fileExtension;
-            }
-
-            newFile = Path.of(filePath, newFilename).toFile();
-            if (keepFileName && newFile.exists()) {
-                Files.delete(newFile.toPath());
-            }
-            fileCreated = newFile.createNewFile();
+        if (!keepFileName) {
+            // append a timestamp and some randomness to the filename to avoid conflicts
+            newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                    + fileExtension;
         }
-        while (!fileCreated);
 
-        return newFile;
+        return Path.of(filePath, newFilename);
     }
 
     /**
@@ -224,9 +206,8 @@ public class FileService implements DisposableBean {
     public String copyExistingFileToTarget(String oldFilePath, String targetFolder, Long entityId) {
         if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
             try {
-                Path source = Path.of(actualPathForPublicPath(oldFilePath));
-                File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
-                Path target = targetFile.toPath();
+                Path source = actualPathForPublicPath(oldFilePath);
+                Path target = generateTargetPath(oldFilePath, targetFolder, false);
                 Files.copy(source, target, REPLACE_EXISTING);
                 String newFilePath = publicPathForActualPath(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
@@ -275,7 +256,7 @@ public class FileService implements DisposableBean {
                 // delete old file
                 log.debug("Delete old file {}", oldFilePath);
                 try {
-                    File oldFile = new File(actualPathForPublicPath(oldFilePath));
+                    Path oldFile = actualPathForPublicPath(oldFilePath);
 
                     if (!FileSystemUtils.deleteRecursively(oldFile)) {
                         log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
@@ -293,9 +274,8 @@ public class FileService implements DisposableBean {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Path.of(actualPathForPublicPath(newFilePath));
-                File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
-                Path target = targetFile.toPath();
+                Path source = actualPathForPublicPath(newFilePath);
+                Path target = generateTargetPath(newFilePath, targetFolder, keepFileName);
                 Files.move(source, target, REPLACE_EXISTING);
                 newFilePath = publicPathForActualPath(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
@@ -313,37 +293,37 @@ public class FileService implements DisposableBean {
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    public String actualPathForPublicPath(String publicPath) {
+    public Path actualPathForPublicPath(String publicPath) {
         // first extract the filename from the url
         String filename = publicPath.substring(publicPath.lastIndexOf("/") + 1);
 
         // check for known path to convert
         if (publicPath.contains("files/temp")) {
-            return Path.of(FilePathService.getTempFilePath(), filename).toString();
+            return Path.of(FilePathService.getTempFilePath(), filename);
         }
         if (publicPath.contains("files/drag-and-drop/backgrounds")) {
-            return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename);
         }
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
-            return Path.of(FilePathService.getDragItemFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragItemFilePath(), filename);
         }
         if (publicPath.contains("files/course/icons")) {
-            return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
+            return Path.of(FilePathService.getCourseIconFilePath(), filename);
         }
         if (publicPath.contains("files/exam-user")) {
-            return Path.of(FilePathService.getStudentImageFilePath(), filename).toString();
+            return Path.of(FilePathService.getStudentImageFilePath(), filename);
         }
         if (publicPath.contains("files/exam-user/signatures")) {
-            return Path.of(FilePathService.getExamUserSignatureFilePath(), filename).toString();
+            return Path.of(FilePathService.getExamUserSignatureFilePath(), filename);
         }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
-            return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
+            return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename);
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
             if (!publicPath.contains("/slide")) {
                 String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-                return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+                return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename);
             }
             final var slideSubPath = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "").split("/");
             final var shouldBeAttachmentUnitId = slideSubPath[0];
@@ -353,7 +333,7 @@ public class FileService implements DisposableBean {
             }
             final var attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
             final var slideId = Long.parseLong(shouldBeSlideId);
-            return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename).toString();
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename);
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -364,7 +344,7 @@ public class FileService implements DisposableBean {
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
             final var submissionId = Long.parseLong(shouldBeSubmissionId);
-            return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
+            return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename);
         }
 
         // path is unknown => cannot convert
@@ -440,15 +420,35 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Creates a new file at the given location with a proper filename consisting of type, timestamp and a random part
+     * Creates a new path at the given location with a proper filename consisting of type, timestamp and a random part.
+     * This does not create the file itself.
      *
      * @param originalFilename the original filename of the file (needed to determine the file type)
      * @param targetFolder     the folder where the new file should be created
-     * @return the newly created file
-     * @throws IOException if the file can't be generated.
+     * @return the new file path
      */
-    private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
+    private Path generateTargetPath(String originalFilename, String targetFolder, Boolean keepFileName) {
         // determine the base for the filename
+        String filenameBase = getFilenameBase(targetFolder);
+
+        // extract the file extension
+        String fileExtension = FilenameUtils.getExtension(originalFilename);
+
+        // create the file path
+        String filename = originalFilename;
+        if (keepFileName) {
+            if (filename.contains(DEFAULT_FILE_SUBPATH)) {
+                filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
+            }
+        }
+        else {
+            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                    + fileExtension;
+        }
+        return Path.of(targetFolder, filename);
+    }
+
+    private String getFilenameBase(String targetFolder) {
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
             filenameBase = "DragAndDropBackground_";
@@ -474,44 +474,7 @@ public class FileService implements DisposableBean {
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath()) && targetFolder.contains("/slide")) {
             filenameBase = "AttachmentUnitSlide_";
         }
-
-        // extract the file extension
-        String fileExtension = FilenameUtils.getExtension(originalFilename);
-
-        // create folder if necessary
-        File folder = new File(targetFolder);
-        if (!folder.exists()) {
-            if (!folder.mkdirs()) {
-                log.error("Could not create directory: {}", targetFolder);
-                throw new IOException("Could not create directory: " + targetFolder);
-            }
-        }
-
-        // create the file (retry if filename already exists)
-        boolean fileCreated;
-        File newFile;
-        String filename = originalFilename;
-        do {
-            if (keepFileName) {
-                if (filename.contains(DEFAULT_FILE_SUBPATH)) {
-                    filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
-                }
-            }
-            else {
-                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                        + fileExtension;
-            }
-            var path = Path.of(targetFolder, filename).toString();
-
-            newFile = new File(path);
-            if (keepFileName && newFile.exists()) {
-                Files.delete(newFile.toPath());
-            }
-            fileCreated = newFile.createNewFile();
-        }
-        while (!fileCreated);
-
-        return newFile;
+        return filenameBase;
     }
 
     /**
