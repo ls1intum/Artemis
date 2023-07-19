@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -40,9 +41,11 @@ export class OrionAssessmentService {
      */
     downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0, testRun: boolean) {
         if (submission === 'new') {
-            this.programmingSubmissionService
-                .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound, testRun));
+            this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, correctionRound).subscribe((newSubmission?: ProgrammingSubmission) => {
+                if (newSubmission) {
+                    this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound, testRun);
+                }
+            });
         } else {
             this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound, testRun);
         }
