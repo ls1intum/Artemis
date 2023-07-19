@@ -79,7 +79,7 @@ export class FileUploadSubmissionService {
      * @param lock
      * @param correctionRound for which to get the Submissions
      */
-    getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<FileUploadSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<FileUploadSubmission | undefined> {
         const url = `api/exercises/${exerciseId}/file-upload-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
@@ -89,7 +89,14 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
+        return this.http.get<FileUploadSubmission | undefined>(url, { params }).pipe(
+            map((res?: FileUploadSubmission) => {
+                if (!res) {
+                    return undefined;
+                }
+                return this.submissionService.convertSubmissionFromServer(res);
+            }),
+        );
     }
 
     /**

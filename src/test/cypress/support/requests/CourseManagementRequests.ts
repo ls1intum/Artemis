@@ -67,7 +67,7 @@ export class CourseManagementRequests {
     createCourse(
         customizeGroups = false,
         courseName = 'Course ' + generateUUID(),
-        courseShortName = 'course' + generateUUID(),
+        courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
         fileName?: string,
