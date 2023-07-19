@@ -38,7 +38,7 @@
     </div>
     <div class="quiz-content container" *ngIf="quizConfiguration.quizQuestions">
         <h4 class="exercise-title">
-            {{ quizConfiguration.title }}
+            {{ quizConfiguration?.exerciseGroup?.title ?? '-' }}
             <span
                 >[{{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                 <jhi-included-in-score-badge

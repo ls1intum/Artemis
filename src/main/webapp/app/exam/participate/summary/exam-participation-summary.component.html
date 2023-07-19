@@ -73,7 +73,7 @@
                             >Plagiarism Case</span
                         >
                     </a>
-                    <ng-container *ngIf="exercise.exampleSolutionPublished">
+                    <ng-container *ngIf="exampleSolutionPublished">
                         <a
                             *ngIf="exercise.type !== PROGRAMMING"
                             class="btn btn-primary ms-2 float-end"
@@ -90,7 +90,7 @@
                     </ng-container>
                 </span>
                 <!-- prettier-ignore -->
-                <h5 class="exercise-title">{{ exercise.title }}
+                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
                 [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge

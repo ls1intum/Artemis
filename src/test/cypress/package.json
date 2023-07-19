@@ -8,9 +8,9 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.4",
-        "@types/node": "20.4.0",
+        "@types/node": "20.4.2",
         "cypress": "12.16.0",
-        "cypress-cloud": "1.9.0",
+        "cypress-cloud": "1.9.1",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "2.0.0",
         "typescript": "5.1.6",
@@ -20,7 +20,8 @@
     "overrides": {
         "semver": "7.5.3",
         "word-wrap": "1.2.3",
-        "debug": "4.3.4"
+        "debug": "4.3.4",
+        "tough-cookie": "4.1.3"
     },
     "scripts": {
         "cypress:open": "cypress open",

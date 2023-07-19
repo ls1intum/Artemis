@@ -14,6 +14,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './exercise-group-update.component.html',
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
+    readonly alertType = 'info';
     courseId: number;
     exam: Exam;
     exerciseGroup: ExerciseGroup;
