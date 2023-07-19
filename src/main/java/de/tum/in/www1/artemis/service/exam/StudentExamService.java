@@ -26,7 +26,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -38,6 +37,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
+import de.tum.in.www1.artemis.domain.quiz.compare.SAMapping;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -277,10 +278,11 @@ public class StudentExamService {
                         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
 
                         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(new QuizSubmission());
+                        // TODO: use instead the latest submission_version.content of this quiz submission instead of existingSubmissionInDatabase
                         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
                         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
-                            quizSubmissionRepository.save((QuizSubmission) submissionFromClient);
+                            quizSubmissionRepository.save(quizSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
@@ -306,28 +308,86 @@ public class StudentExamService {
         }
     }
 
-    private boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
+    public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
+        // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
+        Set<DnDMapping> mappings1 = answer1.toDnDMapping();
+        Set<DnDMapping> mappings2 = answer2.toDnDMapping();
+        // TODO: make sure that this compares the sets correctly, e.g. (<1, 3>, <5, 7>) is equal to (<5, 7>, <1, 3>)
+        return Objects.equals(mappings1, mappings2);
+    }
+
+    public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
+        // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
+        Set<Long> selections1 = answer1.toSelectedIds();
+        Set<Long> selections2 = answer2.toSelectedIds();
+        // TODO make sure that this compares the sets correctly, e.g. (1, 5) is equal to (5, 1)
+        return Objects.equals(selections1, selections2);
+    }
+
+    public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
+        // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
+        Set<SAMapping> mappings1 = answer1.toSAMappings();
+        Set<SAMapping> mappings2 = answer2.toSAMappings();
+        // TODO: make sure that this compares the sets correctly, e.g. (<1, text1>, <5, text5>) is equal to (<5, text5>, <1, text1>)
+        return Objects.equals(mappings1, mappings2);
+    }
+
+    public boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }
         else if (submission1 == null || submission2 == null) {
             return false;
         }
-        try {
-            // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
-            // however directly manipulating the object is dangerous because it will be returned to the client.
-            var answers1JsonString = objectMapper.writeValueAsString(submission1.getSubmittedAnswers());
-            var answers2JsonString = objectMapper.writeValueAsString(submission2.getSubmittedAnswers());
-            return Objects.equals(answers1JsonString, answers2JsonString);
-        }
-        catch (JsonProcessingException e) {
-            log.error("Error when converting quiz submission1 {} or quiz submission1 {} to json value. Will assume they are not equal", submission1, submission2, e);
-            // we cannot be sure that both submissions are equal so we consider they are not
+
+        var answers1 = submission1.getSubmittedAnswers();
+        var answers2 = submission2.getSubmittedAnswers();
+        if (answers1.size() != answers2.size()) {
             return false;
         }
+        for (var answer1 : answers1) {
+            for (var answer2 : answers2) {
+                if (answer1.getQuizQuestion().getId().equals(answer2.getQuizQuestion().getId())) {
+                    var equal = true;
+
+                    if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
+                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
+                    }
+                    else if (answer1 instanceof MultipleChoiceSubmittedAnswer submittedAnswer1 && answer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer2) {
+                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
+                    }
+                    else if (answer1 instanceof ShortAnswerSubmittedAnswer submittedAnswer1 && answer2 instanceof ShortAnswerSubmittedAnswer submittedAnswer2) {
+                        equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);
+                    }
+                    else {
+                        LoggerFactory.getLogger(StudentExamService.class).error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+                        return false;
+                    }
+
+                    if (!equal) {
+                        return false;
+                    }
+                }
+            }
+        }
+        // we did not find any differences
+        return true;
+
+        // try {
+        // // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
+        // // however directly manipulating the object is dangerous because it will be returned to the client.
+        // var answers1JsonString = objectMapper.writeValueAsString(submission1.getSubmittedAnswers());
+        // var answers2JsonString = objectMapper.writeValueAsString(submission2.getSubmittedAnswers());
+        // return Objects.equals(answers1JsonString, answers2JsonString);
+        // }
+        // catch (JsonProcessingException e) {
+        // log.error("Error when converting quiz submission1 {} or quiz submission1 {} to json value. Will assume they are not equal", submission1, submission2, e);
+        // // we cannot be sure that both submissions are equal so we consider they are not
+        // return false;
+        // }
     }
 
-    private static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
+    public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }
@@ -337,7 +397,7 @@ public class StudentExamService {
         return Objects.equals(submission1.getText(), submission2.getText());
     }
 
-    private static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
+    public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }
