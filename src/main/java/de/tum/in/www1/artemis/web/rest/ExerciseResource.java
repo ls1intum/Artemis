@@ -222,10 +222,6 @@ public class ExerciseResource {
     @GetMapping("exercises/{exerciseId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
-        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return ResponseEntity.ok(exercise.getTitle());
-        }
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }

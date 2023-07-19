@@ -704,7 +704,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
-        testGetExamExerciseTitleIfAtLeastTutor();
+        testGetExamExerciseTitle();
     }
 
     @Test
@@ -712,7 +712,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
-        testGetExamExerciseTitleIfAtLeastTutor();
+        testGetExamExerciseTitle();
     }
 
     @Test
@@ -723,10 +723,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         testGetExerciseTitle();
 
         // exam exercise
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
-        final String expectedTitle = textExercise.getExerciseGroup().getTitle();
-        final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
-        assertThat(title).isEqualTo(expectedTitle);
+        testGetExamExerciseTitle();
     }
 
     private void testGetExerciseTitle() throws Exception {
@@ -739,9 +736,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(title).isEqualTo(exercise.getTitle());
     }
 
-    private void testGetExamExerciseTitleIfAtLeastTutor() throws Exception {
+    private void testGetExamExerciseTitle() throws Exception {
         TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
-        final String expectedTitle = textExercise.getTitle();
+        final String expectedTitle = textExercise.getExerciseGroup().getTitle();
         final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(expectedTitle);
     }
