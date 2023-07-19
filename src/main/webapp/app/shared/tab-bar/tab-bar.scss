@@ -1,7 +1,3 @@
-@import 'node_modules/bootstrap/scss/functions';
-@import 'node_modules/bootstrap/scss/variables';
-@import 'node_modules/bootstrap/scss/mixins';
-
 .tab-bar {
     display: flex;
     flex-wrap: wrap;
@@ -19,15 +15,16 @@
 
         padding-bottom: 2px;
         margin: 0.5rem 1rem 0.5rem 0;
+        border-bottom: 2px solid transparent;
 
         &:hover {
             color: var(--tab-bar-color-hover);
-            box-shadow: 0 2px 0 var(--tab-bar-color-hover);
+            border-bottom: 2px solid var(--tab-bar-color-hover);
         }
 
         &.active {
             color: var(--tab-bar-color-active);
-            box-shadow: 0 2px 0 var(--tab-bar-color-active);
+            border-bottom: 2px solid var(--tab-bar-color-active);
         }
 
         // Displays a red circle at the top right corner of the tab item.
@@ -43,10 +40,11 @@
             transform: translate(50%, -50%);
         }
 
-        @include media-breakpoint-down(sm) {
+        @media (max-width: 720px) {
             :nth-child(2) {
                 display: none;
             }
+
             fa-icon:first-child {
                 font-size: calc(var(--bs-body-font-size) * 1.4);
             }
