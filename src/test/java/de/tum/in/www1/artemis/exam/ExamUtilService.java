@@ -635,4 +635,19 @@ public class ExamUtilService {
 
         return exerciseGroup;
     }
+
+    /**
+     * sets the visible, start and end date of the exam. The working time gets set accordingly.
+     *
+     * @param exam        exam that gets the dates set
+     * @param visibleDate new visible date of the exam
+     * @param startDate   new start date of the exam
+     * @param endDate     new end date of the exam
+     */
+    public void setVisibleStartAndEndDateOfExam(Exam exam, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
+    }
 }

@@ -119,6 +119,19 @@ public class UserUtilService {
         return generatedUsers;
     }
 
+    /**
+     * set the registration number of the user with the given login and saves the user in the repository
+     *
+     * @param login              login of the user, whose registration number will be changed
+     * @param registrationNumber new registration number to use
+     * @return the user
+     */
+    public User setRegistrationNumberOfUserAndSave(String login, String registrationNumber) {
+        User user = getUserByLogin(login);
+        user.setRegistrationNumber(registrationNumber);
+        return userRepo.save(user);
+    }
+
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
     }
