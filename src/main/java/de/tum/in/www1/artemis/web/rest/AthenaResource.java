@@ -16,7 +16,9 @@ import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 
 /**
@@ -33,16 +35,19 @@ public class AthenaResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final AuthorizationCheckService authCheckService;
+
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, TextExerciseRepository textExerciseRepository,
-            TextSubmissionRepository textSubmissionRepository) {
+            TextSubmissionRepository textSubmissionRepository, AuthorizationCheckService authCheckService) {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -58,6 +63,7 @@ public class AthenaResource {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         final var submission = textSubmissionRepository.findByIdElseThrow(submissionId);
         try {
             List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
