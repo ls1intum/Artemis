@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -62,10 +63,12 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
             RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -76,6 +79,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         this.repositoryService = repositoryService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -127,14 +131,15 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         parameters.put("buildLog", "");
         var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), chatSession.getUser().getLogin());
         if (participation.isPresent()) {
-            var latestSubmission = participation.get().getSubmissions().stream().max(Comparator.comparing(Submission::getSubmissionDate));
+            var submission = participation.get().getSubmissions().stream().max(Submission::compareTo);
+            Optional<ProgrammingSubmission> latestSubmission = Optional.empty();
+            if (submission.isPresent()) {
+                latestSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+            }
             if (latestSubmission.isPresent()) {
-                if (latestSubmission.get() instanceof ProgrammingSubmission programmingSubmission) {
-                    parameters.put("latestSubmission", programmingSubmission);
-                    parameters.put("buildFailed", programmingSubmission.isBuildFailed());
-                    parameters.put("buildLog", programmingSubmission.getBuildLogEntries());
-                }
-
+                parameters.put("latestSubmission", latestSubmission.get());
+                parameters.put("buildFailed", latestSubmission.get().isBuildFailed());
+                parameters.put("buildLog", latestSubmission.get().getBuildLogEntries());
             }
         }
         parameters.put("session", fullSession);
