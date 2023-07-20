@@ -186,16 +186,17 @@ export class NotificationService {
                 this.subscribeToQuizUpdates(courses);
             }
         });
-        this.tutorialGroupsNotificationService.getTutorialGroupsForNotifications().subscribe((tutorialGroups) => {
-            if (tutorialGroups) {
-                this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
-            }
-        });
-        this.courseConversationsNotificationsService.getConversationsForNotifications().subscribe((conversations) => {
-            if (conversations) {
-                this.subscribeToConversationNotificationUpdates(conversations);
-            }
-        });
+        // TODO temporarily disabled because we should only subscribes once for all tutorial groups and once for all conversations
+        // this.tutorialGroupsNotificationService.getTutorialGroupsForNotifications().subscribe((tutorialGroups) => {
+        //     if (tutorialGroups) {
+        //         this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
+        //     }
+        // });
+        // this.courseConversationsNotificationsService.getConversationsForNotifications().subscribe((conversations) => {
+        //     if (conversations) {
+        //         this.subscribeToConversationNotificationUpdates(conversations);
+        //     }
+        // });
         return this.notificationObserver;
     }
 
