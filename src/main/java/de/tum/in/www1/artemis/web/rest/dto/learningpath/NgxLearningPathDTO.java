@@ -23,7 +23,23 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
         return "NgxLearningPathDTO{nodes=" + nodes + ", edges=" + edges + ", clusters=" + clusters + "}";
     }
 
-    public record Node(String id, NodeType type, long linkedResource, String label) {
+    public record Node(String id, NodeType type, long linkedResource, boolean completed, String label) {
+
+        public Node(String id, NodeType type, long linkedResource, String label) {
+            this(id, type, linkedResource, false, label);
+        }
+
+        public Node(String id, NodeType type, String label) {
+            this(id, type, -1, label);
+        }
+
+        public Node(String id, NodeType type, long linkedResource) {
+            this(id, type, linkedResource, "");
+        }
+
+        public Node(String id, NodeType type) {
+            this(id, type, -1);
+        }
 
         @Override
         public boolean equals(Object obj) {
@@ -35,7 +51,7 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
 
         @Override
         public String toString() {
-            return "Node{id=" + id + ", type=" + type.name() + ", linkedResource=" + linkedResource + ", label=" + label + "}";
+            return "Node{id=" + id + ", type=" + type.name() + ", linkedResource=" + linkedResource + ", completed=" + completed + ", label=" + label + "}";
         }
     }
 

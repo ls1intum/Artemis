@@ -24,6 +24,7 @@ export class NgxLearningPathNode implements Node {
     public id: string;
     public type?: NodeType;
     public linkedResource?: number;
+    public completed?: boolean;
     public label?: string;
 }
 
