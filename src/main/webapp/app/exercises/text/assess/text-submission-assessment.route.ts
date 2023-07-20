@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { of } from 'rxjs';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
@@ -23,7 +24,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         if (exerciseId) {
             return this.textSubmissionService
                 .getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound)
-                .pipe(map((submission) => <StudentParticipation>submission.participation))
+                .pipe(map((submission?: TextSubmission) => <StudentParticipation | undefined>submission?.participation))
                 .pipe(catchError(() => of(undefined)));
         }
         return of(undefined);
@@ -39,15 +40,14 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const participationId = Number(route.paramMap.get('participationId'));
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
         }
         if (submissionId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, correctionRound).pipe(catchError(() => of(undefined)));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(catchError(() => of(undefined)));
         }
         return of(undefined);
     }
@@ -69,7 +69,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participations/:participationId/submissions/:submissionId/assessment',
+        path: 'submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -82,7 +82,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'participations/:participationId/submissions/:submissionId/assessments/:resultId',
+        path: 'submissions/:submissionId/assessments/:resultId',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

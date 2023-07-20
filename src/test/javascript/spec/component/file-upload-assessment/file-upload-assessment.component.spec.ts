@@ -568,12 +568,21 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should not alert when no next result is found', () => {
             const alertServiceSpy = jest.spyOn(alertService, 'error');
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
 
             comp.assessNext();
 
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
             expect(alertServiceSpy).not.toHaveBeenCalled();
+        });
+
+        it('should handle if no next result is found', () => {
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
+
+            comp.assessNext();
+
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
+            expect(comp.submission).toBeUndefined();
         });
 
         it('should alert when assess next is forbidden', () => {
