@@ -300,7 +300,7 @@ describe('Notification Service', () => {
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
         }));
 
-        it('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
+        it.skip('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
             getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([tutorialGroup]));
 
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
@@ -314,7 +314,7 @@ describe('Notification Service', () => {
             wsNotificationSubject.next(tutorialGroupNotification);
         }));
 
-        it('should subscribe to conversation notification updates and receive new message notifications', fakeAsync(() => {
+        it.skip('should subscribe to conversation notification updates and receive new message notifications', fakeAsync(() => {
             getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([conversation]));
 
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {

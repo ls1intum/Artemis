@@ -186,6 +186,10 @@ export class NotificationService {
                 this.subscribeToQuizUpdates(courses);
             }
         });
+        // TODO !!!!!!!!!!!!!!!!!!!
+        // TODO Re-enable / rewrite tests in notification.service.spec.ts, lines 303 and 317 (look for it.skip) when readding this
+        // TODO !!!!!!!!!!!!!!!!!!!
+        // TODO
         // TODO temporarily disabled because we should only subscribes once for all tutorial groups and once for all conversations
         // this.tutorialGroupsNotificationService.getTutorialGroupsForNotifications().subscribe((tutorialGroups) => {
         //     if (tutorialGroups) {
