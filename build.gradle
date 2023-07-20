@@ -15,7 +15,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.0"
+    id "io.spring.dependency-management" version "1.1.1"
     id "com.google.cloud.tools.jib" version "3.3.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.19.0"
@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.3.4"
+version = "6.3.5"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -234,8 +234,8 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
-    // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2023.9"
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "net.sourceforge.plantuml:plantuml:1.2023.10"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
@@ -256,15 +256,15 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
     implementation "com.vdurmont:semver4j:3.1.0"
 
-    implementation "com.github.docker-java:docker-java-core:3.3.1"
-    implementation "com.github.docker-java:docker-java-transport-httpclient5:3.3.1"
+    implementation "com.github.docker-java:docker-java-core:3.3.2"
+    implementation "com.github.docker-java:docker-java-transport-httpclient5:3.3.2"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.11.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.11.2"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -298,15 +298,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
-    implementation "org.springframework.data:spring-data-ldap:2.7.13"
+    implementation "org.springframework.data:spring-data-ldap:2.7.14"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.7"
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.94.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.8"
-    implementation "org.springframework:spring-messaging:5.3.28"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.9"
+    implementation "org.springframework:spring-messaging:5.3.29"
     implementation "org.springframework.retry:spring-retry:2.0.2"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -326,15 +326,15 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.33"
     implementation "org.postgresql:postgresql:42.6.0"
-    implementation "com.h2database:h2:2.1.214"
+    implementation "com.h2database:h2:2.2.220"
 
     // zalando problem spring web can only be updated when we support Spring 6
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:73.2"
     implementation "com.github.seancfoley:ipaddress:5.4.0"
     implementation "org.apache.maven:maven-model:3.9.3"
-    implementation "org.apache.pdfbox:pdfbox:2.0.28"
-    implementation "com.google.protobuf:protobuf-java:3.23.3"
+    implementation "org.apache.pdfbox:pdfbox:2.0.29"
+    implementation "com.google.protobuf:protobuf-java:3.23.4"
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.commonmark:commonmark:0.21.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
@@ -360,10 +360,10 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.160"
+    testImplementation "io.github.classgraph:classgraph:4.8.161"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.2"
+    testImplementation "org.gradle:gradle-tooling-api:8.2.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.1.2"
     testImplementation "com.opencsv:opencsv:5.7.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
@@ -410,7 +410,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.2"
+    gradleVersion = "8.2.1"
 }
 
 tasks.register("stage") {

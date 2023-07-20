@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -10,7 +11,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.hamcrest.MockitoHamcrest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -114,7 +114,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationTest 
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
-        verify(generalInstantNotificationService).sendNotification(eq(sentNotification), (List<User>) MockitoHamcrest.argThat(containsInAnyOrder(user1, user2)), eq(null));
+        verify(generalInstantNotificationService).sendNotification(sentNotification, Arrays.asList(user2), null);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved

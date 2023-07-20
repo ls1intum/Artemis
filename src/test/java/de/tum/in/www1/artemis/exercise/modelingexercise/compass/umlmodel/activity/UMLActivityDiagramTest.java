@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.activity;
 
+import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,11 +15,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.exercise.modelingexercise.compass.umlmodel.AbstractUMLDiagramTest;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 
@@ -145,5 +149,13 @@ class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
     @Test
     void similarityActivityDiagram_DifferentModels() {
         compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.0, 57.08);
+    }
+
+    @Test
+    void loadActivityDiagramExample() throws IOException {
+        var submission = modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_3);
+        submission.setId(1L);
+        UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(submission.getModel()).getAsJsonObject(), submission.getId());
+        assertThat(model).isNotNull();
     }
 }
