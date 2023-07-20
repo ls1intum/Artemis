@@ -8,10 +8,8 @@ runDejagnuTests = fileExists("./testsuite")
 tool = getToolName()
 hasSecretTestFiles = secretTestFilesFolderExists()
 
-dockerImage = "#dockerImage"
-dockerFlags = "#dockerArgs"
-// secretTestVolume = "artemis_blackbox_${tool}-secret"
-secret_volume_mount_path = "/secrets"
+dockerImage = '#dockerImage'
+dockerFlags = '#dockerArgs'
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
 /**
@@ -45,35 +43,13 @@ void testRunner() {
 private void setup() {
     // special jobs to run only for the solution repository
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
-        dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache"
-
-        //if (runDejagnuTests) {
-        //    createSecretTestVolume()
-        //}
+        dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache'
     } else {
-        dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache:ro"
+        dockerFlags += ' -v artemis_blackbox_maven-cache:/maven_cache:ro'
 
         // if not solution repo, disallow network access from containers
-        dockerFlags += " --network none"
-        mavenFlags += " --offline"
-    }
-}
-
-/**
- * Copies the files required only for the secret tests to the Docker volume.
- */
-private void createSecretTestVolume() {
-    stage("Create Secret Test Volume") {
-        docker.image(dockerImage).inside("-v ${secretTestVolume}:${secret_volume_mount_path}") { c ->
-            sh """
-            rm -rf ${secret_volume_mount_path}/*
-            cp testsuite/${tool}.tests/secret.exp ${secret_volume_mount_path}/secret.exp
-            """
-
-            if (hasSecretTestFiles) {
-                sh("cp -vr ${testfiles_base_path}/secret ${secret_volume_mount_path}/secret")
-            }
-        }
+        dockerFlags += ' --network none'
+        mavenFlags += ' --offline'
     }
 }
 
