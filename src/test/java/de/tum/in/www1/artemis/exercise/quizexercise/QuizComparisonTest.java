@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -68,36 +67,302 @@ class QuizComparisonTest {
         }
     }
 
-    Long setQuizQuestionIds(QuizQuestion question, Long id) {
-        if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-            for (var item : dragAndDropQuestion.getDragItems()) {
-                item.setId(id);
-                id++;
-            }
+    @Test
+    void compareQuizSubmittedAnswersWithChangedAnswers() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.INDIVIDUAL);
 
-            for (var location : dragAndDropQuestion.getDropLocations()) {
-                location.setId(id);
-                id++;
-            }
+        long id = 1L;
+        for (var question : quizExercise.getQuizQuestions()) {
+            id = setQuizQuestionIds(question, id);
 
-        }
-        else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-            for (var spot : shortAnswerQuestion.getSpots()) {
-                spot.setId(id);
-                id++;
-            }
+            var submittedAnswer1 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+            var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
 
-        }
-        else if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-            for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
-                answerOption.setId(id);
-                id++;
+            if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer changedSubmittedAnswer) {
+                Set<AnswerOption> answerOptions = changedSubmittedAnswer.getSelectedOptions();
+                assertThat(answerOptions.size()).isEqualTo(1);
+
+                Set<AnswerOption> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
+                        .collect(Collectors.toSet());
+
+                // set the unselected option
+                changedSubmittedAnswer.setSelectedOptions(notSelectedOption);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                changedSubmittedAnswer.setSelectedOptions(answerOptions);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
+                List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
+                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+
+                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
+                DragAndDropMapping mapping3 = dragAndDropMappings.get(2);
+
+                DragItem dragItem1 = mapping1.getDragItem();
+                DropLocation dropLocation1 = mapping1.getDropLocation();
+
+                // change the drag item of one mapping
+                mapping1.setDragItem(mapping2.getDragItem());
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // mapping 1 and 2 have their drag items switched
+                mapping2.setDragItem(dragItem1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // change all 3 drag items
+                mapping2.setDragItem(mapping3.getDragItem());
+                mapping3.setDragItem(dragItem1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                mapping3.setDragItem(mapping2.getDragItem());
+                mapping2.setDragItem(mapping1.getDragItem());
+                mapping1.setDragItem(dragItem1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+                // change the drop location of one mapping
+                mapping1.setDropLocation(mapping2.getDropLocation());
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // mapping 1 and 2 have their drop locations switched
+                mapping2.setDropLocation(dropLocation1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // change all 3 drop locations
+                mapping2.setDropLocation(mapping3.getDropLocation());
+                mapping3.setDropLocation(dropLocation1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                mapping3.setDropLocation(mapping2.getDropLocation());
+                mapping2.setDropLocation(mapping1.getDropLocation());
+                mapping1.setDropLocation(dropLocation1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer) {
+                List<ShortAnswerSubmittedText> shortAnswerSubmittedTexts = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
+                assertThat(shortAnswerSubmittedTexts.size()).isEqualTo(2);
+
+                ShortAnswerSubmittedText submittedText1 = shortAnswerSubmittedTexts.get(0);
+                ShortAnswerSubmittedText submittedText2 = shortAnswerSubmittedTexts.get(1);
+                ShortAnswerSpot spot1 = submittedText1.getSpot();
+                String answerText1 = submittedText1.getText();
+
+                // change the spot of one mapping
+                submittedText1.setSpot(submittedText2.getSpot());
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // switch spots
+                submittedText1.setSpot(submittedText2.getSpot());
+                submittedText2.setSpot(spot1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                submittedText2.setSpot(submittedText1.getSpot());
+                submittedText1.setSpot(spot1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+                // change first submitted text
+                submittedText1.setText("some new text, not yet used");
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                submittedText1.setText(submittedText2.getText());
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // switch the texts
+                submittedText2.setText(answerText1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                submittedText2.setText(submittedText1.getText());
+                submittedText1.setText(answerText1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
             }
         }
-        return id;
     }
 
-    boolean compare(SubmittedAnswer answer1, SubmittedAnswer answer2) {
+    @Test
+    void compareQuizSubmittedAnswersWithAddedAnswers() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.INDIVIDUAL);
+
+        long id = 1L;
+        for (var question : quizExercise.getQuizQuestions()) {
+            id = setQuizQuestionIds(question, id);
+
+            var submittedAnswer1 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+            var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+
+            if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof MultipleChoiceSubmittedAnswer originalAnswer) {
+                Set<AnswerOption> answerOptions = changedSubmittedAnswer.getSelectedOptions();
+                assertThat(answerOptions.size()).isEqualTo(1);
+
+                Set<AnswerOption> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
+                        .collect(Collectors.toSet());
+                // add the not selected option
+                notSelectedOption.forEach(changedSubmittedAnswer::addSelectedOptions);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                // also add to the original
+                notSelectedOption.forEach(originalAnswer::addSelectedOptions);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+
+                // reset submitted answers, compare with the unchanged original
+                changedSubmittedAnswer.setSelectedOptions(answerOptions);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof DragAndDropSubmittedAnswer originalAnswer) {
+                List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
+                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+
+                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
+
+                // filter for mapping1 and mapping2 that should get removed
+                var temporaryRemoved = originalAnswer.getMappings().stream()
+                        .filter(mapping -> mapping.getDragItem().equals(mapping1.getDragItem()) || mapping.getDragItem().equals(mapping2.getDragItem()))
+                        .collect(Collectors.toSet());
+                assertThat(temporaryRemoved.size()).isEqualTo(2);
+
+                // remove mapping1 and mapping2 so that they can be added later
+                temporaryRemoved.forEach(originalAnswer::removeMappings);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeMappings(mapping1);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeMappings(mapping2);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+
+                // start adding the mappings into the changed map
+                changedSubmittedAnswer.addMappings(mapping1);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.addMappings(mapping2);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                // now both answers have the same mappings again
+                temporaryRemoved.forEach(originalAnswer::addMappings);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof ShortAnswerSubmittedAnswer originalAnswer) {
+                var shortAnswerMappings = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
+                assertThat(shortAnswerMappings.size()).isEqualTo(2);
+
+                ShortAnswerSubmittedText submittedText1 = shortAnswerMappings.get(0);
+                ShortAnswerSubmittedText submittedText2 = shortAnswerMappings.get(1);
+
+                var temporaryRemoved = originalAnswer.getSubmittedTexts().stream()
+                        .filter(mapping -> mapping.getSpot().equals(submittedText1.getSpot()) || mapping.getSpot().equals(submittedText2.getSpot())).collect(Collectors.toSet());
+                assertThat(temporaryRemoved.size()).isEqualTo(2);
+
+                // remove submittedText1 and submittedText2 so that they can be added later
+                temporaryRemoved.forEach(originalAnswer::removeSubmittedTexts);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeSubmittedTexts(submittedText1);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeSubmittedTexts(submittedText2);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+
+                // start adding the text
+                changedSubmittedAnswer.addSubmittedTexts(submittedText1);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.addSubmittedTexts(submittedText2);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isFalse();
+
+                // now both answers have the same texts again
+                temporaryRemoved.forEach(originalAnswer::addSubmittedTexts);
+                assertThat(compare(originalAnswer, changedSubmittedAnswer)).isTrue();
+            }
+
+        }
+    }
+
+    @Test
+    void compareQuizSubmittedAnswersWithRemovedAnswers() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.INDIVIDUAL);
+
+        long id = 1L;
+        for (var question : quizExercise.getQuizQuestions()) {
+            id = setQuizQuestionIds(question, id);
+
+            var submittedAnswer1 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+            var submittedAnswer2 = QuizExerciseFactory.generateSubmittedAnswerFor(question, true);
+
+            if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer submittedAnswer) {
+                Set<AnswerOption> answerOptions = submittedAnswer.getSelectedOptions();
+                assertThat(answerOptions.size()).isEqualTo(1);
+
+                // remove all selected options
+                submittedAnswer.setSelectedOptions(Set.of());
+                assertThat(compare(submittedAnswer1, submittedAnswer)).isFalse();
+
+                // add additional optionals
+                var allOptions = new HashSet<>(((MultipleChoiceQuestion) question).getAnswerOptions());
+                submittedAnswer.setSelectedOptions(allOptions);
+                assertThat(compare(submittedAnswer1, submittedAnswer)).isFalse();
+
+                // reset
+                submittedAnswer.setSelectedOptions(answerOptions);
+                assertThat(compare(submittedAnswer1, submittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
+                List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
+                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+                DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
+                DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
+                DragAndDropMapping mapping3 = dragAndDropMappings.get(1);
+
+                // remove the first mapping
+                changedSubmittedAnswer.removeMappings(mapping1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeMappings(mapping2);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeMappings(mapping3);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                dragAndDropMappings.forEach(changedSubmittedAnswer::addMappings);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+
+            }
+            else if (submittedAnswer2 instanceof ShortAnswerSubmittedAnswer changedSubmittedAnswer) {
+                var shortAnswerMappings = changedSubmittedAnswer.getSubmittedTexts().stream().toList();
+                assertThat(shortAnswerMappings.size()).isEqualTo(2);
+                ShortAnswerSubmittedText mapping1 = shortAnswerMappings.get(0);
+                ShortAnswerSubmittedText mapping2 = shortAnswerMappings.get(1);
+
+                // remove the first text
+                changedSubmittedAnswer.removeSubmittedTexts(mapping1);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                changedSubmittedAnswer.removeSubmittedTexts(mapping2);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isFalse();
+
+                // reset
+                shortAnswerMappings.forEach(changedSubmittedAnswer::addSubmittedTexts);
+                assertThat(compare(submittedAnswer1, changedSubmittedAnswer)).isTrue();
+            }
+
+        }
+    }
+
+    private boolean compare(SubmittedAnswer answer1, SubmittedAnswer answer2) {
         if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
             return StudentExamService.isContentEqualTo(submittedAnswer1, submittedAnswer2);
         }
@@ -224,5 +489,34 @@ class QuizComparisonTest {
         assertThat(Objects.equals(set4, set9)).isFalse();
 
         assertThat(Objects.equals(set8, set9)).isTrue();
+    }
+
+    private Long setQuizQuestionIds(QuizQuestion question, Long id) {
+        if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            for (var item : dragAndDropQuestion.getDragItems()) {
+                item.setId(id);
+                id++;
+            }
+
+            for (var location : dragAndDropQuestion.getDropLocations()) {
+                location.setId(id);
+                id++;
+            }
+
+        }
+        else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            for (var spot : shortAnswerQuestion.getSpots()) {
+                spot.setId(id);
+                id++;
+            }
+
+        }
+        else if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+            for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+                answerOption.setId(id);
+                id++;
+            }
+        }
+        return id;
     }
 }
