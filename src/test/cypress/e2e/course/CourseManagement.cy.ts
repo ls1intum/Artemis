@@ -65,6 +65,7 @@ describe('Course management', () => {
             courseManagement.openCourse(course.id!);
             courseManagement.getCourseStudentGroupName().contains(`artemis-${course.shortName}-students (1)`);
 
+            navigationBar.openCourseManagement();
             courseManagement.openStudentOverviewOfCourse(course.id!);
             courseManagement.removeFirstUser();
             courseManagement.getRegisteredStudents().contains(username).should('not.exist');
