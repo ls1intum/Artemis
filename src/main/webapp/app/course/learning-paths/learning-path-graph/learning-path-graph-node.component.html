@@ -1,4 +1,7 @@
-<div [ngSwitch]="type">
-    <fa-icon *ngSwitchCase="NodeType.COMPLETED" [icon]="faCheckCircle"></fa-icon>
-    <fa-icon *ngSwitchDefault [icon]="faCircle"></fa-icon>
+<div class="node-icon" *ngIf="node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT; else noTask">
+    <fa-icon *ngIf="node.completed" [icon]="faCheckCircle"></fa-icon>
+    <fa-icon *ngIf="!node.completed" [icon]="faPlayCircle"></fa-icon>
 </div>
+<ng-template #noTask>
+    <fa-icon [icon]="faCircle"></fa-icon>
+</ng-template>

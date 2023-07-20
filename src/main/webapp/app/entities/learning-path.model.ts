@@ -40,12 +40,12 @@ export class NgxLearningPathCluster implements ClusterNode {
     public childNodeIds?: string[];
 }
 export enum NodeType {
-    COMPETENCY_START,
-    COMPETENCY_END,
-    MATCH_START,
-    MATCH_END,
-    EXERCISE,
-    LECTURE_UNIT,
+    COMPETENCY_START = 'COMPETENCY_START',
+    COMPETENCY_END = 'COMPETENCY_END',
+    MATCH_START = 'MATCH_START',
+    MATCH_END = 'MATCH_END',
+    EXERCISE = 'EXERCISE',
+    LECTURE_UNIT = 'LECTURE_UNIT',
 }
 
 export class LearningPathRecommendation {

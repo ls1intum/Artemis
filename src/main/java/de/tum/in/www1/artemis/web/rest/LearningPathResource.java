@@ -125,7 +125,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getNgxLearningPath(@PathVariable Long learningPathId) {
         log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
@@ -153,7 +153,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathRecommendation> getRecommendation(@PathVariable Long learningPathId) {
         log.debug("REST request to get recommendation for learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPathId);
         LearningObject recommendation = learningPathService.getRecommendation(learningPath);
         if (recommendation == null) {
             return ResponseEntity.ok(new LearningPathRecommendation(-1, -1, LearningPathRecommendation.RecommendationType.EMPTY));

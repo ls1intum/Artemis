@@ -21,18 +21,15 @@
             </svg:marker>
         </ng-template>
         <ng-template #nodeTemplate let-node>
-            <svg:g class="node">
+            <svg:g class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
                 <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-                    <jhi-learning-path-graph-node [type]="node.type"></jhi-learning-path-graph-node>
+                    <jhi-learning-path-graph-node class="node" [node]="node"></jhi-learning-path-graph-node>
                 </svg:foreignObject>
             </svg:g>
         </ng-template>
         <ng-template #linkTemplate let-link>
             <svg:g class="edge">
                 <svg:path class="line" stroke-width="2" stroke="black" marker-end="url(#arrow)"></svg:path>
-                <svg:text class="edge-label" text-anchor="middle">
-                    <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">text</textPath>
-                </svg:text>
             </svg:g>
         </ng-template>
         <ng-template #clusterTemplate let-cluster>

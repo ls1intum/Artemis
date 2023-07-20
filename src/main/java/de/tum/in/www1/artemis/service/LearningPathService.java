@@ -174,7 +174,7 @@ public class LearningPathService {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
         Set<NgxLearningPathDTO.Cluster> clusters = new HashSet<>();
-        learningPath.getCompetencies().forEach(competency -> generateNgxRepresentationForCompetency(competency, nodes, edges, clusters));
+        learningPath.getCompetencies().forEach(competency -> generateNgxRepresentationForCompetency(learningPath, competency, nodes, edges, clusters));
         generateNgxRepresentationForRelations(learningPath, nodes, edges);
         return new NgxLearningPathDTO(nodes, edges, clusters);
     }
@@ -192,12 +192,13 @@ public class LearningPathService {
      * <li>a cluster consisting of all created nodes</li>
      * </ul>
      *
-     * @param competency the competency for which the representation will be created
-     * @param nodes      set of nodes to store the new nodes
-     * @param edges      set of edges to store the new edges
-     * @param clusters   set of clusters to store the new clusters
+     * @param learningPath the learning path for which the representation should be created
+     * @param competency   the competency for which the representation will be created
+     * @param nodes        set of nodes to store the new nodes
+     * @param edges        set of edges to store the new edges
+     * @param clusters     set of clusters to store the new clusters
      */
-    private void generateNgxRepresentationForCompetency(Competency competency, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges,
+    private void generateNgxRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges,
             Set<NgxLearningPathDTO.Cluster> clusters) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
@@ -209,7 +210,7 @@ public class LearningPathService {
         // generate nodes and edges for lecture units
         competency.getLectureUnits().forEach(lectureUnit -> {
             currentCluster.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
-                    lectureUnit.getId(), lectureUnit.getName()));
+                    lectureUnit.getId(), lectureUnit.isCompletedFor(learningPath.getUser()), lectureUnit.getName()));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitInEdgeId(competency.getId(), lectureUnit.getId()), startNodeId,
                     getLectureUnitNodeId(competency.getId(), lectureUnit.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitOutEdgeId(competency.getId(), lectureUnit.getId()), getLectureUnitNodeId(competency.getId(), lectureUnit.getId()),
@@ -218,7 +219,7 @@ public class LearningPathService {
         // generate nodes and edges for exercises
         competency.getExercises().forEach(exercise -> {
             currentCluster.add(new NgxLearningPathDTO.Node(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(),
-                    exercise.getTitle()));
+                    exercise.isCompletedFor(learningPath.getUser()), exercise.getTitle()));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseInEdgeId(competency.getId(), exercise.getId()), startNodeId, getExerciseNodeId(competency.getId(), exercise.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getExerciseOutEdgeId(competency.getId(), exercise.getId()), getExerciseNodeId(competency.getId(), exercise.getId()), endNodeId));
         });

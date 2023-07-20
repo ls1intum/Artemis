@@ -60,7 +60,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private void generateAndAssert(NgxLearningPathDTO expected) {
         LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
-        learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPath.getId());
+        learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
         NgxLearningPathDTO actual = learningPathService.generateNgxRepresentation(learningPath);
         assertThat(actual).isNotNull();
         assertNgxRepEquals(actual, expected);
@@ -283,7 +283,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         void testGetRecommendationEmpty() {
             competencyUtilService.createCompetency(course);
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
-            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPath.getId());
+            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPath.getId());
             assertThat(learningPathService.getRecommendation(learningPath)).isNull();
         }
 
@@ -293,7 +293,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             final var lectureUnit = lectureUtilService.createTextUnit();
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
-            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningUnitsByIdElseThrow(learningPath.getId());
+            learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPath.getId());
             assertThat(learningPathService.getRecommendation(learningPath)).isNotNull();
         }
     }
