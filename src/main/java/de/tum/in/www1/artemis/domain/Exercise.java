@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -495,7 +496,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 continue;
             }
             // NOTE: for the dashboard we only use rated results with completion date
-            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            boolean isAssessmentOver = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(this);
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
             boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
@@ -591,8 +592,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+            else {
+                // this means we have more than one submission, we want the one with the last submission date
+                // make sure that submissions without submission date do not lead to null pointer exception in the comparison
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
@@ -885,6 +887,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return true if example solution publication date is in the past, false otherwise (including null case).
      */
+    @JsonIgnore
     public boolean isExampleSolutionPublished() {
         ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
                 : this.getExampleSolutionPublicationDate();

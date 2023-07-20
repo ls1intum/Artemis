@@ -57,26 +57,4 @@ public class TeamFactory {
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
         return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
     }
-
-    /**
-     * Generate teams
-     *
-     * @param exercise           exercise of the teams
-     * @param shortNamePrefix    prefix that will be added in front of every team's short name
-     * @param loginPrefix        prefix that will be added in front of every student's login
-     * @param numberOfTeams      amount of teams to generate
-     * @param owner              owner of the teams generally a tutor
-     * @param creatorLogin       login of user that created the teams
-     * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @return teams that were generated
-     */
-    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
-            String registrationPrefix) {
-        List<Team> teams = new ArrayList<>();
-        for (int i = 1; i <= numberOfTeams; i++) {
-            int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
-        }
-        return teams;
-    }
 }

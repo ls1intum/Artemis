@@ -79,42 +79,42 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFeedbacksForResultAsTA() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsTA() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetFeedbacksForResultAsEditor() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsEditor() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFeedbacksForResultAsInstructor() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsInstructor() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
-    private void testGetFeedbacksForResultAsCurrentUser() {
+    private void testFilterFeedbacksForClientAsCurrentUser() {
         Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksAreSortedWithManualFirst() {
+    void testFilterFeedbacksForClientAreSortedWithManualFirst() {
         Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
         // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInExamsBeforePublish() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
@@ -123,12 +123,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInExamsAfterPublish() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
@@ -137,12 +137,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeDueDate() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
@@ -150,12 +150,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterDueDate() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
@@ -163,12 +163,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -179,12 +179,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -194,12 +194,12 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -209,13 +209,13 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
+    void testFilterFeedbacksForClientAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -237,13 +237,13 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
             expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
             assertThat(expectedFeedbacks).hasSize(3);
         }
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
+    void testFilterFeedbacksForClientAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -259,6 +259,6 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         List<Feedback> expectedFeedbacks;
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 }

@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,13 +22,11 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -63,25 +59,18 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
-
-    private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final FeedbackRepository feedbackRepository;
-
-    private final FeedbackConflictRepository feedbackConflictRepository;
 
     private final ResultService resultService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
-            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            SingleUserNotificationService singleUserNotificationService, ResultService resultService) {
+            GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService,
+            ResultService resultService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
@@ -91,9 +80,6 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
-        this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
-        this.feedbackConflictRepository = feedbackConflictRepository;
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
@@ -240,12 +226,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, response.getBody().getFeedbacks());
-
-            // call feedback conflict service
-            if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
-                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getLatestResult().getFeedbacks(),
-                        exercise.getId());
-            }
         }
 
         return response;
@@ -320,31 +300,25 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET participations/:participationId/submissions/:submissionId/for-text-assessment
-     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
+     * GET text-submissions/:submissionId/for-assessment
+     * Given a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
-     * @param participationId the id of the participation the submissions belongs to
      * @param submissionId    the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId        if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
+    @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
-
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
-                    "participationIdMismatch");
-        }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -398,18 +372,13 @@ public class TextAssessmentResource extends AssessmentResource {
             textSubmission.setResults(Collections.singletonList(result));
         }
         else {
-            result = textSubmission.getResultForCorrectionRound(correctionRound);
+            textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        final Result finalResult = result;
-
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, finalResult));
-        return bodyBuilder.body(participation);
+        return ResponseEntity.ok().body(participation);
     }
 
     /**
@@ -471,105 +440,9 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok().body(result);
     }
 
-    /**
-     * GET participations/:participationId/submissions/:submissionId/feedbacks/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback
-     * with the given feedback id.
-     * User needs to be either assessor of the submission (with given feedback id) or an instructor for the exercise to check the conflicts.
-     *
-     * @param participationId - id of the participation to the submission
-     * @param submissionId    - id of the submission with the feedback that has conflicts
-     * @param feedbackId      - id of the feedback that has conflicts
-     * @return - Set of text submissions
-     */
-    @GetMapping("/participations/{participationId}/submissions/{submissionId}/feedbacks/{feedbackId}/feedback-conflicts")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long participationId, @PathVariable long submissionId, @PathVariable long feedbackId) {
-        log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
-
-        final TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(submissionId);
-
-        final TextExercise textExercise = (TextExercise) textSubmission.getParticipation().getExercise();
-        final Result result = textSubmission.getLatestResult();
-
-        if (!textSubmission.getParticipation().getId().equals(participationId)) {
-            throw new BadRequestAlertException("The participationId in the path doesnt match the participationId to the submission " + submissionId + " !", "participationId",
-                    "participationIdMismatch");
-        }
-
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkTextExerciseForRequest(textExercise, user);
-
-        if (!textExercise.isAutomaticAssessmentEnabled() || automaticTextAssessmentConflictService.isEmpty()) {
-            throw new BadRequestAlertException("Automatic assessments are not enabled for this text exercise or text assessment conflict service is not available!",
-                    "textAssessmentConflict", "AutomaticTextAssessmentConflictServiceNotFound");
-        }
-        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
-            throw new AccessForbiddenException();
-        }
-
-        Set<TextSubmission> textSubmissionSet = this.automaticTextAssessmentConflictService.get().getConflictingSubmissions(feedbackId);
-
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        return bodyBuilder.body(textSubmissionSet);
-    }
-
-    /**
-     * POST exercise/:exerciseId/feedbackConflict/:feedbackConflictId/solve : With given feedbackConflictId, finds the conflict and sets it as solved.
-     * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
-     * if the user is at least the instructor for the exercise.
-     *
-     * @param exerciseId         - exercise id to check access rights.
-     * @param feedbackConflictId - feedback conflict id to set the conflict as solved
-     * @return - solved feedback conflict
-     */
-    @PostMapping("/exercises/{exerciseId}/feedback-conflicts/{feedbackConflictId}/solve")
-    @EnforceAtLeastTutor
-    public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
-        log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
-
-        if (automaticTextAssessmentConflictService.isEmpty()) {
-            throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
-                    "AutomaticTextAssessmentConflictServiceNotFound");
-        }
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
-        if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !", "exerciseId",
-                    "exerciseIdMismatch");
-        }
-        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
-        final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
-
-        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
-            throw new AccessForbiddenException();
-        }
-
-        this.automaticTextAssessmentConflictService.get().solveFeedbackConflict(feedbackConflict);
-        return ResponseEntity.ok(feedbackConflict);
-    }
-
     @Override
     String getEntityName() {
         return ENTITY_NAME;
-    }
-
-    /**
-     * Checks if the given textExercise is valid and if the requester have the
-     * required permissions
-     *
-     * @param textExercise which needs to be checked
-     * @throws BadRequestAlertException if no request was found
-     */
-    private void checkTextExerciseForRequest(@Nullable TextExercise textExercise, User user) {
-        if (textExercise == null) {
-            throw new BadRequestAlertException("No exercise was found for the given ID.", "textExercise", "exerciseNotFound");
-        }
-        validateExercise(textExercise);
-        checkAuthorization(textExercise, user);
     }
 
     /**

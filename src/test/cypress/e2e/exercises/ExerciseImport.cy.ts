@@ -42,7 +42,7 @@ describe('Import exercises', () => {
                 textExercise = response.body;
             });
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
-                quizExercise = convertModelAfterMultiPart(response) as QuizExercise;
+                quizExercise = response.body;
             });
             courseManagementRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;
@@ -75,12 +75,12 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            cy.fixture('loremIpsum.txt').then((submission) => {
+            cy.fixture('loremIpsum-short.txt').then((submission) => {
                 textExerciseEditor.shouldShowNumberOfWords(0);
                 textExerciseEditor.shouldShowNumberOfCharacters(0);
                 textExerciseEditor.typeSubmission(exercise.id!, submission);
-                textExerciseEditor.shouldShowNumberOfWords(100);
-                textExerciseEditor.shouldShowNumberOfCharacters(591);
+                textExerciseEditor.shouldShowNumberOfWords(16);
+                textExerciseEditor.shouldShowNumberOfCharacters(83);
                 textExerciseEditor.submit().then((request: Interception) => {
                     expect(request.response!.body.text).to.eq(submission);
                     expect(request.response!.body.submitted).to.be.true;
@@ -158,19 +158,14 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, partiallySuccessful, () => {
+            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, partiallySuccessful, () => {
                 programmingExerciseEditor.getResultScore().contains(partiallySuccessful.expectedResult).and('be.visible');
             });
         });
     });
 
     after('Delete Courses', () => {
-        cy.login(admin);
-        if (course.id) {
-            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
-        }
-        if (secondCourse.id) {
-            courseManagementRequest.deleteCourse(secondCourse.id).its('status').should('eq', 200);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementRequest.deleteCourse(secondCourse, admin);
     });
 });

@@ -17,8 +17,8 @@ describe('Course communication', () => {
         cy.login(admin);
 
         let uid = generateUUID();
-        let courseName = 'Cypress course' + uid;
-        let courseShortName = 'cypress' + uid;
+        const courseName = 'Course ' + uid;
+        const courseShortName = 'course' + uid;
         courseManagementRequest
             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
             .then((response) => {
@@ -30,10 +30,10 @@ describe('Course communication', () => {
             });
 
         uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
+        const courseWithMessagingName = 'Course ' + uid;
+        const courseWithMessagingShortName = 'course' + uid;
         courseManagementRequest
-            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
+            .createCourse(false, courseWithMessagingName, courseWithMessagingShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
             .then((response) => {
                 courseWithMessaging = convertModelAfterMultiPart(response);
                 courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
@@ -48,8 +48,8 @@ describe('Course communication', () => {
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
             courseCommunication.selectContextInModal(CourseWideContext.ORGANIZATION);
-            courseCommunication.setTitleInModal('Cypress Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
+            courseCommunication.setTitleInModal('Test Post');
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInModal(text);
             });
             courseCommunication.save();
@@ -257,7 +257,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within exercises', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -373,7 +373,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within lectures', () => {
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -494,7 +494,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within exercises', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();
@@ -565,7 +565,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within lecture', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();
@@ -618,13 +618,8 @@ describe('Course communication', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (course.id) {
-            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
-        }
-        if (courseWithMessaging.id) {
-            courseManagementRequest.deleteCourse(courseWithMessaging.id).its('status').should('eq', 200);
-        }
+    after('Delete Courses', () => {
+        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementRequest.deleteCourse(courseWithMessaging, admin);
     });
 });

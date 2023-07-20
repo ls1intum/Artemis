@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
 /**
  * Spring Data JPA repository for the DragAndDropMapping entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface DragAndDropMappingRepository extends JpaRepository<DragAndDropMapping, Long> {
 

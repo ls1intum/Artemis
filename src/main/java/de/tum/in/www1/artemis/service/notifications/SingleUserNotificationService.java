@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 
 @Service
 public class SingleUserNotificationService {
@@ -85,7 +85,7 @@ public class SingleUserNotificationService {
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(singleUserNotification, notificationSubject);
+        saveAndSend(singleUserNotification, notificationSubject, author);
     }
 
     /**
@@ -168,7 +168,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }
@@ -340,7 +340,7 @@ public class SingleUserNotificationService {
      * @param responsibleUser the responsibleUser sending the message reply
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, responsibleUser);
     }
 
     /**
@@ -350,7 +350,7 @@ public class SingleUserNotificationService {
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
         // do not save notifications that are not relevant for the user
         if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
@@ -362,7 +362,7 @@ public class SingleUserNotificationService {
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
         }
 
-        prepareSingleUserInstantNotification(notification, notificationSubject);
+        prepareSingleUserInstantNotification(notification, notificationSubject, author);
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
@@ -386,10 +386,14 @@ public class SingleUserNotificationService {
      * @param notification        that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject) {
+    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject, User author) {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
+
+        // If the notification is about a reply and the author is also the recipient, we skip send. Do not notify the sender of the message about their own message!
+        boolean skipSend = type == CONVERSATION_NEW_REPLY_MESSAGE && Objects.equals(notification.getRecipient().getId(), author.getId());
+
         // checks if this notification type has email support
-        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type) && !skipSend) {
             notificationService.sendNotification(notification, notification.getRecipient(), notificationSubject);
         }
     }

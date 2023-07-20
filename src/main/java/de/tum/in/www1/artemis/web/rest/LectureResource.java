@@ -192,8 +192,8 @@ public class LectureResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
+        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
         lectures.forEach(lectureService::filterActiveAttachmentUnits);
-        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -208,11 +208,13 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {
             lecture.setChannelName(lectureChannel.getName());
         }
-        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
+
         return ResponseEntity.ok(lecture);
     }
 
@@ -243,10 +245,13 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
-        final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        Channel createdChannel = channelService.createLectureChannel(result, "change-imported-lecture-" + result.getId());
-        channelService.registerUsersToChannelAsynchronously(true, result.getCourse(), createdChannel);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
+
+        String channelName = generateChannelNameFromTitle(savedLecture.getTitle());
+        Channel createdChannel = channelService.createLectureChannel(savedLecture, channelName);
+
+        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -265,7 +270,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
@@ -286,7 +291,7 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         lectureService.filterActiveAttachmentUnits(lecture);
@@ -370,5 +375,21 @@ public class LectureResource {
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    /**
+     * Generates the channel name based on the lecture title and the "lecture-" prefix.
+     * It replaces alternating/consecutive occurrences of spaces and hyphens and limits length of the name to 30 characters.
+     *
+     * @param title title of the lecture
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(String title) {
+        String channelName = "lecture-" + title;
+        channelName = channelName.replaceAll("[-\\s]+", "-");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
     }
 }

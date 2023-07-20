@@ -5,7 +5,6 @@ import { convertModelAfterMultiPart } from '../../../support/requests/CourseMana
 
 let course: Course;
 
-// TODO: fix this test. Fails only on CI. Locally it works and manual testing also works.
 describe.skip('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
@@ -58,9 +57,6 @@ describe.skip('Quiz Exercise Drop Location Spec', () => {
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

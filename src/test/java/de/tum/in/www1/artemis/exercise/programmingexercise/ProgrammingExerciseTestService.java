@@ -417,7 +417,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         exercise.setChannelName("testchannel-pe");
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
-        var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
+        var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).orElseThrow();
         assertThat(generatedExercise.getBonusPoints()).isZero();
         assertThat(savedExercise.getBonusPoints()).isZero();
     }
@@ -444,7 +444,7 @@ public class ProgrammingExerciseTestService {
         else {
             assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isFalse();
         }
-        var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).get();
+        var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).orElseThrow();
         assertThat(savedExercise).isNotNull();
         assertThat(savedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
         assertThat(savedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
@@ -534,6 +534,17 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    public void importFromFile_exception_DirectoryDeleted() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var course = courseUtilService.addEmptyCourse();
+        exercise.setChannelName("testchannel-pe");
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     // TEST
     void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature) throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
@@ -596,13 +607,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
-        assertThat(exerciseGroup.getExercises()).doesNotContain(examExercise);
     }
 
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
@@ -952,7 +961,7 @@ public class ProgrammingExerciseTestService {
         final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
 
         // Extract the programming exercise from the exam
-        Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().get();
+        Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
         // Additionally, get the programming exercise from the server
         var importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
 
@@ -1348,7 +1357,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
@@ -1374,7 +1383,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
 
         // Mock student repo
@@ -1402,7 +1411,7 @@ public class ProgrammingExerciseTestService {
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-        await().until(() -> courseRepository.findById(course.getId()).get().getCourseArchivePath() != null);
+        await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
@@ -1463,7 +1472,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + studentLogin);
 
         // Mock student repo
@@ -2013,7 +2022,7 @@ public class ProgrammingExerciseTestService {
         assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
                 .isNull();
 
-        ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
+        ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).orElseThrow();
         assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
     }
@@ -2065,7 +2074,7 @@ public class ProgrammingExerciseTestService {
 
         // Utility function to avoid duplication
         Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId()))
-                .findAny().get();
+                .findAny().orElseThrow();
 
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
@@ -2211,7 +2220,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).get();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
 
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(),

@@ -72,11 +72,11 @@ public class RequestUtilService {
         }
         builder.file(json);
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
+        restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
@@ -202,7 +202,19 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
-        String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+        return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+    }
+
+    public <T, R> R postWithResponseBody(String path, T body, boolean plainString, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        if (!plainString) {
+            String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+            if (res == null || res.isEmpty() || res.trim().isEmpty()) {
+                return null;
+            }
+            return mapper.readValue(res, responseType);
+        }
+        String res = postWithResponseBodyString(path, body, true, expectedStatus, httpHeaders, expectedResponseHeaders, params);
         if (res == null || res.isEmpty() || res.trim().isEmpty()) {
             return null;
         }
@@ -224,7 +236,32 @@ public class RequestUtilService {
      */
     public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
+        return postWithResponseBodyString(path, body, false, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+    }
+
+    /**
+     * Mocks sending a request and returns response content as string
+     *
+     * @param path                    the url to send request to
+     * @param body                    the body of the request
+     * @param plainStringBody         if true, the body is not converted to json
+     * @param expectedStatus          the status that the request will return
+     * @param httpHeaders             headers of request
+     * @param expectedResponseHeaders headers of response
+     * @param params                  parameters for multi value
+     * @param <T>                     Request type
+     * @return Request content as string
+     * @throws Exception
+     */
+    public <T> String postWithResponseBodyString(String path, T body, boolean plainStringBody, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        String jsonBody;
+        if (!plainStringBody) {
+            jsonBody = mapper.writeValueAsString(body);
+        }
+        else {
+            jsonBody = (String) body;
+        }
         var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
@@ -244,11 +281,23 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
-        return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+        return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+    }
+
+    public <T, R> R postWithResponseBody(String path, T body, boolean plainString, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        if (!plainString) {
+            return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+        }
+        return postWithResponseBody(path, body, true, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> R postWithPlainStringResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postWithResponseBody(path, body, true, responseType, expectedStatus, null, null);
     }
 
     public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
@@ -542,20 +591,6 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
-    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
-            String[] expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-
-        if (expectedResponseHeaders != null) {
-            for (String header : expectedResponseHeaders) {
-                assertThat(res.getResponse().containsHeader(header)).isTrue();
-            }
-        }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
-    }
-
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
@@ -587,7 +622,7 @@ public class RequestUtilService {
      * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
-    public void restoreSecurityContext() {
+    private void restoreSecurityContext() {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
     }
 
