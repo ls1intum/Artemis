@@ -10,7 +10,7 @@ hasSecretTestFiles = secretTestFilesFolderExists()
 
 dockerImage = "#dockerImage"
 dockerFlags = "#dockerArgs"
-secretTestVolume = "artemis_blackbox_${tool}-secret"
+// secretTestVolume = "artemis_blackbox_${tool}-secret"
 secret_volume_mount_path = "/secrets"
 isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
 
@@ -19,7 +19,7 @@ isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
  */
 void testRunner() {
     setup()
-    removeSecretFiles()
+    //removeSecretFiles()
     build()
 
     // catchError-block: execute following steps even if the one inside the
@@ -47,9 +47,9 @@ private void setup() {
     if ("${env.JOB_NAME}" ==~ /.+-SOLUTION$/) {
         dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache"
 
-        if (runDejagnuTests) {
-            createSecretTestVolume()
-        }
+        //if (runDejagnuTests) {
+        //    createSecretTestVolume()
+        //}
     } else {
         dockerFlags += " -v artemis_blackbox_maven-cache:/maven_cache:ro"
 
@@ -109,20 +109,19 @@ private void customCheckers() {
  * Runs Dejagnu scripts.
  */
 private void dejagnuTests() {
+    stage('Secret Tests') {
+        docker.image(dockerImage).inside(dockerFlags) { c ->
+            applyExpectScriptReplacements()
+            runDejagnuTestStep("secret", 60)
+            removeSecretFiles()
+        }
+    }
     stage('Public+Advanced Tests') {
         docker.image(dockerImage).inside(dockerFlags) { c ->
             applyExpectScriptReplacements()
 
             runDejagnuTestStep("public", 60)
             runDejagnuTestStep("advanced", 60)
-        }
-    }
-
-    stage('Secret Tests') {
-        docker.image(dockerImage).inside(dockerFlags + " -v ${secretTestVolume}:${secret_volume_mount_path}:ro") { c ->
-            restoreSecretFiles()
-            applyExpectScriptReplacements()
-            runDejagnuTestStep("secret", 60)
         }
     }
 }
@@ -210,19 +209,6 @@ private void removeSecretFiles() {
 
     if (hasSecretTestFiles) {
         sh("rm -rf ${testfiles_base_path}/secret/")
-    }
-}
-
-/**
- * Copies the secret files from the Docker volume back into the working directory.
- */
-private void restoreSecretFiles() {
-    if (runDejagnuTests) {
-        sh("cp ${secret_volume_mount_path}/secret.exp testsuite/${tool}.tests/secret.exp")
-    }
-
-    if (hasSecretTestFiles) {
-        sh("cp -vr ${secret_volume_mount_path}/secret ${testfiles_base_path}/secret")
     }
 }
 
