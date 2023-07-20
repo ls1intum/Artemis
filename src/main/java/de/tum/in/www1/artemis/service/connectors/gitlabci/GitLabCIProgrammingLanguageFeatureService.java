@@ -17,6 +17,6 @@ public class GitLabCIProgrammingLanguageFeatureService extends ProgrammingLangua
 
     public GitLabCIProgrammingLanguageFeatureService() {
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, true, true));
-        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, false, true, false, List.of(PLAIN_MAVEN, MAVEN_MAVEN), true, true, true));
+        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, false, true, false, List.of(PLAIN_MAVEN, MAVEN_MAVEN), false, true, true));
     }
 }
