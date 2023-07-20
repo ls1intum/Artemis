@@ -265,7 +265,7 @@ public class MetricsBean {
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
 
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
-        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
 
         return exerciseRepository.countActiveStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
@@ -291,7 +291,7 @@ public class MetricsBean {
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
 
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
-        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).collect(Collectors.toList());
+        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
 
         return exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
     }
