@@ -2834,7 +2834,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             changedAnswer.setQuizQuestion(multipleChoiceQuestion);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
-            return selectedOptionIndices.stream().map(answerOptions::get).collect(Collectors.toList());
+            return selectedOptionIndices.stream().map(answerOptions::get).toList();
         }
 
         private void verifyDragAndDropSubmission(DragAndDropMapping changedMapping, QuizSubmission submissionAfterExamSubmission) {

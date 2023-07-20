@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 
-public class TextComparisonTest {
+class TextComparisonTest {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
