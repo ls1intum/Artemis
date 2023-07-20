@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import static org.junit.Assert.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
@@ -61,6 +61,6 @@ class AthenaSubmissionSendingServiceTest extends AthenaTest {
     @Test
     void testSendSubmissionsWithFeedbackSuggestionsDisabled() {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
-        assertThrows(IllegalArgumentException.class, () -> athenaSubmissionSendingService.sendSubmissions(textExercise));
+        assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }
