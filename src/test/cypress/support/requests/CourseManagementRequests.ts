@@ -49,7 +49,7 @@ export class CourseManagementRequests {
         cy.wait(5000);
         if (course) {
             cy.login(admin);
-            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}` });
+            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}`, retryOnStatusCodeFailure: true });
         }
     }
 
