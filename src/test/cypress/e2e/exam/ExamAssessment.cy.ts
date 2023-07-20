@@ -147,13 +147,13 @@ describe('Exam assessment', () => {
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
-                cy.wait(examEnd.diff(dayjs(), 'ms') + 10000);
+                cy.wait(examEnd.diff(dayjs(), 'ms') + 1000);
             }
             examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             cy.visit(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             courseAssessment.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
-                cy.wait(resultDate.diff(dayjs(), 'ms') + 10000);
+                cy.wait(resultDate.diff(dayjs(), 'ms') + 1000);
             }
             examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
