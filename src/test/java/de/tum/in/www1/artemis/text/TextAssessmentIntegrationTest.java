@@ -944,34 +944,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTextSubmissionWithoutAssessmentAndRetrieveParticipationForSubmissionReturnSameBlocksAndFeedback() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
-
-        request.put("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/cancel-assessment", null,
-                HttpStatus.OK);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-        Participation participation = request.get("/api/text-submissions/" + textSubmissions.get(0).getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
-        final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
-        final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
-
-        assertThat(textSubmissionWithoutAssessment.getId()).isEqualTo(submissionFromParticipation.getId());
-        assertThat(Arrays.equals(textSubmissionWithoutAssessment.getBlocks().toArray(), submissionFromParticipation.getBlocks().toArray())).isTrue();
-        final Feedback feedbackFromSubmissionWithoutAssessment = textSubmissionWithoutAssessment.getLatestResult().getFeedbacks().get(0);
-        final Feedback feedbackFromParticipation = resultFromParticipation.getFeedbacks().get(0);
-        assertThat(feedbackFromSubmissionWithoutAssessment.getCredits()).isEqualTo(feedbackFromParticipation.getCredits());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getDetailText()).isEqualTo(feedbackFromParticipation.getDetailText());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getType()).isEqualTo(feedbackFromParticipation.getType());
-    }
-
     @NotNull
     private List<TextSubmission> prepareTextSubmissionsWithFeedbackForAutomaticFeedback() {
         TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
