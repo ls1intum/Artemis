@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faGripLinesVertical, faNetworkWired } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 
 @Component({
@@ -10,8 +9,7 @@ import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-p
     templateUrl: './learning-path-graph-sidebar.component.html',
 })
 export class LearningPathGraphSidebarComponent implements AfterViewInit {
-    course?: Course;
-
+    @Input() learningPathId: number;
     collapsed: boolean;
     // Icons
     faChevronLeft = faChevronLeft;
@@ -21,8 +19,6 @@ export class LearningPathGraphSidebarComponent implements AfterViewInit {
 
     @ViewChild(`learningPathGraphComponent`, { static: false })
     learningPathGraphComponent: LearningPathGraphComponent;
-
-    constructor() {}
 
     ngAfterViewInit(): void {
         // allows the conversation sidebar to be resized towards the right-hand side

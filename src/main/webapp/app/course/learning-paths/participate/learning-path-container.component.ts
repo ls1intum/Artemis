@@ -19,8 +19,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     templateUrl: './learning-path-container.component.html',
 })
 export class LearningPathContainerComponent implements OnInit {
-    @Input()
-    courseId: number;
+    @Input() courseId: number;
     learningPathId: number;
 
     learningObjectId: number;
@@ -44,7 +43,6 @@ export class LearningPathContainerComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        console.log('ON INIT CONTAINER');
         if (!this.courseId) {
             this.activatedRoute.parent!.parent!.params.subscribe((params) => {
                 this.courseId = +params['courseId'];
@@ -52,6 +50,7 @@ export class LearningPathContainerComponent implements OnInit {
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {
             this.learningPathId = learningPathIdResponse.body!;
+            console.log('container' + this.learningPathId);
         });
     }
 
@@ -62,8 +61,6 @@ export class LearningPathContainerComponent implements OnInit {
             this.history.push([this.exercise.id, -1]);
         }
         this.undefineAll();
-        console.log('request next task');
-        console.log(this.courseId);
         this.learningPathService.getRecommendation(this.learningPathId).subscribe((recommendationResponse) => {
             const recommendation = recommendationResponse.body!;
             this.learningObjectId = recommendation.learningObjectId;
@@ -99,7 +96,6 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     loadLectureUnit() {
-        console.log('loading lecture unit');
         this.lectureService.findWithDetails(this.lectureId!).subscribe({
             next: (findLectureResult) => {
                 this.lecture = findLectureResult.body!;
@@ -113,7 +109,6 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     loadExercise() {
-        console.log('load exercise');
         this.exerciseService.getExerciseDetails(this.learningObjectId).subscribe({
             next: (exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;

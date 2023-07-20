@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
@@ -13,6 +13,7 @@ import { NgxLearningPathDTO } from 'app/entities/learning-path.model';
 })
 export class LearningPathGraphComponent implements OnInit {
     isLoading = false;
+    @Input() learningPathId: number;
     @Input() courseId: number;
     ngxLearningPath: NgxLearningPathDTO;
 
@@ -31,23 +32,17 @@ export class LearningPathGraphComponent implements OnInit {
     constructor(private activatedRoute: ActivatedRoute, private learningPathService: LearningPathService) {}
 
     ngOnInit() {
-        if (!this.courseId) {
-            this.activatedRoute.parent!.parent!.params.subscribe((params) => {
-                this.courseId = +params['courseId'];
-                if (this.courseId) {
-                    this.loadData();
-                }
-            });
-        } else {
+        if (this.learningPathId) {
             this.loadData();
         }
     }
 
     loadData() {
         this.isLoading = true;
-        this.learningPathService.getNgxLearningPath(this.courseId).subscribe((ngxLearningPathResponse) => {
+        this.learningPathService.getNgxLearningPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxLearningPath = ngxLearningPathResponse.body!;
             this.isLoading = false;
+            console.log(this.ngxLearningPath);
         });
     }
 

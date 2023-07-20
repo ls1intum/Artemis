@@ -327,19 +327,19 @@ public class LearningPathService {
     }
 
     public static String getCompetencyStartNodeId(long competencyId) {
-        return competencyId + "-start";
+        return "node-" + competencyId + "-start";
     }
 
     public static String getCompetencyEndNodeId(long competencyId) {
-        return competencyId + "-end";
+        return "node-" + competencyId + "-end";
     }
 
     public static String getLectureUnitNodeId(long competencyId, long lectureUnitId) {
-        return competencyId + "-lu-" + lectureUnitId;
+        return "node-" + competencyId + "-lu-" + lectureUnitId;
     }
 
     public static String getExerciseNodeId(long competencyId, long exerciseId) {
-        return competencyId + "-ex-" + exerciseId;
+        return "node-" + competencyId + "-ex-" + exerciseId;
     }
 
     public static String getMatchingClusterStartNodeId(long matchingClusterId) {
@@ -351,35 +351,35 @@ public class LearningPathService {
     }
 
     public static String getLectureUnitInEdgeId(long competencyId, long lectureUnitId) {
-        return competencyId + "-lu-" + getInEdgeId(lectureUnitId);
+        return "edge-" + competencyId + "-lu-" + getInEdgeId(lectureUnitId);
     }
 
     public static String getLectureUnitOutEdgeId(long competencyId, long lectureUnitId) {
-        return competencyId + "-lu-" + getOutEdgeId(lectureUnitId);
+        return "edge-" + competencyId + "-lu-" + getOutEdgeId(lectureUnitId);
     }
 
     public static String getExerciseInEdgeId(long competencyId, long exercise) {
-        return competencyId + "-ex-" + getInEdgeId(exercise);
+        return "edge-" + competencyId + "-ex-" + getInEdgeId(exercise);
     }
 
     public static String getExerciseOutEdgeId(long competencyId, long exercise) {
-        return competencyId + "-ex-" + getOutEdgeId(exercise);
+        return "edge-" + competencyId + "-ex-" + getOutEdgeId(exercise);
     }
 
     public static String getInEdgeId(long id) {
-        return id + "-in";
+        return "edge-" + id + "-in";
     }
 
     public static String getOutEdgeId(long id) {
-        return id + "-out";
+        return "edge-" + id + "-out";
     }
 
     public static String getRelationEdgeId(String sourceNodeId, String targetNodeId) {
-        return "relation-" + sourceNodeId + "-" + targetNodeId;
+        return "edge-relation-" + sourceNodeId + "-" + targetNodeId;
     }
 
     public static String getDirectEdgeId(long competencyId) {
-        return competencyId + "-direct";
+        return "edge-" + competencyId + "-direct";
     }
 
     public LearningObject getRecommendation(LearningPath learningPath) {

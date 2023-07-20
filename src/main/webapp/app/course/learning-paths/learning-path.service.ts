@@ -15,8 +15,12 @@ export class LearningPathService {
         return this.httpClient.put<Course>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
     }
 
-    getNgxLearningPath(courseId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
-        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/courses/${courseId}/learning-path-graph`, { observe: 'response' }).pipe(
+    getLearningPathId(courseId: number) {
+        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
+    }
+
+    getNgxLearningPath(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
+        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' }).pipe(
             map((ngxLearningPathResponse) => {
                 if (!ngxLearningPathResponse.body!.nodes) {
                     ngxLearningPathResponse.body!.nodes = [];
@@ -30,10 +34,6 @@ export class LearningPathService {
                 return ngxLearningPathResponse;
             }),
         );
-    }
-
-    getLearningPathId(courseId: number) {
-        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
     }
 
     getRecommendation(learningPathId: number) {

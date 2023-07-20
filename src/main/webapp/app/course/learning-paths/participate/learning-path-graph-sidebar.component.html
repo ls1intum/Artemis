@@ -13,8 +13,7 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <!--<div class="scrollbar wrapper-scroll-y">content</div>-->
-                <jhi-learning-path-graph #learningPathGraphComponent></jhi-learning-path-graph>
+                <jhi-learning-path-graph #learningPathGraphComponent *ngIf="learningPathId" [learningPathId]="learningPathId"></jhi-learning-path-graph>
             </div>
         </div>
         <div class="draggable-right">
