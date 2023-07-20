@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
 /**
@@ -71,5 +73,24 @@ public class ModelingExerciseFactory {
         course1.addExercises(modelingExercise);
 
         return modelingExercise;
+    }
+
+    /**
+     * creates a new modeling exercise submission with the passed model
+     *
+     * @param modelingExercise the exercise for which a submission should be generated
+     * @param model            model of the submission
+     * @return the created modeling submission
+     */
+    public static ModelingSubmission generateModelingExerciseSubmission(ModelingExercise modelingExercise, String model, String explanation) {
+        ModelingSubmission submission = new ModelingSubmission();
+        StudentParticipation studentParticipation = new StudentParticipation();
+        submission.setParticipation(studentParticipation);
+
+        submission.setModel(model);
+        submission.setExplanationText(explanation);
+
+        modelingExercise.getStudentParticipations().add(studentParticipation);
+        return submission;
     }
 }
