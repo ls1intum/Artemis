@@ -54,7 +54,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     ngAfterViewInit(): void {
         this.editor.getEditor().setOptions({
             animatedScroll: true,
-            maxLines: 80,
+            maxLines: 45,
         });
         this.loadBuildPlan(this.activatedRoute.snapshot.params.exerciseId);
     }
