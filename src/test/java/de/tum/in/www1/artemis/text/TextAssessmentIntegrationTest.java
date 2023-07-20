@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,6 +25,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -110,13 +112,22 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private Course course;
 
+    @Autowired
+    protected AthenaRequestMockProvider athenaRequestMockProvider;
+
     @BeforeEach
     void initTestCase() {
+        athenaRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.MANUAL); // Disable Athena suggestions because it's not available and would cause unexpected requests
         exerciseRepo.save(textExercise);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        athenaRequestMockProvider.reset();
     }
 
     @Test
@@ -1024,6 +1035,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
+        // Athena requests are ok
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         // verify that no new submission was created
