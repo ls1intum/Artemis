@@ -49,44 +49,37 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     const username = credentials.username;
     const password = credentials.password;
 
-    const storageKey = `cypress-token-${username}`;
-
-    const savedToken = Cypress.env(storageKey);
-
-    if (savedToken) {
-        console.log('Success! reusing a token!');
-        cy.setCookie('jwt', savedToken, { log: false });
-        if (url) {
-            cy.visit(url);
-        }
-        return;
-    }
-
-    // IMPORTANT: The "log" and "failOnStatusCode" fields need to be set to false to prevent leakage of the credentials via the Cypress Dashboard!
-    // log = false does not prevent cypress to log the request if it failed, so failOnStatusCode also needs to be set to false, so that the request is never logged.
-    // We still want to the test to fail if the authentication is unsuccessful, so we expect the status code in the then block. This only logs the status code, so it is safe.
-    cy.request({
-        url: BASE_API + 'public/authenticate',
-        method: POST,
-        followRedirect: true,
-        body: {
-            username,
-            password,
-            rememberMe: true,
+    cy.session(
+        username,
+        () => {
+            // IMPORTANT: The "log" and "failOnStatusCode" fields need to be set to false to prevent leakage of the credentials via the Cypress Dashboard!
+            // log = false does not prevent cypress to log the request if it failed, so failOnStatusCode also needs to be set to false, so that the request is never logged.
+            // We still want to the test to fail if the authentication is unsuccessful, so we expect the status code in the then block. This only logs the status code, so it is safe.
+            cy.request({
+                url: BASE_API + 'public/authenticate',
+                method: POST,
+                followRedirect: true,
+                body: {
+                    username,
+                    password,
+                    rememberMe: true,
+                },
+                log: false,
+                failOnStatusCode: false,
+            }).then((response) => {
+                expect(response.status).to.equal(200);
+            });
         },
-        log: false,
-        failOnStatusCode: false,
-    }).then((response) => {
-        expect(response.status).to.equal(200);
-        cy.getCookie('jwt', { log: false }).then((cookie) => {
-            if (cookie) {
-                Cypress.env(storageKey, cookie.value);
-            }
-        });
-        if (url) {
-            cy.visit(url);
-        }
-    });
+        {
+            validate: () => {
+                cy.getCookie('jwt', { log: false }).should('exist');
+            },
+            cacheAcrossSpecs: true,
+        },
+    );
+    if (url) {
+        cy.visit(url);
+    }
 });
 
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
