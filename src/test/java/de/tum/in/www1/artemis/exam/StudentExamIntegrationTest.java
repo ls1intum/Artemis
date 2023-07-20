@@ -15,9 +15,7 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
@@ -61,6 +59,7 @@ import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -2536,5 +2535,182 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
         }
+    }
+
+    @Nested
+    class ChangedAndUnchangedSubmissionsQueryCountIntegrationTest {
+
+        // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
+        // + update Student Exam + find Student Participations By Student Exam With Submissions Result
+        private final int BASE_QUERY_COUNT = 5;
+
+        private TextExercise textExercise;
+
+        private ModelingExercise modeExercise;
+
+        private QuizExercise quizExercise;
+
+        private TextSubmission textSubmission;
+
+        private ModelingSubmission modeSubmission;
+
+        private QuizSubmission quizSubmission;
+
+        private DragAndDropQuestion dragAndDropQuestion;
+
+        private MultipleChoiceQuestion multipleChoiceQuestion;
+
+        private ShortAnswerQuestion shortAnswerQuestion;
+
+        private StudentExam studentExamForConduction;
+
+        @BeforeEach
+        void setUpStudentExamWithExercises() throws Exception {
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            // Add exercises to active exam
+            exam1.setExamMaxPoints(19);
+            exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+
+            // Generate student exam
+            List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            assertThat(studentExams).hasSize(exam1.getExamUsers().size());
+            assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
+
+            // Prepare student exam
+            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
+            StudentExam studentExam = studentExams.get(0);
+            userUtilService.changeUser(studentExam.getUser().getLogin());
+            studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                    HttpStatus.OK, StudentExam.class);
+            assertThat(studentExamForConduction.isStarted()).isTrue();
+
+            // Get exercises for testing
+            textExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, TextExercise.class);
+            modeExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, ModelingExercise.class);
+            quizExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, QuizExercise.class);
+
+            // Get quiz questions for testing
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                if (quizQuestion instanceof DragAndDropQuestion && dragAndDropQuestion == null) {
+                    dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof MultipleChoiceQuestion && multipleChoiceQuestion == null) {
+                    multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof ShortAnswerQuestion && shortAnswerQuestion == null) {
+                    shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                }
+            }
+            assertThat(dragAndDropQuestion).isNotNull();
+            assertThat(multipleChoiceQuestion).isNotNull();
+            assertThat(shortAnswerQuestion).isNotNull();
+
+            textSubmission = (TextSubmission) textExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            modeSubmission = (ModelingSubmission) modeExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            quizSubmission = (QuizSubmission) quizExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedTextSubmission() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed answer";
+            textSubmission.setText(changedAnswer);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            TextExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission submissionAfterExamSubmission = (TextSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndSubmittedTextSubmissionDoesNotChangeQueryCount() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed answer";
+            textSubmission.setText(changedAnswer);
+            request.put("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+
+            // When
+            StudentExam submittedExam = assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+            TextExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission submissionAfterExamSubmission = (TextSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedModelingSubmission() throws Exception {
+            // Given
+            final String changedModel = "This is a changed model";
+            final String changedExplanation = "This is a changed explanation";
+            modeSubmission.setModel(changedModel);
+            modeSubmission.setExplanationText(changedExplanation);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            ModelingExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission submissionAfterExamSubmission = (ModelingSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(submissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(submissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndSubmittedModelingSubmissionDoesNotChangeQueryCount() throws Exception {
+            // Given
+            final String changedModel = "This is a changed model";
+            final String changedExplanation = "This is a changed explanation";
+            modeSubmission.setModel(changedModel);
+            modeSubmission.setExplanationText(changedExplanation);
+            request.put("/api/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+
+            // When
+            StudentExam submittedExam = assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+            ModelingExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission submissionAfterExamSubmission = (ModelingSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(submissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(submissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        // TODO Dominik Remo: add tests for quiz submission
     }
 }
