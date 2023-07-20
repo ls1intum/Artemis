@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 /**
  * Base class for Athena tests providing common functionality
  */
-abstract public class AthenaTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class AthenaTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.athena.url}")
     protected String athenaUrl;
