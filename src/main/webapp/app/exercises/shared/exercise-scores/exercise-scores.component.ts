@@ -199,7 +199,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const programmingExercise = this.exercise as ProgrammingExercise;
             if (programmingExercise.projectKey) {
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, programmingExercise.projectKey);
+                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, this.exercise.id!, programmingExercise.projectKey);
                     this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                 });
             }

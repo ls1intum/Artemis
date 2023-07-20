@@ -7,14 +7,19 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
-export const setBuildPlanUrlForProgrammingParticipations = (profileInfo: ProfileInfo, participations: ProgrammingExerciseStudentParticipation[], projectKey?: string) => {
+export const setBuildPlanUrlForProgrammingParticipations = (
+    profileInfo: ProfileInfo,
+    participations: ProgrammingExerciseStudentParticipation[],
+    exerciseId: number,
+    projectKey?: string,
+) => {
     if (!projectKey) {
         return;
     }
     participations
         .filter((participation) => participation.buildPlanId)
         .forEach((participation) => {
-            participation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, participation.buildPlanId!);
+            participation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, participation.buildPlanId!, exerciseId);
         });
 };
 /**

@@ -141,7 +141,12 @@ export class CourseExerciseService {
                 if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         const programmingParticipations = participation.exercise!.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (participation.exercise as ProgrammingExercise).projectKey);
+                        setBuildPlanUrlForProgrammingParticipations(
+                            profileInfo,
+                            programmingParticipations,
+                            exercise.id!,
+                            (participation.exercise as ProgrammingExercise).projectKey,
+                        );
                     });
                 }
             }

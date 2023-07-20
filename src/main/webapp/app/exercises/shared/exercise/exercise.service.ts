@@ -502,7 +502,7 @@ export class ExerciseService {
         if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (exercise as ProgrammingExercise).projectKey);
+                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, exercise.id!, (exercise as ProgrammingExercise).projectKey);
             });
         }
     }

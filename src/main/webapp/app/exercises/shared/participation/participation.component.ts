@@ -156,7 +156,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 const programmingExercise = this.exercise as ProgrammingExercise;
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                        setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, this.exercise.id!, (this.exercise as ProgrammingExercise).projectKey);
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }

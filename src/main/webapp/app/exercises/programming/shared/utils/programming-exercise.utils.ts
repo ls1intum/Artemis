@@ -24,9 +24,9 @@ export const isLegacyResult = (result: Result) => {
     }
 };
 
-export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
-    if (template && projectKey && buildPlanId) {
-        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
+export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string, exerciseId: number): string | undefined => {
+    if (template && projectKey && buildPlanId && exerciseId) {
+        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey).replace('{exerciseId}', exerciseId.toString());
     }
 };
 

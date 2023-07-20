@@ -50,6 +50,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
                         profileInfo.buildPlanURLTemplate,
                         this.programmingExercise.projectKey,
                         this.programmingExercise.solutionParticipation.buildPlanId,
+                        this.programmingExercise.id!,
                     );
                 }
                 if (this.programmingExercise.templateParticipation?.buildPlanId) {
@@ -57,6 +58,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
                         profileInfo.buildPlanURLTemplate,
                         this.programmingExercise.projectKey,
                         this.programmingExercise.templateParticipation.buildPlanId,
+                        this.programmingExercise.id!,
                     );
                 }
             }

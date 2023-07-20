@@ -173,6 +173,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 profileInfo.buildPlanURLTemplate,
                                 this.programmingExercise.projectKey,
                                 this.programmingExercise.templateParticipation.buildPlanId,
+                                this.programmingExercise.id!,
                             );
                         }
                         if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
@@ -180,6 +181,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 profileInfo.buildPlanURLTemplate,
                                 this.programmingExercise.projectKey,
                                 this.programmingExercise.solutionParticipation.buildPlanId,
+                                this.programmingExercise.id!,
                             );
                         }
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;

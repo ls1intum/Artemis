@@ -117,6 +117,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                                 this.buildPlanLinkTemplate,
                                 exercise.projectKey,
                                 exercise.solutionParticipation!.buildPlanId,
+                                exercise.id!,
                             );
                         }
                         if (exercise.templateParticipation!.buildPlanId) {
@@ -124,6 +125,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                                 this.buildPlanLinkTemplate,
                                 exercise.projectKey,
                                 exercise.templateParticipation!.buildPlanId,
+                                exercise.id!,
                             );
                         }
                     }
