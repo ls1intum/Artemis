@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 
 /**
@@ -119,5 +120,23 @@ public class TextExerciseFactory {
 
     public static TextBlock generateTextBlock(int startIndex, int endIndex) {
         return generateTextBlock(startIndex, endIndex, "");
+    }
+
+    /**
+     * creates a new text exercise submission with the passed text
+     *
+     * @param textExercise the exercise to which we want to
+     * @param text         text of the submission
+     * @return the created text submission
+     */
+    public static TextSubmission generateTextExerciseSubmission(TextExercise textExercise, String text) {
+        TextSubmission submission = new TextSubmission();
+        StudentParticipation studentParticipation = new StudentParticipation();
+        submission.setParticipation(studentParticipation);
+
+        submission.setText(text);
+
+        textExercise.getStudentParticipations().add(studentParticipation);
+        return submission;
     }
 }
