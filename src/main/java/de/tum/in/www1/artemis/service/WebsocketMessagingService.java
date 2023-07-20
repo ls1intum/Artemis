@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -25,6 +27,8 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
  */
 @Service
 public class WebsocketMessagingService {
+
+    private final Logger log = LoggerFactory.getLogger(WebsocketMessagingService.class);
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -50,7 +54,12 @@ public class WebsocketMessagingService {
      */
     @Async
     public void sendMessage(String topic, Message<?> message) {
-        messagingTemplate.send(topic, message);
+        try {
+            messagingTemplate.send(topic, message);
+        }
+        catch (Exception ex) {
+            log.error("Error when sending message {} to topic {}", message, topic, ex);
+        }
     }
 
     /**
@@ -61,19 +70,30 @@ public class WebsocketMessagingService {
      */
     @Async
     public void sendMessage(String topic, Object message) {
-        messagingTemplate.convertAndSend(topic, message);
+        try {
+            messagingTemplate.convertAndSend(topic, message);
+        }
+        catch (Exception ex) {
+            log.error("Error when sending message {} to topic {}", message, topic, ex);
+        }
     }
 
     /**
      * Wrapper method to send a message over websocket to the given topic to a specific user
      *
-     * @param user        the user that should receive the message.
-     * @param destination the destination to send the message to
-     * @param payload     the payload to send
+     * @param user    the user that should receive the message.
+     * @param topic   the destination to send the message to
+     * @param payload the payload to send
      */
     @Async
-    public void sendMessageToUser(String user, String destination, Object payload) {
-        messagingTemplate.convertAndSendToUser(user, destination, payload);
+    public void sendMessageToUser(String user, String topic, Object payload) {
+        try {
+            messagingTemplate.convertAndSendToUser(user, topic, payload);
+        }
+        catch (Exception ex) {
+            log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
+        }
+
     }
 
     /**
