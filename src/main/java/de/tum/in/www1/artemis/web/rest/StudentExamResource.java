@@ -212,8 +212,6 @@ public class StudentExamResource {
             }
         }
 
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
-
         return ResponseEntity.ok(savedStudentExam);
     }
 
