@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 
-public class QuizComparisonIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class QuizComparisonIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private StudentExamService studentExamService;

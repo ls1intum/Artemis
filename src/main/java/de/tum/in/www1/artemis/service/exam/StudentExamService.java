@@ -313,6 +313,14 @@ public class StudentExamService {
         }
     }
 
+    /**
+     * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a drag and drop submitted answer
+     * @param answer2 a drag and drop submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
     public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
         // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
         Set<DnDMapping> mappings1 = answer1.toDnDMapping();
@@ -321,6 +329,14 @@ public class StudentExamService {
         return Objects.equals(mappings1, mappings2);
     }
 
+    /**
+     * Returns {@code true} if the multiple choice answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a multiple choice submitted answer
+     * @param answer2 a multiple choice submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
     public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
         // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
         Set<Long> selections1 = answer1.toSelectedIds();
@@ -329,6 +345,14 @@ public class StudentExamService {
         return Objects.equals(selections1, selections2);
     }
 
+    /**
+     * Returns {@code true} if the short answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a short answer submitted answer
+     * @param answer2 a short answer submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
     public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
         // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
         Set<SAMapping> mappings1 = answer1.toSAMappings();
@@ -337,6 +361,14 @@ public class StudentExamService {
         return Objects.equals(mappings1, mappings2);
     }
 
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a quiz submission
+     * @param submission2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
+     */
     public boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
@@ -379,6 +411,14 @@ public class StudentExamService {
         return true;
     }
 
+    /**
+     * Returns {@code true} if the text submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a text submission
+     * @param submission2 a text submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the text submissions are equal to each other and {@code false} otherwise
+     */
     public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
@@ -389,6 +429,14 @@ public class StudentExamService {
         return Objects.equals(submission1.getText(), submission2.getText());
     }
 
+    /**
+     * Returns {@code true} if the modeling submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a modeling submission
+     * @param submission2 a modeling submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the modeling submissions are equal to each other and {@code false} otherwise
+     */
     public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
@@ -396,7 +444,7 @@ public class StudentExamService {
         else if (submission1 == null || submission2 == null) {
             return false;
         }
-        return Objects.equals(submission1.getModel(), submission2.getModel());
+        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
