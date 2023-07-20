@@ -163,10 +163,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
-    private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
+    private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
-        if (studentParticipation == undefined) {
+        if (!studentParticipation) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;

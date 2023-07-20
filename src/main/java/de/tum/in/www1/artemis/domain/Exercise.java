@@ -901,6 +901,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return true if example solution publication date is in the past, false otherwise (including null case).
      */
+    @JsonIgnore
     public boolean isExampleSolutionPublished() {
         ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
                 : this.getExampleSolutionPublicationDate();
