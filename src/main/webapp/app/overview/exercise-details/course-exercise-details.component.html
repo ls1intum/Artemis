@@ -165,7 +165,7 @@
                 [smallButtons]="false"
             >
             </jhi-reset-repo-button>
-            <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished">
+            <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
@@ -183,7 +183,7 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
-                    <ng-container *ngIf="exampleSolutionInfo?.programmingExercise?.exampleSolutionPublished">
+                    <ng-container *ngIf="exercise?.type === PROGRAMMING">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
