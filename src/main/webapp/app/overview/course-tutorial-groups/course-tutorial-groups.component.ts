@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
-import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
+import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
