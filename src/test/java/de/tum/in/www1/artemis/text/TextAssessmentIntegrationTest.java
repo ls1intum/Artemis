@@ -313,6 +313,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         return request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, params);
     }
 
@@ -341,8 +342,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
 
         long randomId = 1343;
-
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         Result result = request.putWithResponseBody("/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/text-assessment",
                 textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
