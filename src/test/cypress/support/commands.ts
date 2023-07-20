@@ -34,7 +34,6 @@ declare global {
     namespace Cypress {
         interface Chainable {
             login(credentials: CypressCredentials, url?: string): any;
-            logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
             getSettled(selector: string, options?: any): Chainable<unknown>;
             reloadUntilFound(selector: string, interval?: number, timeout?: number): Chainable<undefined>;
@@ -57,6 +56,9 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     if (savedToken) {
         console.log('Success! reusing a token!');
         cy.setCookie('jwt', savedToken, { log: false });
+        if (url) {
+            cy.visit(url);
+        }
         return;
     }
 
