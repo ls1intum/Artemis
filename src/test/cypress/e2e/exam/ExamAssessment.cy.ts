@@ -52,7 +52,7 @@ describe('Exam assessment', () => {
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(1, 'minutes');
+            examEnd = dayjs().add(2, 'minutes');
             prepareExam(course, examEnd, EXERCISE_TYPE.Programming);
         });
 
