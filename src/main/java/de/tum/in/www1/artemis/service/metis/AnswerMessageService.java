@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -50,9 +50,10 @@ public class AnswerMessageService extends PostingService {
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
-            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
-            ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
+            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;

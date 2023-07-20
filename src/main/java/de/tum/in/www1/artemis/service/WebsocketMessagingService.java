@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -44,8 +46,20 @@ public class WebsocketMessagingService {
      * Wrapper method to send a message over websocket to the given topic
      *
      * @param topic   the destination to which subscription the message should be sent
+     * @param message a prebuild message that should be sent to the destination (topic)
+     */
+    @Async
+    public void sendMessage(String topic, Message<?> message) {
+        messagingTemplate.send(topic, message);
+    }
+
+    /**
+     * Wrapper method to send a message over websocket to the given topic
+     *
+     * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
      */
+    @Async
     public void sendMessage(String topic, Object message) {
         messagingTemplate.convertAndSend(topic, message);
     }
@@ -57,6 +71,7 @@ public class WebsocketMessagingService {
      * @param destination the destination to send the message to
      * @param payload     the payload to send
      */
+    @Async
     public void sendMessageToUser(String user, String destination, Object payload) {
         messagingTemplate.convertAndSendToUser(user, destination, payload);
     }
