@@ -113,7 +113,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        textExercise.setAssessmentType(AssessmentType.MANUAL); // Disable Athena suggestions because it's not available and would cause unexpected requests
         exerciseRepo.save(textExercise);
     }
 
