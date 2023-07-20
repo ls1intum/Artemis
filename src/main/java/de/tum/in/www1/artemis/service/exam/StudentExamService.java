@@ -444,7 +444,7 @@ public class StudentExamService {
         else if (submission1 == null || submission2 == null) {
             return false;
         }
-        return Objects.equals(submission1.getModel(), submission2.getModel());
+        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
