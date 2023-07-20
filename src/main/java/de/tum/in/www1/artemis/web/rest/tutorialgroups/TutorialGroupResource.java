@@ -99,19 +99,6 @@ public class TutorialGroupResource {
     }
 
     /**
-     * GET /tutorial-groups/for-notifications
-     *
-     * @return the list of tutorial groups for which the current user should receive notifications
-     */
-    @GetMapping("/tutorial-groups/for-notifications")
-    @EnforceAtLeastStudent
-    public List<TutorialGroup> getAllTutorialGroupsForNotifications() {
-        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return tutorialGroupService.findAllForNotifications(user);
-    }
-
-    /**
      * GET /tutorial-groups/:tutorialGroupId/title : Returns the title of the tutorial-group with the given id
      * <p>
      * NOTE: Used by entity-title service in the client to resolve the title of a tutorial group for breadcrumbs
