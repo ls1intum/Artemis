@@ -182,7 +182,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
 
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
