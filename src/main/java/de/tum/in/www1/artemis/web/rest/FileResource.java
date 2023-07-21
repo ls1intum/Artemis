@@ -228,7 +228,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
-        DragAndDropQuestion question = quizQuestionRepository.findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourseOrThrow(questionId);
+        DragAndDropQuestion question = quizQuestionRepository.findByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         return responseEntityForFilePath(fileService.actualPathForPublicPath(question.getBackgroundFilePath()));
@@ -244,7 +244,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
         log.debug("REST request to get file for drag item : {}", dragItemId);
-        DragItem dragItem = dragItemRepository.findDragItemByIdWithEagerQuestionAndExerciseAndCourseOrThrow(dragItemId);
+        DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
         Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (dragItem.getPictureFilePath() == null) {

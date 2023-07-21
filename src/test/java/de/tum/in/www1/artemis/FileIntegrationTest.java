@@ -78,6 +78,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
@@ -192,7 +195,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
 
         fileUploadSubmission.setFilePath(filePath);
-        return fileUploadSubmission;
+        return fileUploadSubmissionRepository.save(fileUploadSubmission);
     }
 
     @Test

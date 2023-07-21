@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,17 +25,8 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
             """)
     Set<QuizQuestion> getQuizQuestionsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    @Query("""
-            SELECT quizQuestion
-            FROM DragAndDropQuestion quizQuestion
-                LEFT JOIN FETCH quizQuestion.exercise e
-                LEFT JOIN FETCH e.course
-                LEFT JOIN FETCH e.exerciseGroup
-            WHERE quizQuestion.id = :#{#questionId}
-            """)
-    Optional<DragAndDropQuestion> findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourse(@Param("questionId") Long questionId);
-
-    default DragAndDropQuestion findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourseOrThrow(Long questionId) {
-        return findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourse(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
+    default DragAndDropQuestion findByIdOrElseThrow(Long questionId) {
+        return (DragAndDropQuestion) findById(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
     }
+
 }
