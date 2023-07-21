@@ -26,8 +26,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -48,7 +46,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
-import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -102,15 +99,13 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
-    private final ObjectMapper objectMapper;
-
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository,
-            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler, ObjectMapper objectMapper) {
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -130,7 +125,6 @@ public class StudentExamService {
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
         this.scheduler = scheduler;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -148,7 +142,7 @@ public class StudentExamService {
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         submitStudentExam(studentExam);
-        log.info("    Set student exam to submitted in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("    Set student exam to submitted in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         try {
@@ -158,7 +152,7 @@ public class StudentExamService {
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
         }
-        log.info("    Potentially save submissions in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("    Potentially save submissions in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
@@ -173,7 +167,7 @@ public class StudentExamService {
             }
         }
 
-        log.info("    Lock student repositories in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("    Lock student repositories in {}", formatDurationFrom(start));
 
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.isTestExam()) {
@@ -325,7 +319,6 @@ public class StudentExamService {
         // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
         Set<DnDMapping> mappings1 = answer1.toDnDMapping();
         Set<DnDMapping> mappings2 = answer2.toDnDMapping();
-        // TODO: make sure that this compares the sets correctly, e.g. (<1, 3>, <5, 7>) is equal to (<5, 7>, <1, 3>)
         return Objects.equals(mappings1, mappings2);
     }
 
@@ -341,7 +334,6 @@ public class StudentExamService {
         // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
         Set<Long> selections1 = answer1.toSelectedIds();
         Set<Long> selections2 = answer2.toSelectedIds();
-        // TODO make sure that this compares the sets correctly, e.g. (1, 5) is equal to (5, 1)
         return Objects.equals(selections1, selections2);
     }
 
@@ -357,7 +349,6 @@ public class StudentExamService {
         // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
         Set<SAMapping> mappings1 = answer1.toSAMappings();
         Set<SAMapping> mappings2 = answer2.toSAMappings();
-        // TODO: make sure that this compares the sets correctly, e.g. (<1, text1>, <5, text5>) is equal to (<5, text5>, <1, text1>)
         return Objects.equals(mappings1, mappings2);
     }
 
