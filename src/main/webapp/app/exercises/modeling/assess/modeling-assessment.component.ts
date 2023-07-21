@@ -78,7 +78,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
+    async ngOnChanges(changes: SimpleChanges): Promise<void> {
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
@@ -96,7 +96,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         }
         if (changes.highlightDifferences) {
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            await this.updateApollonAssessments(this.referencedFeedbacks);
         }
     }
 
@@ -208,7 +208,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         if (this.apollonEditor != undefined) {
-            await addDelay(100);
+            await addDelay(0);
             const model: UMLModel = this.apollonEditor!.model;
             for (const element of model!.elements) {
                 element.highlight = newElements.get(element.id);
