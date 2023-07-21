@@ -412,7 +412,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createUser_asAdmin_existsInCi_internalError() throws Exception {
+    public void createUser_asAdmin_existsInCi() throws Exception {
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
@@ -420,8 +420,8 @@ public class UserTestService {
 
         mockDelegate.mockCreateUserInUserManagement(student, true);
 
-        final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
+        final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
     }
 
     // Test
