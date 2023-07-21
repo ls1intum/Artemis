@@ -1001,7 +1001,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         examCourse.setMaxComplaintTimeDays(3);
         courseRepository.save(examCourse);
         // 26 characters, exceeds course limit but lower than 2000 --> allowed
-        createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.OK);
+        createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.CREATED);
     }
 
     @Test
