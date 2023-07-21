@@ -1,6 +1,6 @@
 services:
     artemis-android-e2e:
-        image: harbor.ase.in.tum.de/artemis-android/application:${ANDROID_APP_VERSION_TAG}
+        image: ${ANDROID_TEST_IMAGE_REPO}artemis-android/application:${ANDROID_APP_VERSION_TAG}
         depends_on:
             - artemis-app-setup
         environment:
