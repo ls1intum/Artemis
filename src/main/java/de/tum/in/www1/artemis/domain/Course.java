@@ -43,7 +43,7 @@ public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
-    public static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+    private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
     @Transient
     private transient FileService fileService = new FileService();
@@ -472,12 +472,28 @@ public class Course extends DomainObject {
         this.maxComplaintTextLimit = maxComplaintTextLimit;
     }
 
+    @JsonIgnore
+    public int getMaxComplaintTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintTextLimit());
+        }
+        return getMaxComplaintTextLimit();
+    }
+
     public int getMaxComplaintResponseTextLimit() {
         return maxComplaintResponseTextLimit;
     }
 
     public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
         this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
+    }
+
+    @JsonIgnore
+    public int getMaxComplaintResponseTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintResponseTextLimit());
+        }
+        return getMaxComplaintResponseTextLimit();
     }
 
     public boolean getComplaintsEnabled() {

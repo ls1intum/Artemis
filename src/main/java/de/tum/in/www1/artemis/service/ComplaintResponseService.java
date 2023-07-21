@@ -194,13 +194,10 @@ public class ComplaintResponseService {
             final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
 
             // Check whether the complaint text limit is exceeded
-            int maxLength = course.getMaxComplaintResponseTextLimit();
-            if (originalComplaint.getResult().getParticipation().getExercise().isExamExercise()) {
-                maxLength = Math.max(maxLength, Course.DEFAULT_COMPLAINT_TEXT_LIMIT);
-            }
+            Exercise exercise = originalComplaint.getResult().getParticipation().getExercise();
+            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(exercise);
             if (maxLength < updatedComplaintResponse.getResponseText().length()) {
-                throw new BadRequestAlertException(
-                        "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
+                throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                         "exceededComplaintResponseTextLimit");
             }
         }

@@ -344,22 +344,26 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
 
-        var examSubmission = createComplaintForExamExercise(examExercise, "abc", HttpStatus.CREATED);
+        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        examExerciseComplaint = complaintRepo.save(examExerciseComplaint);
 
         examCourse = courseUtilService.updateCourseComplaintResponseTextLimit(examCourse, 20);
         courseRepository.save(examCourse);
 
-        complaint.setResult(examSubmission.getLatestResult());
-        complaint = complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", examExerciseComplaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters, above course limit but vaild for exam exercises
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().complaintResponse(complaintResponse);
-        request.putWithResponseBody("/api/modeling-submissions/" + examSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
-        assertThat(complaintRepo.findByResultId(examSubmission.getId())).isPresent();
+        request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
+        assertThat(complaintRepo.findByResultId(textSubmission.getId())).isPresent();
     }
 
     @Test
