@@ -360,7 +360,7 @@ public class StudentExamService {
      * @param submission2 a quiz submission to be compared with {@code submission1} for equality
      * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
      */
-    public boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
+    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }

@@ -27,6 +27,15 @@ class QuizComparisonTest {
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Test
+    void compareQuizSubmissionWithNull() {
+        // Test null values
+        QuizSubmission submission = new QuizSubmission();
+        assertThat(StudentExamService.isContentEqualTo((QuizSubmission) null, null)).isTrue();
+        assertThat(StudentExamService.isContentEqualTo(null, submission)).isFalse();
+        assertThat(StudentExamService.isContentEqualTo(submission, null)).isFalse();
+    }
+
+    @Test
     void compareCourseQuizSubmittedAnswers() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
