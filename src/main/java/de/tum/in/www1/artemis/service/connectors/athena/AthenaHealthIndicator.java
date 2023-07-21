@@ -39,13 +39,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
     }
 
     private static String moduleHealthToString(AthenaModuleHealth moduleHealth) {
-        var healthString = "";
-        if (moduleHealth.healthy) {
-            healthString += GREEN_CIRCLE; // green circle
-        }
-        else {
-            healthString += RED_CIRCLE; // red circle
-        }
+        var healthString = moduleHealth.healthy ? GREEN_CIRCLE : RED_CIRCLE;
         healthString += " " + moduleHealth.url + " (" + moduleHealth.type + ")";
         return healthString;
     }
