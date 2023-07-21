@@ -171,7 +171,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             }
             else { // same name
                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                fileService.resetOnPath(savePath);
+                fileService.evictCacheForPath(savePath);
             }
         });
         return newFilePath;
