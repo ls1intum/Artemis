@@ -115,12 +115,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        athenaRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
+        // every test indirectly uses the submission selection in Athena, so we mock it here
+        athenaRequestMockProvider.enableMockingOfRequests();
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
     }
 
     @AfterEach
@@ -313,7 +315,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         return request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, params);
     }
 
@@ -335,7 +336,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void saveTextAssessment_wrongParticipationId() throws Exception {
-
         TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -350,7 +350,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitTextAssessment_studentHidden() throws Exception {
-
         TextSubmission submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
@@ -399,7 +398,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         final Result result = submissionWithoutAssessment.getLatestResult();
@@ -728,8 +726,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmitAssessment_IncludedCompletelyWithBonusPointsExercise() throws Exception {
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
-
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
@@ -783,7 +779,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -815,7 +810,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -847,7 +841,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -872,7 +865,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -942,7 +934,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submission1stRequest = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class,
                 params);
 
@@ -1042,7 +1033,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         params.add("lock", "true");
         params.add("correction-round", "0");
         // Athena requests are ok
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         // verify that no new submission was created
@@ -1217,7 +1207,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(-1);
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -1240,7 +1229,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
-
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
         final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
 
