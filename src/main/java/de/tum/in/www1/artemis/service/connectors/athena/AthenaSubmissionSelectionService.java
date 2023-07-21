@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
@@ -51,7 +53,7 @@ public class AthenaSubmissionSelectionService {
         }
     }
 
-    private record ResponseDTO(long data // will contain the submission ID to choose, or -1 if no submission was explicitly chosen
+    private record ResponseDTO(@JsonProperty("data") long submissionId // submission ID to choose, or -1 if no submission was explicitly chosen
     ) {
     }
 
@@ -93,12 +95,11 @@ public class AthenaSubmissionSelectionService {
             // TODO: make module selection dynamic (based on exercise)
             // allow no retries because this should be fast and it's not too bad if it fails
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/select_submission", request, 0);
-            log.info("Remote Service to calculate next proposes submissions responded: {}", response.data);
-            long submissionId = response.data;
-            if (submissionId == -1) {
+            log.info("Remote Service to calculate next proposes submissions responded: {}", response.submissionId);
+            if (response.submissionId == -1) {
                 return Optional.empty();
             }
-            return submissions.stream().filter(s -> s.getId() == submissionId).findFirst();
+            return submissions.stream().filter(s -> s.getId() == response.submissionId).findFirst();
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
