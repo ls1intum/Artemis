@@ -207,7 +207,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             paramMap: convertToParamMap({
                 courseId: 1,
                 examId: 2,
-                exerciseGroupId: 3,
                 exerciseId: modelingExercise.id!,
             }),
         },
@@ -336,7 +335,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.courseId).toBe(1);
         expect(comp.examId).toBe(2);
-        expect(comp.exerciseGroupId).toBe(3);
         expect(comp.exerciseId).toBe(modelingExercise.id);
 
         tick();
@@ -411,6 +409,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeTrue();
         expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
+    });
+
+    it('should handle if no more submissions are assessable', () => {
+        comp.unassessedSubmissionByRound = new Map<number, Submission>();
+        comp.unassessedSubmissionByRound.set(0, modelingSubmission);
+        comp.unassessedSubmissionByRound.set(1, modelingSubmission);
+
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(of(undefined));
+
+        comp.loadAll();
+
+        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
+        expect(comp.unassessedSubmissionByRound.get(0)).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound.get(1)).toBeUndefined();
     });
 
     it('should handle generic error', () => {

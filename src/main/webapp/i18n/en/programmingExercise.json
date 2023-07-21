@@ -55,22 +55,23 @@
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Information",
-                    "difficultyStepTitle": "Difficulty",
+                    "difficultyStepTitle": "Mode",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastructure"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "General Information",
-                    "generalInfoStepMessage": "Add some general information about the new exercise.",
-                    "difficultyStepTitle": "Difficulty",
-                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
+                    "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
+                    "difficultyStepTitle": "Mode",
+                    "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Programming Language",
-                    "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
-                    "gradingStepTitle": "Grading",
-                    "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
+                    "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
                     "problemStepTitle": "Problem Statement",
-                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                    "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
+                    "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
                 },
                 "gradingLabels": {
                     "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",

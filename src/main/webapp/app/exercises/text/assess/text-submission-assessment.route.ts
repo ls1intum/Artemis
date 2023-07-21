@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { of } from 'rxjs';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
@@ -23,7 +24,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         if (exerciseId) {
             return this.textSubmissionService
                 .getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound)
-                .pipe(map((submission) => <StudentParticipation>submission.participation))
+                .pipe(map((submission?: TextSubmission) => <StudentParticipation | undefined>submission?.participation))
                 .pipe(catchError(() => of(undefined)));
         }
         return of(undefined);

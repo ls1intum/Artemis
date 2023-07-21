@@ -39,6 +39,9 @@ import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.compon
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
+import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
+import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
+import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 
 @NgModule({
     imports: [
@@ -60,6 +63,7 @@ import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enl
         MatSelectModule,
         MatFormFieldModule,
         MatDialogModule,
+        LinkPreviewModule,
     ],
     declarations: [
         PostingThreadComponent,
@@ -76,6 +80,8 @@ import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enl
         AnswerPostComponent,
         PostingContentComponent,
         PostingContentPartComponent,
+        LinkPreviewComponent,
+        LinkPreviewContainerComponent,
         EnlargeSlideImageComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
@@ -101,6 +107,8 @@ import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enl
         AnswerPostComponent,
         PostingContentComponent,
         PostingContentPartComponent,
+        LinkPreviewComponent,
+        LinkPreviewContainerComponent,
         EnlargeSlideImageComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,

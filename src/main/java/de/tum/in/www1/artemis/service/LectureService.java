@@ -76,16 +76,23 @@ public class LectureService {
     }
 
     /**
-     * Filter active attachments for a set of lectures.
+     * Filter active attachments for a set of lectures. All lectures must be from the same course.
      *
+     * @param course                  course all the lectures are from
      * @param lecturesWithAttachments lectures that have attachments
      * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
+    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return lecturesWithAttachments;
+        }
+
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            if (lecture.isVisibleToStudents()) {
+                lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            }
         }
         return lecturesWithFilteredAttachments;
     }
