@@ -403,18 +403,18 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
-        if (!this.isExamMode) {
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                this.courseId.toString(),
+                'exams',
+                this.examId.toString(),
+                this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
+                exercise.id!.toString(),
+            ];
+        } else {
             return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
-
-        return [
-            '/course-management',
-            this.courseId.toString(),
-            'exams',
-            this.examId.toString(),
-            this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
-            exercise.id!.toString(),
-        ];
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
