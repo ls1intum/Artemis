@@ -2750,6 +2750,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
             // Given
+            getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
+
             final String text = "Changed short answer text";
             final int spotIndex = 1;
             ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);

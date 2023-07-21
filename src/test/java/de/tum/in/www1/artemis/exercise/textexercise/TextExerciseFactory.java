@@ -123,7 +123,7 @@ public class TextExerciseFactory {
     }
 
     /**
-     * creates a new text exercise submission with the passed text
+     * Creates a new text exercise submission with the passed text
      *
      * @param textExercise the exercise to which we want to
      * @param text         text of the submission

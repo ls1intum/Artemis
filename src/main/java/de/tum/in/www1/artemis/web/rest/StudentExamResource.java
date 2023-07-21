@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
-import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -256,14 +255,14 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
-        log.info("Completed input validation for submitStudentExam in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
         var response = studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
 
         messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
-                TimeLogUtil.formatDurationFrom(start));
+                formatDurationFrom(start));
         return response;
     }
 

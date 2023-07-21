@@ -76,10 +76,11 @@ public class ModelingExerciseFactory {
     }
 
     /**
-     * creates a new modeling exercise submission with the passed model
+     * Creates a new modeling exercise submission with the passed model
      *
      * @param modelingExercise the exercise for which a submission should be generated
      * @param model            model of the submission
+     * @param explanation      explanation of the submissions
      * @return the created modeling submission
      */
     public static ModelingSubmission generateModelingExerciseSubmission(ModelingExercise modelingExercise, String model, String explanation) {
