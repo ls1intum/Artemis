@@ -60,7 +60,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
-        throws IOException, EmptyFileException {
+            throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
@@ -162,19 +162,18 @@ public class FileUploadSubmissionService extends SubmissionService {
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
-        previousFileUploadSubmission
-            .filter(previousSubmission -> previousSubmission.getFilePath() != null)
-            .ifPresent(previousSubmission -> {
-                final String oldFilePath = previousSubmission.getFilePath();
-                // check if we already had a file associated with this submission
-                if (!oldFilePath.equals(newFilePath)) { // different name
-                    // IMPORTANT: only delete the file when it has changed the name
-                    previousSubmission.onDelete();
-                } else { // same name
-                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                    fileService.resetOnPath(savePath);
-                }
-            });
+        previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
+            final String oldFilePath = previousSubmission.getFilePath();
+            // check if we already had a file associated with this submission
+            if (!oldFilePath.equals(newFilePath)) { // different name
+                // IMPORTANT: only delete the file when it has changed the name
+                previousSubmission.onDelete();
+            }
+            else { // same name
+                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                fileService.resetOnPath(savePath);
+            }
+        });
         return newFilePath;
     }
 
