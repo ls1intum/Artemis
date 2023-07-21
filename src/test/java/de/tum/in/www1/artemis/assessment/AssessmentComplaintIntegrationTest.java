@@ -990,4 +990,57 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
         assertThat(storedComplaint).isPresent();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsEnabled_exceededCourseLimit_success() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        examCourse = courseUtilService.updateCourseComplaintTextLimit(examCourse, 25);
+        // enable course complaints
+        examCourse.setMaxComplaintTimeDays(3);
+        courseRepository.save(examCourse);
+        // 26 characters, exceeds course limit but lower than 2000 --> allowed
+        createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsDisabled_notExceededTextLimit() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        // disable course complaints
+        examCourse.setMaxComplaintTimeDays(0);
+        courseRepository.save(examCourse);
+        // less than 2000 characters
+        var examSubmission = createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultSubmissionId(examSubmission.getId());
+        assertThat(storedComplaint).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsDisabled_exceededTextLimit() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        // disable course complaints
+        examCourse.setMaxComplaintTimeDays(0);
+        courseRepository.save(examCourse);
+        // 2004 characters
+        createComplaintForExamExercise(examExercise, "abcd".repeat(501), HttpStatus.BAD_REQUEST);
+    }
+
+    private Submission createComplaintForExamExercise(TextExercise examExercise, String complaintText, HttpStatus expectedStatus) throws Exception {
+
+        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
+        examRepository.save(examExercise.getExamViaExerciseGroupOrCourseMember());
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        examExerciseComplaint.setComplaintText(complaintText);
+        String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examExercise.getExamViaExerciseGroupOrCourseMember().getId()));
+        request.post(url, examExerciseComplaint, expectedStatus);
+        return textSubmission;
+    }
 }
