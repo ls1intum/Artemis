@@ -31,7 +31,7 @@ class QuizComparisonTest {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
-        creatSubmissionsForQuizQuestionsAndAssert(quizExercise);
+        createSubmissionsForQuizQuestionsAndAssert(quizExercise);
     }
 
     @Test
@@ -40,10 +40,10 @@ class QuizComparisonTest {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course, true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().get(0));
 
-        creatSubmissionsForQuizQuestionsAndAssert(quizExercise);
+        createSubmissionsForQuizQuestionsAndAssert(quizExercise);
     }
 
-    void creatSubmissionsForQuizQuestionsAndAssert(QuizExercise quizExercise) {
+    void createSubmissionsForQuizQuestionsAndAssert(QuizExercise quizExercise) {
         long id = 1L;
         for (var question : quizExercise.getQuizQuestions()) {
             id = setQuizQuestionIds(question, id);
