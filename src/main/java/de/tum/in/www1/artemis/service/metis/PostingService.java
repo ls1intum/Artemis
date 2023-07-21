@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -39,22 +38,22 @@ public abstract class PostingService {
 
     protected final AuthorizationCheckService authorizationCheckService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            AuthorizationCheckService authorizationCheckService, ConversationParticipantRepository conversationParticipantRepository,
+            WebsocketMessagingService websocketMessagingService) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.messagingTemplate = messagingTemplate;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -85,21 +84,21 @@ public abstract class PostingService {
 
         if (postDTO.post().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
             Set<ConversationParticipant> participants = this.conversationParticipantRepository
                     .findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessageToUser(conversationParticipant.getUser().getLogin(),
                     genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
         }
-        messagingTemplate.convertAndSend(genericTopicName, postDTO);
+        websocketMessagingService.sendMessage(genericTopicName, postDTO);
     }
 
     /**

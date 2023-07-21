@@ -8,7 +8,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.L
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -24,13 +23,12 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class GroupNotificationService {
 
     private final GroupNotificationRepository groupNotificationRepository;
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private final UserRepository userRepository;
 
@@ -38,10 +36,12 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService) {
+    private final WebsocketMessagingService websocketMessagingService;
+
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, UserRepository userRepository, GeneralInstantNotificationService notificationService,
+            NotificationSettingsService notificationSettingsService, WebsocketMessagingService websocketMessagingService) {
         this.groupNotificationRepository = groupNotificationRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
@@ -318,12 +318,12 @@ public class GroupNotificationService {
     private void saveAndSend(GroupNotification notification, Object notificationSubject, User author) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
-            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            websocketMessagingService.sendMessage(notification.getTopic(), notification);
             return;
         }
 
         groupNotificationRepository.save(notification);
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        websocketMessagingService.sendMessage(notification.getTopic(), notification);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 

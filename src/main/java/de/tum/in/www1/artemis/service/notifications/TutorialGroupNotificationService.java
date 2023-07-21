@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class TutorialGroupNotificationService {
@@ -28,20 +28,20 @@ public class TutorialGroupNotificationService {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final NotificationSettingsService notificationSettingsService;
 
     private final GeneralInstantNotificationService notificationService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public TutorialGroupNotificationService(TutorialGroupNotificationRepository tutorialGroupNotificationRepository,
-            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, SimpMessageSendingOperations messagingTemplate,
-            NotificationSettingsService notificationSettingsService, GeneralInstantNotificationService notificationService) {
+            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, NotificationSettingsService notificationSettingsService,
+            GeneralInstantNotificationService notificationService, WebsocketMessagingService websocketMessagingService) {
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.messagingTemplate = messagingTemplate;
         this.notificationSettingsService = notificationSettingsService;
         this.notificationService = notificationService;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -82,9 +82,9 @@ public class TutorialGroupNotificationService {
     private void sendNotificationViaWebSocket(TutorialGroupNotification notification) {
         // as we send to a general topic, we filter client side by individual notification settings
         notification.getTutorialGroup().getRegistrations().stream().map(TutorialGroupRegistration::getStudent).forEach(user -> {
-            messagingTemplate.convertAndSend(notification.getTopic(user.getId()), notification);
+            websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification);
         });
-        messagingTemplate.convertAndSend(notification.getTopic(notification.getTutorialGroup().getTeachingAssistant().getId()), notification);
+        websocketMessagingService.sendMessage(notification.getTopic(notification.getTutorialGroup().getTeachingAssistant().getId()), notification);
     }
 
     private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
