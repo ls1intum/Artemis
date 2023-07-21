@@ -1001,7 +1001,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         examCourse.setMaxComplaintTimeDays(3);
         courseRepository.save(examCourse);
         // 26 characters, exceeds course limit but lower than 2000 --> allowed
-        createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.CREATED);
+        String complaintText = "abcdefghijklmnopqrstuvwxyz";
+        var examSubmission = createComplaintForExamExercise(examExercise, complaintText, HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultSubmissionId(examSubmission.getId());
+        assertThat(storedComplaint).isPresent();
+        assertThat(storedComplaint.get().getComplaintText()).isEqualTo(complaintText);
     }
 
     @Test
@@ -1031,7 +1035,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     private Submission createComplaintForExamExercise(TextExercise examExercise, String complaintText, HttpStatus expectedStatus) throws Exception {
-
         examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
         examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
         examRepository.save(examExercise.getExamViaExerciseGroupOrCourseMember());
