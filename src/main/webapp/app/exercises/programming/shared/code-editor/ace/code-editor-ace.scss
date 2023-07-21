@@ -13,10 +13,6 @@ Ace Editor
             flex: 1 1 auto;
         }
 
-        .inline-feedback-d-none {
-            display: none;
-        }
-
         .inline-feedback {
             display: block;
         }
@@ -64,6 +60,11 @@ Ace Editor
             justify-self: center;
             width: 100%;
         }
+    }
+
+    .card-body > .inline-feedback {
+        /* The ACE Line Widget will copy this node to another place where it will be visible */
+        display: none;
     }
 
     .diff-newLine {
