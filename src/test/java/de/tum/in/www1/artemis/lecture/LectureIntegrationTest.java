@@ -149,6 +149,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
         lecture.setChannelName("loremipsum");
+        lecture.setVisibleDate(ZonedDateTime.now().minusDays(1));
+        lecture.setStartDate(ZonedDateTime.now());
+        lecture.setEndDate(ZonedDateTime.now().plusWeeks(1));
         Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByLectureId(returnedLecture.getId());
@@ -158,6 +161,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
         assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.getCourse().getId());
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
+        assertThat(returnedLecture.getVisibleDate()).isEqualTo(lecture.getVisibleDate());
+        assertThat(returnedLecture.getStartDate()).isEqualTo(lecture.getStartDate());
+        assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.getEndDate());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
 
@@ -184,6 +190,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
+        ZonedDateTime updatedDate = ZonedDateTime.now().plusMonths(3);
+        originalLecture.setVisibleDate(updatedDate);
+        originalLecture.setStartDate(updatedDate);
+        originalLecture.setEndDate(updatedDate);
         String channelName = "lecture-channel";
         // create channel with same name
         conversationUtilService.createChannel(originalLecture.getCourse(), channelName);
@@ -197,6 +207,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(channel.getName()).isEqualTo(channelName);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
+        assertThat(updatedLecture.getVisibleDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.getStartDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.getEndDate()).isEqualTo(updatedDate);
     }
 
     @Test

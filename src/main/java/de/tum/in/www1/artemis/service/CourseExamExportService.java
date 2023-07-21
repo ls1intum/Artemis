@@ -84,7 +84,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
-        String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
+        String cleanCourseDirName = FileService.removeIllegalCharacters(courseDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -149,7 +149,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
-        var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
+        var cleanExamDirName = FileService.removeIllegalCharacters(examDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -318,7 +318,7 @@ public class CourseExamExportService {
         Path examDir = null;
         try {
             // Create exam directory.
-            String cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
+            String cleanExamTitle = FileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
             examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 

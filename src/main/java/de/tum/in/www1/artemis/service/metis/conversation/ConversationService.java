@@ -102,6 +102,18 @@ public class ConversationService {
     }
 
     /**
+     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     */
+    public void isMemberElseThrow(Long conversationId, Long userId) {
+        if (!isMember(conversationId, userId)) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+    }
+
+    /**
      * Gets the conversation in a course for which the user is a member
      *
      * @param courseId       the id of the course
@@ -309,21 +321,6 @@ public class ConversationService {
     }
 
     /**
-     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
-     *
-     * @param conversationId the id of the conversation
-     * @param user           the user to check
-     * @return conversation if the user is a member
-     */
-    public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
-        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
-        if (conversation.isEmpty() || !isMember(conversationId, user.getId())) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
-        }
-        return conversation.get();
-    }
-
-    /**
      * Search for members of a conversation
      *
      * @param course       the course in which the conversation is located
@@ -437,20 +434,6 @@ public class ConversationService {
     }
 
     /**
-     * Find all conversations for which the given user should be able to receive notifications.
-     *
-     * @param user                    The user for which to find the courses.
-     * @param unreadConversationsOnly Whether to only return conversations that have unread messages.
-     * @return A list of conversations for which the user should receive notifications.
-     */
-    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
-        if (unreadConversationsOnly) {
-            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
-        }
-        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
-    }
-
-    /**
      * Filter all channels where the attached lecture/exercise has been released
      *
      * @param channels A stream of channels
@@ -458,15 +441,16 @@ public class ConversationService {
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
-            if (channel.getExercise() != null) {
+            if (channel.getLecture() != null) {
+                return channel.getLecture().isVisibleToStudents();
+            }
+            else if (channel.getExercise() != null) {
                 return channel.getExercise().isVisibleToStudents();
             }
             else if (channel.getExam() != null) {
                 return channel.getExam().isVisibleToStudents();
             }
-            else {
-                return true;
-            }
+            return true;
         });
     }
 }

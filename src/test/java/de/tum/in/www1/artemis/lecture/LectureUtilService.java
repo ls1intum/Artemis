@@ -78,6 +78,15 @@ public class LectureUtilService {
         return lecture;
     }
 
+    public Lecture createLecture(Course course, ZonedDateTime visibleDate) {
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        lecture.setVisibleDate(visibleDate);
+        lectureRepo.save(lecture);
+        return lecture;
+    }
+
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
             throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);

@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, courseOverview, textExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
@@ -9,10 +9,10 @@ describe('Text exercise participation', () => {
     let course: Course;
     let exercise: TextExercise;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
@@ -34,8 +34,8 @@ describe('Text exercise participation', () => {
             textExerciseEditor.shouldShowNumberOfWords(0);
             textExerciseEditor.shouldShowNumberOfCharacters(0);
             textExerciseEditor.typeSubmission(exercise.id!, submission);
-            textExerciseEditor.shouldShowNumberOfWords(100);
-            textExerciseEditor.shouldShowNumberOfCharacters(591);
+            textExerciseEditor.shouldShowNumberOfWords(74);
+            textExerciseEditor.shouldShowNumberOfCharacters(451);
             textExerciseEditor.submit().then((request: Interception) => {
                 expect(request.response!.body.text).to.eq(submission);
                 expect(request.response!.body.submitted).to.be.true;
@@ -44,10 +44,7 @@ describe('Text exercise participation', () => {
         });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
