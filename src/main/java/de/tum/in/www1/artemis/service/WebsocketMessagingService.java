@@ -6,15 +6,16 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -40,12 +41,15 @@ public class WebsocketMessagingService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final Executor asyncExecutor;
+
     public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, @Qualifier("taskExecutor") Executor asyncExecutor) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
+        this.asyncExecutor = asyncExecutor;
     }
 
     /**
@@ -56,16 +60,16 @@ public class WebsocketMessagingService {
      * @param message a prebuild message that should be sent to the destination (topic)
      * @return a future that can be used to check if the message was sent successfully
      */
-    @Async
     public CompletableFuture<Void> sendMessage(String topic, Message<?> message) {
-        try {
-            messagingTemplate.send(topic, message);
-            return CompletableFuture.completedFuture(null);
-        }
-        catch (MessagingException ex) {
-            log.error("Error when sending message {} to topic {}", message, topic, ex);
-            throw ex;
-        }
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.send(topic, message);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} to topic {}", message, topic, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
     }
 
     /**
@@ -76,16 +80,16 @@ public class WebsocketMessagingService {
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
      * @return a future that can be used to check if the message was sent successfully
      */
-    @Async
     public CompletableFuture<Void> sendMessage(String topic, Object message) {
-        try {
-            messagingTemplate.convertAndSend(topic, message);
-            return CompletableFuture.completedFuture(null);
-        }
-        catch (MessagingException ex) {
-            log.error("Error when sending message {} to topic {}", message, topic, ex);
-            throw ex;
-        }
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.convertAndSend(topic, message);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} to topic {}", message, topic, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
     }
 
     /**
@@ -97,16 +101,16 @@ public class WebsocketMessagingService {
      * @param payload the payload to send
      * @return a future that can be used to check if the message was sent successfully
      */
-    @Async
     public CompletableFuture<Void> sendMessageToUser(String user, String topic, Object payload) {
-        try {
-            messagingTemplate.convertAndSendToUser(user, topic, payload);
-            return CompletableFuture.completedFuture(null);
-        }
-        catch (MessagingException ex) {
-            log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
-            throw ex;
-        }
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.convertAndSendToUser(user, topic, payload);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
     }
 
     /**
