@@ -441,7 +441,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @MethodSource("getNotificationTypesAndTitlesParametersForChannel")
     void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) throws InterruptedException {
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
-        verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
@@ -460,7 +460,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         answerPost.setPost(post);
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);

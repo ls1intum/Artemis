@@ -156,6 +156,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
         var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"),
                 List.of("test3", "test4"), List.of());
-        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, messagingTemplate);
+        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, websocketMessagingService);
     }
 }

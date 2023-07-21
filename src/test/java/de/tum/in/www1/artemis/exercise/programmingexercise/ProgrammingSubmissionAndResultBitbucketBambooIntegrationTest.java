@@ -892,7 +892,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
 
         // Student should receive a result over WebSocket, the exam not over (grace period still active)
-        verify(messagingTemplate).convertAndSendToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
