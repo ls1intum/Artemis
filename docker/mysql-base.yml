@@ -1,16 +1,11 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# MySQL base service
+# MySQL base service - no volumes & no environment configuration
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
     mysql:
         container_name: artemis-mysql
         image: docker.io/library/mysql:8.0.33
-        # DO NOT use this default file for production systems!
-        environment:
-            MYSQL_ALLOW_EMPTY_PASSWORD: true
-            MYSQL_ROOT_PASSWORD: ""
-            MYSQL_DATABASE: "Artemis"
         ports:
             - "127.0.0.1:3306:3306"
         # expose the port to make it reachable docker internally even if the external port mapping changes

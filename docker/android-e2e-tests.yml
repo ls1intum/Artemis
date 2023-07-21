@@ -25,12 +25,16 @@ services:
 
     mysql:
         extends:
-            file: ./mysql-for-android.yml
+            file: ./mysql-base.yml
             service: mysql
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: true
+            MYSQL_ROOT_PASSWORD: ""
+            MYSQL_DATABASE: "Artemis"
 
     artemis-app:
         extends:
-            file: ./artemis-for-android.yml
+            file: ./artemis-base.yml
             service: artemis-app
         depends_on:
             mysql:
