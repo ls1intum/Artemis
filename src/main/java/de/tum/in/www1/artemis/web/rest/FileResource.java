@@ -550,7 +550,7 @@ public class FileResource {
      * @param filename the filename which is validated
      */
     private static void sanitizeFilenameElseThrow(String filename) {
-        String sanitizedFileName = FileService.removeIllegalCharacters(filename);
+        String sanitizedFileName = FileService.sanitizeFilename(filename);
         if (!sanitizedFileName.equals(filename)) {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
