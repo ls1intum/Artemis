@@ -255,7 +255,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
-        log.info("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
+        log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
         var response = studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
 

@@ -142,7 +142,7 @@ public class StudentExamService {
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         submitStudentExam(studentExam);
-        log.info("    Set student exam to submitted in {}", formatDurationFrom(start));
+        log.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         try {
@@ -152,7 +152,7 @@ public class StudentExamService {
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
         }
-        log.info("    Potentially save submissions in {}", formatDurationFrom(start));
+        log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
@@ -167,7 +167,7 @@ public class StudentExamService {
             }
         }
 
-        log.info("    Lock student repositories in {}", formatDurationFrom(start));
+        log.debug("    Lock student repositories in {}", formatDurationFrom(start));
 
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.isTestExam()) {
