@@ -13,6 +13,9 @@ import { LearningPathPagingService } from 'app/course/learning-paths/learning-pa
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPath } from 'app/entities/learning-path.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 
 export enum TableColumn {
     ID = 'ID',
@@ -58,6 +61,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private pagingService: LearningPathPagingService,
         private sortService: SortService,
+        private modalService: NgbModal,
     ) {}
 
     get page(): number {
@@ -202,6 +206,11 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         }
     }
     viewLearningPath(learningPath: LearningPath) {
-        // TODO
+        const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
+            size: 'xl',
+            backdrop: 'static',
+            windowClass: 'learning-path-modal',
+        });
+        modalRef.componentInstance.learningPathId = learningPath.id;
     }
 }

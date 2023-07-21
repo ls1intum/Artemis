@@ -1,0 +1,12 @@
+.modal-container {
+    display: flex;
+    height: 90vh;
+
+    .graph {
+        width: 100%;
+    }
+}
+
+.learning-path-modal .modal-dialog .modal-content {
+    min-height: 500px;
+}

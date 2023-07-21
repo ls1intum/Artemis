@@ -46,7 +46,6 @@ export class LearningPathLectureUnitViewComponent {
      * @param instance The component instance
      */
     onChildActivate(instance: DiscussionSectionComponent) {
-        console.log(instance);
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;

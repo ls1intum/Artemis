@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
@@ -42,7 +42,6 @@ export class LearningPathGraphComponent implements OnInit {
         this.learningPathService.getNgxLearningPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxLearningPath = ngxLearningPathResponse.body!;
             this.isLoading = false;
-            console.log(this.ngxLearningPath);
         });
     }
 

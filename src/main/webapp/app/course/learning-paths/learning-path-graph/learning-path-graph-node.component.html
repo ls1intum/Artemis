@@ -1,7 +1,7 @@
 <div class="node-icon" *ngIf="node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT; else noTask">
-    <fa-icon *ngIf="node.completed" [icon]="faCheckCircle"></fa-icon>
-    <fa-icon *ngIf="!node.completed" [icon]="faPlayCircle"></fa-icon>
+    <fa-icon *ngIf="node.completed" id="completed" [icon]="faCheckCircle"></fa-icon>
+    <fa-icon *ngIf="!node.completed" id="not-completed" [icon]="faPlayCircle"></fa-icon>
 </div>
 <ng-template #noTask>
-    <fa-icon [icon]="faCircle"></fa-icon>
+    <fa-icon id="generic" [icon]="faCircle"></fa-icon>
 </ng-template>

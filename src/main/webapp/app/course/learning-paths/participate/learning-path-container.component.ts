@@ -50,7 +50,6 @@ export class LearningPathContainerComponent implements OnInit {
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {
             this.learningPathId = learningPathIdResponse.body!;
-            console.log('container' + this.learningPathId);
         });
     }
 
@@ -124,7 +123,6 @@ export class LearningPathContainerComponent implements OnInit {
      * @param instance The component instance
      */
     onChildActivate(instance: LearningPathLectureUnitViewComponent | CourseExerciseDetailsComponent) {
-        console.log(instance);
         if (instance instanceof LearningPathLectureUnitViewComponent) {
             this.setupLectureUnitView(instance);
         } else {

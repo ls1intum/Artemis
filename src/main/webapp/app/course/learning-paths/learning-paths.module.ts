@@ -12,6 +12,7 @@ import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-p
 import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph-node.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 
 const routes: Routes = [
     {
@@ -54,7 +55,14 @@ const routes: Routes = [
 
 @NgModule({
     imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, ArtemisSharedComponentModule, NgxGraphModule, RouterModule.forChild(routes), ArtemisLectureUnitsModule],
-    declarations: [LearningPathContainerComponent, LearningPathManagementComponent, LearningPathGraphSidebarComponent, LearningPathGraphComponent, LearningPathGraphNodeComponent],
+    declarations: [
+        LearningPathContainerComponent,
+        LearningPathManagementComponent,
+        LearningPathGraphSidebarComponent,
+        LearningPathGraphComponent,
+        LearningPathGraphNodeComponent,
+        LearningPathProgressModalComponent,
+    ],
     exports: [LearningPathContainerComponent],
 })
 export class ArtemisLearningPathsModule {}

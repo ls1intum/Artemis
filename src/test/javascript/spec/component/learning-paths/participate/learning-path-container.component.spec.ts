@@ -16,6 +16,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -155,5 +157,27 @@ describe('LearningPathContainerComponent', () => {
         expect(findWithDetailsStub).not.toHaveBeenCalled();
         expect(getExerciseDetailsStub).toHaveBeenCalled();
         expect(getExerciseDetailsStub).toHaveBeenCalledWith(exercise.id);
+    });
+
+    it('should set properties of lecture unit view on activate', () => {
+        comp.learningObjectId = lectureUnit.id!;
+        comp.lectureUnit = lectureUnit;
+        comp.lectureId = lecture.id;
+        comp.lecture = lecture;
+        fixture.detectChanges();
+        const instance = { lecture: undefined, lectureUnit: undefined } as unknown as LearningPathLectureUnitViewComponent;
+        comp.setupLectureUnitView(instance);
+        expect(instance.lecture).toEqual(lecture);
+        expect(instance.lectureUnit).toEqual(lectureUnit);
+    });
+
+    it('should set properties of exercise view on activate', () => {
+        comp.exercise = exercise;
+        comp.learningObjectId = exercise.id!;
+        fixture.detectChanges();
+        const instance = { courseId: undefined, exerciseId: undefined } as unknown as CourseExerciseDetailsComponent;
+        comp.setupExerciseView(instance);
+        expect(instance.courseId).toBe(1);
+        expect(instance.exerciseId).toEqual(exercise.id);
     });
 });
