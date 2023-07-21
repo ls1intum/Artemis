@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -225,6 +223,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @return the captured notification at the given index
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
+        // todo: wait until last notification is captured
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
@@ -501,7 +500,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
-    @Test
+    @RepeatedTest(100)
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
