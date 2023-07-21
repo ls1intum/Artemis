@@ -56,7 +56,7 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, ConversationRepository conversationRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;

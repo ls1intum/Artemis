@@ -93,7 +93,7 @@ public abstract class PostingService {
         else if (postDTO.post().getConversation() != null) {
             Set<ConversationParticipant> participants = this.conversationParticipantRepository
                     .findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessage(conversationParticipant.getUser().getLogin(),
+            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessageToUser(conversationParticipant.getUser().getLogin(),
                     genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
