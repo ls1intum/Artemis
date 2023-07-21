@@ -162,9 +162,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             submissionObservable
                 .pipe(
                     tap({
-                        next: (submission: ProgrammingSubmission) => {
+                        next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
-                                // there are no unassessed submission, nothing we have to worry about
+                                // there are no unassessed submissions
+                                this.submission = submission;
                                 return;
                             }
 
@@ -214,7 +215,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
+    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission | undefined> {
         return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
@@ -243,7 +244,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
          *       This problem reoccurs in {@link FileUploadAssessmentComponent#initializePropertiesFromSubmission}
          */
         this.accountService.setAccessRightsForExercise(this.exercise);
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed = !!this.exercise?.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
         this.handleFeedback();
@@ -357,13 +358,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingParticipation = true;
         this.submission = undefined;
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
-            next: (response: ProgrammingSubmission) => {
-                // there are no unassessed submission, nothing we have to worry about
+            next: (response?: ProgrammingSubmission) => {
+                this.loadingParticipation = false;
+
+                // there are no unassessed submissions
                 if (!response) {
+                    this.submission = undefined;
                     return;
                 }
-
-                this.loadingParticipation = false;
 
                 // if override set, skip navigation
                 if (this.overrideNextSubmission) {
@@ -518,7 +520,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!this.participation.results) {
             this.participation.results = [];
         }
-        this.participation.results![0] = this.manualResult = response.body!;
+        this.participation.results[0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
@@ -555,7 +557,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        const feedbacks = this.manualResult?.feedbacks || [];
+        const feedbacks = this.manualResult?.feedbacks ?? [];
         this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.

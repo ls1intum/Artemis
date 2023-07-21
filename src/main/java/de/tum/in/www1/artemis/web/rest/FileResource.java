@@ -141,7 +141,8 @@ public class FileResource {
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getTempFilePath(), filename);
+        sanitizeFilenameElseThrow(filename);
+        return responseEntityForFilePath(Path.of(FilePathService.getTempFilePath(), filename).toString());
     }
 
     /**
@@ -175,10 +176,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        String sanitizedFileName = fileService.sanitizeFilename(filename);
-        if (!sanitizedFileName.equals(filename)) {
-            throw new EntityNotFoundException("Filename is invalid");
-        }
+        sanitizeFilenameElseThrow(filename);
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
     }
 
@@ -194,6 +192,7 @@ public class FileResource {
     @EnforceAtLeastEditor
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
         log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
+
         String languagePrefix = language.name().toLowerCase();
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
@@ -346,6 +345,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        sanitizeFilenameElseThrow(filename);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
@@ -539,6 +539,12 @@ public class FileResource {
         }
     }
 
+    /**
+     * Reads the file and turns it into a ResponseEntity
+     *
+     * @param filePath the path for the file to read
+     * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
+     */
     private ResponseEntity<byte[]> responseEntityForFilePath(String filePath) {
         try {
             var file = fileService.getFileForPath(filePath);
@@ -550,6 +556,19 @@ public class FileResource {
         catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * removes illegal characters and compares the resulting with the original file name
+     * If both are not equal, it throws an exception
+     *
+     * @param filename the filename which is validated
+     */
+    private static void sanitizeFilenameElseThrow(String filename) {
+        String sanitizedFileName = FileService.removeIllegalCharacters(filename);
+        if (!sanitizedFileName.equals(filename)) {
+            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
 
