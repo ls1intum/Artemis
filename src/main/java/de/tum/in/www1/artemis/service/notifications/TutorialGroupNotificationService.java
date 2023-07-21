@@ -81,7 +81,10 @@ public class TutorialGroupNotificationService {
 
     private void sendNotificationViaWebSocket(TutorialGroupNotification notification) {
         // as we send to a general topic, we filter client side by individual notification settings
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        notification.getTutorialGroup().getRegistrations().stream().map(TutorialGroupRegistration::getStudent).forEach(user -> {
+            messagingTemplate.convertAndSend(notification.getTopic(user.getId()), notification);
+        });
+        messagingTemplate.convertAndSend(notification.getTopic(notification.getTutorialGroup().getTeachingAssistant().getId()), notification);
     }
 
     private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
