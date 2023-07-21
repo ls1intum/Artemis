@@ -43,7 +43,6 @@ public class ConversationNotificationService {
      * @param createdMessage the new message
      */
     public void notifyAboutNewMessage(Post createdMessage) {
-
         String notificationText;
         String[] placeholders;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
@@ -78,6 +77,9 @@ public class ConversationNotificationService {
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification) {
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.equals(notification.getAuthor()))
+                .forEach(user -> {
+                    messagingTemplate.convertAndSend(notification.getTopic(user.getId()), notification);
+                });
     }
 }
