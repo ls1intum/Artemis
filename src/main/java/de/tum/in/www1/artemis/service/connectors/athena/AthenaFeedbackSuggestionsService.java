@@ -77,11 +77,11 @@ public class AthenaFeedbackSuggestionsService {
             log.info("Remote Service responded to feedback suggestions request: {}", response.data);
             return response.data.stream().map((feedbackDTO) -> {
                 var ref = feedbackDTO.toTextBlockRef(submission);
-                ref.getBlock().automatic();
-                ref.getFeedback().setType(FeedbackType.AUTOMATIC);
+                ref.block().automatic();
+                ref.feedback().setType(FeedbackType.AUTOMATIC);
                 // Add IDs to connect block and ID
-                ref.getBlock().computeId();
-                ref.getFeedback().setReference(ref.getBlock().getId());
+                ref.block().computeId();
+                ref.feedback().setReference(ref.block().getId());
                 return ref;
             }).toList();
         }

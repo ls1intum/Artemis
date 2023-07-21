@@ -37,8 +37,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AthenaTest {
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
         List<TextBlockRef> suggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(textExercise, textSubmission);
-        assertThat(suggestions.get(0).getFeedback().getText()).isEqualTo("Not so good");
-        assertThat(suggestions.get(0).getBlock().getStartIndex()).isEqualTo(3);
-        assertThat(suggestions.get(0).getFeedback().getReference()).isEqualTo(suggestions.get(0).getBlock().getId());
+        assertThat(suggestions.get(0).feedback().getText()).isEqualTo("Not so good");
+        assertThat(suggestions.get(0).block().getStartIndex()).isEqualTo(3);
+        assertThat(suggestions.get(0).feedback().getReference()).isEqualTo(suggestions.get(0).block().getId());
     }
 }
