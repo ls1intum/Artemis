@@ -43,6 +43,8 @@ public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
+    public static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+
     @Transient
     private transient FileService fileService = new FileService();
 
@@ -146,11 +148,11 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaint_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTextLimit = 2000;
+    private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintResponseTextLimit = 2000;
+    private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
