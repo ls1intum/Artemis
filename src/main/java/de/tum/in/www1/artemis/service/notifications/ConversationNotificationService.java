@@ -4,12 +4,14 @@ import static de.tum.in.www1.artemis.domain.notification.ConversationNotificatio
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
@@ -41,7 +43,6 @@ public class ConversationNotificationService {
      * @param createdMessage the new message
      */
     public void notifyAboutNewMessage(Post createdMessage) {
-
         String notificationText;
         String[] placeholders;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
@@ -69,11 +70,16 @@ public class ConversationNotificationService {
         conversationNotificationRepository.save(notification);
         sendNotificationViaWebSocket(notification);
 
-        final List<User> users = notification.getConversation().getConversationParticipants().stream().map((u) -> u.getUser()).toList();
+        final Long notificationAuthorId = notification.getAuthor().getId();
+        final List<User> users = notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser)
+                .filter((u) -> !Objects.equals(u.getId(), notificationAuthorId)).toList();
         generalInstantNotificationService.sendNotification(notification, users, null);
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification) {
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.equals(notification.getAuthor()))
+                .forEach(user -> {
+                    messagingTemplate.convertAndSend(notification.getTopic(user.getId()), notification);
+                });
     }
 }
