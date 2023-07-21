@@ -1,5 +1,10 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Android End-To-End Tests Services
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     artemis-android-e2e:
+        # The linked android image built for testing. Usually put in some docker repository on each Play Store release.
         image: ${ANDROID_TEST_IMAGE_REPO}artemis-android/application:${ANDROID_APP_VERSION_TAG}
         depends_on:
             - artemis-app-setup
@@ -20,9 +25,11 @@ services:
             - -Dskip.flavor.unrestricted=true
         networks:
             - artemis
+        # Test results can be retrieved in test-outputs. Can be parsed by the Junit Parser
         volumes:
             - ../test-outputs/:/app/test-outputs/
 
+    # We run mysql without any volumes. Each run should start from a clean state, however the Android tests can even run on a dirty database.
     mysql:
         extends:
             file: ./mysql-base.yml
@@ -32,6 +39,7 @@ services:
             MYSQL_ROOT_PASSWORD: ""
             MYSQL_DATABASE: "Artemis"
 
+    # Artemis server without any volumes -> Start with a clean state.
     artemis-app:
         extends:
             file: ./artemis-base.yml
@@ -50,6 +58,7 @@ services:
         networks:
             - artemis
 
+    # For the Android E2E tests we need three users apart from the admin. They are created by this service using the provided script.
     artemis-app-setup:
         image: ellerbrock/alpine-bash-curl-ssl:latest
         depends_on:
