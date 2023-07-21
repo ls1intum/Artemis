@@ -373,17 +373,16 @@ public class StudentExamService {
         if (answers1.size() != answers2.size()) {
             return false;
         }
-        // quiz questions should have the same ids
-        var questionIds1 = answers1.stream().map(answer -> answer.getQuizQuestion().getId()).collect(Collectors.toSet());
-        var questionIds2 = answers2.stream().map(answer -> answer.getQuizQuestion().getId()).collect(Collectors.toSet());
-        if (!questionIds1.equals(questionIds2)) {
-            return false;
-        }
 
         for (var answer1 : answers1) {
             for (var answer2 : answers2) {
-                if (answer1.getQuizQuestion().getId().equals(answer2.getQuizQuestion().getId())) {
-                    var equal = true;
+                QuizQuestion quizQuestion1 = answer1.getQuizQuestion();
+                QuizQuestion quizQuestion2 = answer2.getQuizQuestion();
+
+                // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
+                if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
+                        || quizQuestion1.getId().equals(quizQuestion2.getId())) {
+                    boolean equal;
 
                     if (answer1 instanceof DragAndDropSubmittedAnswer submittedAnswer1 && answer2 instanceof DragAndDropSubmittedAnswer submittedAnswer2) {
                         equal = isContentEqualTo(submittedAnswer1, submittedAnswer2);

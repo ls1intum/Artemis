@@ -38,19 +38,29 @@ class QuizComparisonTest {
     }
 
     @Test
-    void testCompareSubmissionsOfDifferentQuestionType() {
+    void testCompareSubmissionsWithNullQuestionAndIds() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
         // create a submission for each questionType
-        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
-        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
-        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
+        QuizSubmission submission1 = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission submission2 = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission submission3 = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission submission4 = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), false);
 
-        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, dndSubmission)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, saSubmission)).isFalse();
-        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, dndSubmission)).isFalse();
+        QuizExerciseFactory.setQuizQuestionToNull(submission1);
+        QuizExerciseFactory.setQuizQuestionsIdToNull(submission3);
+
+        // comparison should still work, even if quiz question or the quiz question id is null
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission2)).isTrue();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission3)).isTrue();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission3, submission2)).isTrue();
+
+        // submission4 is different from all other submissions
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission1, submission4)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission2, submission4)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(submission3, submission4)).isFalse();
     }
 
     @Test
@@ -61,9 +71,9 @@ class QuizComparisonTest {
         Long id1 = quizQuestions.get(0).getId();
 
         // create a submission for each questionType
-        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
-        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
-        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), false);
+        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), false);
+        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), false);
 
         // change Ids so that all questions have the same id
         quizQuestions.get(1).setId(id1);

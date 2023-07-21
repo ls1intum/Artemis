@@ -526,4 +526,22 @@ public class QuizExerciseFactory {
 
         return quizSubmission;
     }
+
+    /**
+     * sets the quiz question id associated to the quiz submission answer to null
+     *
+     * @param quizSubmission quiz submission with answer
+     */
+    public static void setQuizQuestionToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.setQuizQuestion(null));
+    }
+
+    /**
+     * sets the quiz question id associated to the quiz submission answer to null
+     *
+     * @param quizSubmission quiz submission with answer
+     */
+    public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
+    }
 }
