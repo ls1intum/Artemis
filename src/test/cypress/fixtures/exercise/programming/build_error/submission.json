@@ -5,5 +5,6 @@
             "path": "exercise/programming/build_error/BubbleSort.txt"
         }
     ],
-    "expectedResult": "0%"
+    "expectedResult": "0%",
+    "packageName": "de.test"
 }

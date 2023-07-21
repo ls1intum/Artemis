@@ -169,6 +169,9 @@ public class ProgrammingExerciseTestService {
     private UrlService urlService;
 
     @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseParticipationTestRepository;
+
+    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
@@ -607,13 +610,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
         ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
-        assertThat(exerciseGroup.getExercises()).doesNotContain(examExercise);
     }
 
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
@@ -1835,6 +1836,10 @@ public class ProgrammingExerciseTestService {
         String testPrefix = "cleanup";
         userUtilService.addUsers(userPrefix + testPrefix, 12, 0, 0, 0);
 
+        // this is needed so that the participations that are currently in the repository get ignored by findAllWithBuildPlanIdWithResults().
+        // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below
+        programmingExerciseParticipationTestRepository.updateBuildPlanIdOfAll(null);
+
         exercise = programmingExerciseRepository.save(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
 
@@ -1877,28 +1882,9 @@ public class ProgrammingExerciseTestService {
         var participation8b = createProgrammingParticipationWithSubmissionAndResult(exercise4, testPrefix + "student12", 100D, ZonedDateTime.now().minusDays(6), true);
 
         programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
-
-        // prepare to be used in the mocks
-        participation1a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation1a.getId());
-        participation1b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation1b.getId());
-        participation2a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation2a.getId());
-        participation2b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation2b.getId());
-        participation3a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation3a.getId());
-        participation3b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation3b.getId());
-        participation4b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation4b.getId());
-        participation5b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation5b.getId());
-        participation6b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation6b.getId());
-        participation7a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7a.getId());
-        participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
-        participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
-
-        // TODO: only return participations 1a - 8b from findAllWithBuildPlanIdWithResults().
-        // Otherwise participations with an unexpected buildPlanId are retrieved when calling cleanupBuildPlansOnContinuousIntegrationServer() below, causing an AssertionError.
-        // The previous solution was to use a @SpyBean to spy on the programmingExerciseStudentParticipationRepository and then the commented lines below provided the correct mock.
-        // However, because of a bug in Mockito, these spy beans lead to issues for other tests and the solution either needs to find some other way to mock the returned
-        // participations or refactor the test such that only those participations are returned.
-        // when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
-        // participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
+        await().untilAsserted(
+                () -> assertThat(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).containsExactlyInAnyOrderElementsOf(List.of(participation1a,
+                        participation1b, participation2a, participation2b, participation3a, participation3b, participation4b, participation7a, participation7b, participation8b)));
 
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);

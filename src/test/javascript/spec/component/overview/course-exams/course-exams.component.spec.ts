@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
@@ -18,6 +19,7 @@ describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;
+    let subscribeToCourseUpdates: jest.SpyInstance;
 
     const visibleRealExam1 = {
         id: 1,
@@ -103,7 +105,7 @@ describe('CourseExamsComponent', () => {
                 component = componentFixture.componentInstance;
 
                 courseStorageService = TestBed.inject(CourseStorageService);
-                jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
+                subscribeToCourseUpdates = jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
@@ -150,6 +152,32 @@ describe('CourseExamsComponent', () => {
         component.changeExpandAttemptList(visibleTestExam1.id!);
 
         expect(component.expandAttemptsMap).toEqual(expectedMap);
+    });
+
+    it('should correctly update new exams', () => {
+        const expectedMap = new Map<number, boolean>();
+        expectedMap.set(visibleTestExam1.id!, false);
+        expectedMap.set(visibleTestExam2.id!, false);
+        expectedMap.set(42, false);
+
+        let updateHandler: (course: Course) => void = () => {};
+        subscribeToCourseUpdates.mockReturnValue({
+            subscribe: (handler: (course: Course) => void): void => {
+                updateHandler = handler;
+            },
+        });
+
+        component.ngOnInit();
+
+        const newExam = {
+            id: 42,
+            visibleDate: dayjs().subtract(1, 'minutes'),
+            testExam: true,
+        } as Exam;
+        updateHandler({ exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam, newExam] });
+
+        expect(component.expandAttemptsMap).toEqual(expectedMap);
+        expect(component.testExamsOfCourse).toContain(newExam);
     });
 
     it('should correctly return visible real exams ordered according to startedDate', () => {
