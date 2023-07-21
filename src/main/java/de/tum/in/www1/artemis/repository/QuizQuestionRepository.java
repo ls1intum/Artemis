@@ -36,7 +36,7 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
             """)
     Optional<DragAndDropQuestion> findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourse(@Param("questionId") Long questionId);
 
-    default DragAndDropQuestion findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourseOrThrow(Long id) {
-        return findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourse(id).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", id));
+    default DragAndDropQuestion findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourseOrThrow(Long questionId) {
+        return findDragAndDropQuizQuestionByIdWithEagerExerciseAndCourse(questionId).orElseThrow(() -> new EntityNotFoundException("DragAndDropQuestion", questionId));
     }
 }

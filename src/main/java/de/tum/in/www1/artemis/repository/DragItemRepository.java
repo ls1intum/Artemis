@@ -27,8 +27,8 @@ public interface DragItemRepository extends JpaRepository<DragItem, Long> {
             """)
     Optional<DragItem> findDragItemByIdWithEagerQuestionAndExerciseAndCourse(@Param("dragItemId") Long dragItemId);
 
-    default DragItem findDragItemByIdWithEagerQuestionAndExerciseAndCourseOrThrow(Long id) {
-        return findDragItemByIdWithEagerQuestionAndExerciseAndCourse(id).orElseThrow(() -> new EntityNotFoundException("DragItem", id));
+    default DragItem findDragItemByIdWithEagerQuestionAndExerciseAndCourseOrThrow(Long dragItemId) {
+        return findDragItemByIdWithEagerQuestionAndExerciseAndCourse(dragItemId).orElseThrow(() -> new EntityNotFoundException("DragItem", dragItemId));
     }
 
 }
