@@ -29,13 +29,10 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final FileService fileService;
-
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, FileService fileService) {
+    public RepositoryService(GitService gitService) {
         this.gitService = gitService;
-        this.fileService = fileService;
     }
 
     /**
@@ -263,7 +260,7 @@ public class RepositoryService {
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Path currentSafePath = checkIfPathIsValidAndExistsAndReturnSafePath(repository, fileMove.currentFilePath(), true);
-        String newFilename = fileService.sanitizeFilename(fileMove.newFilename());
+        String newFilename = FileService.removeIllegalCharacters(fileMove.newFilename());
 
         Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
         if (existingFile.isEmpty()) {
