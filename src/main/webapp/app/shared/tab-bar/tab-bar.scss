@@ -41,7 +41,7 @@
         }
 
         @media (max-width: 720px) {
-            :nth-child(2) {
+            .tab-link-text {
                 display: none;
             }
 
