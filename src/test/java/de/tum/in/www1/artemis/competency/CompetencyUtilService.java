@@ -63,7 +63,7 @@ public class CompetencyUtilService {
     public Competency[] createCompetencies(Course course, int numberOfCompetencies) {
         Competency[] competencies = new Competency[numberOfCompetencies];
         for (int i = 0; i < competencies.length; i++) {
-            competencies[i] = createCompetency(course, "" + i);
+            competencies[i] = createCompetency(course, String.valueOf(i));
         }
         return competencies;
     }
@@ -90,6 +90,13 @@ public class CompetencyUtilService {
         exerciseRepository.save(exercise);
     }
 
+    /**
+     * Adds a relation between competencies.
+     *
+     * @param tail the competency that relates to another competency
+     * @param type the type of the relation
+     * @param head the competency that the tail competency relates to
+     */
     public void addRelation(Competency tail, CompetencyRelation.RelationType type, Competency head) {
         CompetencyRelation relation = new CompetencyRelation();
         relation.setTailCompetency(tail);

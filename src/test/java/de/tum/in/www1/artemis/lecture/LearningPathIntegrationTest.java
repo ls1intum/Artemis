@@ -95,13 +95,13 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private final int NUMBER_OF_STUDENTS = 5;
 
-    private final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
+    private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
-    private final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
+    private static final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
 
-    private final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
+    private static final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
 
-    private final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
+    private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
     private User studentNotInCourse;
 
@@ -167,11 +167,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var course2 = courseUtilService.createCourse();
         final var competencyToImport = competencyUtilService.createCompetency(course2);
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies/import", competencyToImport, Competency.class, HttpStatus.CREATED);
-    }
-
-    private Competency updateCompetencyRESTCall() throws Exception {
-        competencies[0].setTitle("Updated Title");
-        return request.putWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencies[0], Competency.class, HttpStatus.OK);
     }
 
     private void deleteCompetencyRESTCall(Competency competency) throws Exception {

@@ -38,10 +38,10 @@ public class LearningPathUtilService {
      * @return the updated course
      */
     public Course enableAndGenerateLearningPathsForCourse(Course course) {
-        course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
-        learningPathService.generateLearningPaths(course);
-        course.setLeanringPathsEnabled(true);
-        return courseRepository.save(course);
+        var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
+        learningPathService.generateLearningPaths(eagerlyLoadedCourse);
+        eagerlyLoadedCourse.setLeanringPathsEnabled(true);
+        return courseRepository.save(eagerlyLoadedCourse);
     }
 
     public LearningPath createLearningPathInCourse(Course course) {
@@ -52,8 +52,8 @@ public class LearningPathUtilService {
     }
 
     public LearningPath createLearningPath(Set<Competency> competencies) {
-        LearningPath lp = new LearningPath();
-        lp.setCompetencies(competencies);
-        return learningPathRepository.save(lp);
+        LearningPath learningPath = new LearningPath();
+        learningPath.setCompetencies(competencies);
+        return learningPathRepository.save(learningPath);
     }
 }

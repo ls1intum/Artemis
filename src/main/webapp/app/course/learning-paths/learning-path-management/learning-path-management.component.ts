@@ -14,7 +14,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LearningPath } from 'app/entities/learning-path.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 
 export enum TableColumn {
