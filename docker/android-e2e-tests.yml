@@ -40,7 +40,7 @@ services:
             mysql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/artemis_e2e_config.env
+            - ./artemis/config/androide2e.env
         extra_hosts:
             - "host.docker.internal:host-gateway"
         ports:
