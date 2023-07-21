@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -47,19 +48,22 @@ public class AnswerMessageService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final ConversationRepository conversationRepository;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, ConversationRepository conversationRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
@@ -78,9 +82,11 @@ public class AnswerMessageService extends PostingService {
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
+        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), user.getId());
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {

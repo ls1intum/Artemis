@@ -11,10 +11,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.UserRole;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -94,8 +91,9 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
-            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessageToUser(conversationParticipant.getUser().getLogin(),
+            Set<ConversationParticipant> participants = this.conversationParticipantRepository
+                    .findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
+            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessage(conversationParticipant.getUser().getLogin(),
                     genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
