@@ -429,12 +429,6 @@
             "import": {
                 "search": "Search for exam"
             },
-            "monitoring": {
-                "enable": {
-                    "title": "Enable exam live statistics",
-                    "description": "The exam live statistics collects the student's interactions with the exam and provides further opportunities for statistics."
-                }
-            },
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
