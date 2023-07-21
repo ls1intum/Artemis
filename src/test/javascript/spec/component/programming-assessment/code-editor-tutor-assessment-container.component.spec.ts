@@ -445,6 +445,17 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
+    it('should show a message if no more unassessed submissions are present', () => {
+        comp.exercise = exercise;
+        comp.ngOnInit();
+
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
+        comp.nextSubmission();
+
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
+        expect(comp.submission).toBeUndefined();
+    });
+
     it('should highlight lines that were changed', fakeAsync(() => {
         // Stub
         const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
