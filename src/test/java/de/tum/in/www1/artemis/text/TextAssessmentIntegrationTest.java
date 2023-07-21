@@ -1304,7 +1304,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,

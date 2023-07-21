@@ -134,8 +134,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
-
-        doNothing().when(websocketMessagingService).sendMessageToUser(any(), any(), any());
     }
 
     @AfterEach
@@ -219,7 +217,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -245,7 +243,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -319,7 +317,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -343,7 +341,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
