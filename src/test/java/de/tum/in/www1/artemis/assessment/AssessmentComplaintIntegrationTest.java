@@ -359,7 +359,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", examExerciseComplaint);
         complaintResponse.getComplaint().setAccepted(true);
-        // 26 characters, above course limit but vaild for exam exercises
+        // 26 characters, above course limit but vaild for exam exercises (where complaint limits don't apply)
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
@@ -1028,7 +1028,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         // enable course complaints
         examCourse.setMaxComplaintTimeDays(3);
         courseRepository.save(examCourse);
-        // 26 characters, exceeds course limit but lower than 2000 --> allowed
+        // 26 characters, exceeds course limit but lower than 2000 --> allowed for exam exercise
         String complaintText = "abcdefghijklmnopqrstuvwxyz";
         var examSubmission = createComplaintForExamExercise(examExercise, complaintText, HttpStatus.CREATED);
         Optional<Complaint> storedComplaint = complaintRepo.findByResultSubmissionId(examSubmission.getId());
@@ -1058,7 +1058,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         // disable course complaints
         examCourse.setMaxComplaintTimeDays(0);
         courseRepository.save(examCourse);
-        // 2004 characters
+        // 2004 characters (4 over the limit of 2000)
         createComplaintForExamExercise(examExercise, "abcd".repeat(501), HttpStatus.BAD_REQUEST);
     }
 
