@@ -26,7 +26,7 @@ export class TableContent {
 @Component({
     selector: 'jhi-exam-monitoring',
     templateUrl: './exam-monitoring.component.html',
-    styleUrls: ['./exam-monitoring.component.scss', '../../overview/tab-bar/tab-bar.scss'],
+    styleUrls: ['./exam-monitoring.component.scss'],
 })
 export class ExamMonitoringComponent implements OnInit, OnDestroy {
     // 'overview', 'exercises', 'students', 'submissions', 'sessions', 'activity-log', 'summary'

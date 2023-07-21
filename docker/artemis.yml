@@ -12,7 +12,7 @@ services:
         # system environments are the default way for custom configuration overrides in the containerized artemis setups
         # either add them in the environments or env_file section (alternative to application-local.yml)
         env_file:
-            - ./artemis/config/prod-application-local.env
+            - ./artemis/config/prod.env
 
 volumes:
     artemis-data:

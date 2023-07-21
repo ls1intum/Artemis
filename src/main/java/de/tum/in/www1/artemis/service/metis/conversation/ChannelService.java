@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -218,6 +219,17 @@ public class ChannelService {
     }
 
     /**
+     * Deletes the channel if it exists
+     *
+     * @param channel the channel to delete
+     */
+    public void deleteChannel(@Nullable Channel channel) {
+        if (channel != null) {
+            conversationService.deleteConversation(channel);
+        }
+    }
+
+    /**
      * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
      *
      * @param userToAddToGroup the user to be added
@@ -390,6 +402,9 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByExerciseId(originalExercise.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, updatedExercise.getChannelName());
     }
 
