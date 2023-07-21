@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.in.www1.artemis.domain.quiz.compare.SAMapping;
 import de.tum.in.www1.artemis.exam.ExamFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 
 class QuizComparisonTest {
@@ -33,6 +35,61 @@ class QuizComparisonTest {
         assertThat(StudentExamService.isContentEqualTo((QuizSubmission) null, null)).isTrue();
         assertThat(StudentExamService.isContentEqualTo(null, submission)).isFalse();
         assertThat(StudentExamService.isContentEqualTo(submission, null)).isFalse();
+    }
+
+    @Test
+    void testCompareSubmissionsOfDifferentQuestionType() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
+        List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
+
+        // create a submission for each questionType
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
+        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
+
+        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, dndSubmission)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, saSubmission)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, dndSubmission)).isFalse();
+    }
+
+    @Test
+    void testCompareSubmissionsOfDifferentQuestionTypeSameId() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
+        List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
+        Long id1 = quizQuestions.get(0).getId();
+
+        // create a submission for each questionType
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
+        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
+
+        // change Ids so that all questions have the same id
+        quizQuestions.get(1).setId(id1);
+        quizQuestions.get(2).setId(id1);
+
+        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, dndSubmission)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, saSubmission)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, dndSubmission)).isFalse();
+    }
+
+    @Test
+    void testCompareSubmissionsWithEmptySubmission() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
+        List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
+
+        // create a submission for each questionType
+        QuizSubmission mcSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(0), true);
+        QuizSubmission dndSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(1), true);
+        QuizSubmission saSubmission = QuizExerciseFactory.generateQuizSubmissionWithSubmittedAnswer(quizQuestions.get(2), true);
+
+        QuizSubmission submissionWithNoAnswer = ParticipationFactory.generateQuizSubmission(true);
+
+        Assertions.assertThat(StudentExamService.isContentEqualTo(mcSubmission, submissionWithNoAnswer)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(dndSubmission, submissionWithNoAnswer)).isFalse();
+        Assertions.assertThat(StudentExamService.isContentEqualTo(saSubmission, submissionWithNoAnswer)).isFalse();
     }
 
     @Test
@@ -500,7 +557,20 @@ class QuizComparisonTest {
         assertThat(Objects.equals(set8, set9)).isTrue();
     }
 
+    private List<QuizQuestion> setAllQuizQuestionIds(QuizExercise quizExercise) {
+        List<QuizQuestion> questions = quizExercise.getQuizQuestions();
+
+        Long id = 1L;
+        for (var question : questions) {
+            id = setQuizQuestionIds(question, id);
+        }
+
+        return questions;
+    }
+
     private Long setQuizQuestionIds(QuizQuestion question, Long id) {
+        question.setId(id);
+        id++;
         if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
             for (var item : dragAndDropQuestion.getDragItems()) {
                 item.setId(id);
