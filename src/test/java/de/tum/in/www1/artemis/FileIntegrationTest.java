@@ -127,7 +127,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragAndDropBackgroundFile() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -147,8 +147,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragItemFile() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -159,7 +158,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilePath(), dragItem.getId());
 
         dragItem.setPictureFilePath(dragItemPath);
-        courseRepo.save(course);
         quizQuestionRepository.save(dragAndDropQuestion);
 
         String receivedPath = request.get(dragItemPath, HttpStatus.OK, String.class);

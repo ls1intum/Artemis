@@ -13,14 +13,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the ConversationParticipant entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipant, Long> {
 
@@ -68,17 +66,11 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
-    Set<ConversationParticipant> findConversationParticipantsByUser(User user);
-
     Integer countByConversationId(Long conversationId);
 
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationId(Long conversationId);
-
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteAllByUser(User user);
 
     /**
      * Increment unreadMessageCount field of ConversationParticipant

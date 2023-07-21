@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSub
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,7 +17,6 @@ import java.util.stream.Stream;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -343,6 +343,14 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_exception_directoryDeleted() throws Exception {
+        doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFileFile_NoZip_badRequest() throws Exception {
         programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
     }
@@ -419,7 +427,6 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    @Disabled // TODO: Fix the TODO inside automaticCleanupBuildPlans() before enabling the test again.
     void testAutomaticCleanUpBuildPlans() throws Exception {
         programmingExerciseTestService.automaticCleanupBuildPlans();
     }
