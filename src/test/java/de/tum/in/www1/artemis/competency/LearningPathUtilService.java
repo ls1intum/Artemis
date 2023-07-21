@@ -44,6 +44,12 @@ public class LearningPathUtilService {
         return courseRepository.save(eagerlyLoadedCourse);
     }
 
+    /**
+     * Creates learning path for course.
+     *
+     * @param course the course for which the learning path should be generated
+     * @return the persisted learning path
+     */
     public LearningPath createLearningPathInCourse(Course course) {
         final var competencies = competencyRepository.findAllForCourse(course.getId());
         LearningPath learningPath = createLearningPath(competencies);
@@ -51,6 +57,12 @@ public class LearningPathUtilService {
         return learningPathRepository.save(learningPath);
     }
 
+    /**
+     * Creates learning path.
+     *
+     * @param competencies the competencies that will be linked to the learning path
+     * @return the persisted learning path
+     */
     public LearningPath createLearningPath(Set<Competency> competencies) {
         LearningPath learningPath = new LearningPath();
         learningPath.setCompetencies(competencies);

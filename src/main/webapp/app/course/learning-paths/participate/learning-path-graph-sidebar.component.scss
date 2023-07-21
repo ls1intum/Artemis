@@ -10,16 +10,6 @@ $graph-min-width: 215px;
         min-height: 500px;
         margin-left: auto;
 
-        .scrollbar {
-            position: relative;
-            max-height: 700px;
-            overflow: auto;
-        }
-
-        .wrapper-scroll-y {
-            display: block;
-        }
-
         .draggable-right {
             display: flex;
             flex-direction: column;

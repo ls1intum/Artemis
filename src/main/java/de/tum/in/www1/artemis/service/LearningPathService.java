@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -155,10 +158,14 @@ public class LearningPathService {
         final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
         final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
 
-        // TODO: consider optional competencies
         final var completed = (float) competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
         final var numberOfCompetencies = learningPath.getCompetencies().size();
-        learningPath.setProgress(numberOfCompetencies == 0 ? 0 : Math.round(completed * 100 / (float) numberOfCompetencies));
+        if (numberOfCompetencies == 0) {
+            learningPath.setProgress(0);
+        }
+        else {
+            learningPath.setProgress(Math.round(completed * 100 / (float) numberOfCompetencies));
+        }
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
     }
@@ -312,11 +319,21 @@ public class LearningPathService {
     private void generateNgxRepresentationForRelation(CompetencyRelation relation, Map<Long, Integer> competencyToMatchCluster, Set<String> createdRelations,
             Set<NgxLearningPathDTO.Edge> edges) {
         final var sourceId = relation.getHeadCompetency().getId();
-        final String sourceNodeId = competencyToMatchCluster.containsKey(sourceId) ? getMatchingClusterEndNodeId(competencyToMatchCluster.get(sourceId))
-                : getCompetencyEndNodeId(sourceId);
+        String sourceNodeId;
+        if (competencyToMatchCluster.containsKey(sourceId)) {
+            sourceNodeId = getMatchingClusterEndNodeId(competencyToMatchCluster.get(sourceId));
+        }
+        else {
+            sourceNodeId = getCompetencyEndNodeId(sourceId);
+        }
         final var targetId = relation.getTailCompetency().getId();
-        final String targetNodeId = competencyToMatchCluster.containsKey(targetId) ? getMatchingClusterStartNodeId(competencyToMatchCluster.get(targetId))
-                : getCompetencyStartNodeId(targetId);
+        String targetNodeId;
+        if (competencyToMatchCluster.containsKey(targetId)) {
+            targetNodeId = getMatchingClusterStartNodeId(competencyToMatchCluster.get(targetId));
+        }
+        else {
+            targetNodeId = getCompetencyStartNodeId(targetId);
+        }
         final String relationEdgeId = getRelationEdgeId(sourceNodeId, targetNodeId);
         // skip if relation has already been created (possible for edges linked to matching cluster start/end nodes)
         if (!createdRelations.contains(relationEdgeId)) {

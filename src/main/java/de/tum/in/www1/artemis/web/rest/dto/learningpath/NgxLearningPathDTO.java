@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.learningpath;
 
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,6 +10,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> clusters) {
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nodes, edges, clusters);
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -42,6 +48,11 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
         }
 
         @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
+
+        @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Node other)) {
                 return false;
@@ -58,6 +69,11 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
     public record Edge(String id, String source, String target) {
 
         @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
+
+        @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Edge other)) {
                 return false;
@@ -72,6 +88,11 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
     }
 
     public record Cluster(String id, String label, Set<String> childNodeIds) {
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
 
         @Override
         public boolean equals(Object obj) {

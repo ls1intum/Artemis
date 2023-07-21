@@ -6,9 +6,14 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -151,8 +156,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
     }
 
-    private Course enableLearningPathsRESTCall(Course course) throws Exception {
-        return request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.OK);
+    private void enableLearningPathsRESTCall(Course course) throws Exception {
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.OK);
     }
 
     private Competency createCompetencyRESTCall() throws Exception {
@@ -275,33 +280,38 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testAddCompetencyToLearningPathsOnCreateCompetency() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-
-        final var createdCompetency = createCompetencyRESTCall();
-
-        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
-        assertThat(learningPathOptional).isPresent();
-        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(createdCompetency);
-        assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
-        final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
-        assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
+    private static Stream<Arguments> addCompetencyToLearningPathsOnCreateAndImportCompetencyTestProvider() {
+        final Function<LearningPathIntegrationTest, Competency> createCall = (reference) -> {
+            try {
+                return reference.createCompetencyRESTCall();
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+        final Function<LearningPathIntegrationTest, Competency> importCall = (reference) -> {
+            try {
+                return reference.importCompetencyRESTCall();
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+        return Stream.of(Arguments.of(createCall), Arguments.of(importCall));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testAddCompetencyToLearningPathsOnImportCompetency() throws Exception {
+    @MethodSource("addCompetencyToLearningPathsOnCreateAndImportCompetencyTestProvider")
+    void addCompetencyToLearningPaths(Function<LearningPathIntegrationTest, Competency> restCall) {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        final var importedCompetency = importCompetencyRESTCall();
+        final var newCompetency = restCall.apply(this);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPathOptional).isPresent();
-        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(importedCompetency);
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(newCompetency);
         assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
         final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
         assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);

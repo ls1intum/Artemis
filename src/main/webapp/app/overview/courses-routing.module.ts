@@ -67,7 +67,7 @@ const routes: Routes = [
             },
             {
                 path: 'learning-path',
-                loadChildren: () => import('./course-learning-path/course-learning-path.module').then((m) => m.CourseLearningPathModule),
+                loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
             },
             {
                 path: 'discussion',
