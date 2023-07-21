@@ -13,7 +13,11 @@ services:
             - DEFAULT_TIMEOUT=10000
             - ADMIN_USERNAME=artemis_admin
             - ADMIN_PASSWORD=artemis_admin
-        command: test
+            - robolectric.logging.enabled=true
+        command:
+            - test
+            - -Dskip.debugVariants=true
+            - -Dskip.flavor.unrestricted=true
         networks:
             - artemis
         volumes:
@@ -48,7 +52,7 @@ services:
             artemis-app:
                 condition: service_healthy
         volumes:
-            - ./create_test_users.sh:/create_test_users.sh
+            - ./artemis/create_test_users.sh:/create_test_users.sh
         entrypoint: /bin/bash -c "/bin/bash /create_test_users.sh artemis-app:8080"
         networks:
             - artemis
