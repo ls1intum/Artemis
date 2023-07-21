@@ -110,10 +110,10 @@ public class MetricsBean {
     private void registerWebsocketMetrics() {
         // Publish the number of currently (via WebSockets) connected sessions
         Gauge.builder("artemis.instance.websocket.sessions", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
-                .description("Number of session connected to this Artemis instance").register(meterRegistry);
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
         // TODO: DEPRECATED metric with same value - Should be removed after October 2023
         Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
-                .description("Number of session connected to this Artemis instance").register(meterRegistry);
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
 
         // Publish the number of currently (via WebSockets) connected users
         Gauge.builder("artemis.global.websocket.users", userRegistry, MetricsBean::extractWebsocketUserCount).strongReference(true)
@@ -121,7 +121,7 @@ public class MetricsBean {
 
         // Publish the number of existing WS subscriptions
         Gauge.builder("artemis.global.websocket.subscriptions", userRegistry, MetricsBean::extractWebsocketSubscriptionCount).strongReference(true)
-                .description("Number of sessions created on all Artemis instances").register(meterRegistry);
+                .description("Number of subscriptions created on all Artemis instances").register(meterRegistry);
     }
 
     private static double extractWebsocketUserCount(SimpUserRegistry userRegistry) {
