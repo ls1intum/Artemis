@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -63,9 +63,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Exercise exercise;
 
@@ -175,7 +172,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = quizExerciseUtilService.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
+        quizExercise = QuizExerciseFactory.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
         exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();

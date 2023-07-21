@@ -197,7 +197,11 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     channel[propertyName] = updatedChannel[propertyName];
                     this.onChangePerformed();
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    if (errorResponse.error?.skipAlert) {
+                        onError(this.alertService, errorResponse);
+                    }
+                },
             });
     }
 }

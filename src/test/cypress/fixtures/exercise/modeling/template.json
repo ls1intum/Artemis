@@ -22,7 +22,7 @@
     "presentationScoreEnabled": false,
     "diagramType": "ClassDiagram",
     "assessmentType": "MANUAL",
-    "title": "Cypress Modeling Exercise",
+    "title": "Modeling Exercise",
     "categories": ["{\"category\":\"cypress-e2e\",\"color\":\"#6ae8ac\"}"],
     "difficulty": "EASY",
     "maxPoints": 10,

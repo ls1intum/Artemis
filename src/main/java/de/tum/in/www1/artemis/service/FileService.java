@@ -138,7 +138,7 @@ public class FileService implements DisposableBean {
      * @param filename the filename to sanitize
      * @return the sanitized filename
      */
-    public String sanitizeFilename(String filename) {
+    public static String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
     }
 
