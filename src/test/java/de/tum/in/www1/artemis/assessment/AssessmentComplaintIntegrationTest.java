@@ -339,6 +339,30 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void submitComplaintResponse_examExercise() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        var examSubmission = createComplaintForExamExercise(examExercise, "abc", HttpStatus.CREATED);
+
+        examCourse = courseUtilService.updateCourseComplaintResponseTextLimit(examCourse, 20);
+        courseRepository.save(examCourse);
+
+        complaint.setResult(examSubmission.getLatestResult());
+        complaint = complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters, above course limit but vaild for exam exercises
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().complaintResponse(complaintResponse);
+        request.putWithResponseBody("/api/modeling-submissions/" + examSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        assertThat(complaintRepo.findByResultId(examSubmission.getId())).isPresent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultIdNoComplaintExists() throws Exception {
         request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Void.class);
