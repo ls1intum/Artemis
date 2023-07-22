@@ -8,7 +8,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -55,6 +55,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     // Icons
     faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private sortService: SortService) {}
 
