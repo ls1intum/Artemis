@@ -251,6 +251,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
+        await comp.apollonEditor!.nextRender;
 
         expect(comp.apollonEditor).not.toBeNull();
 
@@ -287,6 +288,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngOnChanges(changes);
+        await comp.apollonEditor!.nextRender;
 
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
@@ -312,10 +314,13 @@ describe('ModelingAssessmentComponent', () => {
         comp.referencedFeedbacks = [mockFeedbackWithReference];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
-        await comp.ngOnChanges(changes);
+        fixture.detectChanges();
         await fixture.whenStable();
+        await comp.ngOnChanges(changes);
+        expect(comp.apollonEditor).toBeDefined();
 
-        expect(comp.apollonEditor).not.toBeNull();
+        await comp.apollonEditor!.nextRender;
+
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
@@ -335,6 +340,7 @@ describe('ModelingAssessmentComponent', () => {
 
         await comp.ngOnChanges(changes);
         await fixture.whenStable();
+        await comp.apollonEditor!.nextRender;
 
         expect(comp.apollonEditor).not.toBeNull();
 

@@ -3,7 +3,6 @@ import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLE
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { addDelay } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
@@ -118,13 +117,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             type: this.diagramType || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups,
         });
-        this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
+        this.apollonEditor!.subscribeToSelectionChange((selection: Selection) => {
             if (this.readOnly) {
                 this.selectionChanged.emit(selection);
             }
         });
         if (!this.readOnly) {
-            this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
+            this.apollonEditor!.subscribeToAssessmentChange((assessments: Assessment[]) => {
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessments);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
             });
@@ -208,7 +207,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         if (this.apollonEditor != undefined) {
-            await addDelay(0);
+            await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor!.model;
             for (const element of model!.elements) {
                 element.highlight = newElements.get(element.id);
@@ -235,15 +234,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
         if (this.apollonEditor != undefined) {
-            await addDelay(0);
-            const model: UMLModel = this.apollonEditor!.model;
+            await this.apollonEditor.nextRender;
+            const model: UMLModel = this.apollonEditor.model;
             for (const element of model.elements) {
                 element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
             }
             for (const relationship of model.relationships) {
                 relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
             }
-            this.apollonEditor!.model = model;
+            this.apollonEditor.model = model;
         }
     }
 
@@ -267,8 +266,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             dropInfo: this.calculateDropInfo(feedback),
         }));
         if (this.apollonEditor) {
-            await addDelay(0);
-            this.apollonEditor!.model = this.umlModel;
+            await this.apollonEditor.nextRender;
+            this.apollonEditor.model = this.umlModel;
         }
     }
 
