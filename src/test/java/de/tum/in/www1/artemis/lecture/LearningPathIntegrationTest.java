@@ -223,7 +223,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPathsAlreadyEnabled() throws Exception {
-        course.setLeanringPathsEnabled(true);
+        course.setLearningPathsEnabled(true);
         courseRepository.save(course);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.BAD_REQUEST);
     }
@@ -358,7 +358,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        course.setLeanringPathsEnabled(false);
+        course.setLearningPathsEnabled(false);
         courseRepository.save(course);
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
     }

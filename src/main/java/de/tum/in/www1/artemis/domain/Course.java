@@ -733,7 +733,7 @@ public class Course extends DomainObject {
         return learningPathsEnabled;
     }
 
-    public void setLeanringPathsEnabled(boolean learningPathsEnabled) {
+    public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
     }
 

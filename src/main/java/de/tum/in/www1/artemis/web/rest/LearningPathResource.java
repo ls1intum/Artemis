@@ -62,15 +62,13 @@ public class LearningPathResource {
     public ResponseEntity<Course> enableLearningPathsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are already enabled for this course.");
         }
 
+        course.setLearningPathsEnabled(true);
         learningPathService.generateLearningPaths(course);
-
-        course.setLeanringPathsEnabled(true);
         course = courseRepository.save(course);
 
         return ResponseEntity.ok(course);
@@ -88,8 +86,7 @@ public class LearningPathResource {
     public ResponseEntity<SearchResultPageDTO<LearningPath>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
@@ -108,11 +105,11 @@ public class LearningPathResource {
     public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.isStudentInCourse(course, user);
+        authorizationCheckService.isStudentInCourse(course, null);
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
+        User user = userRepository.getUser();
         LearningPath learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), user.getId());
         return ResponseEntity.ok(learningPath.getId());
     }
@@ -132,13 +129,13 @@ public class LearningPathResource {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (authorizationCheckService.isStudentInCourse(course, user)) {
+        if (authorizationCheckService.isStudentInCourse(course, null)) {
+            final var user = userRepository.getUser();
             if (!user.getId().equals(learningPath.getUser().getId())) {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !authorizationCheckService.isAdmin()) {
+        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
         NgxLearningPathDTO graph = learningPathService.generateNgxRepresentation(learningPath);

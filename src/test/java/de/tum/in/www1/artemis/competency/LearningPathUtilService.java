@@ -40,7 +40,7 @@ public class LearningPathUtilService {
     public Course enableAndGenerateLearningPathsForCourse(Course course) {
         var eagerlyLoadedCourse = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(course.getId());
         learningPathService.generateLearningPaths(eagerlyLoadedCourse);
-        eagerlyLoadedCourse.setLeanringPathsEnabled(true);
+        eagerlyLoadedCourse.setLearningPathsEnabled(true);
         return courseRepository.save(eagerlyLoadedCourse);
     }
 
