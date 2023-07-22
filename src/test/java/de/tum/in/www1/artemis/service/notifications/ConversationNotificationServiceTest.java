@@ -108,7 +108,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post = conversationMessageRepository.save(post);
 
         conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
