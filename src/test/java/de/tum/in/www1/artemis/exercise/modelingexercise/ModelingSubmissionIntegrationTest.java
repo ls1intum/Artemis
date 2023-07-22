@@ -76,6 +76,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     private ExamRepository examRepository;
 
     @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
     private CompassService compassService;
 
     @Autowired
@@ -765,7 +768,13 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseGroupRepository.save(exerciseGroup);
         modelingExercise = exerciseRepo.save(modelingExercise);
 
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
+
+        var studentExam = examUtilService.addStudentExamForTestExam(exam, TEST_PREFIX + "student1");
+        studentExam.setStarted(true);
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        studentExamRepository.save(studentExam);
 
         ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission("Some text", true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1",
