@@ -80,4 +80,6 @@ class AthenaSubmissionSelectionServiceTest extends AthenaTest {
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmission(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    // TODO: Tests for 1. Athena returns wrong ID, 2. Athena returns non-existing ID, 3. Athena returns invalid response
 }
