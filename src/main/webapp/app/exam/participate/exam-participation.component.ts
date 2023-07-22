@@ -34,7 +34,6 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -125,7 +124,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private translateService: TranslateService,
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
-        private featureToggleService: FeatureToggleService,
         private artemisDatePipe: ArtemisDatePipe,
     ) {
         // show only one synchronization error every 5s
