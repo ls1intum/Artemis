@@ -680,8 +680,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || this.connected) {
-            // Save collected actions
-
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
