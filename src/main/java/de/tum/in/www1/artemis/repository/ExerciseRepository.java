@@ -349,4 +349,15 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                   AND p.student.id = :userId
             """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(long courseId, long userId);
+
+    @Query("""
+                SELECT e
+                FROM Exercise e
+                    LEFT JOIN e.exerciseGroup eg
+                    WHERE eg IS NOT NULL
+                        AND eg.exam.id = :examId
+                        AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
+
+            """)
+    List<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(long examId);
 }

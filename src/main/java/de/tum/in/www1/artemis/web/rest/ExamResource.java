@@ -33,9 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -116,12 +114,17 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExamSessionService examSessionService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
-            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository) {
+            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
+            ExamSessionService examSessionRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -142,6 +145,8 @@ public class ExamResource {
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.examSessionService = examSessionRepository;
     }
 
     /**
@@ -1195,6 +1200,26 @@ public class ExamResource {
         File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
+    @EnforceAtLeastInstructor
+    public List<Exercise> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exercises for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        return exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+    }
+
+    @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
+    @EnforceAtLeastInstructor
+    public Set<SuspiciousExamSessions> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId);
     }
 
 }

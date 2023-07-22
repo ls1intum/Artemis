@@ -20,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
+import { Exercise } from 'app/entities/exercise.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -480,5 +481,9 @@ export class ExamManagementService {
 
     private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
         this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
+    }
+
+    getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
+        return this.http.get<Exercise[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises-with-potential-plagiarism`);
     }
 }

@@ -75,4 +75,6 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
     @Modifying
     @Transactional // ok because of modifying query
     void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
+
+    long countByExerciseId(long exerciseId);
 }

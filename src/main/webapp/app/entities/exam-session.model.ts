@@ -15,3 +15,7 @@ export class ExamSession implements BaseEntity {
     public createdDate?: Date;
     public lastModifiedDate?: Date;
 }
+
+export class SuspiciousExamSessions {
+    examSessions: ExamSession[] = [];
+}

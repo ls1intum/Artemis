@@ -10,8 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -183,5 +182,13 @@ public class PlagiarismResource {
             plagiarismResultRepository.deletePlagiarismResultsByIdNotAndExerciseId(plagiarismResultId, exerciseId);
         }
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("exercises/{exerciseId}/plagiarism-results")
+    @EnforceAtLeastInstructor
+    public long getNumberOfPlagiarismResultsForExercise(@PathVariable("exerciseId") long exerciseId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        return plagiarismResultRepository.countByExerciseId(exerciseId);
     }
 }

@@ -122,4 +122,6 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     default PlagiarismCase findByIdElseThrow(long plagiarismCaseId) {
         return findById(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
+
+    long countByExerciseId(long exerciseId);
 }

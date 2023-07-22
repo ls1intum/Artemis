@@ -569,7 +569,8 @@
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -584,7 +585,8 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -617,6 +619,11 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "suspiciousBehavior": {
+                "title": "Suspicious behavior",
+                "noSuspiciousSessions": "No suspicious sessions",
+                "plagiarismCasesOverview": "Plagiarism cases overview"
             }
         },
         "examMonitoring": {

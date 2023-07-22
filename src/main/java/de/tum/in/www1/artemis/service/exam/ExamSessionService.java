@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -9,8 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import inet.ipaddr.IPAddress;
 
@@ -72,4 +71,36 @@ public class ExamSessionService {
         long examSessionCount = examSessionRepository.findExamSessionCountByStudentExamId(studentExamId);
         return (examSessionCount == 1);
     }
+
+    public Set<SuspiciousExamSessions> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
+        Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
+        Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
+        examSessions.forEach(examSession -> {
+            Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsyByExamIdAndExamSession(examId, examSession);
+            if (!relatedExamSessions.isEmpty()) {
+                relatedExamSessions.add(examSession);
+                determineSuspiciousReasons(examSession, relatedExamSessions);
+                suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
+            }
+        });
+        return suspiciousExamSessions;
+    }
+
+    private void determineSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+        for (var relatedExamSession : relatedExamSessions) {
+            if (session.sameBrowserFingerprint(relatedExamSession)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
+            }
+            if (session.sameInstanceId(relatedExamSession)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_INSTANCE_ID);
+            }
+            if (session.sameIpAddress(relatedExamSession)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
+            }
+            if (session.sameUserAgent(relatedExamSession)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
+            }
+        }
+    }
+
 }
