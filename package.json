@@ -36,7 +36,7 @@
         "@ng-bootstrap/ng-bootstrap": "15.0.1",
         "@ngx-translate/core": "15.0.0",
         "@ngx-translate/http-loader": "8.0.0",
-        "@palsch/apollon": "^2.14.12",
+        "@palsch/apollon": "^2.14.13",
         "@sentry/angular-ivy": "7.58.1",
         "@sentry/tracing": "7.58.1",
         "@sentry/types": "7.58.1",
