@@ -226,7 +226,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(postsBelongingToFirstExercise).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
