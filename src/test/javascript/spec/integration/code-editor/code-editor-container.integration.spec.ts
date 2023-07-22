@@ -45,7 +45,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { omit } from 'lodash-es';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
@@ -66,6 +66,7 @@ import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -120,6 +121,7 @@ describe('CodeEditorContainerIntegration', () => {
             providers: [
                 ChangeDetectorRef,
                 CodeEditorConflictStateService,
+                MockProvider(AlertService),
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -550,4 +552,14 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.destroy();
         flush();
     }));
+
+    it.each([
+        ['loadingFailed', 'artemisApp.editor.errors.loadingFailed', { connectionIssue: '' }],
+        ['loadingFailedInternetDisconnected', 'artemisApp.editor.errors.loadingFailed', { connectionIssue: 'artemisApp.editor.errors.InternetDisconnected' }],
+    ])('onError should handle disconnectedInternet', (error: string, errorKey: string, translationParams: { connectionIssue: string }) => {
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        container.onError(error);
+        expect(alertServiceSpy).toHaveBeenCalledWith(errorKey, translationParams);
+    });
 });
