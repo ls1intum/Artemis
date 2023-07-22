@@ -359,7 +359,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", examExerciseComplaint);
         complaintResponse.getComplaint().setAccepted(true);
-        // 26 characters, above course limit but vaild for exam exercises (where complaint limits don't apply)
+        // 26 characters, above course limit but valid for exam exercises (where complaint limits don't apply)
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
