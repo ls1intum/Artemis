@@ -568,6 +568,31 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_testExam() throws Exception {
+        // create exam
+        Exam exam = examUtilService.addTestExamWithExerciseGroup(course, true);
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
+        exam.setVisibleDate(now().minusHours(3));
+
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        exerciseGroup.addExercise(textExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        textExercise = exerciseRepo.save(textExercise);
+
+        examRepository.save(exam);
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        var participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        assertThat(participation).isNotNull();
+        assertThat(participation.getSubmissions()).containsExactly(textSubmission);
+        assertThat(participation.getExercise().getExerciseGroup().getExam()).as("The exam object should not be send to students").isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getDataForTextEditor_studentHidden() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
