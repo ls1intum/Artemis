@@ -29,7 +29,7 @@ class AthenaSubmissionSendingServiceTest extends AthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(textSubmissionRepository, athenaRequestMockProvider.getRestTemplate());
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
         ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
 
         athenaRequestMockProvider.enableMockingOfRequests();

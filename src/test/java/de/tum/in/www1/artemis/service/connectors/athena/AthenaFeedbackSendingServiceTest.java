@@ -37,7 +37,7 @@ class AthenaFeedbackSendingServiceTest extends AthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaFeedbackSendingService = new AthenaFeedbackSendingService(textBlockRepository, athenaRequestMockProvider.getRestTemplate());
+        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), textBlockRepository);
         ReflectionTestUtils.setField(athenaFeedbackSendingService, "athenaUrl", athenaUrl);
 
         athenaRequestMockProvider.enableMockingOfRequests();

@@ -37,7 +37,7 @@ public class AthenaSubmissionSendingService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    public AthenaSubmissionSendingService(TextSubmissionRepository textSubmissionRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextSubmissionRepository textSubmissionRepository) {
         this.textSubmissionRepository = textSubmissionRepository;
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
     }

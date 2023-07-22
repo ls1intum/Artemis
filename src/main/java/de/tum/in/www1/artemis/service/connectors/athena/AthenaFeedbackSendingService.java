@@ -44,7 +44,7 @@ public class AthenaFeedbackSendingService {
      * @param textBlockRepository Needed to get start and end indexes of feedbacks
      * @param athenaRestTemplate  The rest template to use for sending requests to Athena
      */
-    public AthenaFeedbackSendingService(TextBlockRepository textBlockRepository, @Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
         this.textBlockRepository = textBlockRepository;
     }

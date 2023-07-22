@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -130,9 +128,16 @@ public class TextSubmissionService extends SubmissionService {
         // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
         if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var assessableSubmissions = getAssessableSubmissions(textExercise, examMode, correctionRound);
-            var athenaSubmission = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(s -> (TextSubmission) s).toList());
+            var athenaSubmission = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmission.isPresent()) {
-                return athenaSubmission;
+                // test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime)
+                var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmission.get().getId());
+                if (submission.isPresent() && submission.get().getLatestResult() == null) { // submission assessable?
+                    return submission;
+                }
+                else {
+                    log.debug("Athena proposed submission {} is not assessable anymore", athenaSubmission.get().getId());
+                }
             }
         }
         var submissionWithoutResult = super.getRandomAssessableSubmission(textExercise, examMode, correctionRound);
