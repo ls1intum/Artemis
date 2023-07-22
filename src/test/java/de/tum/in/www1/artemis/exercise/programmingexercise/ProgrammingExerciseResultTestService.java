@@ -151,15 +151,14 @@ public class ProgrammingExerciseResultTestService {
         feedback.setCredits(10.0);
 
         var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
-        var semiAutoResult = resultsWithFeedback.get(2);
+        var semiAutoResult = resultsWithFeedback.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny().orElseThrow();
         participationUtilService.addFeedbackToResult(feedback, semiAutoResult);
 
         // Assert that the results have been created successfully.
         resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         assertThat(resultsWithFeedback).hasSize(3);
-        assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.MANUAL).hasSize(2);
+        assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).hasSize(1);
 
         // Re-trigger the build. We create a notification with feedback of a successful test
         userUtilService.changeUser(userPrefix + "instructor1");
