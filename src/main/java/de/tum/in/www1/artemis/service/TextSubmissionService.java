@@ -129,15 +129,15 @@ public class TextSubmissionService extends SubmissionService {
 
         // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
         if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
-            var athenaSubmission = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
-            if (athenaSubmission.isPresent()) {
+            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
+            if (athenaSubmissionId.isPresent()) {
                 // test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime)
-                var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmission.get().getId());
+                var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
                 if (submission.isPresent() && submission.get().getLatestResult() == null) { // submission assessable?
                     return submission;
                 }
                 else {
-                    log.debug("Athena proposed submission {} is not assessable anymore", athenaSubmission.get().getId());
+                    log.debug("Athena proposed submission {} is not assessable anymore", athenaSubmissionId.get());
                 }
             }
         }

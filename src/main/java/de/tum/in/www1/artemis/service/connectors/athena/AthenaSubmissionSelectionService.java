@@ -18,9 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 
 /**
@@ -42,8 +40,6 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    private final SubmissionRepository submissionRepository;
-
     private static class RequestDTO {
 
         public TextExerciseDTO exercise;
@@ -63,7 +59,7 @@ public class AthenaSubmissionSelectionService {
     /**
      * Create a new AthenaSubmissionSelectionService, which uses a custom timeout for requests to Athena
      */
-    public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository) {
+    public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
         // Configure rest template to use the given timeout
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(REQUEST_TIMEOUT_MS);
@@ -71,18 +67,18 @@ public class AthenaSubmissionSelectionService {
         athenaRestTemplate.setRequestFactory(requestFactory);
         // Create connector
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
-        this.submissionRepository = submissionRepository;
     }
 
     /**
-     * Fetches the proposedTextSubmission for a given exercise from Athena
+     * Fetches the proposedTextSubmission for a given exercise from Athena.
+     * It is not guaranteed that you get a valid submission ID, so you need to check for existence yourself.
      *
      * @param exercise      the exercise to get the proposed Submission for
      * @param submissionIds IDs of assessable submissions of the exercise
-     * @return a Submission suggested by the Athena submission selector (e.g. chosen by the highest information gain)
+     * @return a submission ID suggested by the Athena submission selector (e.g. chosen by the highest information gain)
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
-    public Optional<TextSubmission> getProposedSubmission(TextExercise exercise, List<Long> submissionIds) {
+    public Optional<Long> getProposedSubmission(TextExercise exercise, List<Long> submissionIds) {
         if (!exercise.isFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
@@ -103,12 +99,7 @@ public class AthenaSubmissionSelectionService {
             if (response.submissionId == -1) {
                 return Optional.empty();
             }
-            var submission = submissionRepository.findById(response.submissionId);
-            if (submission.isEmpty()) {
-                log.error("Athena returned a submission ID that does not exist in the database: {}", response.submissionId);
-                return Optional.empty();
-            }
-            return submission.map(s -> (TextSubmission) s);
+            return Optional.of(response.submissionId);
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
