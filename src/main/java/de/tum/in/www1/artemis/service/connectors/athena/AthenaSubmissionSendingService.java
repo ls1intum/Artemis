@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,6 +30,8 @@ import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 @Service
 @Profile("athena")
 public class AthenaSubmissionSendingService {
+
+    private final static int SUBMISSIONS_PER_REQUEST = 100;
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
 
@@ -81,10 +86,21 @@ public class AthenaSubmissionSendingService {
         log.debug("Start Athena Submission Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all text submissions for exercise (later we will support others)
-        Set<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exercise.getId());
+        int page = 0;
+        while (true) {
+            Pageable pageRequest = PageRequest.of(page, SUBMISSIONS_PER_REQUEST);
+            Page<TextSubmission> textSubmissions = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId(), pageRequest);
+            sendSubmissions(exercise, textSubmissions.toSet(), maxRetries);
+            if (textSubmissions.isLast()) {
+                break;
+            }
+            page++;
+        }
+    }
 
+    public void sendSubmissions(TextExercise exercise, Set<TextSubmission> textSubmissions, int maxRetries) {
         if (textSubmissions.isEmpty()) {
-            log.info("No text submissions found for exercise '{}'.", exercise.getTitle());
+            log.info("No text submissions found to send.");
             return;
         }
 

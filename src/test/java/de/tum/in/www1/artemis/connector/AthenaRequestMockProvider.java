@@ -69,14 +69,16 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Mocks the /submissions API from Athena used to submit all submissions of an exercise
+     * Mocks the /submissions API from Athena used to submit all submissions of an exercise.
+     *
+     * @param expectedContents The expected contents of the request
      */
     public void mockSendSubmissionsAndExpect(RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
-            responseActions.andExpect(matcher);
+            responseActions = responseActions.andExpect(matcher);
         }
 
         // Response: {"status":200,"data":null,"module_name":"module_example"}
@@ -88,6 +90,7 @@ public class AthenaRequestMockProvider {
      * Mocks the /select_submission API from Athena used to select a submission for manual assessment
      *
      * @param submissionIdResponse The submission id to return from the endpoint. An ID of -1 means "no selection".
+     * @param expectedContents     The expected contents of the request
      */
     public void mockSelectSubmissionsAndExpect(long submissionIdResponse, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission"))
@@ -105,6 +108,8 @@ public class AthenaRequestMockProvider {
 
     /**
      * Mocks the /feedbacks API from Athena used to submit feedbacks for a submission
+     *
+     * @param expectedContents The expected contents of the request
      */
     public void mockSendFeedbackAndExpect(RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedbacks"))
@@ -123,6 +128,8 @@ public class AthenaRequestMockProvider {
     /**
      * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
      * Makes the endpoint return one example feedback suggestion.
+     *
+     * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions"))
