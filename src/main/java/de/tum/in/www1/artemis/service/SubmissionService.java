@@ -230,7 +230,15 @@ public class SubmissionService {
      */
     public Optional<Submission> getRandomAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+        return getRandomAssessableSubmission(assessableSubmissions);
+    }
 
+    /**
+     * Given a list of submissions, find a random one.
+     *
+     * @return a random submission or an empty Optional if no submission was passed
+     */
+    public Optional<Submission> getRandomAssessableSubmission(List<Submission> assessableSubmissions) {
         return assessableSubmissions.isEmpty() ? Optional.empty() : Optional.of(assessableSubmissions.get(ThreadLocalRandom.current().nextInt(assessableSubmissions.size())));
     }
 
