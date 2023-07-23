@@ -9,3 +9,8 @@ zonky:
     test:
         database:
             type: POSTGRES
+            postgres:
+                docker:
+                    tmpfs:
+                        enabled: true
+
