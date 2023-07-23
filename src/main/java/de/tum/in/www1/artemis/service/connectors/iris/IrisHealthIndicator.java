@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.iris;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,14 +35,14 @@ public class IrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            final var status = shortTimeoutRestTemplate.getForObject(irisUrl.resolve("/health"), IrisStatusDTO.class);
-            var isUp = status != null
-                    && status.modelStatuses().values().stream().filter(s -> s != IrisStatusDTO.ModelStatus.NOT_AVAILABLE).anyMatch(s -> s == IrisStatusDTO.ModelStatus.UP);
-            var additionalInfo = Map.of("url", irisUrl, "modelStatuses", status.modelStatuses());
+            final var status = shortTimeoutRestTemplate.getForObject(irisUrl.resolve("/health"), IrisStatusDTO[].class);
+            var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == IrisStatusDTO.ModelStatus.UP);
+            Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
             health = new ConnectorHealth(isUp, additionalInfo);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
+            health.setUp(false);
             health.setAdditionalInfo(Map.of("url", irisUrl));
         }
 

@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.annotation.Profile;
@@ -132,10 +132,11 @@ public class IrisSessionResource {
         irisSessionService.checkIsIrisActivated(session);
         var settings = irisSettingsService.getCombinedIrisSettings(session.getExercise(), false);
         var health = irisHealthIndicator.health();
-        Map<String, IrisStatusDTO.ModelStatus> modelStatuses = (Map<String, IrisStatusDTO.ModelStatus>) health.getDetails().get("modelStatuses");
+        IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
         var specificModelStatus = false;
         if (modelStatuses != null) {
-            specificModelStatus = IrisStatusDTO.ModelStatus.UP == modelStatuses.get(settings.getIrisChatSettings().getPreferredModel());
+            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
+                    .allMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
         return ResponseEntity.ok(specificModelStatus && (health.getStatus() == Status.UP));
     }
