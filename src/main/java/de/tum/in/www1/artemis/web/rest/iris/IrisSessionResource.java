@@ -5,8 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -136,8 +136,12 @@ public class IrisSessionResource {
         var specificModelStatus = false;
         if (modelStatuses != null) {
             specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
-                    .allMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+            if (Arrays.stream(modelStatuses).noneMatch(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))) {
+                return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build();
+            }
+            return ResponseEntity.ok(specificModelStatus);
         }
-        return ResponseEntity.ok(specificModelStatus && (health.getStatus() == Status.UP));
+        return ResponseEntity.status(HttpStatus.GONE).build();
     }
 }
