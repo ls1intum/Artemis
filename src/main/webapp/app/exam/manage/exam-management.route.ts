@@ -56,7 +56,7 @@ import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
+import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -232,7 +232,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/suspicious-behavior/suspicious-sessions',
-        component: SuspiciousSessionsComponent,
+        component: SuspiciousSessionsOverviewComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',

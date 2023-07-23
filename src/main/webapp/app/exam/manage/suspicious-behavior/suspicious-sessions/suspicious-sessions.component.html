@@ -1,1 +1,30 @@
-<p>suspicious-sessions works!</p>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.sessionToken' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.userAgent' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.instanceId' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <ng-container *ngFor="let session of suspiciousSessions.examSessions; let i = index">
+            <tr>
+                <th scope="row">{{ session.id }}</th>
+                <td>{{ session.sessionToken }}</td>
+                <td class="align-top w-25">{{ session.userAgent }}</td>
+                <td>{{ session.browserFingerprintHash }}</td>
+                <td>{{ session.instanceId }}</td>
+                <td>{{ session.ipAddress }}</td>
+                <td>{{ session.createdDate }}</td>
+                <td>
+                    {{ session.reasons?.join(', ') }}
+                </td>
+            </tr>
+        </ng-container>
+    </tbody>
+</table>

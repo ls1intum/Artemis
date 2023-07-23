@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions } from 'app/entities/exam-session.model';
-import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.service';
+import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
 
 @Component({

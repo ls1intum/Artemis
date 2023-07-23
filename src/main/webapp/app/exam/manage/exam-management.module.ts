@@ -54,8 +54,9 @@ import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
+import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
+import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -119,8 +120,9 @@ const ENTITY_STATES = [...examManagementState];
         ExamExerciseImportComponent,
         BonusComponent,
         SuspiciousBehaviorComponent,
-        SuspiciousSessionsComponent,
+        SuspiciousSessionsOverviewComponent,
         PlagiarismCasesOverviewComponent,
+        SuspiciousSessionsComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

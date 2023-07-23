@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 
-describe('SuspiciousSessionsComponent', () => {
+describe('SuspiciousSessionComponent', () => {
     let component: SuspiciousSessionsComponent;
     let fixture: ComponentFixture<SuspiciousSessionsComponent>;
 

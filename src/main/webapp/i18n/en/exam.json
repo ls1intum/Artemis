@@ -621,9 +621,27 @@
                 }
             },
             "suspiciousBehavior": {
-                "title": "Suspicious behavior",
-                "noSuspiciousSessions": "No suspicious sessions",
-                "plagiarismCasesOverview": "Plagiarism cases overview"
+                "title": "Suspicious Behavior",
+                "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
+                "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
+                "suspiciousSessionCriterion1": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterion2": "Die gleiche Sitzung (mit Ausnahme des Zeitstempels) nimmt an mehreren Klausuren teil",
+                "viewSuspiciousSessions": "Verdächtige Sitzungen anzeigen",
+                "suspiciousSessions": {
+                    "title": "Suspicious Sessions",
+                    "view": "View Suspicious Sessions",
+                    "number": "This exam has {{numberOfSuspiciousSessions}} suspicious sessions.",
+                    "reasons": "Reasons"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiarism Cases Overview",
+                "exerciseName": "Exercise",
+                "numberOfResults": "Number of potential plagiarism cases",
+                "numberOfCases": "Number of plagiarism cases",
+                "actions": "Actions",
+                "viewResultsOrRunDetection": "View Results or Run Detection",
+                "viewCases": "View Cases"
             }
         },
         "examMonitoring": {
