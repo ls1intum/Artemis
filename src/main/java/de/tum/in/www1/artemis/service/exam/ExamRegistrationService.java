@@ -333,7 +333,7 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = userRepository.getStudents(course);
+        var students = new ArrayList<>(userRepository.getStudents(course));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

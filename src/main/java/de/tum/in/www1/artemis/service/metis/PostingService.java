@@ -69,16 +69,17 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
-     * @param postDTO object including the affected post as well as the action
-     * @param course  course the posting belongs to
+     * @param postDTO    object including the affected post as well as the action
+     * @param course     course the posting belongs to
+     * @param recipients the recipients for this broadcast, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Course course) {
+    protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
 
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         if (postDTO.post().getConversation() != null) {
@@ -97,10 +98,13 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
-            Set<ConversationParticipant> participants = this.conversationParticipantRepository
-                    .findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> websocketMessagingService.sendMessageToUser(conversationParticipant.getUser().getLogin(),
-                    genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
+            if (recipients == null) {
+                // TODO: should we filter the author of the post?
+                recipients = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId()).stream()
+                        .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            }
+            recipients.forEach(
+                    user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
         }

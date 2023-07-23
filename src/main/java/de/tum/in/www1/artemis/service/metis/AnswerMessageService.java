@@ -191,7 +191,7 @@ public class AnswerMessageService extends PostingService {
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setConversation(conversation);
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
     }
 
     /**

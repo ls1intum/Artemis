@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -28,10 +29,10 @@ public interface PushNotificationDeviceConfigurationRepository extends JpaReposi
     @Query("""
             SELECT p FROM PushNotificationDeviceConfiguration p
             WHERE p.expirationDate > now()
-                AND p.owner IN :userList
+                AND p.owner IN :users
                 AND p.deviceType = :deviceType
             """)
-    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, @Param("deviceType") PushNotificationDeviceType deviceType);
+    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("users") Set<User> users, @Param("deviceType") PushNotificationDeviceType deviceType);
 
     /**
      * Cleans up the old/expired push notifications device configurations
