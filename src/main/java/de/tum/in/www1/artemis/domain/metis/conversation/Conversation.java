@@ -108,8 +108,8 @@ public abstract class Conversation extends DomainObject {
     public abstract String getHumanReadableNameForReceiver(User sender);
 
     public void hideDetails() {
-        getConversationParticipants().clear();
-        getPosts().clear();
+        setConversationParticipants(new HashSet<>());
+        setPosts(new HashSet<>());
         setCourse(null);
     }
 }
