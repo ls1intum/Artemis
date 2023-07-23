@@ -3520,6 +3520,63 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExercisesWithPotentialPlagiarismAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetSuspiciousSessionsAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course1, "");
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course1, "");
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExercisesWithPotentialPlagiarismAsInstructor() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        List<Exercise> expectedExercises = new ArrayList<>();
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
+        exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+            if (exercise.getExerciseType() != ExerciseType.QUIZ && exercise.getExerciseType() != ExerciseType.FILE_UPLOAD) {
+                expectedExercises.add(exercise);
+            }
+        }));
+
+        // courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism
+        List<Exercise> exercises = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.OK,
+                Exercise.class);
+        assertThat(exercises).hasSize(5);
+        assertThat(exercises).containsExactlyInAnyOrderElementsOf(expectedExercises);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSuspiciousSessionsAsInstructor() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        // TODO add student exams with suspicious sessions and assert that the correct sessions with the correct reasons are returned
+
+    }
+
     private int prepareExerciseStart(Exam exam) throws Exception {
         return ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
     }
