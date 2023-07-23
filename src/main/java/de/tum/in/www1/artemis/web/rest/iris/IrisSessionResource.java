@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -133,11 +131,17 @@ public class IrisSessionResource {
         var settings = irisSettingsService.getCombinedIrisSettings(session.getExercise(), false);
         var health = irisHealthIndicator.health();
         IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
-        var specificModelStatus = false;
-        if (modelStatuses != null) {
-            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
-                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+        if (health.getDetails().containsKey("error")) {
+            return ResponseEntity.accepted().build();
         }
-        return ResponseEntity.ok(specificModelStatus && (health.getStatus() == Status.UP));
+        return ResponseEntity.ok(health.getDetails().containsKey("modelStatuses"));
+        /*
+         * var specificModelStatus = false;
+         * if (modelStatuses != null) {
+         * specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
+         * .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+         * }
+         * return ResponseEntity.ok(specificModelStatus && (health.getStatus() == Status.UP));
+         */
     }
 }
