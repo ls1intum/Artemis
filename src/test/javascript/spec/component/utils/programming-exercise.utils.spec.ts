@@ -223,13 +223,14 @@ describe('ProgrammingExerciseUtils', () => {
     });
 
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
-        const template = '/job/{projectKey}/job/{buildPlanId}';
+        const template = '/exercise/{exerciseID}/job/{projectKey}/job/{buildPlanId}/';
+        const exerciseId = 'EID';
         const buildPlanId = 'BPID';
         const projectKey = 'PK';
 
         const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId);
 
-        const expectedUrl = '/job/PK/job/BPID';
+        const expectedUrl = '/exercise/EID/job/PK/job/BPID';
         expect(generatedUrl).toBe(expectedUrl);
     });
 
