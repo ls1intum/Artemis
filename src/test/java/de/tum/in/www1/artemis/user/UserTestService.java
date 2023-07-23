@@ -412,7 +412,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createUser_asAdmin_existsInCi() throws Exception {
+    public void createUserAsAdminExistsInCi() throws Exception {
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");

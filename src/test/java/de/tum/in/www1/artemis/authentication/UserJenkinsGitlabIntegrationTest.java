@@ -197,8 +197,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_existsInCi() throws Exception {
-        userTestService.createUser_asAdmin_existsInCi();
+    void createUserAsAdminExistsInCi() throws Exception {
+        userTestService.createUserAsAdminExistsInCi();
     }
 
     @Test
