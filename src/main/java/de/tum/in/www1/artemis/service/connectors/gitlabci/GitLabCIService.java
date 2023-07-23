@@ -126,7 +126,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private void setupGitLabCIConfigurationForRepository(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryURL);
         final ProjectApi projectApi = gitlab.getProjectApi();
-        final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise) + "&file-extension=" + GITLAB_CI_FILE_EXTENSION;
 
         try {
             Project project = projectApi.getProject(repositoryPath);
@@ -134,6 +133,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setJobsEnabled(true);
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
+
+            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise) + "&file-extension=" + GITLAB_CI_FILE_EXTENSION;
             project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
