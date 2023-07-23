@@ -214,8 +214,8 @@ public class ConversationService {
      * @param conversation conversation which members to notify about the new message (except the author)
      * @param recipients   users to which the notification should be sent
      */
-    public void notifyAllConversationMembersAboutNewMessage(Conversation conversation, Set<User> recipients) {
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.NEW_MESSAGE, conversation, recipients);
+    public void notifyAllConversationMembersAboutNewMessage(Course course, Conversation conversation, Set<User> recipients) {
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.NEW_MESSAGE, conversation, recipients);
     }
 
     /**

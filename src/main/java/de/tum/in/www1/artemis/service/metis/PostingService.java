@@ -99,7 +99,6 @@ public abstract class PostingService {
         }
         else if (postDTO.post().getConversation() != null) {
             if (recipients == null) {
-                // TODO: should we filter the author of the post?
                 recipients = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId()).stream()
                         .map(ConversationParticipant::getUser).collect(Collectors.toSet());
             }

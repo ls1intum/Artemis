@@ -90,12 +90,10 @@ public class ConversationMessagingService extends PostingService {
 
         var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
         var conversationParticipants = conversation.getConversationParticipants();
-        var notificationRecipients = conversationParticipants.stream().map(ConversationParticipant::getUser).filter(Objects::nonNull)
-                .filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
-        // we don't need it in the conversation any more
+        var notificationRecipients = conversationParticipants.stream().map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
+        // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
-        var courseTitle = course.getTitle();
 
         // extra checks for channels
         if (conversation instanceof Channel channel) {
@@ -113,14 +111,16 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
 
+        // reset the conversation again, because it might have been lost during save
+        createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
 
-        // Websocket notification 1
+        // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, notificationRecipients);
-        createdMessage.setConversation(conversation);
+
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
@@ -131,12 +131,15 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
+
+        notificationRecipients = notificationRecipients.stream().filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
+        // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(conversation, notificationRecipients);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, notificationRecipients);
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, courseTitle);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
 
         return createdMessage;
     }
