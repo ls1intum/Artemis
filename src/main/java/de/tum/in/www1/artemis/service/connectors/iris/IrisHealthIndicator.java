@@ -35,7 +35,7 @@ public class IrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            final var status = shortTimeoutRestTemplate.getForObject(irisUrl.resolve("/health"), IrisStatusDTO[].class);
+            final var status = shortTimeoutRestTemplate.getForObject(irisUrl.resolve("/api/v1/health"), IrisStatusDTO[].class);
             var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == IrisStatusDTO.ModelStatus.UP);
             Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
             health = new ConnectorHealth(isUp, additionalInfo);
