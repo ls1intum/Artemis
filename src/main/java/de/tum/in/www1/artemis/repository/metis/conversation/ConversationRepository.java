@@ -31,7 +31,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     // This is used only for testing purposes
     List<Conversation> findAllByCourseId(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
+    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user" })
     Optional<Conversation> findWithConversationParticipantsById(long conversationId);
 
     default Conversation findWithConversationParticipantsByIdElseThrow(long conversationId) {

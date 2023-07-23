@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
@@ -68,15 +67,12 @@ public class ConversationNotificationService {
 
     private void saveAndSend(ConversationNotification notification, Set<User> recipients) {
         conversationNotificationRepository.save(notification);
-        sendNotificationViaWebSocket(notification);
+        sendNotificationViaWebSocket(notification, recipients);
 
         generalInstantNotificationService.sendNotification(notification, recipients, null);
     }
 
-    private void sendNotificationViaWebSocket(ConversationNotification notification) {
-        notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.equals(notification.getAuthor()))
-                .forEach(user -> {
-                    websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification);
-                });
+    private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
+        recipients.forEach(user -> websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification));
     }
 }
