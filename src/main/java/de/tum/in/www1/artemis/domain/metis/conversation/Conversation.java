@@ -106,4 +106,10 @@ public abstract class Conversation extends DomainObject {
      * @return returns a human-readable name for this conversation, which can be used in notifications or emails.
      */
     public abstract String getHumanReadableNameForReceiver(User sender);
+
+    public void hideDetails() {
+        getConversationParticipants().clear();
+        getPosts().clear();
+        setCourse(null);
+    }
 }

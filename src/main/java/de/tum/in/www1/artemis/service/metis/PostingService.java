@@ -79,6 +79,12 @@ public abstract class PostingService {
      * @param course  course the posting belongs to
      */
     protected void broadcastForPost(PostDTO postDTO, Course course) {
+
+        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
+        if (postDTO.post().getConversation() != null) {
+            postDTO.post().getConversation().hideDetails();
+        }
+
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
 

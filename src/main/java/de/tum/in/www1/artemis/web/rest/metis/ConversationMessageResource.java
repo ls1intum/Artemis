@@ -56,6 +56,12 @@ public class ConversationMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
+
+        // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
+        if (createdMessage.getConversation() != null) {
+            createdMessage.getConversation().hideDetails();
+        }
+
         // creation of message posts should not trigger entity creation alert
         conversationNotificationService.notifyAboutNewMessage(createdMessage);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);

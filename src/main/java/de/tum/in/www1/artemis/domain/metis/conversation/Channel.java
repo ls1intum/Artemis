@@ -166,4 +166,12 @@ public class Channel extends Conversation {
     public String getHumanReadableNameForReceiver(User sender) {
         return getName();
     }
+
+    @Override
+    public void hideDetails() {
+        setLecture(null);
+        setExam(null);
+        setExercise(null);
+        super.hideDetails();
+    }
 }
