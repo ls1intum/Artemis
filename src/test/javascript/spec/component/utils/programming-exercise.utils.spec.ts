@@ -223,7 +223,7 @@ describe('ProgrammingExerciseUtils', () => {
     });
 
     it('createBuildPlanUrl fills in buildPlanId and projectKey', () => {
-        const template = '/exercise/{exerciseID}/job/{projectKey}/job/{buildPlanId}/';
+        const template = '/exercise/{exerciseId}/job/{projectKey}/job/{buildPlanId}/';
         const exerciseId = 1;
         const buildPlanId = 'BPID';
         const projectKey = 'PK';
