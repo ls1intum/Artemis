@@ -10,7 +10,6 @@ import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/pla
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    styleUrls: ['./suspicious-behavior.component.scss'],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     exercises: Exercise[] = [];

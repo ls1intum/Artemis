@@ -148,7 +148,7 @@ public class PlagiarismCaseResource {
 
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases")
     @EnforceAtLeastInstructor
-    public long getNumberOfPlagiarismCasesForExamExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
+    public long getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to get number of plagiarism cases for exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {

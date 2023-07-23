@@ -9,7 +9,6 @@ import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/Plagiari
 @Component({
     selector: 'jhi-plagiarism-cases-overview',
     templateUrl: './plagiarism-cases-overview.component.html',
-    styleUrls: ['./plagiarism-cases-overview.component.scss'],
 })
 export class PlagiarismCasesOverviewComponent {
     @Input() exercises: Exercise[];

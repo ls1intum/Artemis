@@ -8,6 +8,7 @@
             <th scope="col">{{ 'artemisApp.examSession.instanceId' | artemisTranslate }}</th>
             <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
             <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
+            <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
             <th scope="col">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}</th>
         </tr>
     </thead>
@@ -22,7 +23,12 @@
                 <td>{{ session.ipAddress }}</td>
                 <td>{{ session.createdDate }}</td>
                 <td>
-                    {{ session.reasons?.join(', ') }}
+                    <a id="student-exam-session-{{ i }}" [routerLink]="getStudentExamLink(session.studentExam!)">
+                        {{ session.studentExam?.id }}
+                    </a>
+                </td>
+                <td>
+                    {{ session.suspiciousReasons?.join(', ') }}
                 </td>
             </tr>
         </ng-container>

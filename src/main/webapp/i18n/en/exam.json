@@ -631,7 +631,8 @@
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
                     "number": "This exam has {{numberOfSuspiciousSessions}} suspicious sessions.",
-                    "reasons": "Reasons"
+                    "reasons": "Reasons",
+                    "case": "Case"
                 }
             },
             "plagiarismCasesOverview": {
