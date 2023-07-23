@@ -110,6 +110,7 @@ public abstract class Conversation extends DomainObject {
     public void hideDetails() {
         setConversationParticipants(new HashSet<>());
         setPosts(new HashSet<>());
-        setCourse(null);
+        // TODO: this information is still needed in some places, we need to identify those and then set it to null
+        // setCourse(null);
     }
 }

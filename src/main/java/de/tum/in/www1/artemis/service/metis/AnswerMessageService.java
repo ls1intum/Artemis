@@ -76,27 +76,27 @@ public class AnswerMessageService extends PostingService {
      * @return created answer message that was persisted
      */
     public AnswerPost createAnswerMessage(Long courseId, AnswerPost answerMessage) {
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User author = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), user.getId());
+        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), author.getId());
 
         Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        var course = preCheckUserAndCourseForMessaging(user, courseId);
+        var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         if (conversation instanceof Channel channel) {
-            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
+            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
         // use post from database rather than user input
         answerMessage.setPost(post);
         // set author to current user
-        answerMessage.setAuthor(user);
+        answerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
@@ -107,7 +107,7 @@ public class AnswerMessageService extends PostingService {
         if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
             usersInvolved.add(post.getAuthor());
         }
-        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, user));
+        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
         return savedAnswerMessage;
     }
 
