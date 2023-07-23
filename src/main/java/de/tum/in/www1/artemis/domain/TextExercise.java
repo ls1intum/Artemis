@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -36,6 +37,7 @@ public class TextExercise extends Exercise {
         this.exampleSolution = exampleSolution;
     }
 
+    @JsonIgnore
     public boolean isFeedbackSuggestionsEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }
