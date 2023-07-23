@@ -211,6 +211,7 @@ public class ConversationService {
     /**
      * Notify all members of a conversation about a new message in the conversation
      *
+     * @param course       the course in which the conversation takes place
      * @param conversation conversation which members to notify about the new message (except the author)
      * @param recipients   users to which the notification should be sent
      */

@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
     /**
-     * @param userList   a list of users you want the deviceTokens for.
+     * @param users      a list of users you want the deviceTokens for.
      * @param deviceType the device type you want the deviceTokens to be found for. Either Firebase or APNS.
      * @return Finds all the deviceTokens for a specific deviceType for a list of users.
      */
