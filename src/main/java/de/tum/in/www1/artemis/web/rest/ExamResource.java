@@ -1161,6 +1161,15 @@ public class ExamResource {
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism : Get all exercises with potential plagiarism for exam.
+     * An exercise has potential plagiarism if Artemis supports plagiarism detection for it.
+     * This applies to the exercise types TEXT, MODELING and PROGRAMMING.
+     *
+     * @param courseId the id of the course the exam belongs to
+     * @param examId   the id of the exam for which to find exercises with potential plagiarism
+     * @return the list of exercises with potential plagiarism
+     */
     @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
     @EnforceAtLeastInstructor
     public List<Exercise> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
