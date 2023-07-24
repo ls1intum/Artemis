@@ -4,12 +4,11 @@ import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExe
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -21,6 +20,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -321,7 +321,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
     }
 
     @Test
@@ -398,14 +398,29 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateZip() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any());
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST, false);
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST, true, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.createTempDirectory(any(Path.class), any(String.class))).thenThrow(IOException.class);
+            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST, true, false, false);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_embeddedFilesDontExist() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
         doThrow(GitException.class).when(fileService).getUniquePathString(anyString());
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false);
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false, true, true);
     }
 
     @Test
@@ -434,7 +449,8 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    @Disabled // TODO: Fix the TODO inside automaticCleanupBuildPlans() before enabling the test again.
+    @Disabled
+    // TODO: Fix the TODO inside automaticCleanupBuildPlans() before enabling the test again.
     void testAutomaticCleanUpBuildPlans() throws Exception {
         programmingExerciseTestService.automaticCleanupBuildPlans();
     }

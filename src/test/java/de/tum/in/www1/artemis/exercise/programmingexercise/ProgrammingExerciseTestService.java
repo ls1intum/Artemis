@@ -1267,7 +1267,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
-        generateProgrammingExerciseForExport();
+        generateProgrammingExerciseForExport(false);
 
         setupMockRepo(localRepository, repositoryType, "some-file.java");
 
@@ -1276,7 +1276,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
-        generateProgrammingExerciseForExport();
+        generateProgrammingExerciseForExport(false);
 
         setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
         if (includeTests) {
@@ -1288,8 +1288,15 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false);
+
+    /**
+     * Test that the export of the instructor material works as expected.
+     *
+     * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @throws Exception if the export fails
+     */
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile(boolean saveEmbeddedFiles) throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, true, saveEmbeddedFiles);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
@@ -1314,7 +1321,7 @@ public class ProgrammingExerciseTestService {
     }
 
     void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, true, false);
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
@@ -1335,31 +1342,43 @@ public class ProgrammingExerciseTestService {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false, false, false);
     }
 
-    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull) throws Exception {
+    /**
+     * export programming exercise instructor material
+     *
+     * @param expectedStatus       the expected http status, e.g. 200 OK
+     * @param problemStatementNull whether the problem statement should be null or not
+     * @param mockRepos            whether the repos should be mocked or not, if we mock the files API we cannot mock them but also cannot use them
+     * @param saveEmbeddedFiles    whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @return the zip file
+     * @throws Exception if the export fails
+     */
+    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles)
+            throws Exception {
         if (problemStatementNull) {
             generateProgrammingExerciseWithProblemStatementNullForExport();
         }
         else {
-            generateProgrammingExerciseForExport();
+            generateProgrammingExerciseForExport(saveEmbeddedFiles);
         }
-        // Mock template repo
-        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+        if (mockRepos) {
+            // Mock template repo
+            Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
+            doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
 
-        // Mock solution repo
-        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+            // Mock solution repo
+            Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
+            doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
 
-        // Mock tests repo
-        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
-
+            // Mock tests repo
+            Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+            doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+        }
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
@@ -1373,7 +1392,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
-    private void generateProgrammingExerciseForExport() throws IOException {
+    private void generateProgrammingExerciseForExport(boolean saveEmbeddedFiles) throws IOException {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         exercise.setProblemStatement(String.format("""
@@ -1381,10 +1400,12 @@ public class ProgrammingExerciseTestService {
                 ![mountain.jpg](/api/files/markdown/%s)
                 ![matterhorn.jpg](/api/files/markdown/%s)
                 """, embeddedFileName1, embeddedFileName2));
-        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
-                new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
-        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
-                new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
+        if (saveEmbeddedFiles) {
+            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+                    new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
+            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+                    new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
+        }
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
