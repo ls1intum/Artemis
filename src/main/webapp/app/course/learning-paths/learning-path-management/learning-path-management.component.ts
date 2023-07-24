@@ -154,7 +154,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
             .enableLearningPaths(this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.loadData();
                 }),
             )
             .subscribe({
