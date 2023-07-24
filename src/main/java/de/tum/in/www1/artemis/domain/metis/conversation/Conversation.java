@@ -107,6 +107,9 @@ public abstract class Conversation extends DomainObject {
      */
     public abstract String getHumanReadableNameForReceiver(User sender);
 
+    /**
+     * hide the details of the object, can be invoked before sending it as payload in a REST response or websocket message
+     */
     public void hideDetails() {
         // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
         setConversationParticipants(new HashSet<>());
