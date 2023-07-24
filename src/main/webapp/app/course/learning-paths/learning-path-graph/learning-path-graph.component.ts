@@ -50,4 +50,9 @@ export class LearningPathGraphComponent implements OnInit {
         this.center$.next(true);
         this.zoomToFit$.next(true);
     }
+
+    onCenterView() {
+        this.zoomToFit$.next(true);
+        this.center$.next(true);
+    }
 }

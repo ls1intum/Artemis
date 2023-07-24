@@ -1,0 +1,11 @@
+<div class="row">
+    <div class="col-1">
+        <button class="btn btn-primary" (click)="onRefresh.emit()"><fa-icon [icon]="faArrowsRotate"></fa-icon></button>
+    </div>
+    <div class="col-1">
+        <button class="btn btn-primary" (click)="onCenterView.emit()"><fa-icon [icon]="faArrowsToEye"></fa-icon></button>
+    </div>
+    <div class="col-10 justify-content-end d-flex">
+        <button class="btn btn-danger" (click)="onClose.emit()"><fa-icon [icon]="faXmark"></fa-icon></button>
+    </div>
+</div>

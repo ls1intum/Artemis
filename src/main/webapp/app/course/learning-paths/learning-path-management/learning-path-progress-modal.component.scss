@@ -1,6 +1,19 @@
 .modal-container {
     display: flex;
+    flex-wrap: wrap;
     height: 90vh;
+    width: 100%;
+    padding-top: 8px;
+
+    .row {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .modal-nav {
+        height: max-content;
+    }
 
     .graph {
         width: 100%;
