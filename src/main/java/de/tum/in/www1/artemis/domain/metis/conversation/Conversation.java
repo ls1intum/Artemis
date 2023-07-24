@@ -32,6 +32,7 @@ public abstract class Conversation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
+    @JsonIncludeProperties({ "id", "name" })
     private User creator;
 
     @JsonIgnoreProperties("conversation")
