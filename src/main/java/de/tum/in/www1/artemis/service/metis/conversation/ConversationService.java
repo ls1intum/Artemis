@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
@@ -51,7 +51,7 @@ public class ConversationService {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
@@ -64,7 +64,7 @@ public class ConversationService {
     private final CourseRepository courseRepository;
 
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
-            ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
+            ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, WebsocketMessagingService websocketMessagingService,
             OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
             AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationDTOService = conversationDTOService;
@@ -72,7 +72,7 @@ public class ConversationService {
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
         this.groupChatRepository = groupChatRepository;
@@ -99,6 +99,18 @@ public class ConversationService {
      */
     public boolean isMember(Long conversationId, Long userId) {
         return conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId);
+    }
+
+    /**
+     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     */
+    public void isMemberElseThrow(Long conversationId, Long userId) {
+        if (!isMember(conversationId, userId)) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
     }
 
     /**
@@ -305,22 +317,7 @@ public class ConversationService {
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
-        messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-    }
-
-    /**
-     * Checks if a user is a member of a conversation and therefore can access it else throws an exception
-     *
-     * @param conversationId the id of the conversation
-     * @param user           the user to check
-     * @return conversation if the user is a member
-     */
-    public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
-        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
-        if (conversation.isEmpty() || !isMember(conversationId, user.getId())) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
-        }
-        return conversation.get();
+        websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
     }
 
     /**
@@ -437,20 +434,6 @@ public class ConversationService {
     }
 
     /**
-     * Find all conversations for which the given user should be able to receive notifications.
-     *
-     * @param user                    The user for which to find the courses.
-     * @param unreadConversationsOnly Whether to only return conversations that have unread messages.
-     * @return A list of conversations for which the user should receive notifications.
-     */
-    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
-        if (unreadConversationsOnly) {
-            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
-        }
-        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
-    }
-
-    /**
      * Filter all channels where the attached lecture/exercise has been released
      *
      * @param channels A stream of channels
@@ -458,15 +441,16 @@ public class ConversationService {
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
-            if (channel.getExercise() != null) {
+            if (channel.getLecture() != null) {
+                return channel.getLecture().isVisibleToStudents();
+            }
+            else if (channel.getExercise() != null) {
                 return channel.getExercise().isVisibleToStudents();
             }
             else if (channel.getExam() != null) {
                 return channel.getExam().isVisibleToStudents();
             }
-            else {
-                return true;
-            }
+            return true;
         });
     }
 }

@@ -377,7 +377,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
-        verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
 
         // Perform the request again and make sure no new submission was created
         request.postWithoutLocation(url, null, HttpStatus.OK, null);

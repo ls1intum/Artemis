@@ -1,7 +1,8 @@
 <div [id]="'exercise-' + modelingExercise?.id">
     <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [participation]="participation">
         <span pagetitle>
-            {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ modelingExercise?.title }}</span>
+            {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
+            <span class="font-weight-normal">{{ examMode ? modelingExercise?.exerciseGroup?.title : modelingExercise?.title }}</span>
         </span>
         <jhi-button
             submitbutton

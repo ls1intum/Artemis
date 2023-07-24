@@ -435,6 +435,10 @@ public class ExamUtilService {
         return addStudentExamWithUser(exam, studentUser, 0);
     }
 
+    public StudentExam addStudentExamForTestExam(Exam exam, String userLogin) {
+        return addStudentExamForTestExam(exam, userUtilService.getUserByLogin(userLogin));
+    }
+
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);
@@ -479,13 +483,13 @@ public class ExamUtilService {
         exerciseRepo.save(textExercise2);
         QuizExercise quizExercise1;
         if (withAllQuizQuestionTypes) {
-            quizExercise1 = quizExerciseUtilService.createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
+            quizExercise1 = QuizExerciseFactory.createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
         }
         else {
-            quizExercise1 = quizExerciseUtilService.createQuizForExam(exerciseGroup1);
+            quizExercise1 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         }
 
-        QuizExercise quizExercise2 = quizExerciseUtilService.createQuizForExam(exerciseGroup1);
+        QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
@@ -570,7 +574,7 @@ public class ExamUtilService {
             exam = examRepository.save(exam);
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
-            QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup3);
+            QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
             exerciseRepo.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }
