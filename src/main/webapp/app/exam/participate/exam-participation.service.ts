@@ -14,7 +14,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
