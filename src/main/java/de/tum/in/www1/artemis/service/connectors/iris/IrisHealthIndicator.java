@@ -31,7 +31,7 @@ public class IrisHealthIndicator implements HealthIndicator {
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
-    public IrisHealthIndicator(@Qualifier("irisRestTemplate") RestTemplate restTemplate RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public IrisHealthIndicator(@Qualifier("irisRestTemplate") RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
