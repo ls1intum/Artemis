@@ -14,7 +14,7 @@ describe('Static code analysis tests', () => {
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.createProgrammingExercise({ course }, 50).then((exerciseResponse) => {
+            courseManagementRequest.createProgrammingExercise({ course, scaMaxPenalty: 50 }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });

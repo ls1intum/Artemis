@@ -28,11 +28,9 @@ describe('Programming exercise participation', () => {
 
         before('Setup java programming exercise', () => {
             cy.login(admin);
-            courseManagementRequest
-                .createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, undefined, undefined, ProgrammingLanguage.JAVA, undefined, undefined, undefined)
-                .then((exerciseResponse) => {
-                    exercise = exerciseResponse.body;
-                });
+            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA }).then((exerciseResponse) => {
+                exercise = exerciseResponse.body;
+            });
         });
 
         it('Makes a failing submission', () => {
@@ -65,11 +63,9 @@ describe('Programming exercise participation', () => {
 
         before('Setup c programming exercise', () => {
             cy.login(admin);
-            courseManagementRequest
-                .createProgrammingExercise({ course }, undefined, undefined, undefined, undefined, undefined, undefined, ProgrammingLanguage.C, undefined, undefined, undefined)
-                .then((exerciseResponse) => {
-                    exercise = exerciseResponse.body;
-                });
+            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
+                exercise = exerciseResponse.body;
+            });
         });
 
         it('Makes a submission', () => {
@@ -86,23 +82,9 @@ describe('Programming exercise participation', () => {
 
         before('Setup python programming exercise', () => {
             cy.login(admin);
-            courseManagementRequest
-                .createProgrammingExercise(
-                    { course },
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    ProgrammingLanguage.PYTHON,
-                    undefined,
-                    undefined,
-                    undefined,
-                )
-                .then((exerciseResponse) => {
-                    exercise = exerciseResponse.body;
-                });
+            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.PYTHON }).then((exerciseResponse) => {
+                exercise = exerciseResponse.body;
+            });
         });
 
         it('Makes a submission', () => {

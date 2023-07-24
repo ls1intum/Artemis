@@ -117,32 +117,52 @@ export class CourseManagementRequests {
     }
 
     /**
-     * Creates a programming exercise with the specified title and other data.
-     * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
-     * @param releaseDate when the programming exercise should be available (default is now)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param title the title of the programming exercise
-     * @param programmingShortName the short name of the programming exercise
-     * @param packageName the package name of the programming exercise
-     * @param assessmentDate the due date of the assessment
-     * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
+     * Creates a programming exercise with the specified title and other data
+     * @param options An object containing the options for creating the programming exercise
+     *   - course: The course the exercise will be added to
+     *   - exerciseGroup: The exercise group the exercise will be added to
+     *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
+     *                    If sca should be disabled, pass null or omit this property
+     *   - recordTestwiseCoverage: Enable testwise coverage analysis for this exercise
+     *   - releaseDate: When the programming exercise should be available
+     *   - dueDate: When the programming exercise should be due
+     *   - title: The title of the programming exercise
+     *   - programmingShortName: The short name of the programming exercise
+     *   - programmingLanguage: The programming language for the exercise
+     *   - packageName: The package name of the programming exercise
+     *   - assessmentDate: The due date of the assessment
+     *   - assessmentType: The assessment type of the exercise
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(
-        body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        scaMaxPenalty?: number,
-        recordTestwiseCoverage = false,
-        releaseDate = day(),
-        dueDate = day().add(1, 'day'),
-        title = 'Programming ' + generateUUID(),
-        programmingShortName = 'programming' + generateUUID(),
-        programmingLanguage = ProgrammingLanguage.JAVA,
-        packageName = 'de.test',
-        assessmentDate = day().add(2, 'days'),
-        assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
-    ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
+    createProgrammingExercise(options: {
+        course?: Course;
+        exerciseGroup?: ExerciseGroup;
+        scaMaxPenalty?: number | null;
+        recordTestwiseCoverage?: boolean;
+        releaseDate?: day.Dayjs;
+        dueDate?: day.Dayjs;
+        title?: string;
+        programmingShortName?: string;
+        programmingLanguage?: ProgrammingLanguage;
+        packageName?: string;
+        assessmentDate?: day.Dayjs;
+        assessmentType?: ProgrammingExerciseAssessmentType;
+    }): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
+        const {
+            course,
+            exerciseGroup,
+            scaMaxPenalty = null,
+            recordTestwiseCoverage = false,
+            releaseDate = day(),
+            dueDate = day().add(1, 'day'),
+            title = 'Programming ' + generateUUID(),
+            programmingShortName = 'programming' + generateUUID(),
+            programmingLanguage = ProgrammingLanguage.JAVA,
+            packageName = 'de.test',
+            assessmentDate = day().add(2, 'days'),
+            assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
+        } = options;
+
         let programmingExerciseTemplate = {};
 
         if (programmingLanguage == ProgrammingLanguage.PYTHON) {
@@ -161,10 +181,9 @@ export class CourseManagementRequests {
             channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
-        const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
-        // eslint-disable-next-line no-prototype-builtins
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        if (!isExamExercise) {
+        const exercise: ProgrammingExercise = Object.assign({}, template, { ...(course || exerciseGroup) }) as ProgrammingExercise;
+
+        if (!exerciseGroup) {
             exercise.releaseDate = releaseDate;
             exercise.dueDate = dueDate;
             exercise.assessmentDueDate = assessmentDate;
