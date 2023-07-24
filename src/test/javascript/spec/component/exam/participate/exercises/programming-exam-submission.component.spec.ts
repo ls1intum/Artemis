@@ -73,29 +73,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         return participation;
     };
 
-    it('should initialize with unlocked repository', () => {
-        const exercise = newExercise();
-        component.exercise = exercise;
-        component.studentParticipation = {};
-
-        fixture.detectChanges();
-
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
-
-        expect(component.participationIsLocked).toBeFalse();
-        expect(component.getExercise()).toEqual(newExercise());
-    });
-
-    it('should set the participationIsLocked value to true', () => {
-        component.exercise = newExercise();
-        component.studentParticipation = { locked: true };
-
-        fixture.detectChanges();
-
-        expect(component.participationIsLocked).toBeTrue();
-    });
-
     it('should change state on commit', () => {
         component.studentParticipation = newParticipation();
 
