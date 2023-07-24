@@ -67,7 +67,7 @@ public class ConversationDTO {
         // default constructor
     }
 
-    // TODO: in json, this value is inserted twice
+    // TODO: in json, this value is inserted twice, add @JsonIgnore
     public String getType() {
         return type;
     }

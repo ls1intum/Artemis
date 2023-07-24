@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -110,13 +111,20 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
-
-        // reset the conversation again, because it might have been lost during save
+        // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
+
+        // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
+        notifyAboutMessageCreation(author, conversation, notificationRecipients, course, createdMessage);
+
+        return createdMessage;
+    }
+
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Set<User> notificationRecipients, Course course, Post createdMessage) {
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, notificationRecipients);
@@ -140,8 +148,6 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
-
-        return createdMessage;
     }
 
     /**

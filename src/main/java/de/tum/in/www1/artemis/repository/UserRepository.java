@@ -538,7 +538,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get students by given course
      *
      * @param course object
-     * @return list of students for given course
+     * @return students for given course
      */
     default Set<User> getStudents(Course course) {
         return findAllInGroupWithAuthorities(course.getStudentGroupName());
@@ -548,7 +548,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get tutors by given course
      *
      * @param course object
-     * @return list of tutors for given course
+     * @return tutors for given course
      */
     default Set<User> getTutors(Course course) {
         return findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName());
@@ -558,7 +558,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get editors by given course
      *
      * @param course object
-     * @return list of editors for given course
+     * @return editors for given course
      */
     default Set<User> getEditors(Course course) {
         return findAllInGroupWithAuthorities(course.getEditorGroupName());
@@ -568,7 +568,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get all instructors for a given course
      *
      * @param course The course for which to fetch all instructors
-     * @return A list of all users that have the role of instructor in the course
+     * @return instructors for the given course
      */
     default Set<User> getInstructors(Course course) {
         return findAllInGroupWithAuthorities(course.getInstructorGroupName());
@@ -579,7 +579,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param groupName     The group by which all users should get filtered
      * @param excludedUsers The users that should get ignored/excluded
-     * @return A list of filtered users
+     * @return users who are in the given group except the excluded ones
      */
     default Set<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
         // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists

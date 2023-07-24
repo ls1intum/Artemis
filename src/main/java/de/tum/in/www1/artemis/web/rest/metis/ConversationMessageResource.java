@@ -20,7 +20,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
-import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import io.swagger.annotations.ApiParam;
@@ -37,11 +36,8 @@ public class ConversationMessageResource {
 
     private final ConversationMessagingService conversationMessagingService;
 
-    private final ConversationNotificationService conversationNotificationService;
-
-    public ConversationMessageResource(ConversationNotificationService conversationNotificationService, ConversationMessagingService conversationMessagingService) {
+    public ConversationMessageResource(ConversationMessagingService conversationMessagingService) {
         this.conversationMessagingService = conversationMessagingService;
-        this.conversationNotificationService = conversationNotificationService;
     }
 
     /**

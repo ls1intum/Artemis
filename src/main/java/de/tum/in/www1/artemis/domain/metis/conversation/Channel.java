@@ -169,6 +169,7 @@ public class Channel extends Conversation {
 
     @Override
     public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
         setLecture(null);
         setExam(null);
         setExercise(null);

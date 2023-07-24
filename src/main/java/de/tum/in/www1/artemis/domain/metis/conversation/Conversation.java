@@ -108,6 +108,7 @@ public abstract class Conversation extends DomainObject {
     public abstract String getHumanReadableNameForReceiver(User sender);
 
     public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
         setConversationParticipants(new HashSet<>());
         setPosts(new HashSet<>());
         // TODO: this information is still needed in some places, we need to identify those and then set it to null
