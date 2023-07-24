@@ -104,6 +104,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
+
     private updateViewFromSubmissionVersion() {
         if (this.submissionVersion) {
             if (this.submissionVersion.content) {
@@ -111,7 +112,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
             }
         }
     }
-
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();
