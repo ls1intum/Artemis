@@ -52,7 +52,7 @@
             "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
             "continuousPlagiarismControl": "Kontinuierliche Plagiatskontrolle",
             "continuousPlagiarismControlEnabled": "Aktivieren Kontinuierliche Plagiatskontrolle",
-            "continuousPlagiarismControlPostDueDateChecksEnabled": "Run additional checks during the night after exercise due date.",
+            "continuousPlagiarismControlPostDueDateChecksEnabled": "Lasse die Abgaben in der Nacht nach der Einreichungsfrist auf Plaugiate überprüfen.",
             "plagiarismChecks": "Plagiatskontrolle",
             "problemStatement": "Aufgabenstellung",
             "emptyProblemStatement": "(Keine Aufgabenstellung)",
