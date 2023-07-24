@@ -66,8 +66,9 @@ public class ComplaintService {
         Long courseId = course.getId();
 
         // Check whether the complaint text limit is exceeded
-        if (course.getMaxComplaintTextLimit() < complaint.getComplaintText().length()) {
-            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + course.getMaxComplaintTextLimit() + " characters", ENTITY_NAME,
+        int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
+        if (maxLength < complaint.getComplaintText().length()) {
+            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                     "exceededComplaintTextLimit");
         }
 
