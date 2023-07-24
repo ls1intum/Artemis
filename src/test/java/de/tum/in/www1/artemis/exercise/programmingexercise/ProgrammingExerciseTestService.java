@@ -1303,8 +1303,14 @@ public class ProgrammingExerciseTestService {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
+        Path embeddedFilePath1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
+        Path embeddedFilePath2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        if (Files.exists(embeddedFilePath1)) {
+            Files.delete(embeddedFilePath1);
+        }
+        if (Files.exists(embeddedFilePath2)) {
+            Files.delete(embeddedFilePath2);
+        }
         // Recursively unzip the exported file, to make sure there is no erroneous content
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
@@ -1315,8 +1321,11 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
-                    .anyMatch((filename) -> filename.toString().equals(embeddedFileName1)).anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+            if (saveEmbeddedFiles) {
+                assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().equals(embeddedFileName1))
+                        .anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
+            }
         }
     }
 
