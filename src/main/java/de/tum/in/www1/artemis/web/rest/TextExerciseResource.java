@@ -332,7 +332,7 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
+        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
             throw new AccessForbiddenException();
         }
 
@@ -344,7 +344,6 @@ public class TextExerciseResource {
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
-        participation.getExercise().filterSensitiveInformation();
 
         if (optionalSubmission.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
@@ -377,7 +376,12 @@ public class TextExerciseResource {
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
-            participation.setParticipant(null);
+            participation.filterSensitiveInformation();
+        }
+
+        textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExerciseGroup().setExam(null);
         }
 
         return ResponseEntity.ok(participation);

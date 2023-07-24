@@ -11,4 +11,5 @@ export class LinkPreviewComponent {
     @Input() showLoadingsProgress: boolean;
     @Input() loaded: boolean;
     @Input() hasError: boolean;
+    @Input() multiple: boolean;
 }
