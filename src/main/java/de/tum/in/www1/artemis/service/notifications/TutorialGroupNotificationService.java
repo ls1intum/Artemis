@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIA
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UPDATED;
 import static de.tum.in.www1.artemis.domain.notification.TutorialGroupNotificationFactory.createTutorialGroupNotification;
 
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,7 +73,7 @@ public class TutorialGroupNotificationService {
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(notification.notificationType)) {
             var usersToMail = findUsersToNotify(notification, notifyTutor);
             if (!usersToMail.isEmpty()) {
-                notificationService.sendNotification(notification, new ArrayList<>(usersToMail), notification.getTutorialGroup());
+                notificationService.sendNotification(notification, usersToMail, notification.getTutorialGroup());
             }
         }
     }

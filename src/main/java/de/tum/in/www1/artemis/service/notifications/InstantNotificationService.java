@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -27,5 +27,5 @@ public interface InstantNotificationService {
      * @param users               who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-    void sendNotification(Notification notification, List<User> users, Object notificationSubject);
+    void sendNotification(Notification notification, Set<User> users, Object notificationSubject);
 }
