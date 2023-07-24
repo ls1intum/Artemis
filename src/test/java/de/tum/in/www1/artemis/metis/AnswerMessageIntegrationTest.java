@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -74,9 +73,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
         courseUtilService.enableMessagingForCourse(course);
         courseId = course.getId();
-
-        SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
-        doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
     }
 
     // CREATE
@@ -96,7 +92,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -126,7 +122,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -146,7 +142,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -164,7 +160,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     // UPDATE
@@ -182,7 +178,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
 
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -198,7 +194,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(notUpdatedAnswerPost).isNull();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -217,7 +213,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -230,7 +226,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -244,7 +240,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     // DELETE
@@ -257,7 +253,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -270,7 +266,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isEmpty();
 
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -283,7 +279,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isPresent();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     // HELPER METHODS

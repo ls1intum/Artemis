@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -42,6 +41,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -65,16 +65,16 @@ public class QuizScheduleService {
 
     private final QuizStatisticService quizStatisticService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final QuizCache quizCache;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
+    public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
             QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -544,7 +544,7 @@ public class QuizScheduleService {
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
