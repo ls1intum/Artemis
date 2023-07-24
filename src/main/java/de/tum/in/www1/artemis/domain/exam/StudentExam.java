@@ -158,6 +158,12 @@ public class StudentExam extends AbstractAuditingEntity {
         this.examSessions = examSessions;
     }
 
+    public StudentExam addExamSession(ExamSession examSession) {
+        this.examSessions.add(examSession);
+        examSession.setStudentExam(this);
+        return this;
+    }
+
     /**
      * check if the individual student exam has ended (based on the working time)
      * For test exams, we cannot use exam.startTime, but need to use the student.startedDate. If this is not yet set,
@@ -228,4 +234,5 @@ public class StudentExam extends AbstractAuditingEntity {
             return exam.resultsPublished();
         }
     }
+
 }

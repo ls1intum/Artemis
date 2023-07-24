@@ -3548,7 +3548,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             }
         }));
 
-        // courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism
         List<Exercise> exercises = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.OK,
                 Exercise.class);
         assertThat(exercises).hasSize(5);
@@ -3558,9 +3557,27 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSuspiciousSessionsAsInstructor() throws Exception {
+        final String userAgent1 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15";
+        final String ipAddress1 = "192.0.2.235";
+        final String browserFingerprint1 = "5b2cc274f6eaf3a71647e1f85358ce32";
+        final String sessionToken1 = "abc";
+        final String userAgent2 = "Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36";
+        final String ipAddress2 = "";
+        final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
+        final String sessionToken2 = "def";
         Exam exam = examUtilService.addExam(course1);
-        // TODO add student exams with suspicious sessions and assert that the correct sessions with the correct reasons are returned
-
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam2 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
+        examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
+        ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
+        secondExamSessionStudent1.setSuspiciousReasons(Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_USER_AGENT));
+        Set<SuspiciousExamSessions> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions", HttpStatus.OK,
+                SuspiciousExamSessions.class);
+        assertThat(suspiciousSessionTuples).hasSize(1);
+        var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
+        assertThat(suspiciousSessions.examSessions()).hasSize(2);
+        assertThat(suspiciousSessions.examSessions()).containsExactlyInAnyOrder(firstExamSessionStudent1, secondExamSessionStudent1);
     }
 
     private int prepareExerciseStart(Exam exam) throws Exception {

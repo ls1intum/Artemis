@@ -142,11 +142,6 @@ public class ExamSession extends AbstractAuditingEntity {
     }
 
     @JsonIgnore
-    public boolean sameInstanceId(ExamSession other) {
-        return getInstanceId() != null && getInstanceId().equals(other.getInstanceId());
-    }
-
-    @JsonIgnore
     public boolean sameUserAgent(ExamSession other) {
         return getUserAgent() != null && getUserAgent().equals(other.getUserAgent());
     }

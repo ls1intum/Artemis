@@ -78,8 +78,8 @@ public class ExamSessionService {
         examSessions.forEach(examSession -> {
             Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsyByExamIdAndExamSession(examId, examSession);
             if (!relatedExamSessions.isEmpty()) {
-                relatedExamSessions.add(examSession);
                 determineSuspiciousReasons(examSession, relatedExamSessions);
+                relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         });
@@ -90,9 +90,6 @@ public class ExamSessionService {
         for (var relatedExamSession : relatedExamSessions) {
             if (session.sameBrowserFingerprint(relatedExamSession)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
-            }
-            if (session.sameInstanceId(relatedExamSession)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_INSTANCE_ID);
             }
             if (session.sameIpAddress(relatedExamSession)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);

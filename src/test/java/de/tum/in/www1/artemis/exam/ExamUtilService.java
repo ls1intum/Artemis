@@ -96,6 +96,9 @@ public class ExamUtilService {
     @Autowired
     private ConversationRepository conversationRepository;
 
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
+
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = courseUtilService.createCourse();
         Exam exam = addExam(course, user, visible, start, end);
@@ -414,6 +417,21 @@ public class ExamUtilService {
         studentExam.setUser(user);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
+    }
+
+    public ExamSession addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
+        ExamSession examSession = new ExamSession();
+        examSession.setSessionToken(sessionToken);
+        examSession.setIpAddress(ipAddress);
+        examSession.setBrowserFingerprintHash(browserFingerprint);
+        examSession.setInstanceId(instanceId);
+        examSession.setStudentExam(studentExam);
+        examSession.setUserAgent(userAgent);
+        examSession.setStudentExam(studentExam);
+        examSession = examSessionRepository.save(examSession);
+        studentExam.addExamSession(examSession);
+        studentExamRepository.save(studentExam);
+        return examSession;
     }
 
     public StudentExam addStudentExamForActiveExamWithUser(String user) {
