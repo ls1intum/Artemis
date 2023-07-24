@@ -57,7 +57,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     exerciseDashboardLink: string[];
     userId: number;
     isAssessor = false;
-    hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
@@ -104,7 +103,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
 
         this.route.queryParamMap.subscribe((queryParams) => {
-            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
@@ -173,7 +171,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }
-        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && dayjs(this.modelingExercise!.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed = !!this.modelingExercise?.assessmentDueDate && dayjs(this.modelingExercise.assessmentDueDate).isBefore(dayjs());
 
         this.getComplaint();
 
@@ -329,7 +327,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
+            const isBeforeAssessmentDueDate = this.modelingExercise?.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {

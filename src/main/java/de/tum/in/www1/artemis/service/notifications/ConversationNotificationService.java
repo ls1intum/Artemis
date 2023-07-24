@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import java.util.List;
 import java.util.Objects;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
  * Service for sending notifications about new messages in conversations.
@@ -26,14 +26,14 @@ public class ConversationNotificationService {
 
     private final ConversationNotificationRepository conversationNotificationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final GeneralInstantNotificationService generalInstantNotificationService;
 
-    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, SimpMessageSendingOperations messagingTemplate,
+    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, WebsocketMessagingService websocketMessagingService,
             GeneralInstantNotificationService generalInstantNotificationService) {
         this.conversationNotificationRepository = conversationNotificationRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.generalInstantNotificationService = generalInstantNotificationService;
     }
 
@@ -43,7 +43,6 @@ public class ConversationNotificationService {
      * @param createdMessage the new message
      */
     public void notifyAboutNewMessage(Post createdMessage) {
-
         String notificationText;
         String[] placeholders;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
@@ -78,6 +77,9 @@ public class ConversationNotificationService {
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification) {
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        notification.getConversation().getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.equals(notification.getAuthor()))
+                .forEach(user -> {
+                    websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification);
+                });
     }
 }

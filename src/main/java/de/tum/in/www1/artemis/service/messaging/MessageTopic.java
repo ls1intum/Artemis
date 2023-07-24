@@ -26,8 +26,6 @@ public enum MessageTopic {
     USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS("user-management-cancel-remove-non-activated-users"),
     EXERCISE_RELEASED_SCHEDULE("exercise-released-schedule"),
     ASSESSED_EXERCISE_SUBMISSION_SCHEDULE("assessed-exercise-submission-schedule"),
-    EXAM_MONITORING_SCHEDULE("exam-monitoring-schedule"),
-    EXAM_MONITORING_SCHEDULE_CANCEL("exam-monitoring-schedule-cancel"),
     STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION("student-exam-reschedule-during-conduction"),
     PARTICIPANT_SCORE_SCHEDULE("participant-score-schedule");
     // @formatter:on
