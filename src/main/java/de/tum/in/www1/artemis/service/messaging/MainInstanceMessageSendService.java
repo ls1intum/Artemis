@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.service.messaging;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-
 /**
  * This service is only present on a node that runs the 'scheduling' profile.
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
@@ -119,17 +116,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
-    }
-
-    @Override
-    @FeatureToggle(Feature.ExamLiveStatistics)
-    public void sendExamMonitoringSchedule(Long examId) {
-        instanceMessageReceiveService.processScheduleExamMonitoring(examId);
-    }
-
-    @Override
-    public void sendExamMonitoringScheduleCancel(Long examId) {
-        instanceMessageReceiveService.processScheduleExamMonitoringCancel(examId);
     }
 
     @Override
