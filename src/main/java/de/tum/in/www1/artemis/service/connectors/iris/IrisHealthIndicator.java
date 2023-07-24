@@ -31,7 +31,7 @@ public class IrisHealthIndicator implements HealthIndicator {
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
-    public IrisHealthIndicator(@Qualifier("shortTimeoutIrisRestTemplate") RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public IrisHealthIndicator(@Qualifier("irisRestTemplate") RestTemplate restTemplate RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
@@ -43,12 +43,7 @@ public class IrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            var response = shortTimeoutRestTemplate.getForEntity(irisUrl + "/api/v1/health", JsonNode.class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-                health = new ConnectorHealth(false);
-                return health.asActuatorHealth();
-            }
-            IrisStatusDTO[] status = (IrisStatusDTO[]) parseResponse(response.getBody(), IrisStatusDTO.class.arrayType());
+            IrisStatusDTO[] status = (IrisStatusDTO[])shortTimeoutRestTemplate.getForObject(irisUrl + "/api/v1/health", IrisStatusDTO[].class);
             var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == IrisStatusDTO.ModelStatus.UP);
             Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
             health = new ConnectorHealth(isUp, additionalInfo);
