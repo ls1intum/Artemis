@@ -44,6 +44,24 @@ describe('LinkPreviewComponent', () => {
         expect(previewImage.src).toContain('test-image.jpg');
     });
 
+    it('should render link preview without image when multiple links are provided', () => {
+        component.linkPreview = {
+            title: 'Test Title',
+            description: 'Test Description',
+            image: 'test-image.jpg',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        };
+        component.multiple = true; // this indicates that there are multiple links in the message
+        fixture.detectChanges();
+
+        const previewContainer = fixture.nativeElement.querySelector('.preview-container');
+        const previewImage = fixture.nativeElement.querySelector('.preview-image img');
+
+        expect(previewContainer).toBeTruthy();
+        expect(previewImage).toBeFalsy();
+    });
+
     it('should not render link preview when linkPreview is not provided', () => {
         const previewContainer = fixture.nativeElement.querySelector('.preview-container');
 

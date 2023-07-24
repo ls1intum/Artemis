@@ -17,7 +17,19 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDown,
+    faAngleUp,
+    faCheckDouble,
+    faFileImport,
+    faFileUpload,
+    faFont,
+    faKeyboard,
+    faPlus,
+    faProjectDiagram,
+    faTimes,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
@@ -50,6 +62,7 @@ export class ExerciseGroupsComponent implements OnInit {
     faProjectDiagram = faProjectDiagram;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+    faFileImport = faFileImport;
 
     constructor(
         private route: ActivatedRoute,

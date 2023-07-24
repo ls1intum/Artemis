@@ -11,13 +11,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
@@ -61,6 +60,7 @@ import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -753,7 +753,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(messagingTemplate).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+        verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test
@@ -2535,6 +2535,334 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             studentParticipation
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
+        }
+    }
+
+    @Nested
+    class ChangedAndUnchangedSubmissionsIntegrationTest {
+
+        // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
+        // + update Student Exam + find Student Participations By Student Exam With Submissions Result
+        private final int BASE_QUERY_COUNT = 5;
+
+        private TextExercise textExercise;
+
+        private ModelingExercise modeExercise;
+
+        private QuizExercise quizExercise;
+
+        private TextSubmission textSubmission;
+
+        private ModelingSubmission modeSubmission;
+
+        private QuizSubmission quizSubmission;
+
+        private DragAndDropQuestion dragAndDropQuestion;
+
+        private MultipleChoiceQuestion multipleChoiceQuestion;
+
+        private ShortAnswerQuestion shortAnswerQuestion;
+
+        private StudentExam studentExamForConduction;
+
+        @BeforeEach
+        void setUpStudentExamWithExercises() throws Exception {
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            // Add exercises to active exam
+            exam1.setExamMaxPoints(19);
+            exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+
+            // Generate student exam
+            List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            assertThat(studentExams).hasSize(exam1.getExamUsers().size());
+            assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
+
+            // Prepare student exam
+            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
+            StudentExam studentExam = studentExams.get(0);
+            userUtilService.changeUser(studentExam.getUser().getLogin());
+            studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                    HttpStatus.OK, StudentExam.class);
+            assertThat(studentExamForConduction.isStarted()).isTrue();
+
+            // Get exercises for testing
+            textExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, TextExercise.class);
+            modeExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, ModelingExercise.class);
+            quizExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, QuizExercise.class);
+
+            // Get quiz questions for testing
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                if (quizQuestion instanceof DragAndDropQuestion && dragAndDropQuestion == null) {
+                    dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof MultipleChoiceQuestion && multipleChoiceQuestion == null) {
+                    multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof ShortAnswerQuestion && shortAnswerQuestion == null) {
+                    shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                }
+            }
+            assertThat(dragAndDropQuestion).isNotNull();
+            assertThat(multipleChoiceQuestion).isNotNull();
+            assertThat(shortAnswerQuestion).isNotNull();
+
+            textSubmission = (TextSubmission) textExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            modeSubmission = (ModelingSubmission) modeExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            quizSubmission = (QuizSubmission) quizExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndSubmittedDoesNotChangeQueryCount() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed and submitted answer";
+            textSubmission.setText(changedAnswer);
+            request.put("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+
+            final String changedModel = "This is a changed and submitted model";
+            final String changedExplanation = "This is a changed and submitted explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+            request.put("/api/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(1, 0);
+
+            final String text = "Changed and submitted short answer text";
+            final int spotIndex = 0;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            final List<Integer> selectedOptionIndices = List.of(0, 1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+
+            // load Quiz Submissions Submitted Answers (for comparison) * 3
+            final int quizQueryCount = 3;
+
+            // When
+            StudentExam submittedExam = assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + quizQueryCount);
+
+            // Then
+            TextExercise textExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission textSubmissionAfterExamSubmission = (TextSubmission) textExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(textSubmissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(textSubmissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(textSubmissionAfterExamSubmission);
+
+            ModelingExercise modeExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission modeSubmissionAfterExamSubmission = (ModelingSubmission) modeExerciseAfterExamSubmission.getStudentParticipations().iterator().next()
+                    .findLatestSubmission().orElseThrow();
+            assertThat(modeSubmissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(modeSubmissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(modeSubmissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(modeSubmissionAfterExamSubmission);
+
+            QuizExercise quizExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission quizSubmissionAfterExamSubmission = (QuizSubmission) quizExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(quizSubmissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(quizSubmissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, quizSubmissionAfterExamSubmission);
+            verifyShortAnswerSubmission(changedText, quizSubmissionAfterExamSubmission);
+            verifyMultipleChoiceSubmission(changedAnswerOptions, quizSubmissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedTextSubmission() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed answer";
+            textSubmission.setText(changedAnswer);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            TextExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission submissionAfterExamSubmission = (TextSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedModelingSubmission() throws Exception {
+            // Given
+            final String changedModel = "This is a changed model";
+            final String changedExplanation = "This is a changed explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            ModelingExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission submissionAfterExamSubmission = (ModelingSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(submissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(submissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedDragAndDropQuestionSubmission() throws Exception {
+            // Given
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(0, 1);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
+            // Given
+            getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
+
+            final String text = "Changed short answer text";
+            final int spotIndex = 1;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyShortAnswerSubmission(changedText, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedMultipleChoiceQuestionSubmission() throws Exception {
+            // Given
+            final List<Integer> selectedOptionIndices = List.of(1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyMultipleChoiceSubmission(changedAnswerOptions, submissionAfterExamSubmission);
+        }
+
+        private void changeModelingSubmission(String changedModel, String changedExplanation) {
+            modeSubmission.setModel(changedModel);
+            modeSubmission.setExplanationText(changedExplanation);
+        }
+
+        private DragAndDropMapping getchangedDragAndDropMapping(int dndDragItemIndex, int dndDropLocationIndex) {
+            DragAndDropMapping changedMapping = new DragAndDropMapping();
+
+            changedMapping.setDragItemIndex(dndDragItemIndex);
+            changedMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
+
+            changedMapping.setDropLocationIndex(dndDropLocationIndex);
+            changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
+
+            DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
+            changedAnswer.getMappings().add(changedMapping);
+            changedAnswer.setQuizQuestion(dragAndDropQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedMapping;
+        }
+
+        private ShortAnswerSubmittedText getChangedShortAnswerSubmittedText(String text, int spotIndex) {
+            ShortAnswerSubmittedText changedText = new ShortAnswerSubmittedText();
+            changedText.setText(text);
+            changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
+
+            ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
+            changedAnswer.getSubmittedTexts().add(changedText);
+            changedAnswer.setQuizQuestion(shortAnswerQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedText;
+        }
+
+        private List<AnswerOption> getChangedAnswerOptions(List<Integer> selectedOptionIndices) {
+            List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+
+            MultipleChoiceSubmittedAnswer changedAnswer = new MultipleChoiceSubmittedAnswer();
+            selectedOptionIndices.forEach(selectedOptionIndex -> changedAnswer.addSelectedOptions(answerOptions.get(selectedOptionIndex)));
+            changedAnswer.setQuizQuestion(multipleChoiceQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return selectedOptionIndices.stream().map(answerOptions::get).toList();
+        }
+
+        private void verifyDragAndDropSubmission(DragAndDropMapping changedMapping, QuizSubmission submissionAfterExamSubmission) {
+            DragAndDropSubmittedAnswer answerAfterSubmission = (DragAndDropSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(dragAndDropQuestion);
+            Comparator<DragAndDropMapping> dndMappingComparator = Comparator.comparing(DragAndDropMapping::getDragItemIndex)
+                    .thenComparing(DragAndDropMapping::getDropLocationIndex);
+
+            assertThat(answerAfterSubmission.getMappings()).hasSize(1);
+            assertThat(answerAfterSubmission.getMappings().iterator().next()).usingComparator(dndMappingComparator).isEqualTo(changedMapping);
+        }
+
+        private void verifyShortAnswerSubmission(ShortAnswerSubmittedText changedText, QuizSubmission submissionAfterExamSubmission) {
+            ShortAnswerSubmittedAnswer answerAfterSubmission = (ShortAnswerSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(shortAnswerQuestion);
+            Comparator<ShortAnswerSubmittedText> saMappingComparator = Comparator.comparing(ShortAnswerSubmittedText::getText).thenComparing(saText -> saText.getSpot().getId());
+
+            assertThat(answerAfterSubmission.getSubmittedTexts()).hasSize(1);
+            assertThat(answerAfterSubmission.getSubmittedTexts().iterator().next()).usingComparator(saMappingComparator).isEqualTo(changedText);
+        }
+
+        private void verifyMultipleChoiceSubmission(List<AnswerOption> changedAnswerOption, QuizSubmission submissionAfterExamSubmission) {
+            MultipleChoiceSubmittedAnswer answerAfterSubmission = (MultipleChoiceSubmittedAnswer) submissionAfterExamSubmission
+                    .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
+
+            assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
         }
     }
 }
