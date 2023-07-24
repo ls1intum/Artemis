@@ -310,9 +310,8 @@ public class ExamRegistrationService {
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
 
         var students = userRepository.getStudents(exam.getCourse());
-        Set<User> studentSet = new HashSet<>(students);
 
-        channelService.deregisterUsersFromExamChannel(studentSet, exam.getId());
+        channelService.deregisterUsersFromExamChannel(students, exam.getId());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());

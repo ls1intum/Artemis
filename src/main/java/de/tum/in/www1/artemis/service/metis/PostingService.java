@@ -99,6 +99,7 @@ public abstract class PostingService {
         }
         else if (postDTO.post().getConversation() != null) {
             if (recipients == null) {
+                // send to all participants of the conversation
                 recipients = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId()).stream()
                         .map(ConversationParticipant::getUser).collect(Collectors.toSet());
             }
