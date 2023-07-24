@@ -56,7 +56,7 @@ public class IrisHealthIndicator implements HealthIndicator {
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
             health.setUp(false);
-            health.setAdditionalInfo(Map.of("url", irisUrl));
+            health.setAdditionalInfo(Map.of("url", irisUrl, "exception", emAll.getLocalizedMessage()));
         }
 
         return health.asActuatorHealth();

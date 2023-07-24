@@ -125,7 +125,7 @@ public class IrisSessionResource {
      */
     @GetMapping("/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
-    public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
+    public ResponseEntity<String> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
@@ -138,6 +138,6 @@ public class IrisSessionResource {
             specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
                     .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
-        return ResponseEntity.ok(specificModelStatus && (health.getStatus() == Status.UP));
+        return ResponseEntity.ok(health.getDetails().get("exception"));
     }
 }
