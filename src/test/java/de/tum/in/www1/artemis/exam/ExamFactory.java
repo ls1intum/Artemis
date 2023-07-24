@@ -186,4 +186,18 @@ public class ExamFactory {
         studentExam.setTestRun(true);
         return studentExam;
     }
+
+    /**
+     * generates an exam with one exercise group
+     *
+     * @param course    course of the exam
+     * @param mandatory if the exercise group is mandatory
+     * @return newly generated exam
+     */
+    public static Exam generateExamWithExerciseGroup(Course course, boolean mandatory) {
+        Exam exam = generateExam(course);
+        generateExerciseGroup(mandatory, exam);
+
+        return exam;
+    }
 }

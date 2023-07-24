@@ -11,9 +11,6 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
@@ -151,19 +148,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         log.info("Sending prepare assessed exercise submitted notification for exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE, exerciseId);
-    }
-
-    @Override
-    @FeatureToggle(Feature.ExamLiveStatistics)
-    public void sendExamMonitoringSchedule(Long examId) {
-        log.info("Sending schedule for exam monitoring {} to broker.", examId);
-        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE, examId);
-    }
-
-    @Override
-    public void sendExamMonitoringScheduleCancel(Long examId) {
-        log.info("Sending schedule cancel for exam monitoring {} to broker.", examId);
-        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE_CANCEL, examId);
     }
 
     @Override

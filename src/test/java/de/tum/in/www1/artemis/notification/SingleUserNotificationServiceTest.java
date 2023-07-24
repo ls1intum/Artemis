@@ -14,6 +14,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import javax.mail.MessagingException;
@@ -25,6 +26,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -88,6 +90,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Captor
+    private ArgumentCaptor<CompletableFuture<Void>> futureCaptor;
 
     private User user;
 
@@ -252,7 +257,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
-        verify(messagingTemplate, never()).convertAndSend(any());
+        verify(websocketMessagingService, never()).sendMessage(any(), any());
     }
 
     /**
@@ -408,17 +413,17 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(notificationsBefore);
         // notification should be sent
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
     }
 
     @Test
     void testConversationNotificationsGroupChatCreation() {
         int notificationsBefore = (int) notificationRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, userThree, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService).sendMessage(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
 
         List<Notification> capturedNotifications = notificationRepository.findAll();
         assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(notificationsBefore + 2);
@@ -432,16 +437,16 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @MethodSource("getNotificationTypesAndTitlesParametersForGroupChat")
     void testConversationNotificationsGroupChatAddAndRemoveUsers(NotificationType notificationType, String expectedTitle) {
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, notificationType);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
 
     @ParameterizedTest
     @MethodSource("getNotificationTypesAndTitlesParametersForChannel")
-    void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) {
+    void testConversationNotificationsChannel(NotificationType notificationType, String expectedTitle) throws InterruptedException {
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, userTwo, notificationType);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
         verifyRepositoryCallWithCorrectNotification(expectedTitle);
     }
@@ -460,7 +465,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         answerPost.setPost(post);
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
-        verify(messagingTemplate).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);

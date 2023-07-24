@@ -5,13 +5,14 @@ import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
     faAngleUp,
     faChartBar,
     faClipboard,
+    faComment,
     faComments,
     faFilePdf,
     faFlag,
@@ -68,6 +69,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
+    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
@@ -81,6 +83,7 @@ export class CourseManagementCardComponent implements OnChanges {
     readonly FeatureToggle = FeatureToggle;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     ngOnChanges() {
         const targetCourseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
