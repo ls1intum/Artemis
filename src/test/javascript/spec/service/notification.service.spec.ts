@@ -5,14 +5,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import {
-    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
-    CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
-    DATA_EXPORT_CREATED_TITLE,
-    DATA_EXPORT_FAILED_TITLE,
-    NEW_MESSAGE_TITLE,
-    Notification,
-} from 'app/entities/notification.model';
+import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, DATA_EXPORT_CREATED_TITLE, DATA_EXPORT_FAILED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
