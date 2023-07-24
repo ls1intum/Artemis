@@ -1171,6 +1171,14 @@ public class ExamResource {
         return exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
     }
 
+    /**
+     * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
+     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long)}
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return a set containing all tuples of exam sessions that are suspicious.
+     */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
     public Set<SuspiciousExamSessions> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {

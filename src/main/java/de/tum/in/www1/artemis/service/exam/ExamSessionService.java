@@ -72,6 +72,13 @@ public class ExamSessionService {
         return (examSessionCount == 1);
     }
 
+    /**
+     * Retrieves all suspicious exam sessions for given exam id
+     * For a more detailed explanation see {@link ExamSessionRepository#findAllSuspiciousExamSessionsyByExamIdAndExamSession(long, ExamSession)}
+     *
+     * @param examId id of the exam for which suspicious exam sessions shall be retrieved
+     * @return set of suspicious exam sessions
+     */
     public Set<SuspiciousExamSessions> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);

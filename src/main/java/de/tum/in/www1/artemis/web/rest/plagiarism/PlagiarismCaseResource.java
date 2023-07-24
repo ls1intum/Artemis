@@ -98,26 +98,6 @@ public class PlagiarismCaseResource {
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
-    @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/exercises/{exerciseId}/plagiarism-cases")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamExercise(@PathVariable long courseId, @PathVariable long examId, @PathVariable long exerciseGroupId,
-            @PathVariable long exerciseId) {
-        log.debug("REST request to get all plagiarism cases for the exercise with id {}", exerciseId);
-        // TODO: implement
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
-        if (!plagiarismCases.isEmpty()) {
-            var plagiarismCase = plagiarismCases.get(0);
-            var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
-            if (!exam.getCourse().getId().equals(courseId)) {
-                throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
-            }
-        }
-        return getPlagiarismCasesResponseEntity(plagiarismCases);
-    }
-
     /**
      * Retrieves the plagiarism case with the given ID for the instructor view.
      *
@@ -146,6 +126,13 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCase);
     }
 
+    /**
+     * Counts the number of plagiarism cases for the given exercise.
+     *
+     * @param courseId   the id of the course
+     * @param exerciseId the id of the exercise
+     * @return the number of plagiarism cases for the given exercise
+     */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases")
     @EnforceAtLeastInstructor
     public long getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {

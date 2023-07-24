@@ -184,6 +184,12 @@ public class PlagiarismResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Counts the number of plagiarism results for the given exercise
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of plagiarism results
+     */
     @GetMapping("exercises/{exerciseId}/plagiarism-results")
     @EnforceAtLeastInstructor
     public long getNumberOfPlagiarismResultsForExercise(@PathVariable("exerciseId") long exerciseId) {
