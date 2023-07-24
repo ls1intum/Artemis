@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -48,6 +49,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private Course course;
 
@@ -207,5 +211,26 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructor_correct() throws Exception {
+        var results = request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.OK, Long.class);
+        assertThat(results).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.FORBIDDEN, Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course, "");
+        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.FORBIDDEN, Long.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }
