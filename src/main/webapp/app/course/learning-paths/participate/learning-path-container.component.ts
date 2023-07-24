@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
@@ -16,7 +16,9 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Component({
     selector: 'jhi-learning-path-container',
+    styleUrls: ['./learning-path-container.component.scss'],
     templateUrl: './learning-path-container.component.html',
+    encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathContainerComponent implements OnInit {
     @Input() courseId: number;
