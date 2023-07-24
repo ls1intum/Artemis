@@ -134,18 +134,7 @@ public class ProgrammingExerciseExportService {
 
         // Add problem statement as .md file if it is not null
         if (exercise.getProblemStatement() != null) {
-            var problemStatementFileExtension = ".md";
-            String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
-            String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
-            var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
-            pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
-            try {
-                copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
-            }
-            catch (IOException e) {
-                exportErrors.add("Failed to copy embedded files: " + e.getMessage());
-                log.warn("Could not copy embedded files for exercise with id {}", exercise.getId());
-            }
+            exportProblemStatementAndEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
         }
 
         // Add programming exercise details (object) as .json file
@@ -172,6 +161,21 @@ public class ProgrammingExerciseExportService {
             log.info(error);
             exportErrors.add(error);
             return null;
+        }
+    }
+
+    private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, ArrayList<Path> pathsToBeZipped) {
+        var problemStatementFileExtension = ".md";
+        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
+        String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
+        var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
+        pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
+        try {
+            copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
+        }
+        catch (IOException e) {
+            exportErrors.add("Failed to copy embedded files: " + e.getMessage());
+            log.warn("Could not copy embedded files for exercise with id {}", exercise.getId());
         }
     }
 

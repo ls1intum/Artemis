@@ -1386,7 +1386,6 @@ public class ProgrammingExerciseTestService {
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
         exercise.setProblemStatement(null);
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
