@@ -10,11 +10,12 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -58,18 +59,18 @@ public class WebsocketMessagingService {
      *
      * @param topic   the destination to which subscription the message should be sent
      * @param message a prebuild message that should be sent to the destination (topic)
-     * @return a future that can be used to check if the message was sent successfully
+     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
      */
+    @Nullable
     public CompletableFuture<Void> sendMessage(String topic, Message<?> message) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                messagingTemplate.send(topic, message);
-            }
-            catch (MessagingException ex) {
-                log.error("Error when sending message {} to topic {}", message, topic, ex);
-                throw ex;
-            }
-        }, asyncExecutor);
+        try {
+            return CompletableFuture.runAsync(() -> messagingTemplate.send(topic, message), asyncExecutor);
+        }
+        // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
+        catch (Exception ex) {
+            log.error("Error when sending message {} to topic {}", message, topic, ex);
+        }
+        return null;
     }
 
     /**
@@ -78,18 +79,18 @@ public class WebsocketMessagingService {
      *
      * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
-     * @return a future that can be used to check if the message was sent successfully
+     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
      */
+    @Nullable
     public CompletableFuture<Void> sendMessage(String topic, Object message) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                messagingTemplate.convertAndSend(topic, message);
-            }
-            catch (MessagingException ex) {
-                log.error("Error when sending message {} to topic {}", message, topic, ex);
-                throw ex;
-            }
-        }, asyncExecutor);
+        try {
+            return CompletableFuture.runAsync(() -> messagingTemplate.convertAndSend(topic, message), asyncExecutor);
+        }
+        // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
+        catch (Exception ex) {
+            log.error("Error when sending message {} to topic {}", message, topic, ex);
+        }
+        return null;
     }
 
     /**
@@ -99,18 +100,18 @@ public class WebsocketMessagingService {
      * @param user    the user that should receive the message.
      * @param topic   the destination to send the message to
      * @param payload the payload to send
-     * @return a future that can be used to check if the message was sent successfully
+     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
      */
+    @Nullable
     public CompletableFuture<Void> sendMessageToUser(String user, String topic, Object payload) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                messagingTemplate.convertAndSendToUser(user, topic, payload);
-            }
-            catch (MessagingException ex) {
-                log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
-                throw ex;
-            }
-        }, asyncExecutor);
+        try {
+            return CompletableFuture.runAsync(() -> messagingTemplate.convertAndSendToUser(user, topic, payload), asyncExecutor);
+        }
+        // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
+        catch (Exception ex) {
+            log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
+        }
+        return null;
     }
 
     /**
