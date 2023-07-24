@@ -10,8 +10,6 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,9 +57,8 @@ public class WebsocketMessagingService {
      *
      * @param topic   the destination to which subscription the message should be sent
      * @param message a prebuild message that should be sent to the destination (topic)
-     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
+     * @return a future that can be used to check if the message was sent successfully or resulted in an exception
      */
-    @Nullable
     public CompletableFuture<Void> sendMessage(String topic, Message<?> message) {
         try {
             return CompletableFuture.runAsync(() -> messagingTemplate.send(topic, message), asyncExecutor);
@@ -69,8 +66,8 @@ public class WebsocketMessagingService {
         // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
         catch (Exception ex) {
             log.error("Error when sending message {} to topic {}", message, topic, ex);
+            return CompletableFuture.failedFuture(ex);
         }
-        return null;
     }
 
     /**
@@ -79,9 +76,8 @@ public class WebsocketMessagingService {
      *
      * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
-     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
+     * @return a future that can be used to check if the message was sent successfully or resulted in an exception
      */
-    @Nullable
     public CompletableFuture<Void> sendMessage(String topic, Object message) {
         try {
             return CompletableFuture.runAsync(() -> messagingTemplate.convertAndSend(topic, message), asyncExecutor);
@@ -89,8 +85,8 @@ public class WebsocketMessagingService {
         // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
         catch (Exception ex) {
             log.error("Error when sending message {} to topic {}", message, topic, ex);
+            return CompletableFuture.failedFuture(ex);
         }
-        return null;
     }
 
     /**
@@ -100,9 +96,8 @@ public class WebsocketMessagingService {
      * @param user    the user that should receive the message.
      * @param topic   the destination to send the message to
      * @param payload the payload to send
-     * @return a future that can be used to check if the message was sent successfully or null if an error occurs
+     * @return a future that can be used to check if the message was sent successfully or resulted in an exception
      */
-    @Nullable
     public CompletableFuture<Void> sendMessageToUser(String user, String topic, Object payload) {
         try {
             return CompletableFuture.runAsync(() -> messagingTemplate.convertAndSendToUser(user, topic, payload), asyncExecutor);
@@ -110,8 +105,8 @@ public class WebsocketMessagingService {
         // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
         catch (Exception ex) {
             log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
+            return CompletableFuture.failedFuture(ex);
         }
-        return null;
     }
 
     /**
