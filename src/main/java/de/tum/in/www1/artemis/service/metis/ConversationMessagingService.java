@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -27,7 +26,9 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -47,14 +48,17 @@ public class ConversationMessagingService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final ConversationRepository conversationRepository;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
+            ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
@@ -76,8 +80,9 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
-        conversation.setConversationParticipants(conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()));
+        conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+
+        var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         // extra checks for channels
@@ -87,6 +92,7 @@ public class ConversationMessagingService extends PostingService {
 
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
+        conversation.setCourse(course);
         conversation = conversationService.updateConversation(conversation);
 
         // update last read date and unread message count of author

@@ -3135,20 +3135,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamMonitoringStatus() throws Exception {
-        exam1.setMonitoring(true);
-        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
-
-        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", true);
-
-        exam1.setMonitoring(false);
-        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
-
-        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", false);
-    }
-
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

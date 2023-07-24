@@ -212,8 +212,6 @@ public class StudentExamResource {
             }
         }
 
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
-
         return ResponseEntity.ok(savedStudentExam);
     }
 
@@ -232,6 +230,7 @@ public class StudentExamResource {
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
+        long start = System.nanoTime();
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -254,9 +253,15 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
+        log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
+
+        var response = studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
+
         messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
-        return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
+        log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
+                formatDurationFrom(start));
+        return response;
     }
 
     /**
