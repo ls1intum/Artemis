@@ -138,6 +138,6 @@ public class IrisSessionResource {
             specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
                     .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
-        return ResponseEntity.ok(health.getDetails().get("exception"));
+        return ResponseEntity.ok((String) health.getDetails().get("exception"));
     }
 }
