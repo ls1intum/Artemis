@@ -14,7 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -27,16 +26,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByCreator(User creator);
-
-    @Transactional // ok because of delete
-    @Modifying
     void deleteAllByCourseId(long courseId);
 
     // This is used only for testing purposes
     List<Conversation> findAllByCourseId(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
+    @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user" })
     Optional<Conversation> findWithConversationParticipantsById(long conversationId);
 
     default Conversation findWithConversationParticipantsByIdElseThrow(long conversationId) {

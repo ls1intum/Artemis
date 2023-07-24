@@ -133,7 +133,7 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
         reactionRepository.deleteById(reactionId);
     }
 
