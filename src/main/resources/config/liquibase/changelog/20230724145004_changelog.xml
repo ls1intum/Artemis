@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="jakubriegel" id="1690203011296-205">
+        <addColumn tableName="plagiarism_checks_config">
+            <column name="continuous_plagiarism_control_post_due_date_checks_enabled" type="bit" defaultValue="0"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -48,6 +48,7 @@ export interface ValidationReason {
 
 export interface PlagiarismChecksConfig {
     continuousPlagiarismControlEnabled?: boolean;
+    continuousPlagiarismControlPostDueDateChecksEnabled?: boolean;
     similarityThreshold?: number;
     minimumScore?: number;
     minimumSize?: number;
@@ -97,7 +98,7 @@ export abstract class Exercise implements BaseEntity {
     public competencies?: Competency[];
 
     public plagiarismChecksConfig?: PlagiarismChecksConfig = {
-        continuousPlagiarismControlEnabled: false,
+        continuousPlagiarismControlEnabled: true,
         similarityThreshold: 0.5,
         minimumSize: 0,
         minimumScore: 0,

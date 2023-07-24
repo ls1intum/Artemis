@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import static java.lang.String.format;
 
+import java.time.ZonedDateTime;
+import java.util.function.Predicate;
+
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,9 @@ public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
 
+    private static final Predicate<Exercise> isBeforeDueDateOrAfterWithPostDueDateChecksEnabled = exercise -> exercise.getDueDate() == null
+            || exercise.getDueDate().isAfter(ZonedDateTime.now()) || exercise.getPlagiarismChecksConfig().isContinuousPlagiarismControlPostDueDateChecksEnabled();
+
     private final ExerciseRepository exerciseRepository;
 
     private final PlagiarismChecksService plagiarismChecksService;
@@ -48,8 +54,8 @@ public class ContinuousPlagiarismControlService {
     public void executeChecks() {
         log.info("Starting continuous plagiarism control...");
 
-        var exercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue();
-        exercises.forEach(exercise -> {
+        var exercises = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        exercises.stream().filter(isBeforeDueDateOrAfterWithPostDueDateChecksEnabled).forEach(exercise -> {
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();
 

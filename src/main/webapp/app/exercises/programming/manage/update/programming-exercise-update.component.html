@@ -155,6 +155,20 @@
                         />
                         <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
                     </div>
+                    <div class="plagiarism-option">
+                        <input
+                            type="checkbox"
+                            id="continuous_plagiarism_control_post_due_date_checks_enabled"
+                            class="plagiarism-option-checkbox form-check-input"
+                            name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
+                            [disabled]="!programmingExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
+                            #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
+                            [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
+                        />
+                        <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlPostDueDateChecksEnabled">
+                            Run additional checks during the night after exercise's due date.
+                        </div>
+                    </div>
                 </div>
             </div>
 
