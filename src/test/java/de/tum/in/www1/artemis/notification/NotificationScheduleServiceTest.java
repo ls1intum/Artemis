@@ -85,7 +85,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(4000)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(mailService, timeout(4000).atLeastOnce()).sendNotification(any(), anyList(), any());
+        verify(mailService, timeout(4000).atLeastOnce()).sendNotification(any(), anySet(), any());
     }
 
     @Test

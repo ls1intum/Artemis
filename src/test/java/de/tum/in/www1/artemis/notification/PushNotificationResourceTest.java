@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +61,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationTest {
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
 
         assertThat(response.secretKey()).isNotEmpty();
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Collections.singletonList(user),
+        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
                 PushNotificationDeviceType.FIREBASE);
 
         assertThat(deviceConfigurations).hasSize(1);
@@ -78,7 +78,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationTest {
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         request.delete("/api/push_notification/unregister", HttpStatus.OK, body);
 
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Collections.singletonList(user),
+        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
                 PushNotificationDeviceType.FIREBASE);
 
         assertThat(deviceConfigurations).isEmpty();

@@ -392,7 +392,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
     /**
      * Checks if a push to android and iOS was created and send
      */
-    private void verifyPush(Notification notification, List<User> users, Object notificationSubject) {
+    private void verifyPush(Notification notification, Set<User> users, Object notificationSubject) {
         verify(applePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
         verify(firebasePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
     }
@@ -426,7 +426,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ATTACHMENT_CHANGE_TITLE);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), attachment);
+        verifyPush(notification, Set.of(student), attachment);
     }
 
     @Test
@@ -436,7 +436,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXERCISE_PRACTICE_TITLE);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), exercise);
+        verifyPush(notification, Set.of(student), exercise);
     }
 
     @Test
@@ -514,7 +514,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE, 3);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), post);
+        verifyPush(notification, Set.of(student), post);
     }
 
     /**

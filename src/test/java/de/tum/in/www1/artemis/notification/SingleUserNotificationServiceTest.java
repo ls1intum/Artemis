@@ -556,8 +556,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationTest {
      * @param times how often the email should have been sent
      */
     private void verifyPush(int times) {
-        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anyList(), any(Object.class));
-        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anyList(), any(Object.class));
+        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
+        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
     }
 
     private static Stream<Arguments> getNotificationTypesAndTitlesParametersForGroupChat() {
