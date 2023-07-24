@@ -704,6 +704,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitle();
     }
 
     @Test
@@ -711,23 +712,35 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     void testGetExerciseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
+        // course exercise
         testGetExerciseTitle();
+
+        // exam exercise
+        testGetExamExerciseTitle();
     }
 
     private void testGetExerciseTitle() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
-        exerciseRepository.save(exercise);
+        exercise = exerciseRepository.save(exercise);
 
         final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    private void testGetExamExerciseTitle() throws Exception {
+        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final String expectedTitle = textExercise.getExerciseGroup().getTitle();
+        final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(expectedTitle);
     }
 
     @Test

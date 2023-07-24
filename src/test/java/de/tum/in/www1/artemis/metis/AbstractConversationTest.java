@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -60,9 +59,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     OneToOneChatRepository oneToOneChatRepository;
-
-    @Autowired
-    SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     ConversationMessageRepository conversationMessageRepository;
@@ -131,18 +127,18 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationTest {
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(messagingTemplate).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 
     }
 
     void verifyNoParticipantTopicWebsocketSent() {
-        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
     }
 
     void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
-        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(),
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).metisCrudAction())));
     }
 
@@ -274,7 +270,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationTest {
     }
 
     void resetWebsocketMock() {
-        reset(this.messagingTemplate);
+        reset(this.websocketMessagingService);
     }
 
 }

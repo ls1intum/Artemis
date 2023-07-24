@@ -7,12 +7,12 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +55,14 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationTest {
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
+    private Exercise exerciseWithoutAReleaseDate;
+
+    private Exercise exerciseReleasedYesterdayButAlreadyClosed;
+
+    private Exercise exerciseReleasedTomorrow;
+
+    private Exercise exerciseReleasedAMonthAgo;
+
     private static final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
 
     private static final String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student2";
@@ -85,7 +93,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationTest {
         Course course = courseUtilService.createCourse();
         Set<Exercise> allTestExercises = new HashSet<>();
 
-        Exercise exerciseWithoutAReleaseDate = TextExerciseFactory.generateTextExercise(null, null, null, course);
+        exerciseWithoutAReleaseDate = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseWithoutAReleaseDate.setTitle("exerciseWithoutAReleaseDate");
         allTestExercises.add(exerciseWithoutAReleaseDate);
 
@@ -94,15 +102,15 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationTest {
         exerciseReleasedYesterdayAndNotYetDue.setDifficulty(DifficultyLevel.EASY);
         allTestExercises.add(exerciseReleasedYesterdayAndNotYetDue);
 
-        Exercise exerciseReleasedYesterdayButAlreadyClosed = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
+        exerciseReleasedYesterdayButAlreadyClosed = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
         exerciseReleasedYesterdayButAlreadyClosed.setTitle("exerciseReleasedYesterdayButAlreadyClosed");
         allTestExercises.add(exerciseReleasedYesterdayButAlreadyClosed);
 
-        Exercise exerciseReleasedTomorrow = TextExerciseFactory.generateTextExercise(now.plusDays(1), null, null, course);
+        exerciseReleasedTomorrow = TextExerciseFactory.generateTextExercise(now.plusDays(1), null, null, course);
         exerciseReleasedTomorrow.setTitle("exerciseReleasedTomorrow");
         allTestExercises.add(exerciseReleasedTomorrow);
 
-        Exercise exerciseReleasedAMonthAgo = TextExerciseFactory.generateTextExercise(now.minusMonths(1), null, null, course);
+        exerciseReleasedAMonthAgo = TextExerciseFactory.generateTextExercise(now.minusMonths(1), null, null, course);
         exerciseReleasedAMonthAgo.setTitle("exerciseReleasedAMonthAgo");
         allTestExercises.add(exerciseReleasedAMonthAgo);
 
@@ -119,14 +127,10 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationTest {
      * Tests if the method/runnable prepareEmailSummaries correctly selects exercises that are suited for weekly summaries
      */
     @Test
-    @Disabled // we have to fix the TODO inside the test without using SpyBean
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
         var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
-
-        // TODO: make sure only exerciseReleasedYesterdayAndNotYetDue is returned by exerciseRepository.findAllExercisesForSummary() without using @SpyBean.
-        // Refer to the TODO in automaticCleanupBuildPlans() in ProgrammingExerciseTestService for more information.
 
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
@@ -135,8 +139,12 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationTest {
         verify(javaMailSender, timeout(5000)).send(any(MimeMessage.class));
 
         Set<Exercise> capturedExerciseSet = captor.getValue();
+
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
                 .contains(exerciseReleasedYesterdayAndNotYetDue);
-        assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
+
+        assertThat(capturedExerciseSet)
+                .doesNotContainAnyElementsOf(List.of(exerciseWithoutAReleaseDate, exerciseReleasedYesterdayButAlreadyClosed, exerciseReleasedTomorrow, exerciseReleasedAMonthAgo));
+
     }
 }

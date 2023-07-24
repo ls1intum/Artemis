@@ -5,9 +5,16 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +31,8 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 @Service
 public class WebsocketMessagingService {
 
+    private final Logger log = LoggerFactory.getLogger(WebsocketMessagingService.class);
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final ExamDateService examDateService;
@@ -32,33 +41,76 @@ public class WebsocketMessagingService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final Executor asyncExecutor;
+
     public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, @Qualifier("taskExecutor") Executor asyncExecutor) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
         this.authCheckService = authCheckService;
+        this.asyncExecutor = asyncExecutor;
     }
 
     /**
-     * Wrapper method to send a message over websocket to the given topic
+     * Sends a message over websocket to the given topic.
+     * The message will be sent asynchronously.
+     *
+     * @param topic   the destination to which subscription the message should be sent
+     * @param message a prebuild message that should be sent to the destination (topic)
+     * @return a future that can be used to check if the message was sent successfully
+     */
+    public CompletableFuture<Void> sendMessage(String topic, Message<?> message) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.send(topic, message);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} to topic {}", message, topic, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
+    }
+
+    /**
+     * Sends a message over websocket to the given topic.
+     * The message will be sent asynchronously.
      *
      * @param topic   the destination to which subscription the message should be sent
      * @param message any object that should be sent to the destination (topic), this will typically get transformed into json
+     * @return a future that can be used to check if the message was sent successfully
      */
-    public void sendMessage(String topic, Object message) {
-        messagingTemplate.convertAndSend(topic, message);
+    public CompletableFuture<Void> sendMessage(String topic, Object message) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.convertAndSend(topic, message);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} to topic {}", message, topic, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
     }
 
     /**
-     * Wrapper method to send a message over websocket to the given topic to a specific user
+     * Sends a message over websocket to the given topic to a specific user.
+     * The message will be sent asynchronously.
      *
-     * @param user        the user that should receive the message.
-     * @param destination the destination to send the message to
-     * @param payload     the payload to send
+     * @param user    the user that should receive the message.
+     * @param topic   the destination to send the message to
+     * @param payload the payload to send
+     * @return a future that can be used to check if the message was sent successfully
      */
-    public void sendMessageToUser(String user, String destination, Object payload) {
-        messagingTemplate.convertAndSendToUser(user, destination, payload);
+    public CompletableFuture<Void> sendMessageToUser(String user, String topic, Object payload) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                messagingTemplate.convertAndSendToUser(user, topic, payload);
+            }
+            catch (MessagingException ex) {
+                log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
+                throw ex;
+            }
+        }, asyncExecutor);
     }
 
     /**
@@ -97,12 +149,12 @@ public class WebsocketMessagingService {
                 result.filterSensitiveInformation();
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+                        .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
 
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
                 studentParticipation.getStudents().stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+                        .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }
         }
 
@@ -111,7 +163,7 @@ public class WebsocketMessagingService {
         result.setFeedbacks(originalFeedback);
 
         // Send to tutors, instructors and admins
-        messagingTemplate.convertAndSend(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result);
+        sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result);
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);

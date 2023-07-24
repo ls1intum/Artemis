@@ -31,11 +31,10 @@ import {
     ViewChildren,
     ViewEncapsulation,
 } from '@angular/core';
-import { Subscription, fromEvent, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { Subscription, fromEvent } from 'rxjs';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -46,6 +45,7 @@ import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
+export type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -107,7 +107,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
-    fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+    fileSession: FileSession = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
@@ -175,7 +175,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         ) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (this.selectedFile && !this.fileSession[this.selectedFile]) {
+            if ((this.selectedFile && !this.fileSession[this.selectedFile]) || this.fileSession[this.selectedFile].loadingError) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
@@ -261,24 +261,29 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     loadFile(fileName: string) {
         this.isLoading = true;
-        /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService
-            .getFile(fileName)
-            .pipe(
-                tap((fileObj) => {
-                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
-                    // It is possible that the selected file has changed - in this case don't update the editor.
-                    if (this.selectedFile === fileName) {
-                        this.initEditorAfterFileChange();
-                    }
-                }),
-                catchError(() => {
-                    return of(undefined);
-                }),
-            )
-            .subscribe(() => {
-                this.isLoading = false;
-            });
+        this.repositoryFileService.getFile(fileName).subscribe({
+            next: (fileObj) => {
+                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
+                this.finalizeLoading(fileName);
+            },
+            error: (error) => {
+                this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
+                if (error.message === ConnectionError.message) {
+                    this.onError.emit('loadingFailed' + error.message);
+                } else {
+                    this.onError.emit('loadingFailed');
+                }
+                this.finalizeLoading(fileName);
+            },
+        });
+    }
+
+    finalizeLoading(fileName: string) {
+        // It is possible that the selected file has changed - in this case don't update the editor.
+        if (this.selectedFile === fileName) {
+            this.initEditorAfterFileChange();
+        }
+        this.isLoading = false;
     }
 
     /**
@@ -300,7 +305,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             if (this.fileSession[this.selectedFile].code !== code) {
                 const cursor = this.editor.getEditor().getCursorPosition();
-                this.fileSession[this.selectedFile] = { code, cursor };
+                this.fileSession[this.selectedFile] = { code, cursor, loadingError: false };
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
@@ -413,7 +418,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.annotationsArray = this.annotationsArray.filter((a) => a.fileName === fileChange.fileName);
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
-            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
             this.initEditorAfterFileChange();
         }
         this.displayAnnotations();

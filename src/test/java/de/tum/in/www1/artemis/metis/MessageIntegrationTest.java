@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -135,9 +134,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
-
-        SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
-        doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
     }
 
     @AfterEach
@@ -162,7 +158,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @ParameterizedTest
@@ -221,7 +217,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -247,7 +243,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -305,7 +301,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
 
         // both conversation participants should be notified about the update
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -321,7 +317,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -333,7 +329,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
         // both conversation participants should be notified
-        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -345,7 +341,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test

@@ -18,7 +18,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
-import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
@@ -130,6 +130,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faDownload = faDownload;
     faSpinner = faSpinner;
+    faClipboard = faClipboard;
 
     constructor(
         private route: ActivatedRoute,
