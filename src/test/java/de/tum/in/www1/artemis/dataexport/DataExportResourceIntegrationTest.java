@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.service.dataexport.DataExportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -259,7 +260,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/data-exports", null, RequestDataExportDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -274,9 +275,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequestingDataExportCreatesCorrectDataExportObject() throws Exception {
         dataExportRepository.deleteAll();
-        var dataExport = request.postWithResponseBody("/api/data-exports", null, DataExport.class, HttpStatus.OK);
-        assertThat(dataExport.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
-        assertThat(dataExport.getCreatedDate()).isNotNull();
+        var dataExport = request.postWithResponseBody("/api/data-exports", null, RequestDataExportDTO.class, HttpStatus.OK);
+        assertThat(dataExport.dataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(dataExport.createdDate()).isNotNull();
     }
 
     @ParameterizedTest

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.dataexport.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -56,7 +57,7 @@ public class DataExportResource {
      */
     @PostMapping("data-exports")
     @EnforceAtLeastStudent
-    public DataExport requestDataExport() throws IOException {
+    public RequestDataExportDTO requestDataExport() throws IOException {
         if (!canRequestDataExport()) {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
