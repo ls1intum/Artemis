@@ -665,6 +665,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 // The participation should not get locked if it gets created after the exam already started
                 assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isFalse();
                 verify(versionControlService, atLeastOnce()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
+                verify(versionControlService).configureBranchProtection(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation));
             }
         }
 

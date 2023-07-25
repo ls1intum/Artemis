@@ -618,6 +618,7 @@ public class ParticipationUtilService {
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
 
         doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
+        doNothing().when(versionControlService).configureBranchProtection(any(), any());
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
