@@ -281,7 +281,8 @@
             "instanceId": "Browserinstanz-ID",
             "ipAddress": "IP-Adresse",
             "createdDate": "Erstellungsdatum",
-            "studentExamId": "Klausur-ID"
+            "studentExamId": "Klausur-ID",
+            "userLogin": "Benutzername"
         },
         "studentExams": {
             "title": "Klausuren",

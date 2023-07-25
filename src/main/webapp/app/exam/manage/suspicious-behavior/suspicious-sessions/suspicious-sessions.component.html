@@ -1,36 +1,40 @@
-<table class="table table-responsive">
-    <thead>
-        <tr>
-            <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.sessionToken' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.userAgent' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.instanceId' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
-            <th scope="col">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}</th>
-        </tr>
-    </thead>
-    <tbody>
-        <ng-container *ngFor="let session of suspiciousSessions.examSessions; let i = index">
+<div style="overflow-x: auto; overflow-y: hidden">
+    <table class="table table-responsive">
+        <thead>
             <tr>
-                <th scope="row">{{ session.id }}</th>
-                <td>{{ session.sessionToken }}</td>
-                <td class="align-top w-25">{{ session.userAgent }}</td>
-                <td>{{ session.browserFingerprintHash }}</td>
-                <td>{{ session.instanceId }}</td>
-                <td>{{ session.ipAddress }}</td>
-                <td>{{ session.createdDate | artemisDate }}</td>
-                <td>
-                    <a id="student-exam-session-{{ i }}" [routerLink]="getStudentExamLink(session.studentExam!)">
-                        {{ session.studentExam?.id }}
-                    </a>
-                </td>
-                <td>
-                    {{ session.suspiciousReasons?.join(', ') }}
-                </td>
+                <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.sessionToken' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.userAgent' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.instanceId' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.userLogin' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}</th>
             </tr>
-        </ng-container>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            <ng-container *ngFor="let session of suspiciousSessions.examSessions; let i = index">
+                <tr>
+                    <th scope="row">{{ session.id }}</th>
+                    <td>{{ session.sessionToken }}</td>
+                    <td class="align-top w-25">{{ session.userAgent }}</td>
+                    <td>{{ session.browserFingerprintHash }}</td>
+                    <td>{{ session.instanceId }}</td>
+                    <td>{{ session.ipAddress }}</td>
+                    <td>{{ session.createdDate | artemisDate }}</td>
+                    <td>
+                        <a id="student-exam-session-{{ i }}" [routerLink]="getStudentExamLink(session.studentExam!)">
+                            {{ session.studentExam?.id }}
+                        </a>
+                    </td>
+                    <td>{{ session.studentExam?.user?.login }}</td>
+                    <td>
+                        {{ session.suspiciousReasons?.join(', ') }}
+                    </td>
+                </tr>
+            </ng-container>
+        </tbody>
+    </table>
+</div>

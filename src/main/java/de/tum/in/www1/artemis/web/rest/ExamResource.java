@@ -1172,12 +1172,21 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
     @EnforceAtLeastInstructor
-    public List<Exercise> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
+    public List<ExerciseForPlagiarismCasesOverviewDTO> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all exercises for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        return exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+        List<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+        List<ExerciseForPlagiarismCasesOverviewDTO> exerciseForPlagiarismCasesOverviewDTOS = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());
+            var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+            var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+            ExerciseForPlagiarismCasesOverviewDTO exerciseForPlagiarismCasesOverviewDTO = new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exerciseGroupDTO);
+            exerciseForPlagiarismCasesOverviewDTOS.add(exerciseForPlagiarismCasesOverviewDTO);
+        }
+        return exerciseForPlagiarismCasesOverviewDTOS;
     }
 
     /**
@@ -1190,7 +1199,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
-    public Set<SuspiciousExamSessions> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

@@ -3540,16 +3540,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExercisesWithPotentialPlagiarismAsInstructor() throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        List<Exercise> expectedExercises = new ArrayList<>();
+        List<ExerciseForPlagiarismCasesOverviewDTO> expectedExercises = new ArrayList<>();
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
         exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
             if (exercise.getExerciseType() != ExerciseType.QUIZ && exercise.getExerciseType() != ExerciseType.FILE_UPLOAD) {
-                expectedExercises.add(exercise);
+                var courseDTO = new CourseWithIdDTO(course1.getId());
+                var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+                var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+                expectedExercises.add(new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exerciseGroupDTO));
             }
         }));
 
-        List<Exercise> exercises = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.OK,
-                Exercise.class);
+        List<ExerciseForPlagiarismCasesOverviewDTO> exercises = request.getList(
+                "/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.OK, ExerciseForPlagiarismCasesOverviewDTO.class);
         assertThat(exercises).hasSize(5);
         assertThat(exercises).containsExactlyInAnyOrderElementsOf(expectedExercises);
     }
@@ -3562,7 +3565,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         final String browserFingerprint1 = "5b2cc274f6eaf3a71647e1f85358ce32";
         final String sessionToken1 = "abc";
         final String userAgent2 = "Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36";
-        final String ipAddress2 = "";
+        final String ipAddress2 = "172.168.0.0";
         final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
         final String sessionToken2 = "def";
         Exam exam = examUtilService.addExam(course1);
@@ -3571,13 +3574,33 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
         examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
         ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
-        secondExamSessionStudent1.setSuspiciousReasons(Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_USER_AGENT));
-        Set<SuspiciousExamSessions> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions", HttpStatus.OK,
-                SuspiciousExamSessions.class);
+        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_USER_AGENT,
+                SuspiciousSessionReason.SAME_IP_ADDRESS);
+        firstExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
+        secondExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
+        Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions",
+                HttpStatus.OK, SuspiciousExamSessionsDTO.class);
         assertThat(suspiciousSessionTuples).hasSize(1);
         var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
         assertThat(suspiciousSessions.examSessions()).hasSize(2);
-        assertThat(suspiciousSessions.examSessions()).containsExactlyInAnyOrder(firstExamSessionStudent1, secondExamSessionStudent1);
+        assertThat(suspiciousSessions.examSessions()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdDate")
+                .containsExactlyInAnyOrderElementsOf(createExpectedDTOs(firstExamSessionStudent1, secondExamSessionStudent1));
+    }
+
+    private Set<ExamSessionDTO> createExpectedDTOs(ExamSession session1, ExamSession session2) {
+        var expectedDTOs = new HashSet<ExamSessionDTO>();
+        var firstStudentExamDTO = new StudentExamWithIdAndUserDTO(session1.getStudentExam().getId(),
+                new UserWithIdAndLoginDTO(session1.getStudentExam().getUser().getId(), session1.getStudentExam().getUser().getLogin()));
+        var secondStudentExamDTO = new StudentExamWithIdAndUserDTO(session2.getStudentExam().getId(),
+                new UserWithIdAndLoginDTO(session2.getStudentExam().getUser().getId(), session2.getStudentExam().getUser().getLogin()));
+        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getSessionToken(), session1.getBrowserFingerprintHash(), session1.getUserAgent(),
+                session1.getInstanceId(), session1.getIpAddress(), session1.getSuspiciousReasons(), session1.getCreatedDate(), firstStudentExamDTO);
+        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getSessionToken(), session2.getBrowserFingerprintHash(), session2.getUserAgent(),
+                session2.getInstanceId(), session2.getIpAddress(), session2.getSuspiciousReasons(), session2.getCreatedDate(), secondStudentExamDTO);
+        expectedDTOs.add(firstExamSessionDTO);
+        expectedDTOs.add(secondExamSessionDTO);
+        return expectedDTOs;
+
     }
 
     private int prepareExerciseStart(Exam exam) throws Exception {

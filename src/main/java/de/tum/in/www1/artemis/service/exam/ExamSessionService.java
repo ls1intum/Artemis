@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import inet.ipaddr.IPAddress;
 
 /**
@@ -79,7 +80,7 @@ public class ExamSessionService {
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
      */
-    public Set<SuspiciousExamSessions> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
+    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions.forEach(examSession -> {
@@ -100,15 +101,27 @@ public class ExamSessionService {
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         });
-        return suspiciousExamSessions;
+
+        return convertResultToDTO(suspiciousExamSessions);
+    }
+
+    private Set<SuspiciousExamSessionsDTO> convertResultToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
+        suspiciousExamSessions.forEach(suspiciousExamSession -> {
+            Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
+            suspiciousExamSession.examSessions().forEach(examSession -> {
+                examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getSessionToken(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(),
+                        examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(),
+                        new StudentExamWithIdAndUserDTO(examSession.getStudentExam().getId(),
+                                new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin()))));
+            });
+            suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
+        });
+        return suspiciousExamSessionsDTO;
     }
 
     private void determineSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
         for (var relatedExamSession : relatedExamSessions) {
-            // for (var relatedExamSession2 : relatedExamSessions) {
-            // if(relatedExamSession == relatedExamSession2) {
-            // continue;
-            // }
             if (relatedExamSession.sameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
@@ -122,7 +135,6 @@ public class ExamSessionService {
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
             }
         }
-        // }
     }
 
 }

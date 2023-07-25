@@ -284,7 +284,8 @@
             "instanceId": "Browser Instance ID",
             "ipAddress": "IP Address",
             "createdDate": "Created Date",
-            "studentExamId": "Exam ID"
+            "studentExamId": "Exam ID",
+            "userLogin": "Login"
         },
         "studentExams": {
             "title": "Student exams",
