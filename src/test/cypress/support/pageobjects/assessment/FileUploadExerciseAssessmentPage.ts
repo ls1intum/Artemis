@@ -13,11 +13,11 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
         cy.get('#submit').click();
     }
 
-    rejectComplaint(response: string, examMode: false) {
+    rejectComplaint(response: string, examMode: boolean) {
         return super.rejectComplaint(response, examMode, EXERCISE_TYPE.FileUpload);
     }
 
-    acceptComplaint(response: string, examMode: false) {
+    acceptComplaint(response: string, examMode: boolean) {
         return super.acceptComplaint(response, examMode, EXERCISE_TYPE.FileUpload);
     }
 }
