@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -585,7 +584,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
+        Set<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -177,7 +178,7 @@ public class NotificationSettingsService {
      */
     public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
             NotificationSettingsCommunicationChannel communicationChannel) {
-        List<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Collections.singletonList(user), communicationChannel);
+        Set<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Set.of(user), communicationChannel);
         return !users.isEmpty();
     }
 
@@ -189,12 +190,12 @@ public class NotificationSettingsService {
      * @param communicationChannel which channel to use (e.g. email or webapp or push)
      * @return filtered user list
      */
-    public List<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, List<User> users,
+    public Set<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, Set<User> users,
             NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
-                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(user -> user.getId()).toList());
+                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
         Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
         return users.stream().filter(user -> {
@@ -210,7 +211,7 @@ public class NotificationSettingsService {
 
             Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
             return !deactivatedTypes.contains(type);
-        }).toList();
+        }).collect(Collectors.toSet());
     }
 
     /**
