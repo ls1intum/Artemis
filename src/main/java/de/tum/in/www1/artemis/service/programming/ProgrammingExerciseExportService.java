@@ -164,7 +164,7 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, ArrayList<Path> pathsToBeZipped) {
+    private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) {
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
         String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
