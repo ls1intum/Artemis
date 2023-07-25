@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
@@ -15,6 +15,7 @@ import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/moc
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
@@ -24,6 +25,7 @@ describe('SuspiciousBehaviorComponent', () => {
     let plagiarismCasesService: PlagiarismCasesService;
     let plagiarismResultsService: PlagiarismResultsService;
     let examService: ExamManagementService;
+    let router: Router;
     const exercise1 = {
         id: 1,
         exerciseGroup: {
@@ -60,7 +62,10 @@ describe('SuspiciousBehaviorComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockRouterLinkDirective],
             declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent), MockComponent(ButtonComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
+            ],
         });
         fixture = TestBed.createComponent(SuspiciousBehaviorComponent);
         component = fixture.componentInstance;
@@ -68,6 +73,7 @@ describe('SuspiciousBehaviorComponent', () => {
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismResultsService = TestBed.inject(PlagiarismResultsService);
         examService = TestBed.inject(ExamManagementService);
+        router = TestBed.inject(Router);
 
         fixture.detectChanges();
     });
@@ -85,6 +91,15 @@ describe('SuspiciousBehaviorComponent', () => {
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2);
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
     });
+
+    it('should navigate to suspicious sessions on click', () => {
+        const routerSpy = jest.spyOn(router, 'navigate');
+        fixture.detectChanges();
+        fixture.debugElement.nativeElement.querySelector('#view-sessions-btn').click();
+        expect(routerSpy).toHaveBeenCalledOnce();
+        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 1, 'exams', 2, 'suspicious-behavior', 'suspicious-sessions'], { state: { suspiciousSessions: [] } });
+    });
+
     it('should retrieve plagiarism cases/results onInit', () => {
         const examServiceSpy = jest.spyOn(examService, 'getExercisesWithPotentialPlagiarismForExam').mockReturnValue(of([exercise1, exercise2]));
         const plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getNumberOfPlagiarismCasesForExercise').mockReturnValueOnce(of(0)).mockReturnValueOnce(of(1));

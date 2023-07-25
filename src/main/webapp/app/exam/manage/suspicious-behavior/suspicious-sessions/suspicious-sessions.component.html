@@ -21,7 +21,7 @@
                 <td>{{ session.browserFingerprintHash }}</td>
                 <td>{{ session.instanceId }}</td>
                 <td>{{ session.ipAddress }}</td>
-                <td>{{ session.createdDate }}</td>
+                <td>{{ session.createdDate | artemisDate }}</td>
                 <td>
                     <a id="student-exam-session-{{ i }}" [routerLink]="getStudentExamLink(session.studentExam!)">
                         {{ session.studentExam?.id }}

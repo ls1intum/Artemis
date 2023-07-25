@@ -46,9 +46,10 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                     LEFT JOIN FETCH se.exam e
                 WHERE e.id = :examId
                     AND es.id <> :#{#examSession.id}
+                    AND se.id <> :#{#examSession.studentExam.id}
                     AND (es.ipAddress = :#{#examSession.ipAddress}
                         OR es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
                         OR es.userAgent = :#{#examSession.userAgent})
             """)
-    Set<ExamSession> findAllSuspiciousExamSessionsyByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+    Set<ExamSession> findAllSuspiciousExamSessionsByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
 }

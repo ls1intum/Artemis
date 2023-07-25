@@ -74,7 +74,7 @@ public class ExamSessionService {
 
     /**
      * Retrieves all suspicious exam sessions for given exam id
-     * For a more detailed explanation see {@link ExamSessionRepository#findAllSuspiciousExamSessionsyByExamIdAndExamSession(long, ExamSession)}
+     * For a more detailed explanation see {@link ExamSessionRepository#findAllSuspiciousExamSessionsByExamIdAndExamSession(long, ExamSession)}
      *
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
@@ -83,7 +83,17 @@ public class ExamSessionService {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions.forEach(examSession -> {
-            Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsyByExamIdAndExamSession(examId, examSession);
+            boolean alreadyContained = false;
+            for (var suspiciousExamSession : suspiciousExamSessions) {
+                if (suspiciousExamSession.examSessions().contains(examSession)) {
+                    alreadyContained = true;
+                    break;
+                }
+            }
+            if (alreadyContained) {
+                return;
+            }
+            Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsByExamIdAndExamSession(examId, examSession);
             if (!relatedExamSessions.isEmpty()) {
                 determineSuspiciousReasons(examSession, relatedExamSessions);
                 relatedExamSessions.add(examSession);
@@ -95,16 +105,24 @@ public class ExamSessionService {
 
     private void determineSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
         for (var relatedExamSession : relatedExamSessions) {
-            if (session.sameBrowserFingerprint(relatedExamSession)) {
+            // for (var relatedExamSession2 : relatedExamSessions) {
+            // if(relatedExamSession == relatedExamSession2) {
+            // continue;
+            // }
+            if (relatedExamSession.sameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
+                session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
             }
-            if (session.sameIpAddress(relatedExamSession)) {
+            if (relatedExamSession.sameIpAddress(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
+                session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
             }
-            if (session.sameUserAgent(relatedExamSession)) {
+            if (relatedExamSession.sameUserAgent(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
+                session.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
             }
         }
+        // }
     }
 
 }

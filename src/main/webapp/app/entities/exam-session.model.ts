@@ -5,7 +5,6 @@ import { StudentExam } from './student-exam.model';
 export enum SuspiciousSessionReason {
     SAME_IP_ADDRESS = 'SAME_IP_ADDRESS',
     SAME_BROWSER_FINGERPRINT = 'SAME_BROWSER_FINGERPRINT',
-    SAME_INSTANCE_ID = 'SAME_INSTANCE_ID',
     SAME_USER_AGENT = 'SAME_USER_AGENT',
 }
 

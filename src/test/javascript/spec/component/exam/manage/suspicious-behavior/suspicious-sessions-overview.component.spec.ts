@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
@@ -6,11 +6,12 @@ import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/s
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 
 describe('SuspiciousSessionsComponent', () => {
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, examId: 2 }) } } as unknown as ActivatedRoute;
     const suspiciousSessions = {
         examSessions: [
             {
@@ -29,20 +30,18 @@ describe('SuspiciousSessionsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SuspiciousSessionsOverviewComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            declarations: [SuspiciousSessionsOverviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(SuspiciousSessionsComponent)],
         });
+        history.pushState({ suspiciousSessions: [suspiciousSessions] }, '');
+
         fixture = TestBed.createComponent(SuspiciousSessionsOverviewComponent);
         component = fixture.componentInstance;
         suspiciousSessionService = TestBed.inject(SuspiciousSessionsService);
         fixture.detectChanges();
     });
 
-    it('should retrieve suspicious sessions onInit', () => {
-        const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+    it('should retrieve suspicious sessions onInit', fakeAsync(() => {
         component.ngOnInit();
-        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
-        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2);
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
-    });
+    }));
 });

@@ -11,14 +11,6 @@ export class SuspiciousSessionsService {
     constructor(private http: HttpClient) {}
 
     getSuspiciousSessions(courseId: number, examId: number): Observable<SuspiciousExamSessions[]> {
-        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`).pipe(
-            tap((res) =>
-                res.forEach((suspiciousSessions) => {
-                    suspiciousSessions.examSessions.forEach((examSession) => {
-                        examSession.createdDate = convertDateFromServer(examSession.createdDate);
-                    });
-                }),
-            ),
-        );
+        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`);
     }
 }

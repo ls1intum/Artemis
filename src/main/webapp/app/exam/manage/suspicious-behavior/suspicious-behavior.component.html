@@ -11,14 +11,17 @@
     <li>
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterion2' | artemisTranslate }}
     </li>
+    <li>
+        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterion3' | artemisTranslate }}
+    </li>
 </ul>
 
 <p>
     {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate : { numberOfSuspiciousSessions: suspiciousSessions.length } }}
 </p>
 
-<button [disabled]="suspiciousSessions.length === 0" type="submit" [routerLink]="['./suspicious-sessions']" class="btn btn-primary mb-5">
-    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
+<button [disabled]="suspiciousSessions.length === 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
+    <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
 </button>
 <jhi-plagiarism-cases-overview
     [exercises]="exercises"
