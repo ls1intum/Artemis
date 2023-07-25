@@ -678,12 +678,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
      * @param exercise         The exercise for which the repositories should be unlocked
+     * @param unlockRepository true if the remote repository should get unlocked
      * @param updateLockedFlag true if the participation's locked boolean value should also be updated.
      * @param condition        a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable runUnlockOperation(ProgrammingExercise exercise, boolean updateLockedFlag, Predicate<ProgrammingExerciseStudentParticipation> condition) {
+    public Runnable runUnlockOperation(ProgrammingExercise exercise, boolean unlockRepository, boolean updateLockedFlag,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -696,12 +698,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
                     // programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+                    if (unlockRepository) {
+                        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+                    }
                 };
 
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
                         .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
 
+                // Always invoke the unlockAndCollect operation to find the individual dua dates
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExercise, unlockAndCollectOperation,
                         condition, "add write permissions to all student repositories");
 
@@ -721,12 +726,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 else {
                     groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
+
                 // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
                 // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
                 // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
                 // one use case is to unlock all operation is invoked directly after exam start
                 Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
                         .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
+                // TODO: also take params into account for better performance (only lock repository or only change boolean)
                 scheduleIndividualRepositoryAndParticipationLockTasks(exercise, futureIndividualDueDates);
             }
             catch (EntityNotFoundException ex) {
@@ -745,7 +752,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, true, participation -> true);
+        return runUnlockOperation(exercise, true, true, participation -> true);
     }
 
     /**
@@ -759,7 +766,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, true, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        return runUnlockOperation(exercise, true, true, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
@@ -772,12 +779,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, false, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        return runUnlockOperation(exercise, true, false,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
      * Returns a runnable that, once executed, will unlock all student participations that are inside the working time frame and will schedule all participation lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * This is useful when only the online code editor is activated and therefore no direct access to the remote repository is required.
      * NOTE: this will not immediately unlock the participations as only a Runnable is returned!
      *
      * @param exercise The exercise for which the participations should be unlocked
@@ -785,8 +794,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        // TODO why does this method exist? Why would you ever want to change only the database value?
-        return runUnlockOperation(exercise, true, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        return runUnlockOperation(exercise, false, true,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
