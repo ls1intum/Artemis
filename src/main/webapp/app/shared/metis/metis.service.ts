@@ -190,7 +190,11 @@ export class MetisService implements OnDestroy {
                 }
                 this.cachedTotalNumberOfPots = Number(res.headers.get('X-Total-Count'));
                 if (this.currentPostContextFilter.conversationId) {
-                    this.cachedPosts.forEach((post) => (post.conversation = { id: this.currentPostContextFilter.conversationId } as Conversation));
+                    this.cachedPosts.forEach((post) => {
+                        const conv = { id: this.currentPostContextFilter.conversationId } as Conversation;
+                        post.conversation = conv;
+                        post.answers?.forEach((answer) => answer.post && (answer.post.conversation = conv));
+                    });
                 }
                 this.posts$.next(this.cachedPosts);
                 this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
