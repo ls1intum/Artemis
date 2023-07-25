@@ -678,7 +678,7 @@ public class StudentExamService {
                             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, programmingParticipation);
                         }
                         else {
-                            programmingExerciseParticipationService.lockStudentParticipation(programmingExercise, programmingParticipation);
+                            programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
                         }
                     }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),

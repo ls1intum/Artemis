@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -250,12 +251,9 @@ public class ProgrammingExerciseParticipationService {
      * Lock a student participation. This is necessary if the student is not allowed to submit either from the online editor or from their local Git client.
      * This is the case, if the start date of the exercise is in the future, if the due date is in the past, or if the student has reached the submission limit.
      *
-     * @param programmingExercise the programming exercise this participation belongs to
-     *                                Note: This parameter is not required to lock the student participation but needs to be present here to be able to use this method with
-     *                                ProgrammingExerciseScheduleService#invokeOperationOnAllParticipationsThatSatisfy(), which requires a BiConsumer.
-     * @param participation       the participation to be locked
+     * @param participation the participation to be locked
      */
-    public void lockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+    public void lockStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Update the locked field for the given participation in the database.
         studentParticipationRepository.updateLockedById(participation.getId(), true);
         // Also set the correct value on the participation object in case the caller uses this participation for further processing.
@@ -271,7 +269,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void lockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         lockStudentRepository(programmingExercise, participation);
-        lockStudentParticipation(programmingExercise, participation);
+        lockStudentParticipation(participation);
     }
 
     /**
@@ -283,8 +281,9 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
-            versionControlService.orElseThrow().configureRepository(programmingExercise, participation, true);
+            for (User user : participation.getStudents()) {
+                versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlRepositoryPermission.REPO_WRITE);
+            }
         }
         else {
             log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());

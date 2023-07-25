@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -92,7 +93,7 @@ public class GitLabService extends AbstractVersionControlService {
             }
 
             if (allowAccess) {
-                final RepositoryPermissions permissions = determineRepositoryPermissions(exercise);
+                final VersionControlRepositoryPermission permissions = determineRepositoryPermissions(exercise);
                 addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
             }
 
@@ -106,7 +107,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final Long userId = gitLabUserManagementService.getUserId(user.getLogin());
         final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
@@ -131,10 +132,10 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private static AccessLevel permissionsToAccessLevel(final RepositoryPermissions permissions) {
+    private static AccessLevel permissionsToAccessLevel(final VersionControlRepositoryPermission permissions) {
         return switch (permissions) {
-            case READ_ONLY -> REPORTER;
-            case READ_WRITE -> DEVELOPER;
+            case REPO_READ -> REPORTER;
+            case REPO_WRITE -> DEVELOPER;
         };
     }
 
@@ -473,7 +474,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, RepositoryPermissions.READ_ONLY));
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, VersionControlRepositoryPermission.REPO_READ));
     }
 
     /**
@@ -483,7 +484,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param user          The GitLab user
      * @param permissions   The new access level for the user
      */
-    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {

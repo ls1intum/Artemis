@@ -840,7 +840,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private List<ProgrammingExerciseStudentParticipation> updateParticipationsLockedInDatabase(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentParticipation, condition,
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
+                (programmingExercise, participation) -> programmingExerciseParticipationService.lockStudentParticipation(participation), condition,
                 "lock all student participations");
     }
 
