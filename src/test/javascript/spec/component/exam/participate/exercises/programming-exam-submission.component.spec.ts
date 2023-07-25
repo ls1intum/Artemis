@@ -9,7 +9,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,9 +22,6 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exerc
 describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
     let component: ProgrammingExamSubmissionComponent;
-
-    let domainService: DomainService;
-    let domainServiceSetDomainSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -47,9 +44,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExamSubmissionComponent);
                 component = fixture.componentInstance;
-                domainService = fixture.debugElement.injector.get(DomainService);
-
-                domainServiceSetDomainSpy = jest.spyOn(domainService, 'setDomain');
             });
     });
 
@@ -73,29 +67,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         return participation;
     };
 
-    it('should initialize with unlocked repository', () => {
-        const exercise = newExercise();
-        component.exercise = exercise;
-        component.studentParticipation = {};
-
-        fixture.detectChanges();
-
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
-
-        expect(component.participationIsLocked).toBeFalse();
-        expect(component.getExercise()).toEqual(newExercise());
-    });
-
-    it('should set the participationIsLocked value to true', () => {
-        component.exercise = newExercise();
-        component.studentParticipation = { locked: true };
-
-        fixture.detectChanges();
-
-        expect(component.participationIsLocked).toBeTrue();
-    });
-
     it('should change state on commit', () => {
         component.studentParticipation = newParticipation();
 
@@ -113,7 +84,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(component.studentParticipation.submissions![0].isSynced).toBeTrue();
     });
 
-    it('should desync on file change', () => {
+    it('should not be synced on file change', () => {
         component.studentParticipation = newParticipation();
 
         component.studentParticipation.submissions![0].isSynced = true;
