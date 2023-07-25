@@ -10,7 +10,7 @@ export class FileUploadEditorPage {
 
     attachFileExam(filePath: string) {
         cy.get('#fileUploadInput').attachFile(filePath);
-        cy.get('#fileUploadSubmit').click();
+        cy.get('#file-upload-submit').click();
     }
 
     /**
