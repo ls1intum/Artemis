@@ -18,12 +18,7 @@
                 <td>{{ plagiarismResultsPerExercise.get(exercise) }}</td>
                 <td>{{ plagiarismCasesPerExercise.get(exercise) }}</td>
                 <td>
-                    <button
-                        id="view-plagiarism-results-btn-{{ i }}"
-                        *ngIf="plagiarismResultsPerExercise.get(exercise)"
-                        class="btn btn-primary"
-                        (click)="goToPlagiarismDetection(exercise)"
-                    >
+                    <button id="view-plagiarism-results-btn-{{ i }}" class="btn btn-primary" (click)="goToPlagiarismDetection(exercise)">
                         {{ 'artemisApp.examManagement.plagiarismCasesOverview.viewResultsOrRunDetection' | artemisTranslate }}
                     </button>
                 </td>
