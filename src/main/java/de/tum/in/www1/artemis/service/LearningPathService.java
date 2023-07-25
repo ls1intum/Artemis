@@ -396,6 +396,12 @@ public class LearningPathService {
         return "edge-" + competencyId + "-direct";
     }
 
+    /**
+     * Gets a recommended learning object based on the current state of the given learning path.
+     *
+     * @param learningPath the learning path for which the recommendation should be computed
+     * @return recommended learning object
+     */
     public LearningObject getRecommendation(@NotNull LearningPath learningPath) {
         return learningPath.getCompetencies().stream()
                 .flatMap(competency -> Stream.concat(
