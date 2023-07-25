@@ -430,7 +430,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param exercise    the exercise
      * @param accessLevel the access level to give
      */
-    private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
+    private void addUsersToExerciseGroup(Set<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
         for (final var user : users) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(user.getLogin());
