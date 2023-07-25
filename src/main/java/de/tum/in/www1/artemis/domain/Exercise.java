@@ -42,14 +42,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-// @formatter:off
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
-    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
-    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
-    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
-})
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
@@ -707,6 +699,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
     }
 
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
     public boolean isStudentAssignedTeamIdComputed() {
         return studentAssignedTeamIdComputedTransient;
     }
@@ -715,6 +708,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
     public boolean isGradingInstructionFeedbackUsed() {
         return isGradingInstructionFeedbackUsedTransient;
     }
