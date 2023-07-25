@@ -272,12 +272,8 @@ public class ProgrammingExerciseExportImportResource {
             path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
         }
         catch (Exception e) {
-            throw new InternalServerErrorException("Unexpected error while exporting programming exercise: " + e.getMessage());
-        }
-
-        if (path == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+            log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
+            throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
         var finalZipFile = path.toFile();
 

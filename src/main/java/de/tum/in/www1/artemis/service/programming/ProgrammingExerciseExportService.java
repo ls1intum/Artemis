@@ -111,16 +111,13 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return the path to the zip file
      */
-    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) {
+    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
-        Path exportDir;
-        try {
-            exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
+        Path repoDownloadClonePathAsPath = Path.of(repoDownloadClonePath);
+        if (!Files.exists(repoDownloadClonePathAsPath)) {
+            Files.createDirectories(repoDownloadClonePathAsPath);
         }
-        catch (IOException e) {
-            exportErrors.add("Could not create temporary directory for export: " + e.getMessage());
-            return null;
-        }
+        Path exportDir = Files.createTempDirectory(repoDownloadClonePathAsPath, "programming-exercise-material");
         // Schedule deletion of export directory directly here, so it always gets deleted, even if an exception is thrown
         fileService.scheduleForDirectoryDeletion(exportDir, 5);
 
@@ -152,16 +149,8 @@ public class ProgrammingExerciseExportService {
         Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
-        try {
-            zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
-            return pathToZippedExercise;
-        }
-        catch (IOException e) {
-            var error = "Failed to export programming exercise because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
-            log.info(error);
-            exportErrors.add(error);
-            return null;
-        }
+        zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
+        return pathToZippedExercise;
     }
 
     private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) {
@@ -170,13 +159,7 @@ public class ProgrammingExerciseExportService {
         String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
         var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
         pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
-        try {
-            copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
-        }
-        catch (IOException e) {
-            exportErrors.add("Failed to copy embedded files: " + e.getMessage());
-            log.warn("Could not copy embedded files for exercise with id {}", exercise.getId());
-        }
+        copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped, exportErrors);
     }
 
     /**
@@ -187,7 +170,7 @@ public class ProgrammingExerciseExportService {
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
 
-    private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped) throws IOException {
+    private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
         Set<String> embeddedFiles = new HashSet<>();
 
         Matcher matcher = Pattern.compile(EMBEDDED_FILE_REGEX).matcher(exercise.getProblemStatement());
@@ -198,7 +181,14 @@ public class ProgrammingExerciseExportService {
         Path embeddedFilesDir = outputDir.resolve("files");
         if (!embeddedFiles.isEmpty()) {
             if (!Files.exists(embeddedFilesDir)) {
-                Files.createDirectory(embeddedFilesDir);
+                try {
+                    Files.createDirectory(embeddedFilesDir);
+                }
+                catch (IOException e) {
+                    exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
+                    log.warn("Could not create directory for embedded files. Won't include embedded files: " + e.getMessage());
+                    return;
+                }
             }
             pathsToBeZipped.add(embeddedFilesDir);
         }
@@ -211,7 +201,13 @@ public class ProgrammingExerciseExportService {
             Path imageExportPath = embeddedFilesDir.resolve(fileName);
             // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
             if (!Files.exists(imageExportPath)) {
-                Files.copy(imageFilePath, imageExportPath);
+                try {
+                    Files.copy(imageFilePath, imageExportPath);
+                }
+                catch (IOException e) {
+                    exportErrors.add("Failed to copy embedded files: " + e.getMessage());
+                    log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
+                }
             }
         }
 
