@@ -299,9 +299,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         bitbucketRequestMockProvider.mockUpdateUserDetails(student42.getLogin(), student42.getEmail(), student42.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
+        Set<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
-        List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
+        Set<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
