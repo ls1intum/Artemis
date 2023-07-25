@@ -18,6 +18,7 @@ the external services (Jira, Bitbucket and Bamboo) and connect them directly wit
 Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
 the prelive system, which is already properly setup in the university data center.
 
+
 Local Cypress Setup
 -------------------
 Sometimes developers need to setup Cypress locally, in order to debug failing E2E tests or write new tests.
@@ -87,10 +88,81 @@ In order to setup cypress locally, we need to follow these steps:
    **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
    since it will create the necessary users.
 
+
 Debug using Sorry Cypress
 -------------------------
 In order to debug failing E2E Cypress tests with a dashboard (called Sorry Cypress), please follow the instructions
 on confluence: https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
+
+
+Best Practice when writing new E2E tests
+----------------------------------------
+
+**Understanding the System and Requirements**
+
+Before writing tests, a deep understanding of the system and its requirements is crucial. 
+This understanding guides determining what needs testing and what defines a successful test. 
+The best way to understand is to consolidate the original system`s developer or a person actively working on this
+component.
+
+**Identify Main Test Scenarios** 
+
+Identify what are the main ways the component is supposed to be used. Try
+the action with all involved user roles and test as many different inputs as
+feasible.
+
+**Identify Edge Test Scenarios**
+
+Next to the main test scenarios, there are also edge case scenarios. These
+tests include inputs/actions that are not supposed to be performed (e.g. enter
+a too-long input into a field) and test the error-handling capabilities of the
+platform.
+
+**Write Tests as Development Progresses**
+
+Rather than leaving testing until the end, write tests alongside each piece of
+functionality. This approach ensures the code remains testable and makes
+identifying and fixing issues as they arise easier.
+
+**Keep Tests Focused**
+
+Keep each test focused on one specific aspect of the code. If a test fails, it is
+easier to identify the issue when it does not check multiple functionalities at
+the same time.
+
+**Make Tests Independent**
+
+Tests should operate independently from each other and external factors like
+the current date or time. Each test should be isolated. Use API calls for unrelated tasks, such as creating a
+course, and UI interaction for the appropriate testing steps. This also involves
+setting up a clean environment for every test suite.
+
+**Use Descriptive Test Names**
+
+Ensure each test name clearly describes what the test does. This strategy
+makes the test suite easier to understand and quickly identifies which test
+has failed.
+
+**Use Similar Test Setups**
+
+Avoid using different setups for each test suit. For example, always check
+for the same HTTP response when deleting a course.
+
+**Do Not Ignore Failing Tests**
+
+If a test consistently fails, pay attention to it. Investigate as soon as possible
+and fx the issue, or update the test if the requirements have changed.
+
+**Regularly Review and Refactor Your Tests**
+
+Tests, like code, can accumulate technical debt. Regular reviews for duplication, 
+unnecessary complexity, and other issues help maintain tests and enhance reliability.
+
+**Use HTML IDs instead of classes or other attributes**
+
+When searching for a single element within the DOM of an HTML page, try to use ID selectors as much as possible. 
+They are more reliable since there can only be one element with this ID on one single page according to the HTML
+
 
 Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
