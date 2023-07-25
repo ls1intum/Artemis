@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -151,8 +149,17 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.locked = :#{#locked}
-            WHERE p.id = :#{#participationId}
+            SET p.locked = :locked
+            WHERE p.id = :participationId
             """)
     void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation p
+            SET p.locked = :locked
+            WHERE p.id IN :participationIds
+            """)
+    void updateLockedForAll(@Param("participationIds") Set<Long> participationIds, @Param("locked") boolean locked);
 }

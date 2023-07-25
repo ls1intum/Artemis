@@ -19,6 +19,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -77,12 +78,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GitService gitService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
-            GitService gitService) {
+            GitService gitService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -98,6 +101,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
         this.gitService = gitService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     @PostConstruct
@@ -673,14 +677,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
-     * @param exercise        The exercise for which the repositories should be unlocked
-     * @param unlockOperation the operation that will be executed for every participation that fulfills the condition
-     * @param condition       a condition that determines whether the operation will be executed for a specific participation
+     * @param exercise         The exercise for which the repositories should be unlocked
+     * @param updateLockedFlag true if the participation's locked boolean value should also be updated.
+     * @param condition        a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable runUnlockOperation(ProgrammingExercise exercise, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockOperation,
-            Predicate<ProgrammingExerciseStudentParticipation> condition) {
+    public Runnable runUnlockOperation(ProgrammingExercise exercise, boolean updateLockedFlag, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -692,11 +695,22 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-                    unlockOperation.accept(programmingExercise, participation);
+                    // programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
-                List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
-                        unlockAndCollectOperation, condition, "add write permissions to all student repositories");
+
+                ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
+                        .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
+
+                List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExercise, unlockAndCollectOperation,
+                        condition, "add write permissions to all student repositories");
+
+                if (updateLockedFlag) {
+                    Set<Long> successfulParticipationIds = programmingExercise.getStudentParticipations().stream().map(ProgrammingExerciseStudentParticipation.class::cast)
+                            .filter(condition).filter(participation -> !failedUnlockOperations.contains(participation)).map(DomainObject::getId).collect(Collectors.toSet());
+
+                    programmingExerciseStudentParticipationRepository.updateLockedForAll(successfulParticipationIds, false);
+                }
 
                 // We send a notification to the instructor about the success of the repository unlocking operation.
                 long numberOfFailedUnlockOperations = failedUnlockOperations.size();
@@ -731,7 +745,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation, participation -> true);
+        return runUnlockOperation(exercise, true, participation -> true);
     }
 
     /**
@@ -745,8 +759,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
-                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        return runUnlockOperation(exercise, true, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
@@ -759,8 +772,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
-                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        return runUnlockOperation(exercise, false, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
@@ -773,8 +785,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
-        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentParticipation,
-                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+        // TODO why does this method exist? Why would you ever want to change only the database value?
+        return runUnlockOperation(exercise, true, participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
@@ -864,12 +876,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
-        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
-
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
-        List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExercise, operation, condition, operationName);
+    }
 
+    private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(ProgrammingExercise programmingExercise,
+            BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
+            String operationName) {
+        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
+
+        List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
         // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed
         // synchronously so this might not be an issue
 
@@ -886,6 +903,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }
+
+        log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
 
         return failedOperations;
     }
