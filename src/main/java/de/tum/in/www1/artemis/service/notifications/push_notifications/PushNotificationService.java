@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.notifications.push_notifications;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import javax.crypto.Cipher;
@@ -116,7 +113,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
      */
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
-        sendNotification(notification, Collections.singletonList(user), notificationSubject);
+        sendNotification(notification, Set.of(user), notificationSubject);
     }
 
     /**
@@ -130,7 +127,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
      */
     @Override
     @Async
-    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+    public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
         final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
 
         if (relayServerBaseUrl.isEmpty()) {

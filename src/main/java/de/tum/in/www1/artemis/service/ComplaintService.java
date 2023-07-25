@@ -75,7 +75,7 @@ public class ComplaintService {
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
             final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
-            final List<User> instructors = userRepository.getInstructors(exam.getCourse());
+            final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
                 throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
