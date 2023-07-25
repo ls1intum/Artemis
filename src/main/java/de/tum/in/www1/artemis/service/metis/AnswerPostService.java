@@ -179,7 +179,7 @@ public class AnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
 
-        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
