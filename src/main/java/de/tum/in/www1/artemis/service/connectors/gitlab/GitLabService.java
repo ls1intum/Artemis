@@ -8,6 +8,7 @@ import java.net.URL;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,9 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Value("${artemis.version-control.ci-token}")
     private String ciToken;
+
+    @Value("${artemis.version-control.health-api-token}")
+    private Optional<String> ciHealthToken;
 
     private final UserRepository userRepository;
 
@@ -504,7 +508,10 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
+            UriComponentsBuilder builder = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString());
+            ciHealthToken.ifPresent(token -> builder.queryParam("token", token));
+            URI uri = builder.build().toUri();
+
             final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);
             final var status = healthResponse.get("status").asText();
             if (!status.equals("ok")) {
