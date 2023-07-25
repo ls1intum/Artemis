@@ -7,16 +7,13 @@ import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -63,9 +60,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     OneToOneChatRepository oneToOneChatRepository;
-
-    @Autowired
-    SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     ConversationMessageRepository conversationMessageRepository;
@@ -134,18 +128,18 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(messagingTemplate).convertAndSendToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 
     }
 
     void verifyNoParticipantTopicWebsocketSent() {
-        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
     }
 
     void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
-        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(),
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).metisCrudAction())));
     }
 
@@ -169,13 +163,11 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
-    @NotNull
-    Course setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+    void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
         var persistedCourse = courseRepository.findByIdElseThrow(exampleCourseId);
         persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
-        return persistedCourse;
     }
 
     ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
@@ -279,7 +271,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     void resetWebsocketMock() {
-        reset(this.messagingTemplate);
+        reset(this.websocketMessagingService);
     }
 
 }

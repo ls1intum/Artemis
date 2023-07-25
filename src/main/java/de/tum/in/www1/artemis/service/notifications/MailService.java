@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -243,7 +242,7 @@ public class MailService implements InstantNotificationService {
      */
     @Override
     @Async
-    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+    public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
         users.forEach(user -> sendNotification(notification, user, notificationSubject));
     }
 

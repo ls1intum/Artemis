@@ -257,7 +257,7 @@ public class CourseService {
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
-        course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         course.setCompetencies(competencyService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
@@ -307,7 +307,7 @@ public class CourseService {
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
             course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
-            course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+            course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         }).toList();
 
         if (log.isDebugEnabled()) {
@@ -808,7 +808,7 @@ public class CourseService {
      * @return list of users
      */
     @NotNull
-    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
+    public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
         usersInGroup.forEach(user -> {
@@ -1014,7 +1014,7 @@ public class CourseService {
      *
      * @param usersInGroup user whose variables are removed
      */
-    private void removeUserVariables(List<User> usersInGroup) {
+    private void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
             user.setLastNotificationRead(null);
             user.setActivationKey(null);

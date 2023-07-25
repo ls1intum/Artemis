@@ -47,8 +47,10 @@ public class ProgrammingExerciseFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
-        var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        ExerciseFactory.populateExerciseForExam(programmingExercise, exerciseGroup);
         populateProgrammingExercise(programmingExercise, programmingLanguage);
+        exerciseGroup.addExercise(programmingExercise);
         return programmingExercise;
     }
 
