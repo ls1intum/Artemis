@@ -70,7 +70,12 @@ public class ConversationMessageResource {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter);
         // keep the data as small as possible and avoid unnecessary information sent to the client
-        coursePosts.getContent().forEach(post -> post.setConversation(null));
+        // TODO: in the future we should set conversation to null
+        coursePosts.getContent().forEach(post -> {
+            if (post.getConversation() != null) {
+                post.getConversation().hideDetails();
+            }
+        });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
         logDuration(coursePosts.getContent(), principal, timeNanoStart);
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
