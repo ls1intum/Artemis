@@ -450,7 +450,7 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
             method: POST,
-            body: { submissionExerciseType: 'file-upload', file, id: null },
+            body: { submissionExerciseType: 'file-upload', file },
         });
     }
 
@@ -607,7 +607,7 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
             method: PUT,
-            body: { submissionExerciseType: 'text', text, id: null },
+            body: { submissionExerciseType: 'text', text },
         });
     }
 
