@@ -74,6 +74,11 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
+    public void configureBranchProtection(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        // nothing to do here
+    }
+
+    @Override
     public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
         // Members cannot be added to a local repository. Authenticated users have access by default and are authorized in the LocalVCFetchFilter and LocalVCPushFilter.
     }

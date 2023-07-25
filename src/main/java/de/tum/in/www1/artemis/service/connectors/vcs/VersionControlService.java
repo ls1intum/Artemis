@@ -23,6 +23,16 @@ public interface VersionControlService {
     void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess);
 
     /**
+     * Initially activate the branch protection rules for the student(s).
+     * This method should only be called once when setting up the repository.
+     * Use configureRepository() to change access rights.
+     *
+     * @param exercise      the programming exercise for which the repository should be configured
+     * @param participation the programming participation corresponding to the repository in the exercise
+     */
+    void configureBranchProtection(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation);
+
+    /**
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
      * repository.
      *

@@ -99,8 +99,10 @@ public class GitLabService extends AbstractVersionControlService {
             // Validate that the access token exist, if it is required
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
+    }
 
-        // TODO: we should separate access (above) from protecting branches
+    @Override
+    public void configureBranchProtection(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         String branch = getOrRetrieveBranchOfStudentParticipation(participation);
         protectBranch(participation.getVcsRepositoryUrl(), branch);
     }

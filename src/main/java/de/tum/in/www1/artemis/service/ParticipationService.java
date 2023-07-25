@@ -436,8 +436,10 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
+            var vcs = versionControlService.orElseThrow();
+            vcs.configureBranchProtection(exercise, participation);
             boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getParticipationStartDate());
-            versionControlService.orElseThrow().configureRepository(exercise, participation, allowAccess);
+            vcs.configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
