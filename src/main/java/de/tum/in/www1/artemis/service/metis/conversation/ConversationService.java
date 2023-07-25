@@ -211,15 +211,12 @@ public class ConversationService {
     /**
      * Notify all members of a conversation about a new message in the conversation
      *
+     * @param course       the course in which the conversation takes place
      * @param conversation conversation which members to notify about the new message (except the author)
-     * @param author       author of the new message to filter out
+     * @param recipients   users to which the notification should be sent
      */
-    public void notifyAllConversationMembersAboutNewMessage(Conversation conversation, User author) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
-        // filter out the author of the message
-        usersToContact.remove(author);
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.NEW_MESSAGE, conversation, usersToContact);
+    public void notifyAllConversationMembersAboutNewMessage(Course course, Conversation conversation, Set<User> recipients) {
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.NEW_MESSAGE, conversation, recipients);
     }
 
     /**
@@ -264,11 +261,11 @@ public class ConversationService {
      * @param course          the course in which the conversation is located
      * @param metisCrudAction the action that was performed
      * @param conversation    the conversation that was affected
-     * @param usersToMessage  the users to be messaged
+     * @param recipients      the users to be messaged
      */
-    public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {
+    public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        usersToMessage.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
     /**

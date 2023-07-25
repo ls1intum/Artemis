@@ -2,8 +2,11 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class OneToOneChatDTO extends ConversationDTO {
 
     public Set<ConversationUserDTO> members;
