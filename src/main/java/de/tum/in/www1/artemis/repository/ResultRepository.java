@@ -218,7 +218,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
+    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p) FROM Participation p JOIN p.results r

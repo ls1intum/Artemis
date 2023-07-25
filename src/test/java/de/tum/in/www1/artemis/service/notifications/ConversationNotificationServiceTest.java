@@ -97,7 +97,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void notifyAboutNewMessageInConversation() {
         Post post = new Post();
         post.setAuthor(user1);
@@ -108,7 +108,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post = conversationMessageRepository.save(post);
 
         conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
