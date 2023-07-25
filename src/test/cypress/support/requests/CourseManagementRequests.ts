@@ -181,7 +181,12 @@ export class CourseManagementRequests {
             channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
-        const exercise: ProgrammingExercise = Object.assign({}, template, { ...(course || exerciseGroup) }) as ProgrammingExercise;
+
+        const exercise: ProgrammingExercise = {
+            ...template,
+            ...(course ? { course } : {}),
+            ...(exerciseGroup ? { exerciseGroup } : {}),
+        } as ProgrammingExercise;
 
         if (!exerciseGroup) {
             exercise.releaseDate = releaseDate;
@@ -196,6 +201,8 @@ export class CourseManagementRequests {
 
         exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+
+        console.log(exercise);
 
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
