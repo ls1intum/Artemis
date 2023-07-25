@@ -697,7 +697,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    // programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
                     if (unlockRepository) {
                         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                     }
@@ -711,8 +710,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         condition, "add write permissions to all student repositories");
 
                 if (updateLockedFlag) {
-                    Set<Long> successfulParticipationIds = programmingExercise.getStudentParticipations().stream().map(ProgrammingExerciseStudentParticipation.class::cast)
-                            .filter(condition).filter(participation -> !failedUnlockOperations.contains(participation)).map(DomainObject::getId).collect(Collectors.toSet());
+                    var participations = programmingExercise.getStudentParticipations();
+                    failedUnlockOperations.forEach(participations::remove);
+                    Set<Long> successfulParticipationIds = participations.stream().map(ProgrammingExerciseStudentParticipation.class::cast).filter(condition)
+                            .map(DomainObject::getId).collect(Collectors.toSet());
 
                     programmingExerciseStudentParticipationRepository.updateLockedForAll(successfulParticipationIds, false);
                 }
