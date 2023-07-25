@@ -1029,7 +1029,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             return null;
         }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
         assertThat(participation.isLocked()).isFalse();
@@ -1039,7 +1039,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;

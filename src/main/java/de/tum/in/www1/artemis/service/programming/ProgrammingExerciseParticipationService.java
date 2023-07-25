@@ -276,10 +276,9 @@ public class ProgrammingExerciseParticipationService {
      * Unlock a student repository. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
      * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
      *
-     * @param programmingExercise the programming exercise this repository belongs to
-     * @param participation       the participation whose repository should be unlocked
+     * @param participation the participation whose repository should be unlocked
      */
-    public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+    public void unlockStudentRepository(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             for (User user : participation.getStudents()) {
                 versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlRepositoryPermission.REPO_WRITE);
@@ -294,12 +293,9 @@ public class ProgrammingExerciseParticipationService {
      * Unlock a student participation. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
      * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
      *
-     * @param programmingExercise the programming exercise this participation belongs to
-     *                                Note: This parameter is not required to unlock the student participation but needs to be present here to be able to use this method with
-     *                                ProgrammingExerciseScheduleService#runUnlockOperation(), which requires a BiConsumer.
-     * @param participation       the participation to be unlocked
+     * @param participation the participation to be unlocked
      */
-    public void unlockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+    public void unlockStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Update the locked field for the given participation in the database.
         studentParticipationRepository.updateLockedById(participation.getId(), false);
         // Also set the correct value on the participation object in case the caller uses this participation for further processing.
@@ -309,13 +305,12 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Unlock the repository associated with a programming participation and the participation itself.
      *
-     * @param programmingExercise the programming exercise
-     * @param participation       the programming exercise student participation whose repository should be unlocked
+     * @param participation the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
-    public void unlockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        unlockStudentRepository(programmingExercise, participation);
-        unlockStudentParticipation(programmingExercise, participation);
+    public void unlockStudentRepositoryAndParticipation(ProgrammingExerciseStudentParticipation participation) {
+        unlockStudentRepository(participation);
+        unlockStudentParticipation(participation);
     }
 
     /**
