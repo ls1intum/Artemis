@@ -210,6 +210,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
             backdrop: 'static',
             windowClass: 'learning-path-modal',
         });
+        modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.learningPathId = learningPath.id;
     }
 }

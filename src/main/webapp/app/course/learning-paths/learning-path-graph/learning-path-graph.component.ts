@@ -1,20 +1,22 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO } from 'app/entities/learning-path.model';
+import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/learning-path.model';
 
 @Component({
     selector: 'jhi-learning-path-graph',
     styleUrls: ['./learning-path-graph.component.scss'],
     templateUrl: './learning-path-graph.component.html',
+    encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathGraphComponent implements OnInit {
     isLoading = false;
     @Input() learningPathId: number;
     @Input() courseId: number;
+    @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
     ngxLearningPath: NgxLearningPathDTO;
 
     layout: string | Layout = 'dagreCluster';

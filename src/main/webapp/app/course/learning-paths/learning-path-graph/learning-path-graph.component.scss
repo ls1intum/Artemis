@@ -13,3 +13,25 @@
         height: 100%;
     }
 }
+
+jhi-learning-path-graph-node:hover {
+    cursor: pointer;
+}
+
+.node-icon-container {
+    width: 100%;
+    display: flex;
+
+    fa-icon {
+        width: 100%;
+        svg {
+            margin: 10%;
+            width: 80%;
+            height: 80%;
+        }
+    }
+}
+
+.completed {
+    color: var(--bs-success);
+}

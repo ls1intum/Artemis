@@ -1,7 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
-import { Competency } from 'app/entities/competency.model';
+import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faBrain, faComments, faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java
@@ -12,6 +14,22 @@ export enum LectureUnitType {
     VIDEO = 'video',
     ONLINE = 'online',
 }
+
+export const lectureUnitIcons = {
+    [LectureUnitType.ATTACHMENT]: faDownload,
+    [LectureUnitType.EXERCISE]: faQuestion,
+    [LectureUnitType.TEXT]: faScroll,
+    [LectureUnitType.VIDEO]: faVideo,
+    [LectureUnitType.ONLINE]: faLink,
+};
+
+export const lectureUnitTooltips = {
+    [LectureUnitType.ATTACHMENT]: 'artemisApp.attachmentUnit.tooltip',
+    [LectureUnitType.EXERCISE]: '',
+    [LectureUnitType.TEXT]: 'artemisApp.textUnit.tooltip',
+    [LectureUnitType.VIDEO]: 'artemisApp.videoUnit.tooltip',
+    [LectureUnitType.ONLINE]: 'artemisApp.onlineUnit.tooltip',
+};
 
 export abstract class LectureUnit implements BaseEntity {
     public id?: number;
@@ -26,5 +44,20 @@ export abstract class LectureUnit implements BaseEntity {
 
     protected constructor(type: LectureUnitType) {
         this.type = type;
+    }
+
+    get getIcon(): IconProp {
+        if (!this.type) {
+            return faQuestion as IconProp;
+        }
+        return lectureUnitIcons[this.type] as IconProp;
+    }
+
+    getIconTooltip(): string {
+        if (!this.type) {
+            return '';
+        }
+
+        return lectureUnitTooltips[this.type];
     }
 }

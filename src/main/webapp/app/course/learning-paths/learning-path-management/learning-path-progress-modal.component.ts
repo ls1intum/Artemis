@@ -6,6 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './learning-path-progress-modal.component.html',
 })
 export class LearningPathProgressModalComponent {
+    @Input() courseId: number;
     @Input() learningPathId: number;
     constructor(private activeModal: NgbActiveModal) {}
 
