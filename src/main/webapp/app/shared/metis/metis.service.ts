@@ -189,6 +189,9 @@ export class MetisService implements OnDestroy {
                     this.cachedPosts = res.body!;
                 }
                 this.cachedTotalNumberOfPots = Number(res.headers.get('X-Total-Count'));
+                if (this.currentPostContextFilter.conversationId) {
+                    this.cachedPosts.forEach((post) => (post.conversation = { id: this.currentPostContextFilter.conversationId } as Conversation));
+                }
                 this.posts$.next(this.cachedPosts);
                 this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
                 this.createSubscriptionFromPostContextFilter();
