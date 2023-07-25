@@ -692,7 +692,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
                     unlockOperation.accept(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
@@ -887,6 +886,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }
+
+        log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
 
         return failedOperations;
     }
