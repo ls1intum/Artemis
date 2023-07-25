@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -1027,7 +1028,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, participation, true);
+        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUrl(), participation.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
 
         programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
 
