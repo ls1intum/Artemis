@@ -47,7 +47,7 @@ export abstract class AbstractExerciseAssessmentPage {
             case ExerciseType.MODELING:
                 cy.intercept(PUT, BASE_API + 'complaint-responses/complaint/*/resolve').as('complaintAnswer');
                 break;
-            case EXERCISE_TYPE.FileUpload:
+            case ExerciseType.FILE_UPLOAD:
                 cy.intercept(PUT, BASE_API + 'file-upload-submissions/*/assessment-after-complaint').as('complaintAnswer');
                 break;
             default:

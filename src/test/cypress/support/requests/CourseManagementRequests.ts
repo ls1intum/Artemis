@@ -496,12 +496,12 @@ export class CourseManagementRequests {
 
     updateFileUploadExerciseDueDate(exercise: FileUploadExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
+        return this.updateExercise(exercise, ExerciseType.FILE_UPLOAD);
     }
 
     updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
+        return this.updateExercise(exercise, ExerciseType.FILE_UPLOAD);
     }
 
     /**
