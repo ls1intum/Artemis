@@ -191,17 +191,13 @@ export class CourseManagementRequests {
             programmingExerciseTemplate = javaProgrammingExerciseTemplate;
         }
 
-        const template = {
+        const exercise = {
             ...programmingExerciseTemplate,
             title,
             shortName: programmingShortName,
             packageName,
             channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
-        };
-
-        const exercise: ProgrammingExercise = {
-            ...template,
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
         } as ProgrammingExercise;
