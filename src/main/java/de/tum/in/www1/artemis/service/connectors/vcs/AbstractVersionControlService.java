@@ -191,13 +191,13 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @param programmingExercise The programming exercise the repository belongs to.
      * @return The permissions the user should receive for a repository.
      */
-    protected RepositoryPermissions determineRepositoryPermissions(final ProgrammingExercise programmingExercise) {
+    protected VersionControlRepositoryPermission determineRepositoryPermissions(final ProgrammingExercise programmingExercise) {
         // NOTE: null values are interpreted as offline IDE is allowed
         if (Boolean.FALSE.equals(programmingExercise.isAllowOfflineIde())) {
-            return RepositoryPermissions.READ_ONLY;
+            return VersionControlRepositoryPermission.REPO_READ;
         }
         else {
-            return RepositoryPermissions.READ_WRITE;
+            return VersionControlRepositoryPermission.REPO_WRITE;
         }
     }
 }

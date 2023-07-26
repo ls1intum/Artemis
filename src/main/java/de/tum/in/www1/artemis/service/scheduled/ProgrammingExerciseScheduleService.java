@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUT
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -679,7 +680,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable runUnlockOperation(ProgrammingExercise exercise, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockOperation,
+    public Runnable runUnlockOperation(ProgrammingExercise exercise, Consumer<ProgrammingExerciseStudentParticipation> unlockOperation,
             Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
@@ -692,8 +693,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-                    unlockOperation.accept(programmingExercise, participation);
+                    unlockOperation.accept(participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, condition, "add write permissions to all student repositories");
@@ -840,7 +840,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private List<ProgrammingExerciseStudentParticipation> updateParticipationsLockedInDatabase(Long programmingExerciseId,
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentParticipation, condition,
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
+                (programmingExercise, participation) -> programmingExerciseParticipationService.lockStudentParticipation(participation), condition,
                 "lock all student participations");
     }
 
@@ -886,6 +887,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }
+
+        log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
 
         return failedOperations;
     }

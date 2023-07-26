@@ -22,6 +22,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -156,6 +157,8 @@ public abstract class RepositoryResource {
             HttpHeaders responseHeaders = new HttpHeaders();
             var contentType = repositoryService.getFileType(repository, filename);
             responseHeaders.add("Content-Type", contentType);
+            // Prevent the file from being interpreted as HTML by the browser when opened directly:
+            responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
             return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
         });
     }

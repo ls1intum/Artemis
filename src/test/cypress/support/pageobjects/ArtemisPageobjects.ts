@@ -44,6 +44,10 @@ import { StudentAssessmentPage } from './assessment/StudentAssessmentPage';
 import { ExamTestRunPage } from './exam/ExamTestRunPage';
 import { CourseCommunicationPage } from './course/CourseCommunication';
 import { CourseMessagesPage } from './course/CourseMessages';
+import { FileUploadExerciseCreationPage } from './exercises/file-upload/FileUploadExerciseCreationPage';
+import { FileUploadEditorPage } from './exercises/file-upload/FileUploadEditorPage';
+import { FileUploadExerciseAssessmentPage } from './assessment/FileUploadExerciseAssessmentPage';
+import { FileUploadExerciseFeedbackPage } from './exercises/file-upload/FileUploadExerciseFeedbackPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -99,6 +103,11 @@ export class ArtemisPageobjects {
             shortAnswer: new ShortAnswerQuiz(),
             dragAndDrop: new DragAndDropQuiz(),
         },
+        fileUpload: {
+            creation: new FileUploadExerciseCreationPage(),
+            editor: new FileUploadEditorPage(),
+            feedback: new FileUploadExerciseFeedbackPage(),
+        },
     };
     assessment = {
         exam: new ExamAssessmentPage(),
@@ -107,6 +116,7 @@ export class ArtemisPageobjects {
         text: new TextExerciseAssessmentPage(),
         programming: new ProgrammingExerciseAssessmentPage(),
         modeling: new ModelingExerciseAssessmentEditor(),
+        fileUpload: new FileUploadExerciseAssessmentPage(),
         student: new StudentAssessmentPage(),
     };
     lecture = {
