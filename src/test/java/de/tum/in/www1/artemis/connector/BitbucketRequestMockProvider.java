@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Component
 @Profile("bitbucket")
@@ -358,22 +357,18 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
-        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlService.RepositoryPermissions.READ_WRITE);
+        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlRepositoryPermission.REPO_WRITE);
     }
 
     public void mockGiveReadPermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
-        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlService.RepositoryPermissions.READ_ONLY);
+        mockGiveRepoPermission(exercise, repositoryName, username, status, VersionControlRepositoryPermission.REPO_READ);
     }
 
-    private void mockGiveRepoPermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status,
-            VersionControlService.RepositoryPermissions permissions) throws URISyntaxException {
-        final String repoPermissions = switch (permissions) {
-            case READ_ONLY -> "REPO_READ";
-            case READ_WRITE -> "REPO_WRITE";
-        };
+    private void mockGiveRepoPermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status, VersionControlRepositoryPermission permissions)
+            throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos/")
-                .pathSegment(repositoryName).path("/permissions/users").queryParam("name", username).queryParam("permission", repoPermissions).build().toUri();
+                .pathSegment(repositoryName).path("/permissions/users").queryParam("name", username).queryParam("permission", permissions.toString()).build().toUri();
 
         mockServer.expect(requestTo(permissionPath)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(status));
     }
