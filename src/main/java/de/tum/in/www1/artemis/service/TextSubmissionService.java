@@ -136,7 +136,7 @@ public class TextSubmissionService extends SubmissionService {
             if (athenaSubmissionId.isPresent()) {
                 // test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime)
                 var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
-                if (submission.isPresent() && submission.get().getLatestResult() == null) { // submission assessable?
+                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) { // submission assessable?
                     return submission;
                 }
                 else {
