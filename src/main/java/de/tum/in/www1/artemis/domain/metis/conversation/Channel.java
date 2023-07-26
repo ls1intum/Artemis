@@ -166,4 +166,16 @@ public class Channel extends Conversation {
     public String getHumanReadableNameForReceiver(User sender) {
         return getName();
     }
+
+    /**
+     * hide the details of the object, can be invoked before sending it as payload in a REST response or websocket message
+     */
+    @Override
+    public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
+        setLecture(null);
+        setExam(null);
+        setExercise(null);
+        super.hideDetails();
+    }
 }

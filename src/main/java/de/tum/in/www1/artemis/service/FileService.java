@@ -123,7 +123,7 @@ public class FileService implements DisposableBean {
     }
 
     @CacheEvict(value = "files", key = "#path")
-    public void resetOnPath(String path) {
+    public void evictCacheForPath(String path) {
         log.info("Invalidate files cache for {}", path);
         // Intentionally blank
     }

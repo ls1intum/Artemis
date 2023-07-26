@@ -68,8 +68,8 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
-- [ ] I confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
-- [ ] I confirm that the server changes (in particular related to database calls) are implemented with a very good performance
+- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
+- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance
 #### Code Review
 - [ ] Code Review 1
 - [ ] Code Review 2

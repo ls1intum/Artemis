@@ -7,8 +7,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.L
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -24,13 +24,14 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class GroupNotificationService {
 
     private final GroupNotificationRepository groupNotificationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final UserRepository userRepository;
 
@@ -38,10 +39,10 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
-    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
             GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService) {
         this.groupNotificationRepository = groupNotificationRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
@@ -318,18 +319,18 @@ public class GroupNotificationService {
     private void saveAndSend(GroupNotification notification, Object notificationSubject, User author) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
-            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            websocketMessagingService.sendMessage(notification.getTopic(), notification);
             return;
         }
 
         groupNotificationRepository.save(notification);
-        messagingTemplate.convertAndSend(notification.getTopic(), notification);
+        websocketMessagingService.sendMessage(notification.getTopic(), notification);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
-            List<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
+            Set<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
 
             if (!groupNotificationReceivers.isEmpty()) {
                 notificationService.sendNotification(notification, groupNotificationReceivers, notificationSubject);
@@ -357,23 +358,23 @@ public class GroupNotificationService {
      * @param notification which information should also be propagated via email
      * @param author       the author will be excluded if not null
      */
-    private List<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
+    private Set<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
         Course course = notification.getCourse();
         GroupNotificationType groupType = notification.getType();
-        List<User> foundUsers;
+        Set<User> foundUsers;
         switch (groupType) {
             case STUDENT -> foundUsers = userRepository.getStudents(course);
             case INSTRUCTOR -> foundUsers = userRepository.getInstructors(course);
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
-            default -> foundUsers = Collections.emptyList();
+            default -> foundUsers = Collections.emptySet();
         }
 
         if (author == null) {
             return foundUsers;
         }
         else {
-            return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).toList();
+            return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
         }
     }
 }
