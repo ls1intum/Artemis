@@ -39,12 +39,12 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise deletion', () => {
-        let programmingExercise: ProgrammingExercise;
+        let exercise: ProgrammingExercise;
 
         before(() => {
             cy.login(admin, '/');
             courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
-                programmingExercise = response.body;
+                exercise = response.body;
             });
         });
 
@@ -52,8 +52,8 @@ describe('Programming Exercise Management', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagement.openExercisesOfCourse(course.id!);
-            courseManagementExercises.deleteProgrammingExercise(programmingExercise);
-            courseManagementExercises.getExercise(programmingExercise.id!).should('not.exist');
+            courseManagementExercises.deleteProgrammingExercise(exercise);
+            courseManagementExercises.getExercise(exercise.id!).should('not.exist');
         });
     });
 
