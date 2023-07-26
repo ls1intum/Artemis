@@ -27,9 +27,9 @@ import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
  */
 @Service
 @Profile("athena")
-public class AthenaFeedbackPublishingService {
+public class AthenaFeedbackSendingService {
 
-    private final Logger log = LoggerFactory.getLogger(AthenaFeedbackPublishingService.class);
+    private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
@@ -44,7 +44,7 @@ public class AthenaFeedbackPublishingService {
      * @param textBlockRepository Needed to get start and end indexes of feedbacks
      * @param athenaRestTemplate  The rest template to use for sending requests to Athena
      */
-    public AthenaFeedbackPublishingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
+    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
         this.textBlockRepository = textBlockRepository;
     }

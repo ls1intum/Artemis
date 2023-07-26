@@ -20,12 +20,12 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-class AthenaFeedbackPublishingServiceTest extends AthenaTest {
+class AthenaFeedbackSendingServiceTest extends AthenaTest {
 
     @Mock
     private TextBlockRepository textBlockRepository;
 
-    private AthenaFeedbackPublishingService athenaFeedbackPublishingService;
+    private AthenaFeedbackSendingService athenaFeedbackSendingService;
 
     private TextExercise textExercise;
 
@@ -37,8 +37,8 @@ class AthenaFeedbackPublishingServiceTest extends AthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaFeedbackPublishingService = new AthenaFeedbackPublishingService(athenaRequestMockProvider.getRestTemplate(), textBlockRepository);
-        ReflectionTestUtils.setField(athenaFeedbackPublishingService, "athenaUrl", athenaUrl);
+        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), textBlockRepository);
+        ReflectionTestUtils.setField(athenaFeedbackSendingService, "athenaUrl", athenaUrl);
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
@@ -56,7 +56,7 @@ class AthenaFeedbackPublishingServiceTest extends AthenaTest {
     }
 
     @Test
-    void testFeedbackPublishing() {
+    void testFeedbackSending() {
         athenaRequestMockProvider.mockSendFeedbackAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].id").value(feedback.getId()),
                 jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].text").value(feedback.getText()),
@@ -64,18 +64,18 @@ class AthenaFeedbackPublishingServiceTest extends AthenaTest {
                 jsonPath("$.feedbacks[0].credits").value(feedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
                 jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 
-        athenaFeedbackPublishingService.sendFeedback(textExercise, textSubmission, List.of(feedback));
+        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(feedback));
     }
 
     @Test
     void testEmptyFeedbackNotSending() {
         athenaRequestMockProvider.ensureNoRequest();
-        athenaFeedbackPublishingService.sendFeedback(textExercise, textSubmission, List.of());
+        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of());
     }
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
-        assertThatThrownBy(() -> athenaFeedbackPublishingService.sendFeedback(textExercise, textSubmission, List.of(feedback))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(feedback))).isInstanceOf(IllegalArgumentException.class);
     }
 }
