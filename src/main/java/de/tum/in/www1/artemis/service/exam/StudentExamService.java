@@ -675,10 +675,10 @@ public class StudentExamService {
                         if (studentExam.isTestRun() || studentExam.isTestExam()
                                 || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
-                            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, programmingParticipation);
+                            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
                         }
                         else {
-                            programmingExerciseParticipationService.lockStudentParticipation(programmingExercise, programmingParticipation);
+                            programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
                         }
                     }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),

@@ -281,8 +281,6 @@ export const metisExerciseChannel = {
     isAnnouncementChannel: false,
     isArchived: false,
     isPublic: true,
-    course: metisCourse,
-    exercise: metisExercise,
 } as Channel;
 
 export const metisLectureChannel = {
@@ -292,6 +290,4 @@ export const metisLectureChannel = {
     isAnnouncementChannel: false,
     isArchived: false,
     isPublic: true,
-    course: metisCourse,
-    exercise: metisLecture,
 } as Channel;
