@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -11,7 +10,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.hamcrest.MockitoHamcrest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -70,10 +68,12 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     private User user2;
 
+    private Course course;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course = courseUtilService.createCourse();
+        course = courseUtilService.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
 
@@ -99,7 +99,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void notifyAboutNewMessageInConversation() {
         Post post = new Post();
         post.setAuthor(user1);
@@ -109,13 +109,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         post.setContent("hi test");
         post = conversationMessageRepository.save(post);
 
-        conversationNotificationService.notifyAboutNewMessage(post);
-        verify(messagingTemplate).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
+        conversationNotificationService.notifyAboutNewMessage(post, Set.of(user2), course);
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
-        verify(generalInstantNotificationService).sendNotification(eq(sentNotification), (List<User>) MockitoHamcrest.argThat(containsInAnyOrder(user1, user2)), eq(null));
+        verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), null);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
