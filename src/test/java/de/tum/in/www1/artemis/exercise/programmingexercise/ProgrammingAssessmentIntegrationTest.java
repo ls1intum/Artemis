@@ -897,14 +897,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         result.setScore(100D);
         resultRepository.save(result);
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
 
         var response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
 
         var responseParticipation = response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
 
-        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test
