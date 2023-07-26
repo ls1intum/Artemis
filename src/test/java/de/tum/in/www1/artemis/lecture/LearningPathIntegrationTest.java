@@ -36,7 +36,8 @@ import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -157,7 +158,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.OK);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/enable", null, HttpStatus.OK);
     }
 
     private Competency createCompetencyRESTCall() throws Exception {
@@ -257,7 +258,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseLearningPathsDisabled() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPath.class, pageableSearchUtilService.searchMapping(search));
+        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathPageableSearchDTO.class,
+                pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
@@ -265,7 +267,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPath.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
@@ -275,7 +277,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPath.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }

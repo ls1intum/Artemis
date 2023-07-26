@@ -11,7 +11,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { LearningPath } from 'app/entities/learning-path.model';
+import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',

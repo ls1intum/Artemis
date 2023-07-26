@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { By } from '@angular/platform-browser';
 import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph-node.component';
-import { NgxLearningPathNode, NodeType } from 'app/entities/learning-path.model';
+import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 
 describe('LearningPathGraphNodeComponent', () => {
     let fixture: ComponentFixture<LearningPathGraphNodeComponent>;

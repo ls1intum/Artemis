@@ -54,7 +54,7 @@
                         <span>{{ learningPath.id }}</span>
                     </td>
                     <td class="text-break col-4">
-                        <ngb-highlight [result]="learningPath.user?.firstName + ' ' + learningPath.user?.lastName" [term]="searchTerm"></ngb-highlight>
+                        <ngb-highlight [result]="learningPath.user?.name" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td class="text-break col-2">
                         <ngb-highlight [result]="learningPath.user?.login" [term]="searchTerm"></ngb-highlight>

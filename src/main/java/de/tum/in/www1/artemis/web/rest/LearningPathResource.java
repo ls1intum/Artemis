@@ -22,8 +22,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.learningpath.LearningPathRecommendation;
-import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathRecommendationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @RestController
@@ -59,7 +60,7 @@ public class LearningPathResource {
      */
     @PutMapping("/courses/{courseId}/learning-paths/enable")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Course> enableLearningPathsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -71,7 +72,7 @@ public class LearningPathResource {
         learningPathService.generateLearningPaths(course);
         course = courseRepository.save(course);
 
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -83,7 +84,7 @@ public class LearningPathResource {
      */
     @GetMapping("/courses/{courseId}/learning-paths")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<LearningPath>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -150,19 +151,19 @@ public class LearningPathResource {
      */
     @GetMapping("/learning-path/{learningPathId}/recommendation")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearningPathRecommendation> getRecommendation(@PathVariable Long learningPathId) {
+    public ResponseEntity<LearningPathRecommendationDTO> getRecommendation(@PathVariable Long learningPathId) {
         log.debug("REST request to get recommendation for learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPathId);
         LearningObject recommendation = learningPathService.getRecommendation(learningPath);
         if (recommendation == null) {
-            return ResponseEntity.ok(new LearningPathRecommendation(-1, -1, LearningPathRecommendation.RecommendationType.EMPTY));
+            return ResponseEntity.ok(new LearningPathRecommendationDTO(-1, -1, LearningPathRecommendationDTO.RecommendationType.EMPTY));
         }
         else if (recommendation instanceof LectureUnit lectureUnit) {
             return ResponseEntity
-                    .ok(new LearningPathRecommendation(recommendation.getId(), lectureUnit.getLecture().getId(), LearningPathRecommendation.RecommendationType.LECTURE_UNIT));
+                    .ok(new LearningPathRecommendationDTO(recommendation.getId(), lectureUnit.getLecture().getId(), LearningPathRecommendationDTO.RecommendationType.LECTURE_UNIT));
         }
         else {
-            return ResponseEntity.ok(new LearningPathRecommendation(recommendation.getId(), -1, LearningPathRecommendation.RecommendationType.EXERCISE));
+            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.getId(), -1, LearningPathRecommendationDTO.RecommendationType.EXERCISE));
         }
     }
 }
