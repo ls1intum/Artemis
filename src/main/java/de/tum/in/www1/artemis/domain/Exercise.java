@@ -721,6 +721,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
     }
 
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
     public boolean isStudentAssignedTeamIdComputed() {
         return studentAssignedTeamIdComputedTransient;
     }
@@ -729,6 +730,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
     public boolean isGradingInstructionFeedbackUsed() {
         return isGradingInstructionFeedbackUsedTransient;
     }
