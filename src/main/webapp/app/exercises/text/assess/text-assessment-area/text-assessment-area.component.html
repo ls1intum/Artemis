@@ -2,8 +2,6 @@
     <jhi-textblock-assessment-card
         *ngFor="let ref of textBlockRefs; let i = index"
         id="text-feedback-block-{{ i }}"
-        [attr.startIndex]="ref.block!.startIndex!"
-        [attr.endIndex]="ref.block!.endIndex!"
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
