@@ -154,6 +154,10 @@ public class LearningPathResource {
     public ResponseEntity<LearningPathRecommendationDTO> getRecommendation(@PathVariable Long learningPathId) {
         log.debug("REST request to get recommendation for learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPathId);
+        final var user = userRepository.getUser();
+        if (!user.getId().equals(learningPath.getUser().getId())) {
+            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
+        }
         LearningObject recommendation = learningPathService.getRecommendation(learningPath);
         if (recommendation == null) {
             return ResponseEntity.ok(new LearningPathRecommendationDTO(-1, -1, LearningPathRecommendationDTO.RecommendationType.EMPTY));

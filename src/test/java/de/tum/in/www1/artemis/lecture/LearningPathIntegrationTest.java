@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathRecommendationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -402,5 +403,29 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetRecommendationAsOtherUser() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/recommendation", HttpStatus.FORBIDDEN, LearningPathRecommendationDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the recommendation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetRecommendationAsOwner() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/recommendation", HttpStatus.OK, LearningPathRecommendationDTO.class);
     }
 }
