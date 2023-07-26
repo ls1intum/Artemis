@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="keller" id="20230713113211">
         <addColumn tableName="conversation">
-            <column defaultValueBoolean="false" name="is_auto_join" type="boolean">
+            <column defaultValueBoolean="false" name="is_course_wide" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

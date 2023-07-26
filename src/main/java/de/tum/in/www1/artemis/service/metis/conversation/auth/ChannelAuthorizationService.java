@@ -144,7 +144,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
 
         Channel channel = channelRepository.findByIdElseThrow(channelId);
-        return channel.getIsAutoJoin();
+        return channel.getIsCourseWide();
     }
 
     /**

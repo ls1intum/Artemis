@@ -72,12 +72,12 @@ public class Channel extends Conversation {
     private Boolean isArchived;
 
     /**
-     * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_auto_join=true.
+     * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_course_wide=true.
      * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
      */
-    @Column(name = "is_auto_join")
+    @Column(name = "is_course_wide")
     @NotNull
-    private Boolean isAutoJoin;
+    private Boolean isCourseWide;
 
     @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
@@ -146,12 +146,12 @@ public class Channel extends Conversation {
         isAnnouncementChannel = announcementChannel;
     }
 
-    public Boolean getIsAutoJoin() {
-        return isAutoJoin;
+    public Boolean getIsCourseWide() {
+        return isCourseWide;
     }
 
-    public void setIsAutoJoin(Boolean isAutoJoin) {
-        this.isAutoJoin = isAutoJoin;
+    public void setIsCourseWide(Boolean isCourseWide) {
+        this.isCourseWide = isCourseWide;
     }
 
     public Lecture getLecture() {

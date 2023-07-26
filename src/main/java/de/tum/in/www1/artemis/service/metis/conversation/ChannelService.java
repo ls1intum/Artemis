@@ -455,7 +455,7 @@ public class ChannelService {
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
-        defaultChannel.setIsAutoJoin(true);
+        defaultChannel.setIsCourseWide(true);
         defaultChannel.setIsAnnouncementChannel(false);
         defaultChannel.setIsArchived(false);
         return defaultChannel;

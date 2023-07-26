@@ -102,9 +102,9 @@ public class ConversationDTOService {
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
-        channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsAutoJoin());
+        channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsCourseWide());
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
-        channelDTO.setNumberOfMembers(channel.getIsAutoJoin() ? courseRepository.countCourseMembers(channel.getCourse().getId())
+        channelDTO.setNumberOfMembers(channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
                 : conversationParticipantRepository.countByConversationId(channel.getId()));
         var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
         tutorialGroup.ifPresent(tg -> {

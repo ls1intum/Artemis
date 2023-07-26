@@ -165,7 +165,7 @@ public class AdminCourseResource {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelType.getName());
         channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAutoJoin(true);
+        channelToCreate.setIsCourseWide(true);
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);

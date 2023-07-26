@@ -103,7 +103,7 @@ public class ConversationService {
         }
 
         Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-        return conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin();
+        return conversation instanceof Channel && ((Channel) conversation).getIsCourseWide();
     }
 
     /**
@@ -335,7 +335,7 @@ public class ConversationService {
     public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
-            if (conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin()) {
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
             }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
@@ -357,7 +357,7 @@ public class ConversationService {
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsAutoJoin()) {
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
                 return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
             }
 

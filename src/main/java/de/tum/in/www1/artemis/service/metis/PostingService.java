@@ -115,7 +115,7 @@ public abstract class PostingService {
      * @return users that should receive the new message
      */
     protected Stream<User> getRecipients(Conversation conversation) {
-        return conversation instanceof Channel channel && channelRepository.findByIdElseThrow(channel.getId()).getIsAutoJoin()
+        return conversation instanceof Channel channel && channelRepository.findByIdElseThrow(channel.getId()).getIsCourseWide()
                 ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
                 : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);
     }
