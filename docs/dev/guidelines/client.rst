@@ -384,3 +384,13 @@ Do not use the following for this purpose if it can be avoided:
             <!-- Do not do this -->
         </div>
     </div>
+
+17. Websocket subscriptions
+===========================
+
+The client must not subscribe to more than 20 websocket topics simultaneously, independent of the amount of exercises, lectures, courses, etc. there are.
+
+Best Practices:
+
+1. Dynamic Subscription Handling: Subscribe to topics on an as-needed basis. Unsubscribe from topics that are no longer needed to keep the number of active subscriptions within the recommended limit.
+2. Efficient Topic Aggregation: Where possible, use topic aggregation techniques to consolidate related data streams into a single subscription. This approach can help reduce the overall number of subscriptions while still receiving relevant information. Consequently, don't create a new topic if there is already exists a suitable topic existing that can be reused.
