@@ -123,6 +123,7 @@ public class ChannelResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByExerciseId(exerciseId);
+        channel.hideDetails();
 
         checkChannelMembership(channel, requestingUser.getId());
 
@@ -145,6 +146,7 @@ public class ChannelResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var channel = channelRepository.findChannelByLectureId(lectureId);
+        channel.hideDetails();
 
         checkChannelMembership(channel, requestingUser.getId());
 
