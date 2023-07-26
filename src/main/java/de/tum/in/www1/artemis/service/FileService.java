@@ -1060,7 +1060,7 @@ public class FileService implements DisposableBean {
             output = output.substring(1);
         }
         return output
-            .replaceAll("[^a-zA-Z0-9.\\-\\\\/]", "_")
+            .replaceAll("%", "_")
             .replaceAll("\\.+", ".")
             .replaceAll("\\\\+", "\\")
             .replaceAll("/+", "/");
