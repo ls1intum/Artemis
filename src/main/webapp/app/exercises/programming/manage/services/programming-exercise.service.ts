@@ -24,7 +24,6 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { onError } from 'app/shared/util/global.utils';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
