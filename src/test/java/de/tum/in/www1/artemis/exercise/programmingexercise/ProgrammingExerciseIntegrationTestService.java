@@ -63,6 +63,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
@@ -1654,8 +1655,10 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService).configureRepository(programmingExercise, participation1, true);
-        verify(versionControlService).configureRepository(programmingExercise, participation2, true);
+        verify(versionControlService).addMemberToRepository(participation1.getVcsRepositoryUrl(), participation1.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
+        verify(versionControlService).addMemberToRepository(participation2.getVcsRepositoryUrl(), participation2.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
