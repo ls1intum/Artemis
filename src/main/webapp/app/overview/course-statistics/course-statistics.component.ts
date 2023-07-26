@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
@@ -12,7 +13,6 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
@@ -326,7 +326,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 } else {
                     exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         if (participation.id && participation.results?.length) {
-                            const participationResult: Result | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
+                            const participationResult: ParticipationResultDTO | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);

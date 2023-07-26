@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,7 +115,7 @@ class GeneralInstantNotificationServiceTest {
      */
     @Test
     void testSendAllNotificationsToMultipleUsers() {
-        List<User> studentList = new ArrayList<>();
+        Set<User> studentList = new HashSet<>();
         studentList.add(student1);
         studentList.add(student2);
 
@@ -135,11 +133,11 @@ class GeneralInstantNotificationServiceTest {
 
     @Test
     void testSendEmailOnlyToOneUser() {
-        List<User> studentList = new ArrayList<>();
+        Set<User> studentList = new HashSet<>();
         studentList.add(student1);
         studentList.add(student2);
         when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(Collections.singletonList(student1));
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(Set.of(student1));
         when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
                 NotificationSettingsCommunicationChannel.PUSH)).thenReturn(studentList);
 
@@ -147,23 +145,23 @@ class GeneralInstantNotificationServiceTest {
 
         verify(applePushNotificationService).sendNotification(notification, studentList, null);
         verify(firebasePushNotificationService).sendNotification(notification, studentList, null);
-        verify(mailService).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(mailService).sendNotification(notification, Set.of(student1), null);
     }
 
     @Test
     void testSendPushOnlyToOneUser() {
-        List<User> studentList = new ArrayList<>();
+        Set<User> studentList = new HashSet<>();
         studentList.add(student1);
         studentList.add(student2);
         when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
                 NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(studentList);
         when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(Collections.singletonList(student1));
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(Set.of(student1));
 
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
-        verify(applePushNotificationService).sendNotification(notification, Collections.singletonList(student1), null);
-        verify(firebasePushNotificationService).sendNotification(notification, Collections.singletonList(student1), null);
+        verify(applePushNotificationService).sendNotification(notification, Set.of(student1), null);
+        verify(firebasePushNotificationService).sendNotification(notification, Set.of(student1), null);
         verify(mailService).sendNotification(notification, studentList, null);
     }
 }

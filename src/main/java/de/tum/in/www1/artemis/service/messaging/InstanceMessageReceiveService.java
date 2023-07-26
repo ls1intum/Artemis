@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.*;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -29,8 +28,6 @@ public class InstanceMessageReceiveService {
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private final ModelingExerciseScheduleService modelingExerciseScheduleService;
-
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
     private final NotificationScheduleService notificationScheduleService;
 
@@ -51,13 +48,11 @@ public class InstanceMessageReceiveService {
     private final UserRepository userRepository;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
-            ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
-            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
-            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
+            ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -150,14 +145,6 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_MONITORING_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExamMonitoring(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_MONITORING_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExamMonitoringCancel(message.getMessageObject());
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -296,16 +283,6 @@ public class InstanceMessageReceiveService {
         log.info("Received schedule update for assessed exercise submitted {} notification ", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
-    }
-
-    public void processScheduleExamMonitoring(Long examId) {
-        log.info("Received schedule update for exam monitoring {}", examId);
-        examMonitoringScheduleService.scheduleExamMonitoringTask(examId);
-    }
-
-    public void processScheduleExamMonitoringCancel(Long examId) {
-        log.info("Received schedule cancel for exam monitoring {}", examId);
-        examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
     public void processExamWorkingTimeChangeDuringConduction(Long studentExamId) {
