@@ -157,7 +157,7 @@ This is a bad example for a DTO, since it contains the entity object ``Post``:
 
     public record PostDTO(Post post, MetisCrudAction action) {}
 
-This is a good example for a DTO, since it only contains very little information in the form of boxed primitive types and an enum value:
+This is a good example for a DTO, because it only contains very little information in the form of boxed primitive types and an enum value:
 
 .. code-block:: java
 
