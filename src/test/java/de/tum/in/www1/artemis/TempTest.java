@@ -19,6 +19,10 @@ public class TempTest {
     @Test
     void pseudoServerStart() {
         // This test should pass
-        // System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
     }
 }
