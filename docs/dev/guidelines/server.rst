@@ -145,9 +145,11 @@ Use data transfer objects (DTOs) to send data from the server to the client, i.e
 
 Definition and Characteristics of DTOs:
 
-1. Java Records: DTOs are implemented as Java records.
-2. No Domain Objects: DTOs must not contain domain objects, but only primitive types or other DTOs.
+1. Java Records: DTOs are implemented as Java records. Records do not support inheritance, so duplication for DTOs is ok.
+2. No Entity Objects: DTOs must not contain entity objects, but only primitive types or other DTOs.
 3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
+4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
+5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should serve only as simple data containers without any business logic.
 
 13. Dependency injection
 ========================

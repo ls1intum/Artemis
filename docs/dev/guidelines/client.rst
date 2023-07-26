@@ -388,7 +388,7 @@ Do not use the following for this purpose if it can be avoided:
 17. Websocket subscriptions
 ===========================
 
-The client must not subscribe to more than 20 websocket topics simultaneously, independent of the amount of exercises, lectures, courses, etc. there are.
+The client must not subscribe to more than 20 websocket topics simultaneously, regardless of the amount of exercises, lectures, courses, etc. there are for one particular user.
 
 Best Practices:
 
