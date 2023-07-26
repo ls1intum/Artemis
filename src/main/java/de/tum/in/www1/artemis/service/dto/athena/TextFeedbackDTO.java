@@ -10,7 +10,8 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 /**
  * A DTO representing a Feedback, for transferring data to Athena
  */
-public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String text, String detailText, double credits, Integer indexStart, Integer indexEnd) {
+public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String text, String detailText, double credits, Long gradingInstructionId, Integer indexStart,
+        Integer indexEnd) {
 
     /**
      * Creates a TextFeedbackDTO from a Feedback object
@@ -24,7 +25,8 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
     public static TextFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback, TextBlock feedbackBlock) {
         Integer startIndex = feedbackBlock == null ? null : feedbackBlock.getStartIndex();
         Integer endIndex = feedbackBlock == null ? null : feedbackBlock.getEndIndex();
-        return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), startIndex, endIndex);
+        return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(),
+                feedback.getGradingInstruction().getId(), startIndex, endIndex);
     }
 
     /**
