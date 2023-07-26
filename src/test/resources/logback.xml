@@ -2,7 +2,23 @@
 <!DOCTYPE configuration>
 
 <configuration scan="true">
-    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>logFileName</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender class="ch.qos.logback.core.FileAppender">
+                <file>build/logs/${logFileName}.log</file>
+                <append>false</append>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>%d{HH:mm:ss.SSS} | %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
 
     <logger name="de.tum.in.www1.artemis" level="INFO"/>
 
@@ -36,8 +52,8 @@
     <logger name="sun.rmi.transport" level="WARN"/>
 
     <root>
-        <level>WARN</level>
-        <appender-ref ref="CONSOLE"/>
+        <level>ALL</level>
+        <appender-ref ref="SIFT"/>
     </root>
 
 </configuration>
