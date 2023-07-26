@@ -60,26 +60,41 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
-     * @param courseName the title of the course (will generate default name if not provided)
-     * @param courseShortName the short name (will generate default name if not provided)
-     * @param start the start date of the course (default: now() - 2 hours)
-     * @param end the end date of the course (default: now() + 2 hours)
-     * @param fileName the course icon file name (default: undefined)
-     * @param file the course icon file blob (default: undefined)
+     * @param options An object containing the options for creating the course
+     *   - customizeGroups: whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
+     *   - courseName: the title of the course (will generate default name if not provided)
+     *   - courseShortName: the short name (will generate default name if not provided)
+     *   - start: the start date of the course (default: now() - 2 hours)
+     *   - end: the end date of the course (default: now() + 2 hours)
+     *   - iconFileName: the course icon file name (default: undefined)
+     *   - iconFile: the course icon file blob (default: undefined)
+     *   - allowCommunication: if communication should be enabled for the course
+     *   - allowMessaging: if messaging should be enabled for the course
      * @returns <Chainable> request response
      */
-    createCourse(
-        customizeGroups = false,
-        courseName = 'Course ' + generateUUID(),
-        courseShortName = 'cypress' + generateUUID(),
-        start = day().subtract(2, 'hours'),
-        end = day().add(2, 'hours'),
-        fileName?: string,
-        file?: Blob,
-        allowCommunication = true,
-        allowMessaging = true,
-    ): Cypress.Chainable<Cypress.Response<Course>> {
+    createCourse(options: {
+        customizeGroups?: boolean;
+        courseName?: string;
+        courseShortName?: string;
+        start?: day.Dayjs;
+        end?: day.Dayjs;
+        iconFileName?: string,
+        iconFile?: Blob,
+        allowCommunication?: boolean;
+        allowMessaging?: boolean;
+    } = {}): Cypress.Chainable<Cypress.Response<Course>> {
+        const {
+            customizeGroups = false,
+            courseName = 'Course ' + generateUUID(),
+            courseShortName = 'cypress' + generateUUID(),
+            start = day().subtract(2, 'hours'),
+            end = day().add(2, 'hours'),
+            iconFileName,
+            iconFile,
+            allowCommunication = true,
+            allowMessaging = true,
+        } = options;
+
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
@@ -104,11 +119,14 @@ export class CourseManagementRequests {
             course.editorGroupName = Cypress.env('editorGroupName');
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
+
         const formData = new FormData();
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
-        if (file) {
-            formData.append('file', file, fileName);
+        
+        if (iconFile) {
+            formData.append('file', iconFile, iconFileName);
         }
+
         return cy.request({
             url: COURSE_ADMIN_BASE,
             method: POST,

@@ -21,7 +21,7 @@ describe('Test exam participation', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });

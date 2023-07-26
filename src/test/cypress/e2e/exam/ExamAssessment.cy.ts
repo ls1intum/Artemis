@@ -38,7 +38,7 @@ describe('Exam assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);

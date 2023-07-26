@@ -22,7 +22,7 @@ describe('Test exam test run', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
