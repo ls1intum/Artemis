@@ -71,6 +71,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * Gets all TextSubmissions which are submitted and loads all blocks
      *
      * @param exerciseId the ID of the exercise
+     * @param pageable   the pagination information for the query
      * @return Set of Text Submissions
      */
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "blocks" })

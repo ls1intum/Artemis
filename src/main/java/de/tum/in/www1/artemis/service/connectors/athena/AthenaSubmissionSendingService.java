@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 @Profile("athena")
 public class AthenaSubmissionSendingService {
 
-    private final static int SUBMISSIONS_PER_REQUEST = 100;
+    private static final int SUBMISSIONS_PER_REQUEST = 100;
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
 
@@ -98,6 +98,13 @@ public class AthenaSubmissionSendingService {
         }
     }
 
+    /**
+     * Calls the remote Athena service to submit a Job for calculating automatic feedback
+     *
+     * @param exercise        the exercise the automatic assessments should be calculated for
+     * @param textSubmissions the submissions to send
+     * @param maxRetries      number of retries before the request will be canceled
+     */
     public void sendSubmissions(TextExercise exercise, Set<TextSubmission> textSubmissions, int maxRetries) {
         if (textSubmissions.isEmpty()) {
             log.info("No text submissions found to send.");

@@ -236,6 +236,7 @@ public class SubmissionService {
     /**
      * Given a list of submissions, find a random one.
      *
+     * @param assessableSubmissions the list of submissions to choose from
      * @return a random submission or an empty Optional if no submission was passed
      */
     public Optional<Submission> getRandomAssessableSubmission(List<Submission> assessableSubmissions) {
