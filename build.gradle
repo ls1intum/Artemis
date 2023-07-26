@@ -99,7 +99,7 @@ modernizer {
 
 test {
     useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
+    include "", "**/TempTest*"
     testLogging {
         events "FAILED", "SKIPPED"
     }
