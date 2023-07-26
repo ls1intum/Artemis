@@ -106,7 +106,8 @@ public class AthenaFeedbackSendingService {
             return;
         }
 
-        log.info("Calling Athena with given feedback.");
+        log.info("Calling Athena with given feedback. URL: {}; Exercise: {}; Submission: {}; Feedbacks: {}", athenaUrl + "/modules/text/module_text_cofee/feedbacks", exercise,
+                submission, feedbacks);
 
         try {
             final RequestDTO request = new RequestDTO(exercise, submission, feedbacks, textBlockRepository);
