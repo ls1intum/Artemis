@@ -88,7 +88,7 @@ public class AthenaSubmissionSelectionService {
 
         log.debug("Start Athena Submission Selection Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
-        log.info("Calling Remote Service to calculate next proposed submissions for {} submissions.", submissionIds.size());
+        log.info("Calling Athena to calculate next proposed submissions for {} submissions.", submissionIds.size());
 
         try {
             final RequestDTO request = new RequestDTO(exercise, submissionIds);
@@ -102,11 +102,11 @@ public class AthenaSubmissionSelectionService {
             return Optional.of(response.submissionId);
         }
         catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
+            log.error("Error while calling Athena: {}", networkingError.getMessage());
         }
         catch (HttpClientErrorException httpClientErrorException) {
             // We don't want to crash because of this because it would break the assessment process
-            log.error("HTTP Client Error while calling Remote Service: {}", httpClientErrorException.getMessage());
+            log.error("HTTP Client Error while calling Athena: {}", httpClientErrorException.getMessage());
         }
 
         return Optional.empty();

@@ -117,16 +117,16 @@ public class AthenaSubmissionSendingService {
             return;
         }
 
-        log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
+        log.info("Calling Athena to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
             final RequestDTO request = new RequestDTO(exercise, textSubmissions);
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
-            log.info("Remote Service to calculate automatic feedback responded: {}", response.data);
+            log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingError error) {
-            log.error("Error while calling Remote Service: {}", error.getMessage());
+            log.error("Error while calling Athena: {}", error.getMessage());
         }
     }
 

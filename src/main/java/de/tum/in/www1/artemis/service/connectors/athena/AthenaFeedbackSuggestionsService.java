@@ -68,7 +68,7 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextBlockRef> getFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingError {
         log.debug("Start Athena Feedback Suggestions Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
-        log.info("Calling Remote Service with exercise and submission.");
+        log.info("Calling Athena with exercise and submission.");
 
         try {
             final RequestDTO request = new RequestDTO(exercise, submission);
@@ -86,7 +86,7 @@ public class AthenaFeedbackSuggestionsService {
             }).toList();
         }
         catch (NetworkingError error) {
-            log.error("Error while calling Remote Service: {}", error.getMessage());
+            log.error("Error while calling Athena: {}", error.getMessage());
             throw error;
         }
     }

@@ -106,7 +106,7 @@ public class AthenaFeedbackSendingService {
             return;
         }
 
-        log.info("Calling Remote Service with given feedback.");
+        log.info("Calling Athena with given feedback.");
 
         try {
             final RequestDTO request = new RequestDTO(exercise, submission, feedbacks, textBlockRepository);
@@ -115,7 +115,7 @@ public class AthenaFeedbackSendingService {
             log.info("Remote Service responded to feedback: {}", response.data);
         }
         catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
+            log.error("Error while calling Athena: {}", networkingError.getMessage());
         }
     }
 
