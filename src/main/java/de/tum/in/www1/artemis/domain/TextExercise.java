@@ -6,7 +6,6 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
@@ -16,7 +15,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-@JsonTypeName("text")
 @SecondaryTable(name = "text_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
