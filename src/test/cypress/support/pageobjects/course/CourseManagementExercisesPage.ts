@@ -55,6 +55,14 @@ export class CourseManagementExercisesPage {
         cy.wait('@deleteProgrammingExercise');
     }
 
+    deleteFileUploadExercise(exercise: Exercise) {
+        this.getExercise(exercise.id!).find('#delete-exercise').click();
+        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.intercept(DELETE, BASE_API + 'file-upload-exercises/*').as('deleteFileUploadExercise');
+        cy.get('#delete').click();
+        cy.wait('@deleteFileUploadExercise');
+    }
+
     createProgrammingExercise() {
         cy.get('#create-programming-exercise').click();
     }
@@ -69,6 +77,10 @@ export class CourseManagementExercisesPage {
 
     createQuizExercise() {
         cy.get('#create-quiz-button').click();
+    }
+
+    createFileUploadExercise() {
+        cy.get('#create-file-upload-exercise').click();
     }
 
     importProgrammingExercise() {
