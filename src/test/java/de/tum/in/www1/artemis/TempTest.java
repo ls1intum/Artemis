@@ -15,4 +15,10 @@ public class TempTest {
     void passingTest() {
         // This test should pass
     }
+
+    @Test
+    void pseudoServerStart() {
+        // This test should pass
+        System.out.println(":: Powered by Spring Boot 2.7.13 ::");
+    }
 }
