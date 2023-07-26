@@ -143,9 +143,11 @@ Additional notes on the controller methods:
 
 Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and websocket messages. A DTO ...
 
-* is always a Java record
-* must not include domain objects, but only other DTOs
-* should be as small as possible and only contain the minimum amount of data the client really needs
+Definition and Characteristics of DTOs:
+
+1. Java Records: DTOs are implemented as Java records.
+2. No Domain Objects: DTOs must not contain domain objects, but only primitive types or other DTOs.
+3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
 
 13. Dependency injection
 ========================
