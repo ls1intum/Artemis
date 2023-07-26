@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackPublishingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -66,14 +66,14 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultService resultService;
 
-    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
+    private final Optional<AthenaFeedbackPublishingService> athenaFeedbackPublishingService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService,
-            ResultService resultService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
+            ResultService resultService, Optional<AthenaFeedbackPublishingService> athenaFeedbackPublishingService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
@@ -86,7 +86,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
-        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
+        this.athenaFeedbackPublishingService = athenaFeedbackPublishingService;
     }
 
     /**
@@ -490,13 +490,13 @@ public class TextAssessmentResource extends AssessmentResource {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
+        if (athenaFeedbackPublishingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
             // Athena needs IDs on all feedbacks
             if (feedbacks.stream().anyMatch(feedback -> feedback.getId() == null)) {
                 throw new IllegalArgumentException("All feedbacks need to have an ID");
             }
             // Send feedback in thread because it's not important for the user => quicker response
-            Thread thread = new Thread(() -> athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks));
+            Thread thread = new Thread(() -> athenaFeedbackPublishingService.get().sendFeedback(exercise, textSubmission, feedbacks));
             thread.start();
         }
     }
