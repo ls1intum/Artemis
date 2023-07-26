@@ -151,7 +151,7 @@ Definition and Characteristics of DTOs:
 4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
 5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should serve only as simple data containers without any business logic.
 
-This is a bad example for a DTO, since it contains the entity object ``Post``.:
+This is a bad example for a DTO, since it contains the entity object ``Post``:
 
 .. code-block:: java
 
