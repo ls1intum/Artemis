@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.iris;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,13 +19,13 @@ import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 @Profile("iris")
 public class IrisHealthIndicator implements HealthIndicator {
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestTemplate restTemplate;
 
     @Value("${artemis.iris.url}")
     private URI irisUrl;
 
-    public IrisHealthIndicator(@Qualifier("shortTimeoutIrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public IrisHealthIndicator(@Qualifier("irisRestTemplate") RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -34,15 +35,15 @@ public class IrisHealthIndicator implements HealthIndicator {
     public Health health() {
         ConnectorHealth health;
         try {
-            final var status = shortTimeoutRestTemplate.getForObject(irisUrl.resolve("/health"), IrisStatusDTO.class);
-            var isUp = status != null
-                    && status.modelStatuses().values().stream().filter(s -> s != IrisStatusDTO.ModelStatus.NOT_AVAILABLE).anyMatch(s -> s == IrisStatusDTO.ModelStatus.UP);
-            var additionalInfo = Map.of("url", irisUrl, "modelStatuses", status.modelStatuses());
+            IrisStatusDTO[] status = (IrisStatusDTO[]) restTemplate.getForObject(irisUrl + "/api/v1/health", IrisStatusDTO[].class);
+            var isUp = status != null && Arrays.stream(status).anyMatch(s -> s.status() == IrisStatusDTO.ModelStatus.UP);
+            Map<String, Object> additionalInfo = Map.of("url", irisUrl, "modelStatuses", status);
             health = new ConnectorHealth(isUp, additionalInfo);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
-            health.setAdditionalInfo(Map.of("url", irisUrl));
+            health.setUp(false);
+            health.setAdditionalInfo(Map.of("url", irisUrl, "exception", emAll.getLocalizedMessage()));
         }
 
         return health.asActuatorHealth();

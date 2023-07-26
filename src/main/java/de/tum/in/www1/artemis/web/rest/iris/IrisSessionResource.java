@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.iris;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -16,6 +17,8 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
@@ -39,14 +42,18 @@ public class IrisSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
+    private final IrisHealthIndicator irisHealthIndicator;
+
     public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService) {
+            IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
+            IrisHealthIndicator irisHealthIndicator) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
+        this.irisHealthIndicator = irisHealthIndicator;
     }
 
     /**
@@ -107,5 +114,29 @@ public class IrisSessionResource {
 
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
+    }
+
+    /**
+     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
+     * This checks if the used model is healthy.
+     *
+     * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
+     */
+    @GetMapping("/sessions/{sessionId}/active")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
+        var session = irisChatSessionRepository.findByIdElseThrow(sessionId);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        irisSessionService.checkIsIrisActivated(session);
+        var settings = irisSettingsService.getCombinedIrisSettings(session.getExercise(), false);
+        var health = irisHealthIndicator.health();
+        IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
+        var specificModelStatus = false;
+        if (modelStatuses != null) {
+            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
+                    .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
+        }
+        return ResponseEntity.ok(specificModelStatus);
     }
 }
