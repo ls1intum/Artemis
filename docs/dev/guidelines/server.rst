@@ -106,6 +106,7 @@ It gets activated when a particular jar file is detected on the classpath. The s
 * RestControllers should not execute business logic but rely on delegation.
 * RestControllers should deal with the HTTP layer of the application.
 * RestControllers should be oriented around a use-case/business-capability.
+* RestControllers should return DTOs that are as small as possible
 
 Route naming conventions:
 
@@ -137,14 +138,23 @@ Additional notes on the controller methods:
     * Bad Request - the request was wrong.
     * Not Found - can't find the requested data or it should be not accessible yet.
 
-12. Dependency injection
+12. Use DTOs
+============
+
+Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and websocket messages. A DTO ...
+
+* is always a Java record
+* must not include domain objects, but only other DTOs
+* should be as small as possible and only contain the minimum amount of data the client really needs
+
+13. Dependency injection
 ========================
 
 * Some of you may argue with this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
 * Use setter based DI only for optional dependencies.
 * Avoid circular dependencies, try constructor and setter based DI for such cases.
 
-13. Keep it simple and stupid
+14. Keep it simple and stupid
 =============================
 
 * Don't write complex code.
@@ -153,14 +163,14 @@ Additional notes on the controller methods:
 * Commit messages should describe both what the commit changes and how it does it.
 * ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
 
-14. File handling
+15. File handling
 =================
 
 * Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
 * Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
 * Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
 
-15. General best practices
+16. General best practices
 ==========================
 
 * Always use the least possible access level, prefer using private over public access modifier (package-private or protected can be used as well).
@@ -172,7 +182,7 @@ Additional notes on the controller methods:
 * Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check Java code style and to automatically fix it.
 * Don't use ``.collect(Collectors.toList())``. Instead use only ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` to explicitly create a new ArrayList.
 
-16. Avoid service dependencies
+17. Avoid service dependencies
 ==============================
 
 In order to achieve low coupling and high cohesion, services should have as few dependencies on other services as possible:
@@ -210,7 +220,7 @@ Another approach is moving objects into the domain classes, but be aware that yo
         return false;
     }
 
-17. Proper annotation of SQL query parameters
+18. Proper annotation of SQL query parameters
 =============================================
 
 Query parameters for SQL must be annotated with ``@Param("variable")``!
@@ -239,7 +249,7 @@ but instead annotate the parameter with @Param:
 
 The string name inside must match the name of the variable exactly!
 
-18. SQL statement formatting
+19. SQL statement formatting
 ============================
 
 We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
@@ -253,7 +263,7 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
-19. Avoid the usage of Sub-queries
+20. Avoid the usage of Sub-queries
 ==================================
 
 SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
@@ -284,13 +294,13 @@ you should use:
 
 Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
-20. Criteria Builder
+21. Criteria Builder
 ==================================================
 
 For more details, please visit the :doc:`./criteria-builder` page.
 
 
-21. REST endpoint best practices for authorization
+22. REST endpoint best practices for authorization
 ==================================================
 
 To reject unauthorized requests as early as possible, Artemis employs a two-step system:
@@ -361,7 +371,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
 
 
-22. Assert using the most specific overload method
+23. Assert using the most specific overload method
 ==================================================
 
 When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
@@ -393,7 +403,7 @@ Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-c
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
 
-23. General Testing Tips
+24. General Testing Tips
 ========================
 
 Write meaningful comments for your tests.
@@ -442,7 +452,7 @@ https://www.baeldung.com/spring-tests
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
-24. Counting database query calls within tests
+25. Counting database query calls within tests
 ==============================================
 
 It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
@@ -465,7 +475,7 @@ add any other assertions to the test, as shown below.
         }
     }
 
-25. Avoid using @MockBean
+26. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
