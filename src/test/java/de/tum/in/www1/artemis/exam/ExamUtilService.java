@@ -437,6 +437,10 @@ public class ExamUtilService {
         return addStudentExamWithUser(exam, studentUser, 0);
     }
 
+    public StudentExam addStudentExamForTestExam(Exam exam, String userLogin) {
+        return addStudentExamForTestExam(exam, userUtilService.getUserByLogin(userLogin));
+    }
+
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);

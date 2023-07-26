@@ -230,12 +230,16 @@ public class CourseScoreCalculationService {
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, gradedStudentParticipations, userId, plagiarismCases);
 
         // Get participation results (used in course-statistics.component).
-        List<Result> participationResults = new ArrayList<>();
+        List<ParticipationResultDTO> participationResults = new ArrayList<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result participationResult = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
-                participationResult.setParticipation(studentParticipation);
+                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+                var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
                 participationResults.add(participationResult);
+                // this line is an important workaround. It prevents that the whole tree
+                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
+                // TODO: in the future, we need a better solution to prevent this
+                studentParticipation.setExercise(null);
             }
         }
 
