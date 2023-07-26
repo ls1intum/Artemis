@@ -627,7 +627,10 @@ HTTP. We need to extend the configuration in the file
          url: http://localhost:5000
          secret: abcdef12345
 
+The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the Athena documentation_.
+
 .. _Athena: https://github.com/ls1intum/Athena
+.. _documentation: https://ls1intum.github.io/Athena
 
 ------------------------------------------------------------------------------------------------------------------------
 
