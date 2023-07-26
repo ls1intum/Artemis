@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody class="markdown-preview">
-            <tr *ngFor="let fileUploadExercise of filteredFileUploadExercises; trackBy: trackId">
+            <tr *ngFor="let fileUploadExercise of filteredFileUploadExercises; trackBy: trackId" id="exercise-card-{{ fileUploadExercise.id }}">
                 <td>
                     <a *ngIf="fileUploadExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
                         {{ fileUploadExercise.id }}
@@ -77,6 +77,7 @@
                         </a>
                         <button
                             *ngIf="fileUploadExercise.isAtLeastInstructor"
+                            id="delete-exercise"
                             jhiDeleteButton
                             [entityTitle]="fileUploadExercise.title!"
                             deleteQuestion="artemisApp.exercise.delete.question"

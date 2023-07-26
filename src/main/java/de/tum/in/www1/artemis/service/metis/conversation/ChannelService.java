@@ -402,6 +402,9 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByExerciseId(originalExercise.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, updatedExercise.getChannelName());
     }
 

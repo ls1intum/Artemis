@@ -5,8 +5,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -16,6 +14,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -36,21 +35,21 @@ public abstract class PostingService {
 
     private final ChannelRepository channelRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
     }
@@ -68,36 +67,45 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
-     * @param postDTO object including the affected post as well as the action
-     * @param course  course the posting belongs to
+     * @param postDTO    object including the affected post as well as the action
+     * @param course     course the posting belongs to
+     * @param recipients the recipients for this broadcast, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Course course) {
+    protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
+
+        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
+        if (postDTO.post().getConversation() != null) {
+            postDTO.post().getConversation().hideDetails();
+        }
+
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
 
         if (postDTO.post().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getConversation() != null) {
-            var participants = getConversationParticipants(postDTO.post().getConversation());
-
-            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getLogin(),
-                    genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
+            if (recipients == null) {
+                // send to all participants of the conversation
+                recipients = getRecipients(postDTO.post().getConversation()).collect(Collectors.toSet());
+            }
+            recipients.forEach(
+                    user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
         }
-        messagingTemplate.convertAndSend(genericTopicName, postDTO);
+        websocketMessagingService.sendMessage(genericTopicName, postDTO);
     }
 
     /**
@@ -106,7 +114,7 @@ public abstract class PostingService {
      * @param conversation conversation the participants are supposed be retrieved
      * @return users that should receive the new message
      */
-    protected Stream<User> getConversationParticipants(Conversation conversation) {
+    protected Stream<User> getRecipients(Conversation conversation) {
         return conversation instanceof Channel channel && channelRepository.findByIdElseThrow(channel.getId()).getIsAutoJoin()
                 ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
                 : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);

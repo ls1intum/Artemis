@@ -21,6 +21,7 @@ export enum EXERCISE_TYPE {
     Modeling = 'modeling',
     Quiz = 'quiz',
     Programming = 'programming',
+    FileUpload = 'file',
 }
 
 // CourseWideContext
