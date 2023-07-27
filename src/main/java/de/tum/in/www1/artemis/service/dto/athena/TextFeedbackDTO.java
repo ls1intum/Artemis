@@ -25,9 +25,9 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
     public static TextFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback, TextBlock feedbackBlock) {
         Integer startIndex = feedbackBlock == null ? null : feedbackBlock.getStartIndex();
         Integer endIndex = feedbackBlock == null ? null : feedbackBlock.getEndIndex();
-        var gradingInstruction = feedback.getGradingInstruction();
-        return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(),
-                gradingInstruction == null ? null : gradingInstruction.getId(), startIndex, endIndex);
+        var gradingInstructionId = feedback.getGradingInstruction() == null ? null : feedback.getGradingInstruction().getId();
+        return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
+                startIndex, endIndex);
     }
 
     /**

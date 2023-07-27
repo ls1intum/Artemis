@@ -57,7 +57,6 @@ class AthenaConnector<RequestType, ResponseType> {
         }
 
         final ResponseType responseBody = response.getBody();
-        assert responseBody != null;
         log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
 
         return responseBody;
