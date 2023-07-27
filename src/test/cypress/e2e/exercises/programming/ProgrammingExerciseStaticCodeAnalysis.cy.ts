@@ -11,7 +11,7 @@ describe('Static code analysis tests', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.createProgrammingExercise({ course, scaMaxPenalty: 50 }).then((exerciseResponse) => {

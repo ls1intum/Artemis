@@ -35,7 +35,7 @@ describe('Import exercises', () => {
 
     before('Setup course with exercises', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.createTextExercise({ course }).then((response) => {
@@ -50,7 +50,7 @@ describe('Import exercises', () => {
             courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
                 programmingExercise = response.body;
             });
-            courseManagementRequest.createCourse().then((response) => {
+            courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
                 secondCourse = convertModelAfterMultiPart(response);
                 courseManagementRequest.addStudentToCourse(secondCourse, studentOne);
                 courseManagementRequest.addInstructorToCourse(secondCourse, instructor);
