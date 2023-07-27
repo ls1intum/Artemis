@@ -15,6 +15,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
+import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
@@ -29,6 +31,8 @@ describe('LearningPathManagementComponent', () => {
     let state: PageableSearch;
     let learningPath: LearningPath;
     let course: Course;
+    let learningPathService: LearningPathService;
+    let enableLearningPathsStub: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(NgbPagination)],
@@ -57,6 +61,8 @@ describe('LearningPathManagementComponent', () => {
                 sortService = TestBed.inject(SortService);
                 searchForLearningPathsStub = jest.spyOn(pagingService, 'searchForLearningPaths');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
+                learningPathService = TestBed.inject(LearningPathService);
+                enableLearningPathsStub = jest.spyOn(learningPathService, 'enableLearningPaths');
             });
     });
 
@@ -71,7 +77,6 @@ describe('LearningPathManagementComponent', () => {
         course = new Course();
         course.id = 1;
         course.learningPathsEnabled = true;
-        course.learningPaths = [learningPath];
         findCourseStub.mockReturnValue(of(new HttpResponse({ body: course })));
         searchResult = { numberOfPages: 3, resultsOnPage: [learningPath] };
         state = {
@@ -102,6 +107,23 @@ describe('LearningPathManagementComponent', () => {
             expect(comp.course).toEqual(course);
         });
     }));
+
+    it('should allow to enable learning paths if learning paths disabled', () => {
+        course.learningPathsEnabled = false;
+        findCourseStub.mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        expect(comp.course).toEqual(course);
+        expect(comp.course.learningPathsEnabled).toBeFalsy();
+        expect(comp.isLoading).toBeFalsy();
+        const button = fixture.debugElement.query(By.css('div'));
+        console.log(fixture.debugElement);
+        expect(button).not.toBeNull();
+
+        button.nativeElement.click();
+        expect(enableLearningPathsStub).toHaveBeenCalledOnce();
+        expect(enableLearningPathsStub).toHaveBeenCalledWith(course.id);
+    });
 
     it('should set content to paging result on sort', fakeAsync(() => {
         expect(comp.listSorting).toBeTrue();

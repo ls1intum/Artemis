@@ -10,6 +10,7 @@
         <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
         <div [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate">
             <button
+                id="enable-learning-paths-button"
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 type="button"
                 class="btn btn-primary"

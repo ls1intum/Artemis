@@ -5,6 +5,7 @@ import { MockComponent } from 'ng-mocks';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { By } from '@angular/platform-browser';
+import { LearningPathProgressNavComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-nav.component';
 
 describe('LearningPathProgressModalComponent', () => {
     let fixture: ComponentFixture<LearningPathProgressModalComponent>;
@@ -14,7 +15,7 @@ describe('LearningPathProgressModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(LearningPathGraphComponent)],
+            imports: [ArtemisTestModule, MockComponent(LearningPathGraphComponent), MockComponent(LearningPathProgressNavComponent)],
             declarations: [LearningPathProgressModalComponent],
             providers: [],
         })

@@ -48,4 +48,15 @@ describe('LearningPathGraphComponent', () => {
         expect(zoomToFitStub).toHaveBeenCalledOnce();
         expect(zoomToFitStub).toHaveBeenCalledWith(true);
     });
+
+    it('should zoom to fit and center on resize', () => {
+        const zoomToFitStub = jest.spyOn(comp.zoomToFit$, 'next');
+        const centerStub = jest.spyOn(comp.center$, 'next');
+        fixture.detectChanges();
+        comp.onCenterView();
+        expect(zoomToFitStub).toHaveBeenCalledOnce();
+        expect(zoomToFitStub).toHaveBeenCalledWith(true);
+        expect(centerStub).toHaveBeenCalledOnce();
+        expect(centerStub).toHaveBeenCalledWith(true);
+    });
 });
