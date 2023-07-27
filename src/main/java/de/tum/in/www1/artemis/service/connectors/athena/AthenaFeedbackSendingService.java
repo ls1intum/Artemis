@@ -12,7 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
