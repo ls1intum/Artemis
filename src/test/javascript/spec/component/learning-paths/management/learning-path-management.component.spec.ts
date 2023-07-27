@@ -113,13 +113,12 @@ describe('LearningPathManagementComponent', () => {
         const disabledCourse = Object.assign({}, course);
         disabledCourse.learningPathsEnabled = false;
         findCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: disabledCourse }))).mockReturnValueOnce(course);
-        const loadDataStub = jest.spyOn(comp, 'loadData');
         fixture.detectChanges();
         comp.ngOnInit();
         comp.enableLearningPaths();
         expect(enableLearningPathsStub).toHaveBeenCalledOnce();
         expect(enableLearningPathsStub).toHaveBeenCalledWith(course.id);
-        expect(loadDataStub).toHaveBeenCalledTimes(2);
+        expect(findCourseStub).toHaveBeenCalledTimes(3);
         expect(comp.course.learningPathsEnabled).toBeTruthy();
     }));
 
