@@ -12,11 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.TextBlockRef;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
@@ -36,11 +35,14 @@ public class AthenaFeedbackSuggestionsService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
+    private final GradingInstructionRepository gradingInstructionRepository;
+
     /**
      * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, GradingInstructionRepository gradingInstructionRepository) {
         connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
+        this.gradingInstructionRepository = gradingInstructionRepository;
     }
 
     private static class RequestDTO {
@@ -76,7 +78,11 @@ public class AthenaFeedbackSuggestionsService {
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
             log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().map((feedbackDTO) -> {
-                var ref = feedbackDTO.toTextBlockRef(submission);
+                GradingInstruction gradingInstruction = null;
+                if (feedbackDTO.gradingInstructionId() != null) {
+                    gradingInstruction = gradingInstructionRepository.findById(feedbackDTO.gradingInstructionId()).orElse(null);
+                }
+                var ref = feedbackDTO.toTextBlockRef(submission, gradingInstruction);
                 ref.block().automatic();
                 ref.feedback().setType(FeedbackType.AUTOMATIC);
                 // Add IDs to connect block and ID

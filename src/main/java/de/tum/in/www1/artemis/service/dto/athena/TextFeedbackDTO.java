@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextBlockRef;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 
 /**
  * A DTO representing a Feedback, for transferring data to Athena
@@ -33,12 +30,15 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
     /**
      * Creates a TextBlockRef (feedback + text block combined) from this DTO and a TextSubmission
      */
-    public TextBlockRef toTextBlockRef(TextSubmission onSubmission) {
+    public TextBlockRef toTextBlockRef(TextSubmission onSubmission, GradingInstruction gradingInstruction) {
         Feedback feedback = new Feedback();
         feedback.setId(id());
         feedback.setText(title());
         feedback.setDetailText(description());
         feedback.setCredits(credits());
+        // The given grading instruction should match the one of this DTO:
+        assert gradingInstructionId() == null || gradingInstructionId().equals(gradingInstruction.getId());
+        feedback.setGradingInstruction(gradingInstruction);
 
         TextBlock textBlock = new TextBlock();
         textBlock.setStartIndex(indexStart());
