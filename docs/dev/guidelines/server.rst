@@ -153,7 +153,109 @@ Definition and Characteristics of DTOs:
 4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
 5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should serve only as simple data containers without any business logic.
 
-This is a bad example for a DTO, since it contains the entity object ``Post``:
+Not utilizing DTOs can result in accidentally sending excessive data to clients, leading to unnecessary load on the underlying systems.
+In the worst-case scenario, this might lead to the inadvertent exposure of sensitive data.
+For instance, in a direct message chat, without employing DTOs, the following amount of information is transmitted via WebSocket for just one new message:
+
+.. code-block:: json
+
+    {
+        "notificationType": "conversation",
+        "id": 90,
+        "title": "artemisApp.conversationNotification.title.newMessage",
+        "text": "artemisApp.conversationNotification.text.newMessageDirect",
+        "textIsPlaceholder": true,
+        "placeholderValues": "[\"PR Testing Course\",\"Test\",\"2023-07-24T03:07:59.299591+02:00[Europe/Berlin]\",\"artemis_test_user_1 artemis_test_user_1\",\"artemis_test_user_1 artemis_test_user_1\",\"oneToOneChat\"]",
+        "notificationDate": "2023-07-24T03:07:59.416129+02:00",
+        "target": "{\"message\":\"new-message\",\"entity\":\"message\",\"mainPage\":\"courses\",\"id\":31,\"course\":2,\"conversation\":31}",
+        "priority": "MEDIUM",
+        "outdated": false,
+        "author": {
+            "id": 2,
+            "createdDate": "2023-06-20T17:32:21.249Z",
+            "login": "artemis_test_user_1",
+            "firstName": "artemis_test_user_1",
+            "lastName": "artemis_test_user_1",
+            "email": "artemis_test_user_1@example.com",
+            "activated": true,
+            "langKey": "en",
+            "resetDate": "2023-06-20T17:32:21.214Z",
+            "groups": ["artemis-athena-students", "artemis-students"],
+            "authorities": [{
+                "name": "ROLE_USER"
+            }],
+            "name": "artemis_test_user_1 artemis_test_user_1",
+            "participantIdentifier": "artemis_test_user_1",
+            "internal": true,
+            "deleted": false
+        },
+        "message": {
+            "id": 31,
+            "author": {
+                "id": 2,
+                "name": "artemis_test_user_1 artemis_test_user_1"
+            },
+            "creationDate": "2023-07-24T03:07:59.299591+02:00",
+            "content": "Test",
+            "visibleForStudents": true,
+            "conversation": {
+                "type": "oneToOneChat",
+                "id": 31,
+                "creator": {
+                    "id": 1,
+                    "createdDate": "2023-06-20T17:30:31.555Z",
+                    "login": "artemis_admin",
+                    "firstName": "Administrator",
+                    "lastName": "Administrator",
+                    "email": "admin@localhost",
+                    "activated": true,
+                    "langKey": "en",
+                    "resetDate": "2023-06-20T17:30:31.495Z",
+                    "name": "Administrator Administrator",
+                    "participantIdentifier": "artemis_admin",
+                    "internal": true,
+                    "deleted": false
+                },
+                "creationDate": "2023-07-24T02:43:54.791+02:00",
+                "lastMessageDate": "2023-07-24T03:07:59.372553+02:00"
+            },
+            "displayPriority": "NONE",
+            "resolved": false,
+            "answerCount": 0,
+            "voteCount": 0
+        },
+        "conversation": {
+            "type": "oneToOneChat",
+            "id": 31,
+            "creator": {
+                "id": 1,
+                "createdDate": "2023-06-20T17:30:31.555Z",
+                "login": "artemis_admin",
+                "firstName": "Administrator",
+                "lastName": "Administrator",
+                "email": "admin@localhost",
+                "activated": true,
+                "langKey": "en",
+                "resetDate": "2023-06-20T17:30:31.495Z",
+                "name": "Administrator Administrator",
+                "participantIdentifier": "artemis_admin",
+                "internal": true,
+                "deleted": false
+            },
+            "creationDate": "2023-07-24T02:43:54.791+02:00",
+            "lastMessageDate": "2023-07-24T03:07:59.372553+02:00"
+        },
+        "targetTransient": {
+            "message": "new-message",
+            "entity": "message",
+            "mainPage": "courses",
+            "id": 31,
+            "course": 2,
+            "conversation": 31
+        }
+    }
+
+Hence, entity objects must not be included in DTOs. This is a bad example for a DTO, since it contains the entity object ``Post``:
 
 .. code-block:: java
 
