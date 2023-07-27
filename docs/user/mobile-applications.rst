@@ -145,17 +145,17 @@ Push Notifications
 ^^^^^^^^^^^^^^^^^^
 Users may receive push notifications on their iOS devices. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
 
-  .. image:: native-applications/ios/initial_login_notification_configuration.png
+  .. image:: native-applications/iOS/initial_login_notification_configuration.png
             :width: 300
 
 When logged in, users can navigate to the notification settings:
 
-  .. image:: native-applications/ios/settings_push.png
+  .. image:: native-applications/iOS/settings_push.png
             :width: 300
 
 In this screen, users can choose which notification types they want to receive.
 
-  .. image:: native-applications/ios/settings_push_detail.png
+  .. image:: native-applications/iOS/settings_push_detail.png
             :width: 300
 
 Problems
