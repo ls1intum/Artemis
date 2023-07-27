@@ -173,9 +173,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return the name/title of the exercise or null if the exercise does not exist
      */
     @Query("""
-            SELECT e.title
-            FROM Exercise e
-            WHERE e.id = :exerciseId
+            SELECT
+                CASE WHEN exerciseGroup IS NOT NULL
+                     THEN exerciseGroup.title
+                     ELSE exercise.title
+                END AS title
+            FROM Exercise exercise
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+            WHERE exercise.id = :exerciseId
             """)
     @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);

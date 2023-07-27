@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class SingleUserNotificationService {
@@ -37,7 +37,7 @@ public class SingleUserNotificationService {
 
     private final UserRepository userRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final GeneralInstantNotificationService notificationService;
 
@@ -46,11 +46,11 @@ public class SingleUserNotificationService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
+            WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -359,7 +359,7 @@ public class SingleUserNotificationService {
         boolean isWebappNotificationAllowed = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification,
                 notification.getRecipient(), WEBAPP);
         if (isWebappNotificationAllowed) {
-            messagingTemplate.convertAndSend(notification.getTopic(), notification);
+            websocketMessagingService.sendMessage(notification.getTopic(), notification);
         }
 
         prepareSingleUserInstantNotification(notification, notificationSubject, author);
