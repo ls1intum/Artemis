@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { LearningPathRecommendation, NgxLearningPathDTO } from 'app/entities/learning-path.model';
+import { LearningPathRecommendationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -11,8 +11,8 @@ export class LearningPathService {
 
     constructor(private httpClient: HttpClient) {}
 
-    enableLearningPaths(courseId: number): Observable<HttpResponse<Course>> {
-        return this.httpClient.put<Course>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
+    enableLearningPaths(courseId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
     }
 
     getLearningPathId(courseId: number) {
@@ -37,6 +37,6 @@ export class LearningPathService {
     }
 
     getRecommendation(learningPathId: number) {
-        return this.httpClient.get<LearningPathRecommendation>(`${this.resourceURL}/learning-path/${learningPathId}/recommendation`, { observe: 'response' });
+        return this.httpClient.get<LearningPathRecommendationDTO>(`${this.resourceURL}/learning-path/${learningPathId}/recommendation`, { observe: 'response' });
     }
 }

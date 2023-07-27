@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { Competency } from 'app/entities/competency.model';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 
@@ -12,6 +12,12 @@ export class LearningPath implements BaseEntity {
     public competencies?: Competency[];
 
     constructor() {}
+}
+
+export class LearningPathPageableSearchDTO {
+    public id?: number;
+    public user?: UserNameAndLoginDTO;
+    public progress?: number;
 }
 
 export class NgxLearningPathDTO {
@@ -48,7 +54,7 @@ export enum NodeType {
     LECTURE_UNIT = 'LECTURE_UNIT',
 }
 
-export class LearningPathRecommendation {
+export class LearningPathRecommendationDTO {
     public learningObjectId: number;
     public lectureId?: number;
     public type: RecommendationType;

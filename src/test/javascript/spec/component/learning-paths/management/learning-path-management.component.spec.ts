@@ -3,7 +3,7 @@ import { LearningPathManagementComponent, TableColumn } from 'app/course/learnin
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { LearningPath } from 'app/entities/learning-path.model';
+import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';

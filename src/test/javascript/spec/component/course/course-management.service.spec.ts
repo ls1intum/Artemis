@@ -26,7 +26,7 @@ import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Result } from 'app/entities/result.model';
-import { LearningPath } from 'app/entities/learning-path.model';
+import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
