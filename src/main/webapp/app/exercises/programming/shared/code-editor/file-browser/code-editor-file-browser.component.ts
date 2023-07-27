@@ -408,7 +408,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.renamingFile) {
             return;
-        } else if (newFileName.search('%')) {
+        } else if (newFileName.search('%') != -1) {
             this.onError.emit('disallowedCharacter');
             return;
         }
@@ -456,7 +456,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.creatingFile) {
             return;
-        } else if (fileName.search('%')) {
+        } else if (fileName.search('%') != -1) {
             this.onError.emit('disallowedCharacter');
             return;
         }
