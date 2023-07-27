@@ -107,13 +107,10 @@ public class AthenaFeedbackSendingService {
             return;
         }
 
-        log.info("Calling Athena with given feedback. URL: {}; Exercise: {}; Submission: {}; Feedbacks: {}", athenaUrl + "/modules/text/module_text_cofee/feedbacks", exercise,
-                submission, feedbacks);
+        log.info("Calling Athena with given feedback.");
 
         try {
             final RequestDTO request = new RequestDTO(exercise, submission, feedbacks, textBlockRepository);
-            log.info("Athena request: /feedbacks with body {}", request);
-            log.info("Athena max retries: {}", maxRetries);
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedbacks", request, maxRetries);
             log.info("Remote Service responded to feedback: {}", response.data);
