@@ -490,13 +490,21 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             });
         }
     }
-
+    /**
+     * Checks if fileName contains one of the following illegal characters:
+     * 1. %
+     * 2. More than one .
+     * 3. More than one \
+     * 4. More than one /
+     * 5. \ as the first character
+     * 6. / as the first character
+     **/
     hasIllegalCharacters(fileName: string) {
         return (
             fileName.search('%') != -1 ||
-            fileName.search('\\.+') != -1 ||
-            fileName.search('\\\\+') != -1 ||
-            fileName.search('/+') != -1 ||
+            fileName.search('\\.\\.+') != -1 ||
+            fileName.search('\\\\\\\\+') != -1 ||
+            fileName.search('//+') != -1 ||
             fileName.at(0) === '/' ||
             fileName.at(0) === '\\'
         );
