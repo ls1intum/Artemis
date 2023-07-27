@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.domain.quiz;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * A QuizSubmission.
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizSubmission extends AbstractQuizSubmission {
 
