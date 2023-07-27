@@ -13,7 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
