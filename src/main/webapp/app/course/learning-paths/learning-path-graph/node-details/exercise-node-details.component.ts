@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
@@ -32,4 +32,7 @@ export class ExerciseNodeDetailsComponent implements OnInit {
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
     }
+
+    protected readonly getIcon = getIcon;
+    protected readonly getIconTooltip = getIconTooltip;
 }
