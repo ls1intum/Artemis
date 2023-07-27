@@ -34,6 +34,7 @@ describe('LearningPathProgressModalComponent', () => {
 
     it('should display learning path graph if id is present', () => {
         comp.learningPathId = 1;
+        comp.courseId = 2;
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.graph')).nativeElement).toBeTruthy();
     });
