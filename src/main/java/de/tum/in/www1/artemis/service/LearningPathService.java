@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -26,7 +23,8 @@ import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.learningpath.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
@@ -99,11 +97,12 @@ public class LearningPathService {
      * @param course the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPath> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
+    public SearchResultPageDTO<LearningPathPageableSearchDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
         final var pageable = PageUtil.createLearningPathPageRequest(search);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
-        return new SearchResultPageDTO<>(learningPathPage.getContent(), learningPathPage.getTotalPages());
+        final List<LearningPathPageableSearchDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathPageableSearchDTO::new).toList();
+        return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
     }
 
     /**
