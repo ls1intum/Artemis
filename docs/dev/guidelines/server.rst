@@ -138,6 +138,8 @@ Additional notes on the controller methods:
     * Bad Request - the request was wrong.
     * Not Found - can't find the requested data or it should be not accessible yet.
 
+.. _server-guideline-dto-usage:
+
 12. Use DTOs for data transfer
 ==============================
 

@@ -394,3 +394,4 @@ Best Practices:
 
 1. Dynamic Subscription Handling: Subscribe to topics on an as-needed basis. Unsubscribe from topics that are no longer needed to keep the number of active subscriptions within the recommended limit.
 2. Efficient Topic Aggregation: Where possible, use topic aggregation techniques to consolidate related data streams into a single subscription. Consequently, don't create a new topic if there is already exists a suitable topic that can be reused.
+3. Small Messages: Send small messages and use DTOs. See :ref:`server-guideline-dto-usage` for more information and examples.
