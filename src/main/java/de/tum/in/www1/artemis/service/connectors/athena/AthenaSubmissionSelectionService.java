@@ -95,7 +95,7 @@ public class AthenaSubmissionSelectionService {
             // TODO: make module selection dynamic (based on exercise)
             // allow no retries because this should be fast and it's not too bad if it fails
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/select_submission", request, 0);
-            log.info("Remote Service to calculate next proposes submissions responded: {}", response.submissionId);
+            log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();
             }

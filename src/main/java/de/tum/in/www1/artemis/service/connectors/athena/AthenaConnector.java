@@ -34,11 +34,11 @@ class AthenaConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remote service with a network call.
+     * Invoke the Athena with a network call.
      *
-     * @param url           remote service api endpoint
+     * @param url           Athena api endpoint
      * @param requestObject request body as POJO
-     * @return response body from remote service
+     * @return response body from Athena
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */
     private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingError {
@@ -63,12 +63,12 @@ class AthenaConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remote service with a network call, but retry the request n times in case of an unsuccessful request.
+     * Invoke the Athena with a network call, but retry the request n times in case of an unsuccessful request.
      *
-     * @param url           remote service api endpoint
+     * @param url           Athena api endpoint
      * @param requestObject request body as POJO
      * @param maxRetries    how many times to retry in case of an unsuccessful request.
-     * @return response body from remote service
+     * @return response body from Athena
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */
     ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, int maxRetries) throws NetworkingError {

@@ -74,7 +74,7 @@ public class AthenaFeedbackSuggestionsService {
             final RequestDTO request = new RequestDTO(exercise, submission);
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
-            log.info("Remote Service responded to feedback suggestions request: {}", response.data);
+            log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().map((feedbackDTO) -> {
                 var ref = feedbackDTO.toTextBlockRef(submission);
                 ref.block().automatic();
