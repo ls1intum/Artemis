@@ -33,11 +33,13 @@ import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-sto
 import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ChangeContext } from 'ngx-slider-v2';
+import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
     let submissionService: SubmissionService;
+    let submissionVersionService: SubmissionVersionService;
 
     const courseValue = { id: 1 } as Course;
     const examValue = { course: courseValue, id: 2 } as Exam;
@@ -84,6 +86,7 @@ describe('Student Exam Timeline Component', () => {
                 fixture = TestBed.createComponent(StudentExamTimelineComponent);
                 component = fixture.componentInstance;
                 submissionService = TestBed.inject(SubmissionService);
+                submissionVersionService = TestBed.inject(SubmissionVersionService);
                 fixture.detectChanges();
                 jest.spyOn(component.examNavigationBarComponent, 'changePage').mockImplementation(() => {});
             });
@@ -98,16 +101,16 @@ describe('Student Exam Timeline Component', () => {
             .spyOn(submissionService, 'findAllSubmissionsOfParticipation')
             .mockReturnValueOnce(of({ body: [programmingSubmission1] }) as unknown as Observable<EntityArrayResponseType>)
             .mockReturnValueOnce(of({ body: [fileUploadSubmission1] }) as unknown as Observable<EntityArrayResponseType>);
-        const submissionServiceSubmissionVersionsSpy = jest
-            .spyOn(submissionService, 'findAllSubmissionVersionsOfSubmission')
+        const submissionVersionServiceSpy = jest
+            .spyOn(submissionVersionService, 'findAllSubmissionVersionsOfSubmission')
             .mockReturnValueOnce(of([submissionVersion]) as unknown as Observable<SubmissionVersion[]>);
         component.studentExam = studentExamValue;
         component.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
             expect([submissionVersion, programmingSubmission1, fileUploadSubmission1]).toContain(results[0]);
         });
         expect(submissionServiceSpy).toHaveBeenCalledTimes(2);
-        expect(submissionServiceSubmissionVersionsSpy).toHaveBeenCalledOnce();
-        expect(submissionServiceSubmissionVersionsSpy).toHaveBeenCalledWith(2);
+        expect(submissionVersionServiceSpy).toHaveBeenCalledOnce();
+        expect(submissionVersionServiceSpy).toHaveBeenCalledWith(2);
     }));
 
     it('should fetch submission versions and submission versions on init using retrieveSubmissionData', fakeAsync(() => {
@@ -163,12 +166,15 @@ describe('Student Exam Timeline Component', () => {
             component.selectedTimestamp = dayjs('2023-01-07').valueOf();
             if (exercise === programmingExercise) {
                 expectedSubmission = programmingSubmission1;
+                component.currentExercise = fileUploadExercise;
             }
             if (exercise === fileUploadExercise) {
                 expectedSubmission = fileUploadSubmission1;
+                component.currentExercise = programmingExercise;
             }
             if (exercise === textExercise) {
                 expectedSubmission = submissionVersion;
+                component.currentExercise = programmingExercise;
             }
         }
         component.submissionVersions = [submissionVersion];

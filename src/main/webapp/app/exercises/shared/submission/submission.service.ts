@@ -57,10 +57,6 @@ export class SubmissionService {
         );
     }
 
-    findAllSubmissionVersionsOfSubmission(submissionId: number): Observable<SubmissionVersion[]> {
-        return this.http.get<SubmissionVersion[]>(`${this.resourceUrl}/${submissionId}/versions`).pipe(map((res) => this.convertCreatedDatesFromServer(res)));
-    }
-
     /**
      * Find the submissions with complaints for a tutor for a specified exercise (complaintType == 'COMPLAINT').
      * @param exerciseId
@@ -268,11 +264,5 @@ export class SubmissionService {
             secondFeedback.reference === firstFeedback.reference &&
             secondFeedback.text === firstFeedback.text
         );
-    }
-
-    private convertCreatedDatesFromServer(res: SubmissionVersion[]): SubmissionVersion[] {
-        return res.map((version) => {
-            return { ...version, createdDate: convertDateFromServer(version.createdDate)! };
-        });
     }
 }

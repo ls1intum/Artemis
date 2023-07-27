@@ -17,6 +17,7 @@ import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -56,6 +57,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         private studentExamService: StudentExamService,
         private activatedRoute: ActivatedRoute,
         private submissionService: SubmissionService,
+        private submissionVersionService: SubmissionVersionService,
         private datePipe: ArtemisDatePipe,
     ) {}
 
@@ -143,7 +145,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 submissionObservables.push(this.submissionService.findAllSubmissionsOfParticipation(id).pipe(map(({ body }) => body!)));
             } else {
                 submissionObservables.push(
-                    this.submissionService.findAllSubmissionVersionsOfSubmission(exercise.studentParticipations![0].submissions![0].id!).pipe(
+                    this.submissionVersionService.findAllSubmissionVersionsOfSubmission(exercise.studentParticipations![0].submissions![0].id!).pipe(
                         mergeMap((versions) => versions),
                         toArray(),
                     ),
@@ -176,7 +178,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         }
 
         if (!exerciseChange.submission) {
-            exerciseChange.submission = this.findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exerciseChange.exercise!);
+            // only change the submission if the exercise has changed
+            if (exerciseChange.exercise !== this.currentExercise) {
+                exerciseChange.submission = this.findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exerciseChange.exercise!);
+            }
         }
 
         if (this.isSubmissionVersion(exerciseChange.submission)) {
