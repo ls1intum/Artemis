@@ -74,5 +74,6 @@ export default defineConfig({
         specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.ts'],
         supportFile: 'support/index.ts',
         baseUrl: 'http://localhost:8080',
+        testIsolation: false,
     },
 });
