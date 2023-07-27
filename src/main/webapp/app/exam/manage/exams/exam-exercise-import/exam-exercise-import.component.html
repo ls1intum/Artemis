@@ -95,11 +95,13 @@
                             <td>
                                 <input
                                     *ngIf="exercise.type !== exerciseType.PROGRAMMING"
-                                    [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 }"
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 || exercisesWithDuplicatedTitles.has(exercise) }"
                                     type="text"
                                     [id]="'exercise-' + exercise.id + '-title'"
                                     [name]="'exercise-' + exercise.id + '-title'"
+                                    [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
+                                    (change)="checkIfExerciseSelectedAndDuplicates(exercise, true, exerciseGroup)"
                                 />
                                 <input
                                     *ngIf="exercise.type === exerciseType.PROGRAMMING"
@@ -109,6 +111,7 @@
                                     [name]="'exercise-' + exercise.id + '-title'"
                                     [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
+                                    (change)="checkIfExerciseSelectedAndDuplicates(exercise, true, exerciseGroup)"
                                 />
                             </td>
                             <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
@@ -119,6 +122,7 @@
                                     [name]="'programming-exercise-' + exercise.id + '-shortName'"
                                     [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.shortName"
+                                    (change)="checkIfExerciseSelectedAndDuplicates(exercise, false, exerciseGroup)"
                                 />
                             </td>
                             <td>
