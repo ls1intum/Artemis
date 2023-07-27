@@ -2088,7 +2088,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseRepo.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
-                Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true, 1);
+                Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }), true, 1);
         gradingScale.setExam(exam);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
