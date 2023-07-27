@@ -408,7 +408,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.renamingFile) {
             return;
-        } else if (newFileName.search('%') != -1) {
+        } else if (this.hasIllegalCharacters(newFileName)) {
             this.onError.emit('disallowedCharacter');
             return;
         }
@@ -456,7 +456,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.creatingFile) {
             return;
-        } else if (fileName.search('%') != -1) {
+        } else if (this.hasIllegalCharacters(fileName)) {
             this.onError.emit('disallowedCharacter');
             return;
         }
@@ -489,6 +489,17 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 error: () => this.onError.emit('fileOperationFailed'),
             });
         }
+    }
+
+    hasIllegalCharacters(fileName: string) {
+        return (
+            fileName.search('%') != -1 ||
+            fileName.search('\\.+') != -1 ||
+            fileName.search('\\\\+') != -1 ||
+            fileName.search('/+') != -1 ||
+            fileName.at(0) === '/' ||
+            fileName.at(0) === '\\'
+        );
     }
 
     /**
