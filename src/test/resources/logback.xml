@@ -5,17 +5,14 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
 
     <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
-        <discriminator>
-            <key>logFileName</key>
-            <defaultValue>unknown</defaultValue>
-        </discriminator>
+        <discriminator class="de.tum.in.www1.artemis.util.parallelTestExecution.LoggingDiscriminator"></discriminator>
         <sift>
             <appender class="ch.qos.logback.core.FileAppender">
                 <file>build/logs/${logFileName}.log</file>
                 <append>false</append>
-                <layout class="ch.qos.logback.classic.PatternLayout">
+                <encoder>
                     <pattern>%d{HH:mm:ss.SSS} | %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
-                </layout>
+                </encoder>
             </appender>
         </sift>
     </appender>
@@ -52,7 +49,7 @@
     <logger name="sun.rmi.transport" level="WARN"/>
 
     <root>
-        <level>ALL</level>
+        <level>WARN</level>
         <appender-ref ref="SIFT"/>
     </root>
 
