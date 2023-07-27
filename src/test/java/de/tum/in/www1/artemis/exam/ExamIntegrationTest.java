@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -299,9 +300,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         bitbucketRequestMockProvider.mockUpdateUserDetails(student42.getLogin(), student42.getEmail(), student42.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
+        Set<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
-        List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
+        Set<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
@@ -662,9 +663,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam2.getExerciseGroups().get(0));
                 // No initial submissions should be created for programming exercises
                 assertThat(participation.getSubmissions()).isEmpty();
+                ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
                 // The participation should not get locked if it gets created after the exam already started
-                assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isFalse();
-                verify(versionControlService, atLeastOnce()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
+                assertThat(studentParticipation.isLocked()).isFalse();
+                verify(versionControlService).addMemberToRepository(studentParticipation.getVcsRepositoryUrl(), studentParticipation.getStudent().orElseThrow(),
+                        VersionControlRepositoryPermission.REPO_WRITE);
             }
         }
 
@@ -2238,7 +2241,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseRepo.save(exerciseWithNoUsers);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 },
-                Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true, 1);
+                Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }), true, 1);
         gradingScale.setExam(exam);
         gradingScale = gradingScaleRepository.save(gradingScale);
 
