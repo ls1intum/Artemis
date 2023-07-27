@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -89,8 +88,7 @@ public class ConversationMessagingService extends PostingService {
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
 
         var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
-        var conversationParticipants = conversation.getConversationParticipants();
-        var notificationRecipients = conversationParticipants.stream().map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
+        var notificationRecipients = getRecipients(conversation).collect(Collectors.toSet());
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
