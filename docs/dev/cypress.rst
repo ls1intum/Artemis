@@ -26,67 +26,70 @@ In order to setup cypress locally, we need to follow these steps:
 
 1. Install dependencies
 
-   First head into the cypress folder by using ``cd /src/test/cypress``. Now run ``npm install``.
+  First head into the cypress folder by using ``cd /src/test/cypress``. Now run ``npm install``.
 
 2. Customize Cypress settings
 
-   To connect cypress to our local Artemis instance, we need to adjust some configurations. 
-   First we need to set the URL or IP of the Artemis instance in the ``cypress.config.ts`` file.
-   Adjust the ``baseUrl`` setting to fit your setup (e.g. ``baseUrl: 'http://localhost:9000',``)
+  To connect cypress to our local Artemis instance, we need to adjust some configurations. 
+  First we need to set the URL or IP of the Artemis instance in the ``cypress.config.ts`` file.
+  Adjust the ``baseUrl`` setting to fit your setup (e.g. ``baseUrl: 'http://localhost:9000',``)
 
 3. Adjust user settings
 
-   We also need to adjust the user setting, which will determine the usernames and passwords, that cypress
-   will use. These settings are located within the ``cypress.env.json`` file. If you use the Atlassian setup,
-   the file should typically look like this:
-   .. code:: yaml
-      {
-         "username": "artemis_test_user_USERID",
-         "password": "artemis_test_user_USERID",
-         "adminUsername": "artemis_admin",
-         "adminPassword": "artemis_admin",
-         "allowGroupCustomization": true,
-         "studentGroupName": "students",
-         "tutorGroupName": "tutors",
-         "editorGroupName": "editors",
-         "instructorGroupName": "instructors"
-      }
+  We also need to adjust the user setting, which will determine the usernames and passwords, that cypress
+  will use. These settings are located within the ``cypress.env.json`` file. If you use the Atlassian setup,
+  the file should typically look like this:
+   
+  .. code-block:: json
 
-   The ``USERID`` part will be replaced by different user ids. These are set within the ``support/users.ts`` file. 
-   For a typical local installation the IDs are:
-   - studentOne: 1
-   - studentTwo: 2
-   - studentThree: 3
-   - instructor: 16
-   - tutor: 6
+    {
+      "username": "artemis_test_user_USERID",
+      "password": "artemis_test_user_USERID",
+      "adminUsername": "artemis_admin",
+      "adminPassword": "artemis_admin",
+      "allowGroupCustomization": true,
+      "studentGroupName": "students",
+      "tutorGroupName": "tutors",
+      "editorGroupName": "editors",
+      "instructorGroupName": "instructors"
+    }
 
-   For cypress to use the correct IDs, you have to adjust the code like this:
+  The ``USERID`` part will be replaced by different user ids. These are set within the ``support/users.ts`` file. 
+  For a typical local installation the IDs are:
+    - studentOne: 1
+    - studentTwo: 2
+    - studentThree: 3
+    - instructor: 16
+    - tutor: 6
 
-   .. code:: javascript
-      export const USER_ID = {
-         studentOne: 1,
-         studentTwo: 2,
-         studentThree: 3,
-         instructor: 16,
-         tutor: 6,
-      };
+  For cypress to use the correct IDs, you have to adjust the code like this:
+
+  .. code-block:: ts
+
+    export const USER_ID = {
+      studentOne: 1,
+      studentTwo: 2,
+      studentThree: 3,
+      instructor: 16,
+      tutor: 6,
+    };
 
 4. Open Cypress browser
 
-   If you want to use a different browser than chrome, you can set this within the ``package.json`` file
-   within the cypress subfolder like this ``"cypress:open": "cypress open --browser=edge",``.
-   To now run the test suites selectively instead of in full, we need to open the cypress
-   browser, which is by default chrome by running the following command ``npm run cypress:open``.
-   Now select ``E2E Testing``, followed by ``Start E2E testing in ...``. A new browser window
-   should open, which should look like this:
+  If you want to use a different browser than chrome, you can set this within the ``package.json`` file
+  within the cypress subfolder like this ``"cypress:open": "cypress open --browser=edge",``.
+  To now run the test suites selectively instead of in full, we need to open the cypress
+  browser, which is by default chrome by running the following command ``npm run cypress:open``.
+  Now select ``E2E Testing``, followed by ``Start E2E testing in ...``. A new browser window
+  should open, which should look like this:
 
-   .. figure:: cypress/cypress-open-screenshot.png
-      :align: center
-      :alt: Cypress cypress-open-screenshot
+  .. figure:: cypress/cypress-open-screenshot.png
+    :align: center
+    :alt: Cypress cypress-open-screenshot
 
-   You can now click on any test suite and it should run. 
-   **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
-   since it will create the necessary users.
+  You can now click on any test suite and it should run. 
+  **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
+  since it will create the necessary users.
 
 
 Debug using Sorry Cypress
@@ -172,61 +175,61 @@ Using ``docker compose`` we can start a MySQL database and the Artemis server lo
 connect it to the prelive system in the university data center.
 
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
-   :align: center
-   :alt: Artemis Deployment on Bamboo Build Agent for Cypress
+  :align: center
+  :alt: Artemis Deployment on Bamboo Build Agent for Cypress
 
-   Artemis Deployment on Bamboo Build Agent for Cypress
+  Artemis Deployment on Bamboo Build Agent for Cypress
 
 In total there are three Docker containers started in the Bamboo build agent:
 
 1. MySQL
 
-   This container starts a MySQL database and exposes it on port 3306.
-   The container automatically creates a new database 'Artemis' and configures it
-   with the recommended settings for Artemis.
-   The Cypress setup reuses the already existing
-   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
-   from the standard Artemis Docker setup.
+  This container starts a MySQL database and exposes it on port 3306.
+  The container automatically creates a new database 'Artemis' and configures it
+  with the recommended settings for Artemis.
+  The Cypress setup reuses the already existing
+  `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
+  from the standard Artemis Docker setup.
 
 2. Artemis
 
-   The Docker image for the Artemis container is created from the already existing
-   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
-   When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
-   from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
-   Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
-   for the Artemis server.
+  The Docker image for the Artemis container is created from the already existing
+  `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
+  When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
+  from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
+  Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
+  for the Artemis server.
 
-   The main configuration of the Artemis server is contained in the
-   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
-   However, this file does not contain any security relevant information.
-   Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
-   the Docker container via environment variables.
-   This information is accessible to the Bamboo build agent via
-   `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
+  The main configuration of the Artemis server is contained in the
+  `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
+  However, this file does not contain any security relevant information.
+  Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
+  the Docker container via environment variables.
+  This information is accessible to the Bamboo build agent via
+  `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
 
-   The Artemis container is also configured to
-   `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
-   the MySQL container and uses
-   `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__
-   to wait until the MySQL container is up and running.
+  The Artemis container is also configured to
+  `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
+  the MySQL container and uses
+  `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__
+  to wait until the MySQL container is up and running.
 
 3. Cypress
 
-   Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__
-   to execute Cypress tests.
-   We use an image which has the Cypress operating system dependencies and a Chrome browser installed.
-   However, Cypress itself is not installed in
-   `these images <https://github.com/cypress-io/cypress-docker-images/tree/master/browsers>`__.
-   This is convenient for us because the image is smaller and the Artemis Cypress project requires
-   additional dependencies to fully function.
-   Therefore, the Artemis Cypress Docker container is configured to install all dependencies
-   (using :code:`npm ci`) upon start. This will also install Cypress itself.
-   Afterwards the Artemis Cypress test suite is executed.
+  Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__
+  to execute Cypress tests.
+  We use an image which has the Cypress operating system dependencies and a Chrome browser installed.
+  However, Cypress itself is not installed in
+  `these images <https://github.com/cypress-io/cypress-docker-images/tree/master/browsers>`__.
+  This is convenient for us because the image is smaller and the Artemis Cypress project requires
+  additional dependencies to fully function.
+  Therefore, the Artemis Cypress Docker container is configured to install all dependencies
+  (using :code:`npm ci`) upon start. This will also install Cypress itself.
+  Afterwards the Artemis Cypress test suite is executed.
 
-   The necessary configuration for the Cypress test suite is also passed in via environment variables.
-   Furthermore, the Cypress container depends on the Artemis container and is only started
-   once Artemis has been fully booted.
+  The necessary configuration for the Cypress test suite is also passed in via environment variables.
+  Furthermore, the Cypress container depends on the Artemis container and is only started
+  once Artemis has been fully booted.
 
 **Bamboo webhook**
 
@@ -262,10 +265,10 @@ and executes the Cypress test suite against it.
 This build plan is automatically executed every 8 hours and verifies that test server 3 is working properly.
 
 .. figure:: cypress/cypress_test_environment_deployment_diagram.svg
-   :align: center
-   :alt: Artemis Deployment on test environment for Cypress
+  :align: center
+  :alt: Artemis Deployment on test environment for Cypress
 
-   Artemis Deployment on test environment for Cypress
+  Artemis Deployment on test environment for Cypress
 
 The difference of this setup is that the Artemis server is deployed on a separate environment which already contains
 the necessary configuration files for the Artemis server to connect to the prelive system.
