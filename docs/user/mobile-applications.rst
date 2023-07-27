@@ -135,11 +135,7 @@ After installation, users have to first decide which Artemis server they want to
 * KIT: https://artemis.praktomat.cs.kit.edu
 * Hochschule Munich: https://artemis.cs.hm.edu/
 
-Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Then, select "Custom Instance":
-
-|server-selection-overview-ios|
-
-Then, enter the URL of the server as you would enter it into the browser:
+Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Under "Custom Instance" enter the URL of the server as you would enter it into the browser:
 
 |custom-server-entered-ios|
 
@@ -149,17 +145,17 @@ Push Notifications
 ^^^^^^^^^^^^^^^^^^
 Users may receive push notifications on their iOS devices. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
 
-  .. image:: native-applications/android/initial_login_notification_configuration.png
+  .. image:: native-applications/ios/initial_login_notification_configuration.png
             :width: 300
 
 When logged in, users can navigate to the notification settings:
 
-  .. image:: native-applications/android/settings_push.png
+  .. image:: native-applications/ios/settings_push.png
             :width: 300
 
 In this screen, users can choose which notification types they want to receive.
 
-  .. image:: native-applications/android/settings_push_detail.png
+  .. image:: native-applications/ios/settings_push_detail.png
             :width: 300
 
 Problems
@@ -171,5 +167,8 @@ Please report any issues on the `GitHub repository <https://github.com/ls1intum/
     :width: 300
 
 .. |custom-server-entered-android| image:: native-applications/android/custom_server_entered.png
+    :width: 300
+
+.. |custom-server-entered-ios| image:: native-applications/iOS/custom-server-entered-ios.PNG
     :width: 300
 
