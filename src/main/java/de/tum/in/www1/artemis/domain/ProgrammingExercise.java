@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-@JsonTypeName("programming")
 @SecondaryTable(name = "programming_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {

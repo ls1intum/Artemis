@@ -16,7 +16,7 @@ services:
             mysql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress.env
+            - ./artemis/config/cypress-mysql.env
 
     nginx:
         extends:
