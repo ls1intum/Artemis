@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -29,16 +28,16 @@ public class QuizStatisticService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
-    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate,
-            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository,
-            QuizSubmissionRepository quizSubmissionRepository) {
+    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
@@ -140,7 +139,7 @@ public class QuizStatisticService {
             // notify users via websocket about new results for the statistics.
             // filters out solution information
             quiz.filterForStatisticWebsocket();
-            messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), quiz);
+            websocketMessagingService.sendMessage("/topic/statistic/" + quiz.getId(), quiz);
         }
     }
 
