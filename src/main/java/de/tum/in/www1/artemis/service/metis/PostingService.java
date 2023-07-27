@@ -98,7 +98,7 @@ public abstract class PostingService {
         else if (postDTO.post().getConversation() != null) {
             if (recipients == null) {
                 // send to all participants of the conversation
-                recipients = getRecipients(postDTO.post().getConversation()).collect(Collectors.toSet());
+                recipients = getRecipientsForConversation(postDTO.post().getConversation()).collect(Collectors.toSet());
             }
             recipients.forEach(
                     user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
@@ -114,7 +114,7 @@ public abstract class PostingService {
      * @param conversation conversation the participants are supposed be retrieved
      * @return users that should receive the new message
      */
-    protected Stream<User> getRecipients(Conversation conversation) {
+    protected Stream<User> getRecipientsForConversation(Conversation conversation) {
         return conversation instanceof Channel channel && channelRepository.findByIdElseThrow(channel.getId()).getIsCourseWide()
                 ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
                 : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);

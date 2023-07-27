@@ -88,7 +88,7 @@ public class ConversationMessagingService extends PostingService {
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
 
         var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
-        var notificationRecipients = getRecipients(conversation).collect(Collectors.toSet());
+        var notificationRecipients = getRecipientsForConversation(conversation).collect(Collectors.toSet());
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
