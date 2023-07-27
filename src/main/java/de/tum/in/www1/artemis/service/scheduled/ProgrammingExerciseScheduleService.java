@@ -704,7 +704,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     long numberOfFailedUnlockOperations = failures.size();
                     String notificationText;
                     if (numberOfFailedUnlockOperations > 0) {
-                        notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failures.size();
+                        notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + numberOfFailedUnlockOperations;
                     }
                     else {
                         notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION;
