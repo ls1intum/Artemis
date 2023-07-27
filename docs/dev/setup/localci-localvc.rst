@@ -48,7 +48,7 @@ The values configured here are sufficient for a basic Artemis setup that allows 
 
 .. HINT::
    If you are running Artemis in Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri`` with the value ``tcp://localhost:2375``.
-   The default value for this property is ``unix:///var/run/docker.sock`` which is defined in ``src/main/resources/config/application-localci.yml``. The ``application-local.yml`` file overrides the values set there.
+   The default value for this property is ``unix:///var/run/docker.sock`` which is defined in ``src/main/resources/config/application-localci.yml``. The ``application-local.yml`` file overrides the values set there. When using Windows, you will also need make sure to enable the Docker setting "Expose daemon on tcp://localhost:2375 without TLS". You can do this in Docker Desktop under Settings > General.
 
 When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
 You can then use that admin user to create further users in Artemis' internal user management system.

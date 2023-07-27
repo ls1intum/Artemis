@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -650,6 +651,7 @@ public class QuizScheduleService {
                 // NOTE: we save (1) participation and (2) submission (in this particular order) here individually so that one exception (e.g. duplicated key) cannot
                 // destroy multiple student answers
                 participation = studentParticipationRepository.save(participation);
+
                 quizSubmission.addResult(result);
                 quizSubmission.setParticipation(participation);
                 // this automatically saves the results due to CascadeType.ALL
@@ -678,8 +680,8 @@ public class QuizScheduleService {
                 // add the result of the participation resultHashMap for the statistic-Update
                 addResultForStatisticUpdate(quizExercise.getId(), result);
             }
-            catch (ConstraintViolationException constraintViolationException) {
-                log.error("ConstraintViolationException in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), constraintViolationException.getMessage(), constraintViolationException);
+            catch (ConstraintViolationException | DataIntegrityViolationException violationException) {
+                log.error("ConstraintViolationException | DataIntegrityViolationException in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), violationException.getMessage(), violationException);
                 // We got a ConstraintViolationException -> The "User-Quiz" pair is already saved in the database, but for some reason was not removed from the maps
                 // We remove it from the maps now to prevent this error from occurring again
                 // We do NOT add it to the participation map, as this should have been done already earlier (when the entry was added to the database)
@@ -689,8 +691,8 @@ public class QuizScheduleService {
                 // clean up the batch association
                 userBatchMap.remove(username);
             }
-            catch (Exception e) {
-                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
+            catch (Exception ex) {
+                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), ex.getMessage(), ex);
             }
         }
         return count;
