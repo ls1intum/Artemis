@@ -58,24 +58,28 @@ describe('Programming exercise participation', () => {
         });
     });
 
-    describe('C programming exercise', () => {
-        let exercise: ProgrammingExercise;
+    // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
+    // See https://github.com/ls1intum/Artemis/issues/6994
+    if (Cypress.env('DB_TYPE') !== 'Postgres') {
+        describe('C programming exercise', () => {
+            let exercise: ProgrammingExercise;
 
-        before('Setup c programming exercise', () => {
-            cy.login(admin);
-            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
-                exercise = exerciseResponse.body;
+            before('Setup c programming exercise', () => {
+                cy.login(admin);
+                courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
+                    exercise = exerciseResponse.body;
+                });
+            });
+
+            it('Makes a submission', () => {
+                programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
+                const submission = cAllSuccessful;
+                programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
+                    programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
+                });
             });
         });
-
-        it('Makes a submission', () => {
-            programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-            const submission = cAllSuccessful;
-            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, () => {
-                programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
-            });
-        });
-    });
+    }
 
     describe('Python programming exercise', () => {
         let exercise: ProgrammingExercise;
