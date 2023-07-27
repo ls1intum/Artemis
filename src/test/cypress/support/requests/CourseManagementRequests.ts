@@ -72,17 +72,19 @@ export class CourseManagementRequests {
      *   - allowMessaging: if messaging should be enabled for the course
      * @returns <Chainable> request response
      */
-    createCourse(options: {
-        customizeGroups?: boolean;
-        courseName?: string;
-        courseShortName?: string;
-        start?: day.Dayjs;
-        end?: day.Dayjs;
-        iconFileName?: string,
-        iconFile?: Blob,
-        allowCommunication?: boolean;
-        allowMessaging?: boolean;
-    } = {}): Cypress.Chainable<Cypress.Response<Course>> {
+    createCourse(
+        options: {
+            customizeGroups?: boolean;
+            courseName?: string;
+            courseShortName?: string;
+            start?: day.Dayjs;
+            end?: day.Dayjs;
+            iconFileName?: string;
+            iconFile?: Blob;
+            allowCommunication?: boolean;
+            allowMessaging?: boolean;
+        } = {},
+    ): Cypress.Chainable<Cypress.Response<Course>> {
         const {
             customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
@@ -122,7 +124,7 @@ export class CourseManagementRequests {
 
         const formData = new FormData();
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
-        
+
         if (iconFile) {
             formData.append('file', iconFile, iconFileName);
         }
