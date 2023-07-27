@@ -20,7 +20,10 @@ export class ExamExerciseImportComponent implements OnInit {
     // or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
 
+    // Set of programming exercises with duplicated titles
     exercisesWithDuplicatedTitles = new Set<Exercise>();
+
+    // Set of programming exercises with duplicated short names
     exercisesWithDuplicatedShortNames = new Set<Exercise>();
 
     // Expose enums to the template
@@ -218,6 +221,17 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     /**
+     * Validates the Title for Programming Exercises based on the user's input
+     * @param exercise the exercise to be checked
+     */
+    validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
+        return (
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            exercise.shortName?.length! > 2 && this.shortNamePattern.test(exercise.shortName!) && !this.exercisesWithDuplicatedShortNames.has(exercise)
+        );
+    }
+
+    /**
      * checks if the exercise is selected and checks for duplicated titles or short names
      * @param exercise      the exercise we want to check if it has duplicates
      * @param checkForTitle true if duplicated titles should be checked otherwise the short names are checked
@@ -265,17 +279,6 @@ export class ExamExerciseImportComponent implements OnInit {
                 this.exercisesWithDuplicatedShortNames.forEach((ex) => this.checkForDuplicatedTitlesOrShortNames(ex, false));
             }
         }
-    }
-
-    /**
-     * Validates the Title for Programming Exercises based on the user's input
-     * @param exercise the exercise to be checked
-     */
-    validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
-        return (
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.shortName?.length! > 2 && this.shortNamePattern.test(exercise.shortName!) && !this.exercisesWithDuplicatedShortNames.has(exercise)
-        );
     }
 
     /**
