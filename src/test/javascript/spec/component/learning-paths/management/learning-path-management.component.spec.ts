@@ -15,8 +15,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { expectElementToBeDisabled } from '../../../helpers/utils/general.utils';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
@@ -88,6 +88,7 @@ describe('LearningPathManagementComponent', () => {
             ...searchResult,
         };
         searchForLearningPathsStub.mockReturnValue(of(searchResult));
+        enableLearningPathsStub.mockReturnValue(of(new HttpResponse<void>()));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -108,22 +109,19 @@ describe('LearningPathManagementComponent', () => {
         });
     }));
 
-    it('should allow to enable learning paths if learning paths disabled', () => {
-        course.learningPathsEnabled = false;
-        findCourseStub.mockReturnValue(of(new HttpResponse({ body: course })));
+    it('should enable learning paths and load data', fakeAsync(() => {
+        const disabledCourse = Object.assign({}, course);
+        disabledCourse.learningPathsEnabled = false;
+        findCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: disabledCourse }))).mockReturnValueOnce(course);
+        const loadDataStub = jest.spyOn(comp, 'loadData');
         fixture.detectChanges();
         comp.ngOnInit();
-        expect(comp.course).toEqual(course);
-        expect(comp.course.learningPathsEnabled).toBeFalsy();
-        expect(comp.isLoading).toBeFalsy();
-        const button = fixture.debugElement.query(By.css('div'));
-        console.log(fixture.debugElement);
-        expect(button).not.toBeNull();
-
-        button.nativeElement.click();
+        comp.enableLearningPaths();
         expect(enableLearningPathsStub).toHaveBeenCalledOnce();
         expect(enableLearningPathsStub).toHaveBeenCalledWith(course.id);
-    });
+        expect(loadDataStub).toHaveBeenCalledTimes(2);
+        expect(comp.course.learningPathsEnabled).toBeTruthy();
+    }));
 
     it('should set content to paging result on sort', fakeAsync(() => {
         expect(comp.listSorting).toBeTrue();
