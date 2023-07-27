@@ -1,6 +1,8 @@
-import { Lecture } from 'app/entities/lecture.model';
-import { BASE_API, DELETE, POST } from '../../constants';
 import day from 'dayjs/esm';
+
+import { Lecture } from 'app/entities/lecture.model';
+
+import { BASE_API, DELETE, POST } from '../../constants';
 
 export class LectureManagementPage {
     clickCreateLecture() {

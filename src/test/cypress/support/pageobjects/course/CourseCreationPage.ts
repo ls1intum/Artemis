@@ -1,6 +1,7 @@
-import dayjs from 'dayjs/esm';
-import { enterDate } from '../../utils';
+import day from 'dayjs/esm';
+
 import { BASE_API, POST, PUT } from '../../constants';
+import { enterDate } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -33,14 +34,14 @@ export class CourseCreationPage {
     /**
      * @param date the date when the exam starts
      */
-    setStartDate(date: dayjs.Dayjs) {
+    setStartDate(date: day.Dayjs) {
         enterDate('#field_startDate', date);
     }
 
     /**
      * @param date the date when the exam will end
      */
-    setEndDate(date: dayjs.Dayjs) {
+    setEndDate(date: day.Dayjs) {
         enterDate('#field_endDate', date);
     }
 

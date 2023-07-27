@@ -1,10 +1,19 @@
-import dayjs from 'dayjs/esm';
+import { Interception } from 'cypress/types/net-stubbing';
+import day from 'dayjs/esm';
 
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+
+import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import {
+    courseManagementAPIRequest,
     courseManagementExercises,
-    courseManagementRequest,
     courseOverview,
+    exerciseAPIRequest,
     modelingExerciseCreation,
     modelingExerciseEditor,
     programmingExerciseCreation,
@@ -14,16 +23,8 @@ import {
     textExerciseCreation,
     textExerciseEditor,
 } from '../../support/artemis';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../support/users';
-import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
-import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { Interception } from 'cypress/types/net-stubbing';
-import { checkField, generateUUID } from '../../support/utils';
+import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
 describe('Import exercises', () => {
     let course: Course;
@@ -35,25 +36,25 @@ describe('Import exercises', () => {
 
     before('Setup course with exercises', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createTextExercise({ course }).then((response) => {
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createTextExercise({ course }).then((response) => {
                 textExercise = response.body;
             });
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
                 quizExercise = response.body;
             });
-            courseManagementRequest.createModelingExercise({ course }).then((response) => {
+            exerciseAPIRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;
             });
-            courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
+            exerciseAPIRequest.createProgrammingExercise({ course }).then((response) => {
                 programmingExercise = response.body;
             });
-            courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+            courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
                 secondCourse = convertModelAfterMultiPart(response);
-                courseManagementRequest.addStudentToCourse(secondCourse, studentOne);
-                courseManagementRequest.addInstructorToCourse(secondCourse, instructor);
+                courseManagementAPIRequest.addStudentToCourse(secondCourse, studentOne);
+                courseManagementAPIRequest.addInstructorToCourse(secondCourse, instructor);
             });
         });
     });
@@ -66,9 +67,9 @@ describe('Import exercises', () => {
         checkField('#field_title', textExercise.title!);
         checkField('#field_points', textExercise.maxPoints!);
 
-        textExerciseCreation.setReleaseDate(dayjs());
-        textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-        textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+        textExerciseCreation.setReleaseDate(day());
+        textExerciseCreation.setDueDate(day().add(1, 'days'));
+        textExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
 
         textExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -100,7 +101,7 @@ describe('Import exercises', () => {
 
         cy.wait(500);
 
-        quizExerciseCreation.setVisibleFrom(dayjs());
+        quizExerciseCreation.setVisibleFrom(day());
 
         quizExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -124,9 +125,9 @@ describe('Import exercises', () => {
         checkField('#field_title', modelingExercise.title!);
         checkField('#field_points', modelingExercise.maxPoints!);
 
-        modelingExerciseCreation.setReleaseDate(dayjs());
-        modelingExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-        modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+        modelingExerciseCreation.setReleaseDate(day());
+        modelingExerciseCreation.setDueDate(day().add(1, 'days'));
+        modelingExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
 
         modelingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -165,7 +166,7 @@ describe('Import exercises', () => {
     });
 
     after('Delete Courses', () => {
-        courseManagementRequest.deleteCourse(course, admin);
-        courseManagementRequest.deleteCourse(secondCourse, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
     });
 });
