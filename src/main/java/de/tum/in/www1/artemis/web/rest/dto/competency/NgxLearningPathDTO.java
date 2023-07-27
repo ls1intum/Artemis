@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.dto.learningpath;
+package de.tum.in.www1.artemis.web.rest.dto.competency;
 
 import java.util.Set;
 

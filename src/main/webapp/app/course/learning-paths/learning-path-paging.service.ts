@@ -4,9 +4,9 @@ import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LearningPath } from 'app/entities/learning-path.model';
+import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 
-type EntityResponseType = SearchResult<LearningPath>;
+type EntityResponseType = SearchResult<LearningPathPageableSearchDTO>;
 @Injectable({ providedIn: 'root' })
 export class LearningPathPagingService extends PagingService {
     public resourceUrl = 'api';

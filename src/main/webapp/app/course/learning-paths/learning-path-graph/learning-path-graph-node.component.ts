@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { faCheckCircle, faCircle, faPlayCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { NgxLearningPathNode, NodeType } from 'app/entities/learning-path.model';
+import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

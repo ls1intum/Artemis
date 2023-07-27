@@ -7,7 +7,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { LearningPathRecommendation, RecommendationType } from 'app/entities/learning-path.model';
+import { LearningPathRecommendationDTO, RecommendationType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -95,7 +95,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should load lecture unit on recommendation', () => {
-        const recommendation = new LearningPathRecommendation();
+        const recommendation = new LearningPathRecommendationDTO();
         recommendation.learningObjectId = lectureUnit.id!;
         recommendation.lectureId = lecture.id;
         recommendation.type = RecommendationType.LECTURE_UNIT;
@@ -107,7 +107,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should load exercise on recommendation', () => {
-        const recommendation = new LearningPathRecommendation();
+        const recommendation = new LearningPathRecommendationDTO();
         recommendation.learningObjectId = exercise.id!;
         recommendation.type = RecommendationType.EXERCISE;
         getRecommendationStub.mockReturnValue(of(new HttpResponse({ body: recommendation })));

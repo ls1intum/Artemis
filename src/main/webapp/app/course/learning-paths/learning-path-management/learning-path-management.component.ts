@@ -11,7 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { LearningPath } from 'app/entities/learning-path.model';
+import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
@@ -44,7 +44,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         sortingOrder: SortingOrder.ASCENDING,
         sortedColumn: TableColumn.ID,
     };
-    content: SearchResult<LearningPath>;
+    content: SearchResult<LearningPathPageableSearchDTO>;
     total = 0;
 
     private search = new Subject<void>();
@@ -92,7 +92,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
      * @param item The item itself
      * @returns The ID of the item
      */
-    trackId(index: number, item: LearningPath): number {
+    trackId(index: number, item: LearningPathPageableSearchDTO): number {
         return item.id!;
     }
 
@@ -158,8 +158,8 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe({
-                next: (res) => {
-                    this.course = res.body!;
+                next: () => {
+                    this.course.learningPathsEnabled = true;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -204,7 +204,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
             this.page = pageNumber;
         }
     }
-    viewLearningPath(learningPath: LearningPath) {
+    viewLearningPath(learningPath: LearningPathPageableSearchDTO) {
         const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
             size: 'xl',
             backdrop: 'static',
