@@ -85,6 +85,7 @@
                 "checkoutFailed": "Dein Git-Repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
                 "unsupportedFile": "Datei mit dieser Endung wird nicht unterstützt.",
+                "disallowedCharacter": "Datei/Verzeichnisname enthält ein unerlaubtes Zeichen.",
                 "fileOperationFailed": "Dateioperation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal.",
                 "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
                 "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",

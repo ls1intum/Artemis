@@ -86,6 +86,7 @@
                 "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
                 "unsupportedFile": "File with this extension not supported.",
+                "disallowedCharacter": "File/Directory name contains a disallowed character.",
                 "fileOperationFailed": "File operation could not be executed. Please try again later.",
                 "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
                 "participationCouldNotBeCreated": "Participation could not be created.",

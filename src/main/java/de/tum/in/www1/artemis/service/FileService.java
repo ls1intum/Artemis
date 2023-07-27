@@ -1053,17 +1053,17 @@ public class FileService implements DisposableBean {
     }
 
     public static String removeIllegalPathCharacters(String string) {
-        // First replace all characters that are not (^) a-z, A-Z, 0-9, '-', '.' with '_'
+        // First check if the path is an absolute path (starts with '\' or '/')
+        // If so, ignore the first character in order to make it a relative path
+        // Then replace all characters that are '%' with '_'
         // Then replace multiple points, e.g. '...' with one point '.'
+        // Then replace multiple backslashes, e.g. '\\' with one backslash '\'
+        // Then replace multiple slashes, e.g. '//' with one slash '/'
         String output = string;
-        if(output.startsWith("\\") || output.startsWith("/")) {
+        if (output.startsWith("\\") || output.startsWith("/")) {
             output = output.substring(1);
         }
-        return output
-            .replaceAll("%", "_")
-            .replaceAll("\\.+", ".")
-            .replaceAll("\\\\+", "\\")
-            .replaceAll("/+", "/");
+        return output.replaceAll("%", "_").replaceAll("\\.+", ".").replaceAll("\\\\+", "\\").replaceAll("/+", "/");
     }
 
     /**
