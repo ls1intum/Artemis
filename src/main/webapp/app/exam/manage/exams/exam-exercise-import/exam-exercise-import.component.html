@@ -95,13 +95,11 @@
                             <td>
                                 <input
                                     *ngIf="exercise.type !== exerciseType.PROGRAMMING"
-                                    [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 || exercisesWithDuplicatedTitles.has(exercise) }"
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 }"
                                     type="text"
                                     [id]="'exercise-' + exercise.id + '-title'"
                                     [name]="'exercise-' + exercise.id + '-title'"
-                                    [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
-                                    (change)="checkIfExerciseSelectedAndDuplicates(exercise, true, exerciseGroup)"
                                 />
                                 <input
                                     *ngIf="exercise.type === exerciseType.PROGRAMMING"

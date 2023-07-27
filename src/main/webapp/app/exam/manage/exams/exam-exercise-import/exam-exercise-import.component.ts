@@ -89,8 +89,7 @@ export class ExamExerciseImportComponent implements OnInit {
             this.containsProgrammingExercises.set(exerciseGroup, hasProgrammingExercises);
             // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.
             exerciseGroup.exercises?.forEach((exercise) => {
-                if (exercise.title) {
-                    //exercise.type === ExerciseType.PROGRAMMING &&
+                if (exercise.type === ExerciseType.PROGRAMMING && exercise.title) {
                     if (!duplicated.has(exercise.title)) {
                         duplicated.add(exercise.title);
                         this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
@@ -240,19 +239,18 @@ export class ExamExerciseImportComponent implements OnInit {
         let hasDuplicate = false;
         this.selectedExercises.forEach((exerciseGroup) => {
             exerciseGroup.forEach((ex) => {
-                //if (ex.type == ExerciseType.PROGRAMMING) {
-                if (ex !== exercise) {
+                if (ex.type == ExerciseType.PROGRAMMING && ex !== exercise) {
                     if (checkForTitle && ex.title === exercise.title) {
                         hasDuplicate = true;
                         this.exercisesWithDuplicatedTitles.add(ex);
-                    } /* else if (ex.shortName === exercise.shortName){
-                           /     hasDuplicate = true;
-                                this.exercisesWithDuplicatedShortNames.add(ex);
-                            }
-                        } */
+                    } else if (ex.shortName === exercise.shortName) {
+                        hasDuplicate = true;
+                        this.exercisesWithDuplicatedShortNames.add(ex);
+                    }
                 }
             });
         });
+
         if (hasDuplicate) {
             if (checkForTitle) {
                 this.exercisesWithDuplicatedTitles.add(exercise);
