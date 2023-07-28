@@ -385,7 +385,7 @@ Do not use the following for this purpose if it can be avoided:
         </div>
     </div>
 
-17. WebSocket subscriptions
+17. WebSocket Subscriptions
 ===========================
 
 The client must not subscribe to more than 20 websocket topics simultaneously, regardless of the amount of exercises, lectures, courses, etc. there are for one particular user.
