@@ -59,8 +59,8 @@ class AthenaFeedbackSendingServiceTest extends AthenaTest {
     void testFeedbackSending() {
         athenaRequestMockProvider.mockSendFeedbackAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].id").value(feedback.getId()),
-                jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].text").value(feedback.getText()),
-                jsonPath("$.feedbacks[0].detailText").value(feedback.getDetailText()), jsonPath("$.feedbacks[0].credits").value(feedback.getCredits()),
+                jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].title").value(feedback.getText()),
+                jsonPath("$.feedbacks[0].description").value(feedback.getDetailText()), jsonPath("$.feedbacks[0].credits").value(feedback.getCredits()),
                 jsonPath("$.feedbacks[0].credits").value(feedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
                 jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 

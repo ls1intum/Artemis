@@ -140,8 +140,8 @@ public class AthenaRequestMockProvider {
         }
 
         // Response: {"status":200,"data":<suggestions>,"module_name":"module_text_cofee"}
-        final ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("text", "Not so good")
-                .put("detailText", "This needs to be improved").put("credits", -1.0).put("indexStart", 3).put("indexEnd", 9);
+        final ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
+                .put("description", "This needs to be improved").put("credits", -1.0).put("indexStart", 3).put("indexEnd", 9);
 
         final ObjectNode node = mapper.createObjectNode().put("module_name", "module_text_cofee").put("status", 200).set("data", mapper.createArrayNode().add(suggestion));
 
