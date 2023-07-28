@@ -98,7 +98,7 @@ class TextPlagiarismResultConverter {
         submission.setElements(jplagSubmission.getTokenList().stream().filter(Objects::nonNull)
                 .map(token -> TextSubmissionElement.fromJPlagToken(token, submission, exercise, submissionDirectory)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSize(jplagSubmission.getNumberOfTokens());
-        submission.setScore(null); // TODO
+        submission.setScore(null);
 
         jPlagSubmissionDataExtractor.retrieveAndSetSubmissionIdAndStudentLogin(submission, jplagSubmission, exercise);
         return submission;
