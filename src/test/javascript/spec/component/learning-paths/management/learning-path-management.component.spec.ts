@@ -16,7 +16,6 @@ import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { expectElementToBeDisabled } from '../../../helpers/utils/general.utils';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
