@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamPage } from 'app/entities/exam-page.model';
@@ -54,7 +53,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     @ViewChild('slider') slider: SliderComponent;
 
     constructor(
-        private studentExamService: StudentExamService,
         private activatedRoute: ActivatedRoute,
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
