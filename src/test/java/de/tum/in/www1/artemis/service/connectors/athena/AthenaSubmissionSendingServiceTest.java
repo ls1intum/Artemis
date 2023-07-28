@@ -25,9 +25,9 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 class AthenaSubmissionSendingServiceTest extends AthenaTest {
 
-    private final static Language DEFAULT_SUBMISSION_LANGUAGE = Language.ENGLISH;
+    private static final Language DEFAULT_SUBMISSION_LANGUAGE = Language.ENGLISH;
 
-    private final static String DEFAULT_SUBMISSION_TEXT = "This is a test submission.";
+    private static final String DEFAULT_SUBMISSION_TEXT = "This is a test submission.";
 
     @Mock
     private TextSubmissionRepository textSubmissionRepository;
