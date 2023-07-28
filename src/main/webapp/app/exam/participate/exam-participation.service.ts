@@ -8,14 +8,15 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
-export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -261,9 +262,7 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            if (!exercise.exerciseGroup) {
-                exercise.exerciseGroup = { exam: studentExam.exam } as ExerciseGroup;
-            }
+            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam } as ExerciseGroup;
             return exercise;
         });
         return studentExam;
@@ -288,10 +287,22 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    public static getSubmissionForExercise(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
+    public static getSubmissionForExercise(exercise: Exercise): Submission | undefined {
+        const studentParticipation = ExamParticipationService.getParticipationForExercise(exercise);
+        if (studentParticipation && studentParticipation.submissions) {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
-            return exercise.studentParticipations[0].submissions.last();
+            return studentParticipation.submissions.last();
+        }
+    }
+
+    /**
+     * Get the first participation for the given exercise.
+     * @param exercise the exercise for which to get the participation
+     * @return the first participation of the given exercise
+     */
+    public static getParticipationForExercise(exercise: Exercise): StudentParticipation | undefined {
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return exercise.studentParticipations[0];
         }
     }
 
@@ -306,7 +317,6 @@ export class ExamParticipationService {
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
-        // programming exercise
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
         } else if (!submission.submitted && submission.isSynced) {

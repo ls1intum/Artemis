@@ -17,19 +17,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExportToCsv } from 'export-to-csv';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const generateCsv = jest.fn();
-
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
-    })),
-}));
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Detailed Grading System Component', () => {
     let comp: DetailedGradingSystemComponent;
@@ -782,8 +781,7 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalledTimes(2);
-        expect(generateCsv).toHaveBeenCalledTimes(2);
+        expect(generateCsv).toHaveBeenCalledOnce();
     });
 
     it('should not show grading steps above max points warning', () => {

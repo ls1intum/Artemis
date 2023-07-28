@@ -15,6 +15,5 @@ docker/
 src/main/generated/
 src/main/resources/
 uploads/
-webpack/
 target/
 node/

@@ -407,38 +407,6 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[5]).toEqual(hintCrumb);
         });
 
-        it('text exercise feedback conflict', () => {
-            const testUrl = '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4';
-            router.setUrl(testUrl);
-
-            fixture.detectChanges();
-
-            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
-            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
-
-            const submissionsCrumb = {
-                label: 'artemisApp.exercise.submissions',
-                translate: true,
-                uri: '/course-management/1/text-exercises/2/submissions/',
-            } as MockBreadcrumb;
-
-            const conflictCrumb = {
-                label: 'artemisApp.textAssessment.title',
-                translate: true,
-                uri: '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4/',
-            } as MockBreadcrumb;
-
-            expect(component.breadcrumbs).toHaveLength(6);
-
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/text-exercises/' } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/text-exercises/2/' } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(submissionsCrumb);
-            expect(component.breadcrumbs[5]).toEqual(conflictCrumb);
-        });
-
         it('exercise assessment dashboard', () => {
             const courseId = 1;
             const exerciseId = 2;

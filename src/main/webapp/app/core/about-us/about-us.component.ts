@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { filter, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
@@ -41,6 +39,7 @@ export class AboutUsComponent implements OnInit {
         ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.cit.tum.de/user/markdown-support/' }],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/' }],
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.cit.tum.de/user/learning-analytics/' }],
+        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/' }],
         ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.cit.tum.de/user/tutorialgroups/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.cit.tum.de/user/scaling/' }],
         ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.cit.tum.de/user/user-experience/' }],
@@ -64,20 +63,13 @@ export class AboutUsComponent implements OnInit {
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    this.contact = info.contact;
-                }),
-            )
-            .subscribe((profileInfo) => {
-                if (profileInfo.git) {
-                    this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                    this.gitBranchName = profileInfo.git.branch;
-                }
-            });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.contact = profileInfo.contact;
+            if (profileInfo.git) {
+                this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                this.gitBranchName = profileInfo.git.branch;
+            }
+        });
     }
 
     /**

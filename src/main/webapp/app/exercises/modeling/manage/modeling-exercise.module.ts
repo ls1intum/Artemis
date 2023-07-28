@@ -22,6 +22,7 @@ import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/s
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 @NgModule({
     imports: [
@@ -45,6 +46,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ExampleSubmissionsModule,
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
+        TitleChannelNameModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],

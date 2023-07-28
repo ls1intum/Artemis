@@ -8,6 +8,7 @@
             <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
             <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
             <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.endNow.title">Confirm end now operation</span>
+            <span *ngSwitchCase="actionTypes.RequestDataExport" jhiTranslate="artemisApp.dataExport.confirmationHeader">Confirm data export request</span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -24,7 +25,7 @@
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
-            <label for="confirm-exercise-name" class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
+            <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
             <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
@@ -35,18 +36,20 @@
         <button
             id="delete"
             type="submit"
-            class="btn btn-danger"
+            [ngClass]="['btn', buttonType]"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
             [ngSwitch]="actionType"
         >
-            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>
             <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.action.remove">Remove</span>
             <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.action.unlink">Unlink</span>
             <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.action.delete">Delete</span>
+            <span *ngSwitchCase="actionTypes.RequestDataExport" jhiTranslate="entity.action.requestDataExport"></span>
             <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.action.endNow">End Now</span>
         </button>
     </div>

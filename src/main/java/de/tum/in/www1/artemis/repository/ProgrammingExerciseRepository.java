@@ -57,9 +57,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "learningGoals", "auxiliaryRepositories",
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
             "submissionPolicy" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(Long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
@@ -79,6 +79,33 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
+
+    List<ProgrammingExercise> findAllByProjectKey(String projectKey);
+
+    @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
+    List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
+
+    /**
+     * Finds one programming exercise including its submission policy by the exercise's project key.
+     *
+     * @param projectKey           the project key of the programming exercise.
+     * @param withSubmissionPolicy whether the submission policy should be included in the result.
+     * @return the programming exercise.
+     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
+     */
+    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy) throws EntityNotFoundException {
+        List<ProgrammingExercise> exercises;
+        if (withSubmissionPolicy) {
+            exercises = findWithSubmissionPolicyByProjectKey(projectKey);
+        }
+        else {
+            exercises = findAllByProjectKey(projectKey);
+        }
+        if (exercises.size() != 1) {
+            throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
+        }
+        return exercises.get(0);
+    }
 
     /**
      * Returns all programming exercises with its test cases
@@ -129,7 +156,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
      * <li>The release date is in the future → Schedule combine template commits</li>
-     * <li>The build and test student submissions after deadline date is in the future</li>
+     * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
      * </ul>
@@ -191,6 +218,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation LEFT JOIN FETCH pe.solutionParticipation")
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
+
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation
+                LEFT JOIN FETCH pe.solutionParticipation
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
@@ -290,7 +326,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
@@ -308,7 +344,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseIds the exercise ids we are interested in
@@ -331,7 +367,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * We therefore have to check here that a submission exists, that was submitted before the due date.
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
@@ -351,7 +387,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     * We therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param examId the exam id we are interested in
      * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
@@ -369,7 +405,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     * We therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are
@@ -549,9 +585,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsElseThrow(long programmingExerciseId)
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

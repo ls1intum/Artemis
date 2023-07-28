@@ -42,6 +42,7 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,13 +53,19 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
+
+    private final Environment environment;
+
+    private final ProfileService profileService;
 
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
@@ -97,8 +104,6 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final FileService fileService;
-
     private final ZipFileService zipFileService;
 
     private TransportConfigCallback sshCallback;
@@ -111,12 +116,13 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
+        this.profileService = profileService;
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.fileService = fileService;
+        this.environment = environment;
         this.zipFileService = zipFileService;
     }
 
@@ -230,7 +236,7 @@ public class GitService {
             public HostConfig lookupDefault(String hostName, int port, String userName) {
                 return lookup(hostName, port, userName);
             }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
+        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
         sshCallback = transport -> {
             if (transport instanceof SshTransport sshTransport) {
@@ -252,12 +258,29 @@ public class GitService {
         return getGitUri(vcsRepositoryUrl).toString();
     }
 
+    /**
+     * Get the URI for a {@link VcsRepositoryUrl}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
+     * used.
+     * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
+     * For Bitbucket and GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
+     * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
+     *
+     * @param vcsRepositoryUrl the {@link VcsRepositoryUrl} for which to get the URI
+     * @return the URI (SSH, HTTP(S), or local path)
+     * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
+     */
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        if (profileService.isLocalVcsCi()) {
+            // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
+            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
+            String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
+            return localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toUri();
+        }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
 
     private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        URI templateUri = new URI(sshUrlTemplate.get());
+        URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUrl.getURI();
@@ -896,13 +919,13 @@ public class GitService {
             }
             else {
                 log.debug("Last valid submission is not present for participation");
-                // Get last commit before deadline
+                // Get last commit before due date
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
-                commitHash = latestCommitBeforeDeadline.getId().getName();
+                RevCommit latestCommitBeforeDueDate = commits.iterator().next();
+                commitHash = latestCommitBeforeDueDate.getId().getName();
             }
             log.debug("Last commit hash is {}", commitHash);
 
@@ -1242,7 +1265,7 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String zipRepoName = FileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }

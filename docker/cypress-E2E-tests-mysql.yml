@@ -16,9 +16,7 @@ services:
             mysql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress-application-local.env
-        environment:
-            SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
+            - ./artemis/config/cypress-mysql.env
 
     nginx:
         extends:
@@ -33,7 +31,7 @@ services:
         ports:
             - "80:80"
             - "443:443"
-            # see comments in artemis/config/cypress-application-local.env why this port is necessary
+            # see comments in artemis/config/cypress.env why this port is necessary
             - "54321:54321"
 
     artemis-cypress:
@@ -43,6 +41,9 @@ services:
         depends_on:
             artemis-app:
                 condition: service_healthy
+        environment:
+            SORRY_CYPRESS_PROJECT_ID: "artemis-mysql"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:mysql"
 
 networks:
     artemis:

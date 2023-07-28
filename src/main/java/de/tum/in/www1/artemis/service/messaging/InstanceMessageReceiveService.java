@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.messaging;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.*;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -30,8 +28,6 @@ public class InstanceMessageReceiveService {
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private final ModelingExerciseScheduleService modelingExerciseScheduleService;
-
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
     private final NotificationScheduleService notificationScheduleService;
 
@@ -52,13 +48,11 @@ public class InstanceMessageReceiveService {
     private final UserRepository userRepository;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
-            ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
-            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
-            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
+            ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -105,17 +99,36 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processUnlockAllRepositories((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
+                .addMessageListener(message -> {
+                    SecurityUtils.setAuthorizationObject();
+                    processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
+                .addMessageListener(message -> {
+                    SecurityUtils.setAuthorizationObject();
+                    processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
+                .addMessageListener(message -> {
+                    SecurityUtils.setAuthorizationObject();
+                    processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processLockAllRepositoriesAndParticipations((message.getMessageObject()));
+        });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processLockAllRepositories((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_WITHOUT_EARLIER_DUE_DATE.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(message.getMessageObject());
+            processLockAllRepositoriesAndParticipationsWithEarlierDueDate((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_WITHOUT_LATER_DUE_DATE.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllRepositoriesWithoutLaterIndividualDueDate(message.getMessageObject());
+            processLockAllParticipationsWithEarlierDueDate((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -133,13 +146,9 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_MONITORING_SCHEDULE.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleExamMonitoring(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_MONITORING_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExamMonitoringCancel(message.getMessageObject());
+            processExamWorkingTimeChangeDuringConduction(message.getMessageObject());
         });
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -200,7 +209,35 @@ public class InstanceMessageReceiveService {
         log.info("Received unlock all repositories for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipations(programmingExercise).run();
+    }
+
+    public void processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories and participations with earlier start date and later due date for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExercise).run();
+    }
+
+    public void processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories with earlier start date and later due date for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExercise).run();
+    }
+
+    public void processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Received unlock all participations with earlier start date and later due date for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExercise).run();
+    }
+
+    public void processLockAllRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Received lock all repositories and participations for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.lockAllStudentRepositoriesAndParticipations(programmingExercise).run();
     }
 
     public void processLockAllRepositories(Long exerciseId) {
@@ -210,34 +247,18 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }
 
-    /**
-     * Unlocks all repositories that do not have an individual due date before now
-     *
-     * @param exerciseId the id of the programming exercises where the repos should be unlocked
-     */
-    public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
-        log.info("Received unlock all repositories without an individual due date before now for programming exercise {}", exerciseId);
+    public void processLockAllRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Received lock all repositories and participations with earlier due date for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
-        programmingExerciseScheduleService.unlockStudentRepositories(programmingExercise, participation -> {
-            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
-            return individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now());
-        }).run();
+        programmingExerciseScheduleService.lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExercise).run();
     }
 
-    /**
-     * Locks all repositories that do not have an individual due date after now
-     *
-     * @param exerciseId the id of the programming exercises where the repos should be locked
-     */
-    public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
-        log.info("Received lock all repositories without an individual due date after now for programming exercise {}", exerciseId);
+    public void processLockAllParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Received lock all participations with a due date in the past for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
-        programmingExerciseScheduleService.lockStudentRepositories(programmingExercise, participation -> {
-            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
-            return individualDueDate == null || individualDueDate.isBefore(ZonedDateTime.now());
-        }).run();
+        programmingExerciseScheduleService.lockAllStudentParticipationsWithEarlierDueDate(programmingExercise).run();
     }
 
     public void processRemoveNonActivatedUser(Long userId) {
@@ -262,16 +283,6 @@ public class InstanceMessageReceiveService {
         log.info("Received schedule update for assessed exercise submitted {} notification ", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
-    }
-
-    public void processScheduleExamMonitoring(Long examId) {
-        log.info("Received schedule update for exam monitoring {}", examId);
-        examMonitoringScheduleService.scheduleExamMonitoringTask(examId);
-    }
-
-    public void processScheduleExamMonitoringCancel(Long examId) {
-        log.info("Received schedule cancel for exam monitoring {}", examId);
-        examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
     public void processExamWorkingTimeChangeDuringConduction(Long studentExamId) {

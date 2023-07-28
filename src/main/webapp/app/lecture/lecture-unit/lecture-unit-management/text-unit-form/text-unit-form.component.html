@@ -21,16 +21,16 @@
                 ></jhi-date-time-picker>
             </div>
             <div class="form-group">
-                <jhi-learning-goal-selection
-                    id="learning-goals"
-                    [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.learningGoal.link.lectureUnit' | artemisTranslate"
-                    formControlName="learningGoals"
-                ></jhi-learning-goal-selection>
+                <jhi-competency-selection
+                    id="competencies"
+                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                    [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+                    formControlName="competencies"
+                ></jhi-competency-selection>
             </div>
             <div class="form-group">
                 <label class="d-block" for="content">{{ 'artemisApp.textUnit.createTextUnit.content' | artemisTranslate }}</label>
-                <small id="contentHelp" class="form-text mb-1 text-muted">
+                <small id="contentHelp" class="form-text mb-1 text-body-secondary">
                     {{ 'artemisApp.textUnit.markdownHelp' | artemisTranslate }}
                     <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                 </small>

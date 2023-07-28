@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -110,8 +110,8 @@ class Lti10ServiceTest {
 
         lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
 
-        verify(ltiOutcomeUrlRepository, times(1)).findByUserAndExercise(user, exercise);
-        verify(ltiOutcomeUrlRepository, times(1)).save(any());
+        verify(ltiOutcomeUrlRepository).findByUserAndExercise(user, exercise);
+        verify(ltiOutcomeUrlRepository).save(any());
     }
 
     @Test
@@ -224,7 +224,7 @@ class Lti10ServiceTest {
         course.setOnlineCourseConfiguration(null);
         when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
 
-        assertThrows(IllegalStateException.class, () -> lti10Service.onNewResult(participation));
+        assertThatIllegalStateException().isThrownBy(() -> lti10Service.onNewResult(participation));
 
         verifyNoInteractions(resultRepository);
     }
@@ -247,8 +247,8 @@ class Lti10ServiceTest {
         when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
 
         lti10Service.onNewResult(participation);
-        verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
-        verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        verify(resultRepository).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
+        verify(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         verifyNoInteractions(client);
     }
 
@@ -274,9 +274,9 @@ class Lti10ServiceTest {
         when(client.execute(any())).thenReturn(response);
 
         lti10Service.onNewResult(participation);
-        verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
-        verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-        verify(client, times(1)).execute(any());
+        verify(resultRepository).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
+        verify(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        verify(client).execute(any());
     }
 
     private void ltiOutcomeUrlRepositorySetup(User user) {

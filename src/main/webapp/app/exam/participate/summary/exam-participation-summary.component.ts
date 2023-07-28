@@ -38,6 +38,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     private _studentExam: StudentExam;
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
+    exampleSolutionPublished = false;
 
     get studentExam(): StudentExam {
         return this._studentExam;
@@ -113,6 +114,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
                 });
         }
 
+        this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
@@ -127,7 +130,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     private isExamResultPublished() {
         const exam = this.studentExam.exam;
-        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
+        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     getIcon(exerciseType: ExerciseType) {

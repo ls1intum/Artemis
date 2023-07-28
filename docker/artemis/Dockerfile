@@ -22,9 +22,16 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:17-jdk as builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:17-jdk as builder
 
 WORKDIR /opt/artemis
+
+# some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
+RUN echo "Installing build dependencies" \
+  && apt-get update && apt-get install -y --no-install-recommends python3 build-essential \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
@@ -54,6 +61,9 @@ FROM docker.io/library/eclipse-temurin:17-jdk as runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
+#default UID/GID of the artemis user
+ARG UID=1337
+ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
@@ -72,7 +82,8 @@ ENV LANGUAGE en_US.UTF-8
 
 # Create directories for volumes, create artemis user and set right owners
 RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
-  && useradd -Ums /bin/bash artemis \
+  && groupadd --gid ${GID} artemis \
+  && useradd -m --gid ${GID} --uid ${UID} --shell /bin/bash artemis \
   && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 

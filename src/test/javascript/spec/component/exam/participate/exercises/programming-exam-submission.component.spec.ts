@@ -1,6 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -10,7 +9,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,9 +22,6 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exerc
 describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
     let component: ProgrammingExamSubmissionComponent;
-
-    let domainService: DomainService;
-    let domainServiceSetDomainSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,9 +44,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExamSubmissionComponent);
                 component = fixture.componentInstance;
-                domainService = fixture.debugElement.injector.get(DomainService);
-
-                domainServiceSetDomainSpy = jest.spyOn(domainService, 'setDomain');
             });
     });
 
@@ -74,30 +67,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         return participation;
     };
 
-    it('should initialize with unlocked repository', () => {
-        const exercise = newExercise();
-        component.exercise = exercise;
-
-        fixture.detectChanges();
-
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
-
-        expect(component.repositoryIsLocked).toBeFalse();
-        expect(component.getExercise()).toEqual(newExercise());
-    });
-
-    it('should set the repositoryIsLocked value to true', () => {
-        const programmingExercise = newExercise();
-        programmingExercise.dueDate = dayjs().subtract(10, 'seconds');
-        programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().subtract(60, 'seconds');
-
-        component.exercise = programmingExercise;
-        fixture.detectChanges();
-
-        expect(component.repositoryIsLocked).toBeTrue();
-    });
-
     it('should change state on commit', () => {
         component.studentParticipation = newParticipation();
 
@@ -115,7 +84,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(component.studentParticipation.submissions![0].isSynced).toBeTrue();
     });
 
-    it('should desync on file change', () => {
+    it('should not be synced on file change', () => {
         component.studentParticipation = newParticipation();
 
         component.studentParticipation.submissions![0].isSynced = true;

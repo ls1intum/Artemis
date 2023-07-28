@@ -44,7 +44,7 @@
             "loading": "Loading...",
             "fetchingResults": "Fetching plagiarism results...",
             "replyToAccusation": "Reply to Accusation",
-            "replyToAccusationDeadlineNotification": "You can provide a statement to this accusation until <b>{{ deadline }}</b> the latest.",
+            "replyToAccusationDueDateNotification": "You can provide a statement to this accusation until <b>{{ dueDate }}</b> the latest.",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Clean up plagiarism comparisons",
@@ -61,7 +61,7 @@
                 "resolvedPlagiarismCase": "Resolved Plagiarism Case",
                 "notification": {
                     "title": "Plagiarism Case: {{ exercise }}",
-                    "body": "Dear <b>{{ student }}</b>,<br><br>After a meticulous review of your final submission for the exercise \"{{ exercise }}\" {{ inCourseOrExam }} \"{{ courseOrExam }}\", we have concluded that you have committed plagiarism. This is a violation of the <a href=\"{{ cocLink }}\">Student Code of Conduct</a> of the School of Computation, Information and Technology that you have agreed upon. The <a href=\"{{ aspoLink }}\">Allgemeine Studien- und Prüfungsordnung</a> (General Examination and Study Regulations) regulates consequences for such cases in §22.1. This means that the exam in question can potentially be graded \"5.0 (U)\", which can have serious consequences for your further studies.<br><br><b>You have one week (until {{ deadline }}) to provide a statement about this particular case directly in Artemis (not via E-Mail).</b><br><br>Best regards,<br>{{ instructor }}",
+                    "body": "Dear <b>{{ student }}</b>,<br><br>After a meticulous review of your final submission for the exercise \"{{ exercise }}\" {{ inCourseOrExam }} \"{{ courseOrExam }}\", we have concluded that you have committed plagiarism. This is a violation of the <a href=\"{{ cocLink }}\">Student Code of Conduct</a> of the School of Computation, Information and Technology that you have agreed upon. The <a href=\"{{ aspoLink }}\">Allgemeine Studien- und Prüfungsordnung</a> (General Examination and Study Regulations) regulates consequences for such cases in §22.1. This means that the exam in question can potentially be graded \"5.0 (U)\", which can have serious consequences for your further studies.<br><br><b>You have one week (until {{ dueDate }}) to provide a statement about this particular case directly in Artemis (not via E-Mail).</b><br><br>Best regards,<br>{{ instructor }}",
                     "inCourse": "in the course",
                     "inExam": "in the exam"
                 },

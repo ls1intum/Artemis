@@ -1,10 +1,7 @@
-import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 
-export class QuizSubmission extends Submission {
-    public scoreInPoints?: number;
-    public submittedAnswers?: SubmittedAnswer[];
-
+export class QuizSubmission extends AbstractQuizSubmission {
     constructor() {
         super(SubmissionExerciseType.QUIZ);
     }

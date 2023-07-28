@@ -20,17 +20,13 @@ import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-po
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
-import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
-import { ProgrammingExerciseUpdateWizardDifficultyComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-difficulty.component';
-import { ProgrammingExerciseUpdateWizardLanguageComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-language.component';
-import { ProgrammingExerciseUpdateWizardProblemComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-problem.component';
-import { ProgrammingExerciseUpdateWizardGradingComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-grading.component';
 import { ProgrammingExerciseUpdateWizardBottomBarComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-bottom-bar.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 @NgModule({
     imports: [
@@ -49,16 +45,12 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
         ArtemisTableModule,
         SubmissionPolicyUpdateModule,
         ArtemisModePickerModule,
+        TitleChannelNameModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseUpdateWizardComponent,
         ProgrammingExerciseUpdateWizardStepComponent,
-        ProgrammingExerciseUpdateWizardInformationComponent,
-        ProgrammingExerciseUpdateWizardDifficultyComponent,
-        ProgrammingExerciseUpdateWizardLanguageComponent,
-        ProgrammingExerciseUpdateWizardGradingComponent,
-        ProgrammingExerciseUpdateWizardProblemComponent,
         ProgrammingExerciseUpdateWizardBottomBarComponent,
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseDifficultyComponent,

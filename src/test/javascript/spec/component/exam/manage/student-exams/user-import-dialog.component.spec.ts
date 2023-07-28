@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -67,50 +67,46 @@ describe('UsersImportButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should reset dialog when selecting csv file', fakeAsync(() => {
+    it('should reset dialog when selecting csv file', async () => {
         component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }];
         component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
-        component.onCSVFileSelect(event);
-        tick();
+        await component.onCSVFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-    }));
+    });
 
-    it('should read no students from csv file', fakeAsync(() => {
+    it('should read no students from csv file', async () => {
         const event = { target: { files: [studentCsvColumns] } };
-        component.onCSVFileSelect(event);
-        tick();
+        await component.onCSVFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
         expect(component.noUsersFoundError).toBeTrue();
-    }));
+    });
 
-    it('should read students from csv file', fakeAsync(() => {
+    it('should read students from csv file', async () => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };
-        component.onCSVFileSelect(event);
-        tick();
+        await component.onCSVFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
         expect(component.noUsersFoundError).toBeUndefined();
-    }));
+    });
 
-    it('should have validation error for invalid csv', fakeAsync(() => {
+    it('should have validation error for invalid csv', async () => {
         // Csv without header
         const invalidCsv = `"1","Max","Mustermann"\n"2","John","Wick"`;
 
         const event = { target: { files: [invalidCsv] } };
-        component.onCSVFileSelect(event);
-        tick();
+        await component.onCSVFileSelect(event);
 
         expect(component.validationError).toHaveLength(1);
-    }));
+    });
 
     it('should import students', () => {
         const studentsToImport: ExamUserDTO[] = [
@@ -135,50 +131,45 @@ describe('UsersImportButtonComponent', () => {
         const testDir = path.join(__dirname, '../../../../util/user-import');
         const testFiles = fs.readdirSync(testDir).filter((testFile) => testFile.localeCompare('UserImportEmailOnlySampleFile.csv') !== 0);
 
-        test.each(testFiles)(
-            'reading from %s',
-            fakeAsync((testFileName: string) => {
-                const pathToTestFile = path.join(testDir, testFileName);
-                const csv = fs.readFileSync(pathToTestFile, 'utf-8');
-                const event = { target: { files: [csv] } };
-                component.onCSVFileSelect(event);
-                tick();
+        test.each(testFiles)('reading from %s', async (testFileName: string) => {
+            const pathToTestFile = path.join(testDir, testFileName);
+            const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+            const event = { target: { files: [csv] } };
+            await component.onCSVFileSelect(event);
 
-                expect(component.usersToImport).toHaveLength(5);
+            expect(component.usersToImport).toHaveLength(5);
 
-                let expectedStudentDTOs: ExamUserDTO[];
-                if (testFileName.localeCompare('TUMonlineCourseExport.csv') === 0) {
-                    expectedStudentDTOs = [
-                        { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: 'max-moritz.mustermann@example.com' },
-                        { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: 'john-james.doe@example.com' },
-                        { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: 'jane.doe@example.com' },
-                        { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: 'alice@example.com' },
-                        { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: 'bob.ross@example.com' },
-                    ];
-                } else {
-                    expectedStudentDTOs = [
-                        { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: '' },
-                        { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: '' },
-                        { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: '' },
-                        { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: '' },
-                        { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: '' },
-                    ];
-                }
+            let expectedStudentDTOs: ExamUserDTO[];
+            if (testFileName.localeCompare('TUMonlineCourseExport.csv') === 0) {
+                expectedStudentDTOs = [
+                    { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: 'max-moritz.mustermann@example.com' },
+                    { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: 'john-james.doe@example.com' },
+                    { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: 'jane.doe@example.com' },
+                    { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: 'alice@example.com' },
+                    { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: 'bob.ross@example.com' },
+                ];
+            } else {
+                expectedStudentDTOs = [
+                    { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: '' },
+                    { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: '' },
+                    { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: '' },
+                    { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: '' },
+                    { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: '' },
+                ];
+            }
 
-                expect(component.usersToImport).toEqual(expectedStudentDTOs);
-            }),
-        );
+            expect(component.usersToImport).toEqual(expectedStudentDTOs);
+        });
     });
 
-    it('should read students from csv with email only', fakeAsync(() => {
+    it('should read students from csv with email only', async () => {
         const testDir = path.join(__dirname, '../../../../util/user-import');
 
         const pathToTestFile = path.join(testDir, 'UserImportEmailOnlySampleFile.csv');
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
         const event = { target: { files: [csv] } };
 
-        component.onCSVFileSelect(event);
-        tick();
+        await component.onCSVFileSelect(event);
 
         expect(component.usersToImport).toHaveLength(5);
 
@@ -191,7 +182,7 @@ describe('UsersImportButtonComponent', () => {
         ];
 
         expect(component.usersToImport).toEqual(expectedStudentDTOs);
-    }));
+    });
 
     it('should read students from csv with room/seat information', async () => {
         const testDir = path.join(__dirname, '../../../../util/exam-user-import');

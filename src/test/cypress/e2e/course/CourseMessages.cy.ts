@@ -2,26 +2,17 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { generateUUID } from '../../support/utils';
-
-// Common primitives
-let courseName: string;
-let courseShortName: string;
+import { titleLowercase } from '../../support/utils';
 
 describe('Course messages', () => {
     let course: Course;
-    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseId = course.id!;
+        courseManagementRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
@@ -31,6 +22,15 @@ describe('Course messages', () => {
 
     describe('Channel messages', () => {
         describe('Create channel', () => {
+            it('check for pre-created channels', () => {
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.checkChannelsExists('tech-support');
+                courseMessages.checkChannelsExists('organization');
+                courseMessages.checkChannelsExists('random');
+                courseMessages.checkChannelsExists('announcement');
+            });
+
             it('instructors should be able to create public announcement channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 const name = 'public-ancmnt-ch';
@@ -87,12 +87,37 @@ describe('Course messages', () => {
                 courseMessages.getError().contains('Names can only contain lowercase letters');
             });
 
-            it('instructors should not be able to create channel with name longer than 20 chars', () => {
+            it('instructors should not be able to create channel with name longer than 30 chars', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                const name = 'way-to-long-channel-title';
+                const name = 'way-way-way-too-long-channel-title';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
-                courseMessages.getError().contains('Name can be max 20 characters long!');
+                courseMessages.getError().contains('Name can be max 30 characters long!');
+            });
+
+            it('check that channel is created, when a lecture is created', () => {
+                cy.login(admin);
+                courseManagementRequest.createLecture(course, 'Test Lecture');
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseLectureChannelsButton();
+                courseMessages.checkChannelsExists('lecture-test-lecture');
+            });
+
+            it('check that channel is created, when an exercise is created', () => {
+                cy.login(admin);
+                courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseExerciseChannelsButton();
+                courseMessages.checkChannelsExists('exercise-test-exercise');
+            });
+
+            it('check that channel is created, when an exam is created', () => {
+                cy.login(admin);
+                const examContent = new ExamBuilder(course).build();
+                courseManagementRequest.createExam(examContent);
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseExamChannelsButton();
+                courseMessages.checkChannelsExists(titleLowercase(examContent.title));
             });
         });
 
@@ -126,6 +151,27 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementRequest.createCourseMessageChannel(course, 'join-test-channel', 'Join Test Channel', true, true).then((response) => {
                     channel = response.body;
+                });
+            });
+
+            it('student should be joined into pre-created channels automatically', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.getChannelIdByName('tech-support').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('random').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('announcement').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('organization').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
                 });
             });
 
@@ -172,7 +218,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -347,7 +393,7 @@ describe('Course messages', () => {
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
                     courseMessages.checkMessage(message.id, newMessage);
-                    courseMessages.checkMessage(message.id, 'edited by');
+                    courseMessages.getSinglePost(message.id).find('.edited-text').should('exist');
                 });
             });
 
@@ -364,10 +410,7 @@ describe('Course messages', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

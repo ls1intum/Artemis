@@ -1,32 +1,25 @@
 package de.tum.in.www1.artemis;
 
-import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.base.DescribedPredicate.*;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
+import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
-import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
-import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.*;
+import com.tngtech.archunit.lang.*;
 
-class ArchitectureTest {
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
-    private static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
-
-    private static JavaClasses testClasses;
-
-    private static JavaClasses allClasses;
-
-    @BeforeAll
-    static void loadClasses() {
-        testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-        allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-    }
+class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoJUnit4() {
@@ -50,5 +43,67 @@ class ArchitectureTest {
 
         stringUtils.check(allClasses);
         randomStringUtils.check(allClasses);
+    }
+
+    @Test
+    void testNoJunitJupiterAssertions() {
+        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
+
+        noJunitJupiterAssertions.check(testClasses);
+    }
+
+    @Test
+    void testNoCollectorsToList() {
+        ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
+                .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
+        toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testNullnessAnnotations() {
+        var notNullPredicate = and(not(resideInPackageAnnotation("javax.validation.constraints")), simpleNameAnnotation("NotNull"));
+        var nonNullPredicate = simpleNameAnnotation("NonNull");
+        var nullablePredicate = and(not(resideInPackageAnnotation("javax.annotation")), simpleNameAnnotation("Nullable"));
+
+        Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nullablePredicate);
+
+        for (var predicate : allPredicates) {
+            ArchRule units = noCodeUnits().should().beAnnotatedWith(predicate);
+            ArchRule parameters = methods().should(notHaveAnyParameterAnnotatedWith(predicate));
+
+            units.check(allClasses);
+            parameters.check(allClasses);
+        }
+    }
+
+    @Test
+    void testValidSimpMessageSendingOperationsUsage() {
+        ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
+                .beDeclaredIn(WebsocketMessagingService.class)
+                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
+        usage.check(productionClasses);
+    }
+
+    // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
+
+    private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
+        return equalTo(name).as("Annotation with simple name " + name).onResultOf(annotation -> annotation.getRawType().getSimpleName());
+    }
+
+    private DescribedPredicate<? super JavaAnnotation<?>> resideInPackageAnnotation(String packageName) {
+        return equalTo(packageName).as("Annotation in package " + packageName).onResultOf(annotation -> annotation.getRawType().getPackageName());
+    }
+
+    private ArchCondition<JavaMethod> notHaveAnyParameterAnnotatedWith(DescribedPredicate<? super JavaAnnotation<?>> annotationPredicate) {
+        return new ArchCondition<>("have parameters annotated with ") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
+                if (!satisfied) {
+                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                }
+            }
+        };
     }
 }

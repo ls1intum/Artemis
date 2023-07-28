@@ -51,10 +51,9 @@ public class Feedback extends DomainObject {
     @Column(name = "has_long_feedback_text")
     private boolean hasLongFeedbackText = false;
 
-    // the fetch actually is lazy, since the primary key is mapped, so both sides of the relation have the join column
-    @OneToOne(mappedBy = "feedback", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
-    private LongFeedbackText longFeedbackText;
+    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore // important, data should only be requested explicitly
+    private Set<LongFeedbackText> longFeedbackText = new HashSet<>();
 
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
@@ -108,13 +107,6 @@ public class Feedback extends DomainObject {
     @JsonSerialize
     private Long suggestedFeedbackParticipationReference;
 
-    // TODO: JP remove these two references as they are not really needed
-    @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
-    private List<FeedbackConflict> firstConflicts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
-    private List<FeedbackConflict> secondConflicts = new ArrayList<>();
-
     public String getText() {
         return text;
     }
@@ -146,7 +138,7 @@ public class Feedback extends DomainObject {
      */
     public void setDetailTextTruncated(@Nullable final String detailText) {
         this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
-        this.longFeedbackText = null;
+        this.longFeedbackText.clear();
         this.hasLongFeedbackText = false;
     }
 
@@ -166,15 +158,15 @@ public class Feedback extends DomainObject {
     public void setDetailText(@Nullable final String detailText) {
         if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
             this.detailText = detailText;
-            setLongFeedbackText(null);
             setHasLongFeedbackText(false);
+            this.longFeedbackText.clear();
         }
         else {
             final LongFeedbackText longFeedback = buildLongFeedback(detailText);
 
             this.detailText = trimDetailText(detailText);
-            setLongFeedbackText(longFeedback);
             setHasLongFeedbackText(true);
+            setLongFeedback(longFeedback);
         }
     }
 
@@ -186,8 +178,6 @@ public class Feedback extends DomainObject {
     private LongFeedbackText buildLongFeedback(final String detailText) {
         final LongFeedbackText longFeedback = new LongFeedbackText();
         longFeedback.setText(StringUtils.truncate(detailText, LONG_FEEDBACK_MAX_LENGTH));
-        longFeedback.setFeedback(this);
-
         return longFeedback;
     }
 
@@ -205,7 +195,23 @@ public class Feedback extends DomainObject {
     }
 
     @JsonIgnore
-    public LongFeedbackText getLongFeedbackText() {
+    public Optional<LongFeedbackText> getLongFeedback() {
+        return getLongFeedbackText().stream().findAny();
+    }
+
+    private void setLongFeedback(final LongFeedbackText longFeedbackText) {
+        this.longFeedbackText.clear();
+        longFeedbackText.setFeedback(this);
+        this.longFeedbackText.add(longFeedbackText);
+    }
+
+    /**
+     * Only for JPA, do not use directly. Use {@link #getLongFeedback()} instead.
+     *
+     * @return The long feedback this feedback is attached to.
+     */
+    @JsonIgnore
+    public Set<LongFeedbackText> getLongFeedbackText() {
         return longFeedbackText;
     }
 
@@ -214,7 +220,8 @@ public class Feedback extends DomainObject {
      *
      * @param longFeedbackText The long feedback text this feedback is linked to.
      */
-    public void setLongFeedbackText(LongFeedbackText longFeedbackText) {
+    @SuppressWarnings("unused")
+    public void setLongFeedbackText(final Set<LongFeedbackText> longFeedbackText) {
         this.longFeedbackText = longFeedbackText;
     }
 
@@ -364,22 +371,6 @@ public class Feedback extends DomainObject {
         return this;
     }
 
-    public List<FeedbackConflict> getFirstConflicts() {
-        return firstConflicts;
-    }
-
-    public void setFirstConflicts(List<FeedbackConflict> firstConflicts) {
-        this.firstConflicts = firstConflicts;
-    }
-
-    public List<FeedbackConflict> getSecondConflicts() {
-        return secondConflicts;
-    }
-
-    public void setSecondConflicts(List<FeedbackConflict> secondConflicts) {
-        this.secondConflicts = secondConflicts;
-    }
-
     /**
      * Checks whether the feedback was created by static code analysis
      *
@@ -422,41 +413,6 @@ public class Feedback extends DomainObject {
             return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
         }
         return "";
-    }
-
-    /**
-     * Copies an automatic feedback to be used for the manual result of a programming exercise
-     *
-     * @return Copy of the automatic feedback without its original ID
-     */
-    public Feedback copyFeedback() {
-        final Feedback feedback = new Feedback();
-
-        feedback.setDetailText(getDetailText());
-        feedback.setType(getType());
-        // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
-        feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
-        feedback.setText(getText());
-
-        if (isPositive() == null) {
-            feedback.setPositiveViaCredits();
-        }
-        else {
-            feedback.setPositive(isPositive());
-        }
-
-        feedback.setReference(getReference());
-        feedback.setVisibility(getVisibility());
-        feedback.setGradingInstruction(getGradingInstruction());
-
-        feedback.setHasLongFeedbackText(getHasLongFeedbackText());
-        if (feedback.getHasLongFeedbackText()) {
-            final var copiedLongFeedback = getLongFeedbackText().copy();
-            copiedLongFeedback.setFeedback(feedback);
-            feedback.setLongFeedbackText(copiedLongFeedback);
-        }
-
-        return feedback;
     }
 
     /**

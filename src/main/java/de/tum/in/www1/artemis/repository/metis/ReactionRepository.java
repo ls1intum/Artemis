@@ -11,11 +11,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Reaction entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
     List<Reaction> findReactionsByPostId(Long postId);
+
+    List<Reaction> findReactionsByUserId(long userId);
 
     List<Reaction> findReactionsByAnswerPostId(Long answerPostId);
 

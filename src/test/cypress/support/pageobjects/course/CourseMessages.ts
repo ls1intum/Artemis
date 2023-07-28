@@ -14,6 +14,36 @@ export class CourseMessagesPage {
         cy.get('#channelOverview').click();
     }
 
+    browseExerciseChannelsButton() {
+        cy.get('#exerciseChannelButton').click();
+        cy.get('#exerciseChannelOverview').click();
+    }
+
+    browseLectureChannelsButton() {
+        cy.get('#lectureChannelButton').click();
+        cy.get('#lectureChannelOverview').click();
+    }
+
+    browseExamChannelsButton() {
+        cy.get('#examChannelButton').click();
+        cy.get('#examChannelOverview').click();
+    }
+
+    checkChannelsExists(name: string) {
+        cy.get('.channels-overview').find('.list-group-item').contains(name);
+    }
+
+    getChannelIdByName(name: string) {
+        return cy
+            .get('.channels-overview')
+            .find('.list-group-item')
+            .filter(`:contains("${name}")`)
+            .invoke('attr', 'id')
+            .then((id) => {
+                return id?.replace('channel-', '');
+            });
+    }
+
     joinChannel(channelID: number) {
         cy.intercept(POST, BASE_API + 'courses/*/channels/*/register').as('joinChannel');
         cy.get(`#channel-${channelID}`).find(`#register${channelID}`).click({ force: true });

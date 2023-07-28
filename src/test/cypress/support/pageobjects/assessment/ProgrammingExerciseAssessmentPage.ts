@@ -29,11 +29,11 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     /**
      * Every code line in the ace editor has an attached inline feedback
-     * @param index the index of the code line where the inline feedback is attached
+     * @param line the code line where the inline feedback is attached
      * @returns the root element of the inline feedback component
      */
-    private getInlineFeedback(index: number) {
-        return cy.get('#test-' + index);
+    private getInlineFeedback(line: number) {
+        return cy.get('#code-editor-inline-feedback-' + line);
     }
 
     rejectComplaint(response: string, examMode: boolean) {

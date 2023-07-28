@@ -7,7 +7,17 @@
         img {
             border-radius: 50%;
             max-width: 100%;
-            max-height: 100px;
+            max-height: 80px;
         }
+    }
+}
+
+@media (max-width: 1024px) {
+    .row {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+        margin-top: 10px;
     }
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -40,6 +40,7 @@ describe('Lecture Service', () => {
         elemDefault.id = 1;
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
+        elemDefault.channelName = 'lecture-default';
     });
 
     afterEach(() => {

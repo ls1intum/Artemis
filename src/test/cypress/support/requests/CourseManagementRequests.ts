@@ -8,12 +8,13 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
-import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
+import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
@@ -21,6 +22,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -33,6 +35,7 @@ export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
+export const UPLOAD_EXERCISE_BASE = BASE_API + 'file-upload-exercises/';
 
 /**
  * A class which encapsulates all cypress requests related to course management.
@@ -40,13 +43,17 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param courseId the course id
+     * @param course the course
+     * @param admin the admin user
      * @returns <Chainable> request response
      */
-    deleteCourse(courseId: number) {
-        // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
-        cy.wait(100);
-        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
+    deleteCourse(course: Course, admin: CypressCredentials) {
+        if (course) {
+            cy.login(admin);
+            // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
+            cy.wait(500);
+            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}`, retryOnStatusCodeFailure: true });
+        }
     }
 
     /**
@@ -62,7 +69,7 @@ export class CourseManagementRequests {
      */
     createCourse(
         customizeGroups = false,
-        courseName = 'Cypress course' + generateUUID(),
+        courseName = 'Course ' + generateUUID(),
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
@@ -127,8 +134,8 @@ export class CourseManagementRequests {
         recordTestwiseCoverage = false,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
-        title = 'Cypress programming exercise ' + generateUUID(),
-        programmingShortName = 'cypress' + generateUUID(),
+        title = 'Programming ' + generateUUID(),
+        programmingShortName = 'programming' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
         assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
@@ -138,6 +145,7 @@ export class CourseManagementRequests {
             title,
             shortName: programmingShortName,
             packageName,
+            channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
@@ -260,6 +268,14 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
     }
 
+    getExerciseChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/channel` });
+    }
+
+    getLectureChannel(courseId: number, exerciseId: number) {
+        return cy.request({ method: GET, url: `${COURSE_BASE}${courseId}/lectures/${exerciseId}/channel` });
+    }
+
     createCourseMessageGroupChat(course: Course, users: Array<string>) {
         const body = users;
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/group-chats`, body });
@@ -378,7 +394,7 @@ export class CourseManagementRequests {
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(exam: Exam, title = 'group' + generateUUID(), mandatory = true) {
+    addExerciseGroupForExam(exam: Exam, title = 'Group ' + generateUUID(), mandatory = true) {
         const exerciseGroup = new ExerciseGroup();
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
@@ -390,10 +406,62 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
-        const template = { ...textExerciseTemplate, title };
+    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()) {
+        const template = {
+            ...textExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
         const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
+    }
+
+    deleteTextExercise(exerciseId: number) {
+        return cy.request({
+            url: TEXT_EXERCISE_BASE + exerciseId,
+            method: DELETE,
+        });
+    }
+
+    /**
+     * Creates a file upload exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
+     * @returns <Chainable> request response
+     */
+    createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()) {
+        const template = {
+            ...fileUploadExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+        const uploadExercise = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: UPLOAD_EXERCISE_BASE, body: uploadExercise });
+    }
+
+    deleteFileUploadExercise(exerciseID: number) {
+        return cy.request({
+            url: `${UPLOAD_EXERCISE_BASE}/${exerciseID}`,
+            method: DELETE,
+        });
+    }
+
+    makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
+            method: POST,
+            body: { submissionExerciseType: 'file-upload', file },
+        });
+    }
+
+    updateFileUploadExerciseDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.dueDate = due;
+        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
+    }
+
+    updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.assessmentDueDate = due;
+        return this.updateExercise(exercise, EXERCISE_TYPE.FileUpload);
     }
 
     /**
@@ -414,14 +482,15 @@ export class CourseManagementRequests {
 
     createModelingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        title = 'Cypress modeling exercise ' + generateUUID(),
+        title = 'Modeling ' + generateUUID(),
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
-    ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
+    ) {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+            channelName: 'exercise-' + titleLowercase(title),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
@@ -485,7 +554,7 @@ export class CourseManagementRequests {
     createQuizExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
-        title = 'Cypress quiz exercise' + generateUUID(),
+        title = 'Quiz ' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
     ) {
@@ -494,6 +563,7 @@ export class CourseManagementRequests {
             title,
             quizQuestions,
             duration,
+            channelName: 'exercise-' + titleLowercase(title),
         };
         let newQuizExercise;
         const dates = {
@@ -537,7 +607,7 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
             method: PUT,
-            body: { submissionExerciseType: 'text', text, id: null },
+            body: { submissionExerciseType: 'text', text },
         });
     }
 
@@ -631,18 +701,19 @@ export class CourseManagementRequests {
         });
     }
 
-    createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
-        const lecture = {
+    createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+        const body = {
             ...lectureTemplate,
             course,
             title,
             startDate,
             endDate,
+            channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
             url: `${BASE_API}lectures`,
             method: POST,
-            body: lecture,
+            body,
         });
     }
 }
@@ -664,6 +735,7 @@ export class ExamBuilder {
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
         this.template.workingTime = 86400;
+        this.template.channelName = titleLowercase(this.template.title);
     }
 
     /**
@@ -780,7 +852,7 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+export function convertModelAfterMultiPart(response: Cypress.Response<Course>): Course {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');

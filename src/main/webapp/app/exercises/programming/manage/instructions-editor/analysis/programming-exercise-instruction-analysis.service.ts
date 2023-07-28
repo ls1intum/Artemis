@@ -33,7 +33,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis);
-        return { invalidTestCases, missingTestCases, completeAnalysis };
+        return { invalidTestCases, missingTestCases, completeAnalysis, numOfTasks: tasksFromProblemStatement.length };
     };
 
     /**

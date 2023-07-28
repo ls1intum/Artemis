@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -34,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-@JsonTypeName("programming")
 @SecondaryTable(name = "programming_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
@@ -294,6 +295,12 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    /**
+     * Getter for the stored default branch of the exercise.
+     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
+     *
+     * @return the name of the default branch or null if not yet stored in Artemis
+     */
     @JsonIgnore
     public String getBranch() {
         return branch;
@@ -568,6 +575,10 @@ public class ProgrammingExercise extends Exercise {
         this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
     }
 
+    public void addStaticCodeAnalysisCategory(final StaticCodeAnalysisCategory category) {
+        staticCodeAnalysisCategories.add(category);
+    }
+
     @JsonProperty("sequentialTestRuns")
     public boolean hasSequentialTestRuns() {
         return Objects.requireNonNullElse(sequentialTestRuns, false);
@@ -684,7 +695,7 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the deadline
+            // as their relevantDueDate is before the due date
             if (getAllowManualFeedbackRequests()) {
                 return true;
             }
@@ -713,8 +724,7 @@ public class ProgrammingExercise extends Exercise {
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
     private boolean checkForAssessedResult(Result result) {
-        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return result.getCompletionDate() != null && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
+        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic());
     }
 
     @Override
@@ -838,5 +848,15 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disconnectRelatedEntities() {
+        Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
+
+        super.disconnectRelatedEntities();
     }
 }

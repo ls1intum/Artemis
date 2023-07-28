@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Strings;
@@ -53,7 +52,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final ResultRepository resultRepository;
 
@@ -81,20 +80,22 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final FeedbackService feedbackService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackService feedbackService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
         this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -107,6 +108,7 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -176,7 +178,7 @@ public class ProgrammingExerciseGradingService {
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = studentParticipation.getBranch();
+                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
             }
             if (Strings.isNullOrEmpty(participationDefaultBranch)) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
@@ -221,6 +223,8 @@ public class ProgrammingExerciseGradingService {
             try {
                 // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
                 // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
+                // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
+                // time.
                 submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {
@@ -259,11 +263,14 @@ public class ProgrammingExerciseGradingService {
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
         if (isStudentParticipation) {
-            // When a student receives a new result, we want to check whether we need to lock the participation
+            // When a student receives a new result, we want to check whether we need to lock the participation and the
             // repository when a lock repository policy is present. At this point, we know that the programming
-            // exercise exists.
+            // exercise exists and that the participation must be a ProgrammingExerciseStudentParticipation.
+            // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
+            // test run repository).
+            // Student test exam participations will still be locked by this.
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isTestRun()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
@@ -273,7 +280,7 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
+                updatedLatestSemiAutomaticResult = resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -312,7 +319,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         latestSemiAutomaticResult.setTestCaseCount(newAutomaticResult.getTestCaseCount());
@@ -338,7 +345,7 @@ public class ProgrammingExerciseGradingService {
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
+            websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 

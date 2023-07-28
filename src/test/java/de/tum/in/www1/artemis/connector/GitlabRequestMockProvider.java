@@ -17,6 +17,8 @@ import org.gitlab4j.api.models.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,11 +51,16 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccess
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
+
+    @Value("${artemis.version-control.health-api-token}")
+    private String healthToken;
 
     private final RestTemplate restTemplate;
 
@@ -117,6 +124,9 @@ public class GitlabRequestMockProvider {
     public void reset() throws Exception {
         if (mockServer != null) {
             mockServer.reset();
+        }
+        if (mockServerShortTimeout != null) {
+            mockServerShortTimeout.reset();
         }
         if (closeable != null) {
             closeable.close();
@@ -307,7 +317,7 @@ public class GitlabRequestMockProvider {
         final var mockedUserId = 1L;
         doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(login);
         if (throwError) {
-            System.out.println("repositoryPath: " + repositoryPath + ", mockedUserId: " + mockedUserId);
+            log.debug("repositoryPath: {}, mockedUserId: {}", repositoryPath, mockedUserId);
             doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).addMember(repositoryPath, mockedUserId, DEVELOPER);
         }
         else {
@@ -332,7 +342,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
-        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").build().toUri();
+        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").queryParam("token", healthToken).build().toUri();
         final var response = new ObjectMapper().writeValueAsString(Map.of("status", healthStatus));
         mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
     }

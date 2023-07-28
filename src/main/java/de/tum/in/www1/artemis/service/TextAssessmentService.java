@@ -22,18 +22,14 @@ public class TextAssessmentService extends AssessmentService {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
-    private final FeedbackConflictRepository feedbackConflictRepository;
-
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
+            ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
-        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -56,7 +52,7 @@ public class TextAssessmentService extends AssessmentService {
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
+            final List<Feedback> assessments = feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
@@ -68,7 +64,7 @@ public class TextAssessmentService extends AssessmentService {
             result = new Result();
             result.setParticipation(participation);
 
-            resultService.createNewRatedManualResult(result, false);
+            resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
@@ -94,22 +90,5 @@ public class TextAssessmentService extends AssessmentService {
 
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
-
-        // Set each block's impact on other submissions for the current 'textSubmission'
-        if (computeFeedbackSuggestions) {
-            textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-            result.setSubmission(textSubmission);
-        }
-    }
-
-    private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
-        List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
-        final List<FeedbackConflict> allConflictsByFeedbackList = this.feedbackConflictRepository
-                .findAllConflictsByFeedbackList(feedbackList.stream().map(Feedback::getId).toList());
-        feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getFirstFeedback().getId().equals(feedback.getId())).toList());
-            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getSecondFeedback().getId().equals(feedback.getId())).toList());
-        });
-        return feedbackList;
     }
 }

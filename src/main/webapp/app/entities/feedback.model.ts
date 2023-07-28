@@ -2,7 +2,6 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {
@@ -62,7 +61,6 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
-    public conflictingTextAssessments?: FeedbackConflict[];
     public suggestedFeedbackReference?: string;
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;

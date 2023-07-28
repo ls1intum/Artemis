@@ -13,7 +13,6 @@ export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
-    ExamLiveStatistics = 'ExamLiveStatistics',
     TutorialGroups = 'TutorialGroups',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
@@ -98,7 +97,7 @@ export class FeatureToggleService {
      * Setter method for the state of a feature toggle.
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
-        const url = '/api/admin/management/feature-toggle';
+        const url = '/api/admin/feature-toggle';
         const toggleParam = { [featureToggle]: active };
         return this.http.put(url, toggleParam);
     }

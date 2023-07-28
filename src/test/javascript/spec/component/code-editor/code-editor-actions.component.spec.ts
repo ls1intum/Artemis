@@ -228,6 +228,34 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).toBeFalse();
     });
 
+    it('should emit different error messages on different error responses', () => {
+        let commitObservable = new Subject<void>();
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+        comp.commitState = CommitState.UNCOMMITTED_CHANGES;
+        fixture.detectChanges();
+
+        commitStub.mockReturnValue(commitObservable);
+
+        const commitButton = fixture.debugElement.query(By.css('#submit_button'));
+
+        commitButton.nativeElement.click();
+        commitObservable.error({ error: { detail: 'submitBeforeStartDate' } });
+        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'submitFailed');
+        expect(onErrorSpy).toHaveBeenNthCalledWith(2, 'submitBeforeStartDate');
+
+        commitObservable = new Subject<void>();
+        commitStub.mockReturnValue(commitObservable);
+        commitButton.nativeElement.click();
+        commitObservable.error({ error: { detail: 'submitAfterDueDate' } });
+        expect(onErrorSpy).toHaveBeenNthCalledWith(4, 'submitAfterDueDate');
+
+        commitObservable = new Subject<void>();
+        commitStub.mockReturnValue(commitObservable);
+        commitButton.nativeElement.click();
+        commitObservable.error({ error: { detail: 'submitAfterReachingSubmissionLimit' } });
+        expect(onErrorSpy).toHaveBeenNthCalledWith(6, 'submitAfterReachingSubmissionLimit');
+    });
+
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const saveObservable = new Subject<null>();
@@ -272,7 +300,7 @@ describe('CodeEditorActionsComponent', () => {
         flush();
     }));
 
-    it.each([false, true])(
+    it.each([true, false])(
         'should autosave unsaved files after 30 seconds if autosave is not disabled',
         fakeAsync((disableAutoSave: boolean) => {
             const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };

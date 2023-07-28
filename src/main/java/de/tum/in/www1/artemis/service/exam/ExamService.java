@@ -232,7 +232,7 @@ public class ExamService {
         for (StudentExam studentExam : studentExams) {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
+                    .filter(studentParticipation -> studentParticipation.getStudent().orElseThrow().getId().equals(studentExam.getUser().getId())).toList();
             var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
                     examBonusCalculator);
             studentResults.add(studentResult);
@@ -263,7 +263,8 @@ public class ExamService {
      */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
-        var exam = studentExam.getExam();
+        // load again from the database because the exam object of the student exam might not have all the properties we need
+        var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
         Long studentId = studentExam.getUser().getId();
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
@@ -292,7 +293,7 @@ public class ExamService {
             Double achievedPointsOfSource = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
-            Integer achievedPresentationScore = null;
+            Double achievedPresentationScore = null;
             if (result != null) {
                 achievedPointsOfSource = result.achievedPoints();
                 verdict = result.mostSeverePlagiarismVerdict();
@@ -320,7 +321,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
-                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse().getId(), studentIds);
+                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
             }
             else {
                 return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
@@ -448,7 +449,8 @@ public class ExamService {
         if (!isAtLeastInstructor) {
             // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
             exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
-            exercise.setExerciseGroup(null);
+            exercise.getExerciseGroup().setExercises(null);
+            exercise.getExerciseGroup().setExam(null);
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
@@ -505,19 +507,22 @@ public class ExamService {
 
         // To prevent LazyInitializationException.
         participation.setResults(Set.of());
-        if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
+        if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
-            // Also set the latest result into the participation as the client expects it there for programming exercises
-            Result latestResult = lastSubmission.getLatestResult();
-            if (latestResult != null) {
-                latestResult.setParticipation(null);
-                latestResult.setSubmission(lastSubmission);
-                // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                // lastResult -> lastSubmission
-                participation.setResults(Set.of(latestResult));
+            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+                // Also set the latest result into the participation as the client expects it there for programming exercises
+                Result latestResult = lastSubmission.getLatestResult();
+                if (latestResult != null) {
+                    latestResult.setParticipation(null);
+                    latestResult.setSubmission(lastSubmission);
+                    latestResult.filterSensitiveInformation();
+                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
+                    // lastResult -> lastSubmission
+                    participation.setResults(Set.of(latestResult));
+                }
+                participation.setSubmissions(Set.of(lastSubmission));
             }
             lastSubmission.setResults(null);
-            participation.setSubmissions(Set.of(lastSubmission));
         }
     }
 
@@ -717,7 +722,7 @@ public class ExamService {
 
     private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course, PlagiarismMapping plagiarismMapping) {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
-            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().get().getId(), participation.getExercise().getId());
+            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
 
             return calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course, plagiarismPointDeductionPercentage);
@@ -826,7 +831,7 @@ public class ExamService {
         Double pointsReachableByMandatoryExercises = 0.0;
         Set<ExerciseGroup> mandatoryExerciseGroups = exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).collect(Collectors.toSet());
         for (ExerciseGroup exerciseGroup : mandatoryExerciseGroups) {
-            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().orElseThrow();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
                 pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxPoints();
             }
@@ -839,7 +844,7 @@ public class ExamService {
         // Ensure that the sum of all max points of all exercise groups is at least as big as the max points set in the exam
         Double pointsReachable = 0.0;
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().get();
+            Exercise groupRepresentativeExercise = exerciseGroup.getExercises().stream().findAny().orElseThrow();
             if (groupRepresentativeExercise.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_COMPLETELY)) {
                 pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
@@ -1016,7 +1021,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+            instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1048,7 +1053,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllRepositories(programmingExercise.getId());
+            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1143,7 +1148,7 @@ public class ExamService {
             // Attach the path to the archive to the exam and save it in the database
             if (archivedExamPath.isPresent()) {
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
-                examRepository.save(exam);
+                examRepository.saveAndFlush(exam);
             }
             else {
                 groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
