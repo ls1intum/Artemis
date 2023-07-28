@@ -28,7 +28,12 @@
 
 <ng-template #popContentTask>
     <jhi-exercise-node-details class="node-details" *ngIf="node.type === NodeType.EXERCISE" [exerciseId]="node.linkedResource!"></jhi-exercise-node-details>
-    <jhi-lecture-unit-node-details class="node-details" *ngIf="node.type === NodeType.LECTURE_UNIT" [lectureUnitId]="node.linkedResource!"></jhi-lecture-unit-node-details>
+    <jhi-lecture-unit-node-details
+        class="node-details"
+        *ngIf="node.type === NodeType.LECTURE_UNIT"
+        [lectureId]="node.linkedResourceParent!"
+        [lectureUnitId]="node.linkedResource!"
+    ></jhi-lecture-unit-node-details>
 </ng-template>
 
 <ng-template #popContentCompetency>

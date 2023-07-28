@@ -3,9 +3,9 @@
         <h3 class="mb-0">
             <fa-icon
                 *ngIf="lectureUnit.type"
-                [icon]="lectureUnit.getIcon"
+                [icon]="getIcon(lectureUnit.type!)"
                 [fixedWidth]="true"
-                [ngbTooltip]="lectureUnit.getIconTooltip | artemisTranslate"
+                [ngbTooltip]="getIconTooltip(lectureUnit.type!) | artemisTranslate"
                 container="body"
             ></fa-icon>
             <span>{{ lectureUnit.name }}</span>

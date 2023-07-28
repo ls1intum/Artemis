@@ -45,19 +45,18 @@ export abstract class LectureUnit implements BaseEntity {
     protected constructor(type: LectureUnitType) {
         this.type = type;
     }
+}
 
-    get getIcon(): IconProp {
-        if (!this.type) {
-            return faQuestion as IconProp;
-        }
-        return lectureUnitIcons[this.type] as IconProp;
+export function getIcon(lectureUnitType: LectureUnitType): IconProp {
+    if (!lectureUnitType) {
+        return faQuestion as IconProp;
     }
+    return lectureUnitIcons[lectureUnitType] as IconProp;
+}
 
-    getIconTooltip(): string {
-        if (!this.type) {
-            return '';
-        }
-
-        return lectureUnitTooltips[this.type];
+export function getIconTooltip(lectureUnitType: LectureUnitType) {
+    if (!lectureUnitType) {
+        return '';
     }
+    return lectureUnitTooltips[lectureUnitType];
 }

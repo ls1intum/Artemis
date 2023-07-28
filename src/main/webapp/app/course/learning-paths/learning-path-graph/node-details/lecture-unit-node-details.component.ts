@@ -4,7 +4,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, getIcon, getIconTooltip } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-lecture-unit-node-details',
@@ -39,4 +39,7 @@ export class LectureUnitNodeDetailsComponent implements OnInit {
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
     }
+
+    protected readonly getIcon = getIcon;
+    protected readonly getIconTooltip = getIconTooltip;
 }

@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { RecommendationType } from 'app/entities/competency/learning-path.model';
+import { NgxLearningPathNode, NodeType, RecommendationType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -141,6 +141,24 @@ export class LearningPathContainerComponent implements OnInit {
         if (this.exercise) {
             instance.courseId = this.courseId;
             instance.exerciseId = this.learningObjectId;
+        }
+    }
+
+    onNodeClicked(node: NgxLearningPathNode) {
+        if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
+            if (this.lectureUnit?.id) {
+                this.history.push([this.lectureUnit.id, this.lectureId!]);
+            } else if (this.exercise?.id) {
+                this.history.push([this.exercise.id, -1]);
+            }
+            this.undefineAll();
+            this.learningObjectId = node.linkedResource!;
+            this.lectureId = node.linkedResourceParent;
+            if (node.type === NodeType.LECTURE_UNIT) {
+                this.loadLectureUnit();
+            } else if (node.type === NodeType.EXERCISE) {
+                this.loadExercise();
+            }
         }
     }
 }
