@@ -35,3 +35,8 @@ jhi-learning-path-graph-node:hover {
 .completed {
     color: var(--bs-success);
 }
+
+.node-details {
+    display: block;
+    max-width: 90vh;
+}

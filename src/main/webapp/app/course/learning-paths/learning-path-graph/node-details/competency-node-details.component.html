@@ -1,5 +1,5 @@
 <div *ngIf="competency" class="row">
-    <div class="col">
+    <div class="col-9">
         <h3 class="mb-0">
             <fa-icon
                 *ngIf="competency.taxonomy"
@@ -14,5 +14,5 @@
         </h3>
         <div *ngIf="competency.description">{{ competency.description }}</div>
     </div>
-    <div class="col"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings></div>
+    <div class="col-3"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings></div>
 </div>
