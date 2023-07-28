@@ -258,7 +258,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationTest {
     @NotNull
     private GradingScale createBonusToGradingScale(Exam bonusToExam) {
         GradingScale bonusToGradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 40, 20, 15, 15, 10, 100 },
-                Optional.of(new String[] { "5.0", "4.0", "3.0", "2.0", "1.0", "1.0+" }), true, 1);
+                Optional.of(new String[] { "5.0", "4.0", "3.0", "2.0", "1.0", "1.0" }), true, 1);
 
         bonusToGradingScale.setGradeType(GradeType.GRADE);
         bonusToGradingScale.setExam(bonusToExam);
