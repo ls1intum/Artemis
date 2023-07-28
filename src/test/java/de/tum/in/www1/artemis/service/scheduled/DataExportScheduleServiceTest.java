@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -119,7 +118,6 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @Disabled("enable again as soon as the testing is done")
     void testCronDataExportCreationTaskScheduledEveryDayAt4AMByDefault() {
         final String cronExpression = "0 0 4 * * *";
         final String cronTaskName = "de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
