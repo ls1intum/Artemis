@@ -1750,8 +1750,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExerciseRepository.save(programmingExercise2);
 
-        // exerciseGroupRepository.save(exerciseGroup1);
-
         Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/lock-all-repositories",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 

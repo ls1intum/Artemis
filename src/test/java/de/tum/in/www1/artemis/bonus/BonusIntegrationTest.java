@@ -76,7 +76,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
      */
     @BeforeEach
     void init() {
-        // todo
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         course = courseUtilService.addEmptyCourse();
         course.setMaxPoints(200);
@@ -91,8 +90,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         sourceExamGradingScale = GradingScaleFactory.generateGradingScaleForExam(sourceExam, GradeType.BONUS);
 
-        courseGradingScale = GradingScaleFactory.generateGradingScaleForExam(sourceExam, GradeType.BONUS);
-        courseGradingScale.setCourse(course);
+        courseGradingScale = GradingScaleFactory.generateGradingScaleForCourse(course, GradeType.BONUS);
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
 

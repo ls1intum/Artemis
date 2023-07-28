@@ -21,9 +21,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -42,8 +40,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     private Long courseId;
 
     private Long idOfIndividualTextExercise;
-
-    private Long getIdOfIndividualTextExerciseOfExam;
 
     private Long idOfTeamTextExercise;
 
@@ -136,11 +132,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         // setting up exam
         exam = examUtilService.addExamWithUser(course, student1, true, pastTimestamp, pastTimestamp, pastTimestamp);
-        ExamFactory.generateExerciseGroup(true, exam);
 
         idOfExam = exam.getId();
-        var examTextExercise = createIndividualTextExerciseForExam(exam);
-        getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
+        var examTextExercise = textExerciseUtilService.createTextExerciseForExam(exam.getExerciseGroups().get(0));
+        long getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
         participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
@@ -253,15 +248,5 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(5.6);
         assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(90.0);
-    }
-
-    private TextExercise createIndividualTextExerciseForExam(Exam exam) {
-        var exerciseGroup0 = exam.getExerciseGroups().get(0);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
-        textExercise.setMaxPoints(10.0);
-        textExercise.setBonusPoints(0.0);
-        textExercise = exerciseRepository.save(textExercise);
-        getIdOfIndividualTextExerciseOfExam = textExercise.getId();
-        return textExercise;
     }
 }

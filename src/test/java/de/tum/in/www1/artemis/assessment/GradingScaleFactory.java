@@ -29,8 +29,22 @@ public class GradingScaleFactory {
     /**
      * Generates a GradingScale instance with given arguments.
      *
+     * @param course    of grading scale
+     * @param gradeType grade type of the grading scale
+     * @return a new GradingScale instance.
+     */
+    public static GradingScale generateGradingScaleForCourse(Course course, GradeType gradeType) {
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setCourse(course);
+        gradingScale.setGradeType(gradeType);
+        return gradingScale;
+    }
+
+    /**
+     * Generates a GradingScale instance with given arguments.
+     *
      * @param exam      of grading scale
-     * @param gradeType the grade type of the grading scale
+     * @param gradeType grade type of the grading scale
      * @return a new GradingScale instance.
      */
     public static GradingScale generateGradingScaleForExam(Exam exam, GradeType gradeType) {
