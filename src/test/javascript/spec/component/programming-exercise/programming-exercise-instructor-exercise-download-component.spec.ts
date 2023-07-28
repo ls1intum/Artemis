@@ -1,12 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-exercise-download.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { of, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 
