@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1668,13 +1669,12 @@ class ProgrammingExerciseIntegrationTestService {
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
-        // Wait until the notifications got created
-        Thread.sleep(300);
-
-        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Instructor get notified that unlock operations were successful")
-                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
-                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+        await().untilAsserted(() -> {
+            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            assertThat(notifications).as("Instructor get notified that unlock operations were successful")
+                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
+                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+        });
     }
 
     void testCheckPlagiarism() throws Exception {
