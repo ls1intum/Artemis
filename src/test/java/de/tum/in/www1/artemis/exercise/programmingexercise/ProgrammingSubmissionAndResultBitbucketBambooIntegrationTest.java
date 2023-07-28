@@ -559,65 +559,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
+        doNothing().when(programmingTriggerService).triggerTemplateBuildAndNotifyUser(exerciseId);
         postTestRepositorySubmissionWithoutCommit(HttpStatus.OK);
-    }
-
-    /**
-     * After a commit into the test repository, the VCS triggers Artemis to create submissions for all participations of the given exercise.
-     * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).orElseThrow();
-        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
-        setBuildAndTestAfterDueDateForProgrammingExercise(null);
-        // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
-        postTestRepositorySubmission();
-        // There are two student participations, so after the test notification two new submissions should have been created.
-        List<Participation> participations = new ArrayList<>();
-        participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).orElseThrow());
-        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(solutionParticipationId);
-        // We only create submissions for the solution participation after a push to the test repository.
-        assertThat(submissions).hasSize(1);
-        for (Participation participation : participations) {
-            assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).toList()).hasSize(1);
-        }
-        assertThat(submissions).allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST));
-
-        // Phase 2: Now the CI informs Artemis about the participation build results.
-        postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
-        // The number of total participations should not have changed.
-        assertThat(participationRepository.findByExerciseId(exerciseId)).hasSize(2);
-
-        // Now for both student's submission a result should have been created and assigned to the submission.
-        submissions = submissionRepository.findAll();
-
-        // After a push to the test repository, only the solution and template repository are built.
-        List<Result> results = resultRepository.findAllByExerciseId(exerciseId);
-        assertThat(results).isEmpty();
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
-                .ifPresent(results::addAll);
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
-                .ifPresent(results::addAll);
-        assertThat(results).hasSize(1);
-
-        for (Result r : results) {
-            boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
-            assertThat(hasMatchingSubmission).isTrue();
-        }
-
-        participations = new ArrayList<>();
-        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).orElseThrow());
-        for (Participation p : participations) {
-            assertThat(p.getSubmissions()).hasSize(1);
-            assertThat(p.getResults()).hasSize(1);
-            Result participationResult = new ArrayList<>(p.getResults()).get(0);
-            Result submissionResult = new ArrayList<>(p.getSubmissions()).get(0).getLatestResult();
-            assertThat(participationResult.getId()).isEqualTo(submissionResult.getId());
-            // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
-            assertThat(participationResult.isRated()).isTrue();
-        }
+        verify(programmingTriggerService, times(1)).triggerTemplateBuildAndNotifyUser(exerciseId);
     }
 
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {

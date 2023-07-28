@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -12,15 +10,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -40,19 +39,20 @@ public class PublicProgrammingSubmissionResource {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ParticipationRepository participationRepository;
 
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public PublicProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository) {
+            ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
-        this.versionControlService = versionControlService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationRepository = participationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -132,23 +132,24 @@ public class PublicProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
-        String lastCommitHash = null;
-        try {
-            Commit commit = versionControlService.orElseThrow().getLastCommitDetails(requestBody);
-            lastCommitHash = commit.getCommitHash();
-            log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
-        }
-        catch (Exception ex) {
-            log.debug(
-                    "Commit hash could not be parsed from test repository from exercise {}, the submission will be created with the latest commit hash of the solution repository.",
-                    exerciseId, ex);
-        }
-
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
-        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+        ProgrammingSubmission submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(solutionParticipation, SubmissionType.TEST);
+
         programmingMessagingService.notifyUserAboutSubmission(submission);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChanged(exerciseId, true);
+
+        // Trigger rebuild of template submission. It cannot be done in the build plan since it is copied for every student submission
+        try {
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exerciseId);
+        }
+        catch (EntityNotFoundException ex) {
+            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+            log.error(
+                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
+                    exerciseId);
+        }
 
         return ResponseEntity.ok().build();
     }

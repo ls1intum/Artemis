@@ -108,10 +108,6 @@ public class ProgrammingSubmission extends Submission {
         this.buildLogEntries = buildLogEntries;
     }
 
-    public boolean belongsToTestRepository() {
-        return SubmissionType.TEST.equals(getType());
-    }
-
     @Override
     public boolean isEmpty() {
         return false; // programming submissions cannot be empty, they are only created for actual commits in the git repository

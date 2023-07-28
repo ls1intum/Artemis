@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -179,7 +178,8 @@ public class LocalCIConnectorService {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
+            submission = (ProgrammingSubmission) solutionParticipation.findLatestSubmission()
+                    .orElse(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash));
         }
         catch (EntityNotFoundException | IllegalStateException e) {
             throw new LocalCIException("Could not create submission for solution participation", e);
@@ -207,7 +207,7 @@ public class LocalCIConnectorService {
 
             // The solution participation received a new result, also trigger a build of the template repository.
             try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId());
             }
             catch (EntityNotFoundException e) {
                 // Something went wrong while retrieving the template participation.

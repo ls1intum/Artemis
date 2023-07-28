@@ -46,8 +46,6 @@ public class ProgrammingTriggerService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final AuditEventRepository auditEventRepository;
@@ -61,10 +59,9 @@ public class ProgrammingTriggerService {
     private final ProgrammingMessagingService programmingMessagingService;
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService, AuditEventRepository auditEventRepository,
+            ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingMessagingService programmingMessagingService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -72,7 +69,6 @@ public class ProgrammingTriggerService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auditEventRepository = auditEventRepository;
         this.resultRepository = resultRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -121,7 +117,6 @@ public class ProgrammingTriggerService {
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     private void setTestCasesChanged(ProgrammingExercise programmingExercise, boolean testCasesChanged) throws EntityNotFoundException {
-
         // If the flag testCasesChanged has not changed, we can stop the execution
         // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
         // It is only relevant when there are student submissions that should get an updated result.
@@ -265,34 +260,19 @@ public class ProgrammingTriggerService {
      * Trigger the template repository build with the given commitHash.
      *
      * @param programmingExerciseId is used to retrieve the template participation.
-     * @param commitHash            the unique hash code of the git repository identifying the submission, will be used for the created submission.
-     * @param submissionType        will be used for the created submission.
      * @throws EntityNotFoundException if the programming exercise has no template participation (edge case).
      */
-    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
-                .findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId) throws EntityNotFoundException {
+        TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                .findWithEagerSubmissionsByProgrammingExerciseIdElseThrow(programmingExerciseId);
         // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
-    }
-
-    /**
-     * Creates a submission with the given type and commitHash for the provided participation.
-     * Will notify the user about occurring errors when trying to trigger the build.
-     *
-     * @param participation  for which to create the submission.
-     * @param commitHash     the unique hash code of the git repository identifying the submission,to assign to the submission.
-     * @param submissionType to assign to the submission.
-     */
-    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
-        ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            programmingMessagingService.notifyUserAboutSubmission(submission);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(templateParticipation);
+            programmingMessagingService.notifyUserAboutSubmission((ProgrammingSubmission) templateParticipation.findLatestSubmission().get());
         }
-        catch (Exception e) {
-            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
-            programmingMessagingService.notifyUserAboutSubmissionError(submission, error);
+        catch (ContinuousIntegrationException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), templateParticipation.getId());
+            programmingMessagingService.notifyUserAboutSubmissionError(templateParticipation, error);
         }
     }
 

@@ -50,7 +50,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
@@ -70,8 +70,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ExamSubmissionService examSubmissionService,
+            GitService gitService, StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
@@ -83,7 +83,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.examSubmissionService = examSubmissionService;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -316,7 +316,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash)
             throws EntityNotFoundException, IllegalStateException {
-        var solutionParticipation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
+        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);

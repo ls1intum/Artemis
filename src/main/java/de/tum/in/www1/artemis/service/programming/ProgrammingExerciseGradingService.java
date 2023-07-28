@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
@@ -204,14 +203,14 @@ public class ProgrammingExerciseGradingService {
         }
 
         return submissions.stream().filter(theSubmission -> {
-            var commitHash = buildResult.getCommitHash(theSubmission.getType());
+            var commitHash = buildResult.getCommitHashFromAssignmentRepo();
             return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
         }).max(Comparator.naturalOrder());
     }
 
     @NotNull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
-        final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
+        final var commitHash = buildResult.getCommitHashFromAssignmentRepo();
         if (commitHash.isEmpty()) {
             log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
         }

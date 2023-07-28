@@ -38,6 +38,11 @@ public interface TemplateProgrammingExerciseParticipationRepository extends JpaR
 
     Optional<TemplateProgrammingExerciseParticipation> findByProgrammingExerciseId(Long programmingExerciseId);
 
+    default TemplateProgrammingExerciseParticipation findWithEagerSubmissionsByProgrammingExerciseIdElseThrow(Long exerciseId) {
+        var optional = findWithEagerSubmissionsByProgrammingExerciseId(exerciseId);
+        return optional.orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation", exerciseId));
+    }
+
     default TemplateProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(Long programmingExerciseId) {
         var optional = findByProgrammingExerciseId(programmingExerciseId);
         return optional.orElseThrow(() -> new EntityNotFoundException("Template Programming Exercise Participation", programmingExerciseId));
