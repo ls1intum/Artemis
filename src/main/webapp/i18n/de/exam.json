@@ -197,6 +197,7 @@
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
             "bonusGradeColumn": "Bonusnote",
+            "bonusPointsColumn": "Bonuspunkte",
             "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
             "mostSeverePlagiarismVerdictColumn": "Urteil",
