@@ -361,6 +361,12 @@ public class TextExerciseUtilService {
         return course;
     }
 
+    /**
+     * creates and saves a text exercise for an exam
+     *
+     * @param exerciseGroup exercise group to which the text exercise should be added
+     * @return newly created text exercise
+     */
     public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
