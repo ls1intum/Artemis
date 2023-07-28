@@ -100,7 +100,7 @@ class TextPlagiarismResultConverter {
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO
 
-        jPlagSubmissionDataExtractor.getAndSetSubmissionIdAndStudentLogin(submission, jplagSubmission, exercise);
+        jPlagSubmissionDataExtractor.retrieveAndSetSubmissionIdAndStudentLogin(submission, jplagSubmission, exercise);
         return submission;
     }
 }
