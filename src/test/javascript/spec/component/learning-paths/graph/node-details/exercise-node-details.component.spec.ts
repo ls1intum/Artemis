@@ -27,7 +27,7 @@ describe('ExerciseNodeDetailsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseNodeDetailsComponent);
                 comp = fixture.componentInstance;
-                exercise = new TextExercise();
+                exercise = new TextExercise(undefined, undefined);
                 exercise.id = 1;
                 exercise.title = 'Some arbitrary title';
 

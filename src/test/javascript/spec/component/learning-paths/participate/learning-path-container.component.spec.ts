@@ -182,7 +182,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle lecture unit node click', () => {
-        const node = { id: 1, type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
+        const node = { id: 'some-id', type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
         expect(comp.lectureId).toBe(node.linkedResourceParent);
@@ -190,7 +190,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle exercise node click', () => {
-        const node = { id: 1, type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
+        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
         expect(getExerciseDetailsStub).toHaveBeenCalledWith(node.linkedResource);
@@ -202,7 +202,7 @@ describe('LearningPathContainerComponent', () => {
         comp.lectureId = lecture.id;
         comp.lecture = lecture;
         fixture.detectChanges();
-        const node = { id: 1, type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
+        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.history).toEqual([[lectureUnit.id!, lecture.id!]]);
     });
@@ -211,7 +211,7 @@ describe('LearningPathContainerComponent', () => {
         comp.learningObjectId = exercise.id!;
         comp.exercise = exercise;
         fixture.detectChanges();
-        const node = { id: 1, type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
+        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.history).toEqual([[exercise.id!, -1]]);
     });
