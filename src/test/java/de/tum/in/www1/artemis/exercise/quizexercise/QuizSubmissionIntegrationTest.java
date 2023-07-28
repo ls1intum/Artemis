@@ -12,9 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -529,7 +527,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
-    @Test
+    @RepeatedTest(1000)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_forbidden() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
