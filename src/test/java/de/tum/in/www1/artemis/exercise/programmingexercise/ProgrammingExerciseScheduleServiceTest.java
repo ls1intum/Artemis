@@ -199,7 +199,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
         mockStudentRepoLocks();
-        long delayMS = 200; // 200 ms.
+        long delayMS = 500; // 500 ms.
         programmingExercise.setDueDate(plusMillis(ZonedDateTime.now(), delayMS / 2));
         // Setting it the first time.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
