@@ -88,6 +88,7 @@ const testExam = {
 
 const exerciseGroup = {
     exam,
+    title: 'exercise group',
 } as ExerciseGroup;
 
 const textSubmission = { id: 1, submitted: true } as TextSubmission;
@@ -422,5 +423,11 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(component.isBeforeStudentReviewEnd()).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should show exercise group title', () => {
+        fixture.detectChanges();
+        const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('.exercise-title');
+        expect(exerciseTitleElement.textContent).toContain('exercise group');
     });
 });

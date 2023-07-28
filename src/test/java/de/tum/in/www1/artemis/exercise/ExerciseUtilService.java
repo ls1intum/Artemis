@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -114,6 +115,11 @@ public class ExerciseUtilService {
     public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
         var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst()
                 .orElseThrow();
+        return (T) exercise;
+    }
+
+    public <T extends Exercise> T getFirstExerciseWithType(StudentExam studentExam, Class<T> clazz) {
+        var exercise = studentExam.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
 
