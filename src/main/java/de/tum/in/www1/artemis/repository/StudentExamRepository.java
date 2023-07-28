@@ -9,11 +9,10 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -247,6 +246,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 AND se.exam.testExam = TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("UPDATE StudentExam s SET s.submitted = true, s.submissionDate = :submissionDate WHERE s.id = :studentExamId")
+    void submitStudentExam(@Param("studentExamId") Long studentExamId, @Param("submissionDate") ZonedDateTime submissionDate);
 
     @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
