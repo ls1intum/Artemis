@@ -41,7 +41,9 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
         feedback.setDetailText(description());
         feedback.setCredits(credits());
         // The given grading instruction should match the one of this DTO:
-        assert gradingInstructionId() == null || gradingInstructionId().equals(gradingInstruction.getId());
+        if (gradingInstructionId() != null && !gradingInstructionId().equals(gradingInstruction.getId())) {
+            throw new IllegalArgumentException("The grading instruction of this DTO does not match the given grading instruction");
+        }
         feedback.setGradingInstruction(gradingInstruction);
 
         TextBlock textBlock = new TextBlock();
