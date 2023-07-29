@@ -150,7 +150,7 @@ public class PublicResultResource {
         log.info("triggerTemplateBuildIfTestCasesChanged programmingExerciseId {}, submission {}, results {}", programmingExerciseId, submission, submission.getResults());
         // We only trigger the template build when the test repository was changed.
         // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
-        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
+        if (!submission.belongsToTestRepository()) {
             return;
         }
         try {
