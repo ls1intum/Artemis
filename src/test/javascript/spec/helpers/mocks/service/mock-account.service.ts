@@ -14,7 +14,7 @@ export class MockAccountService implements IAccountService {
         this.userIdentityValue = user;
     }
 
-    identity = () => Promise.resolve({ id: 99 } as User);
+    identity = () => Promise.resolve({ id: 99, login: 'admin' } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
     setPrefilledUsername = (username: string) => ({});
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
