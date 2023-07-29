@@ -12,7 +12,7 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
     templateUrl: './programming-exercise-grading.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseGradingComponent {
+export class ProgrammingExerciseGradingComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly faQuestionCircle = faQuestionCircle;
