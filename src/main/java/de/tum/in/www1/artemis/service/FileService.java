@@ -1059,11 +1059,13 @@ public class FileService implements DisposableBean {
         // Then replace multiple points, e.g. '...' with one point '.'
         // Then replace multiple backslashes, e.g. '\\' with one backslash '\'
         // Then replace multiple slashes, e.g. '//' with one slash '/'
-        String output = string;
+        String output = string.replaceAll("%", "_").replaceAll("\\.+", ".").replaceAll("\\\\+", "\\").replaceAll("/+", "/");
         if (output.startsWith("\\") || output.startsWith("/")) {
-            output = output.substring(1);
+            return output.substring(1);
         }
-        return output.replaceAll("%", "_").replaceAll("\\.+", ".").replaceAll("\\\\+", "\\").replaceAll("/+", "/");
+        else {
+            return output;
+        }
     }
 
     /**
