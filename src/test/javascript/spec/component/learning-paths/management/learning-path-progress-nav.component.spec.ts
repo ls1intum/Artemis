@@ -2,6 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { By } from '@angular/platform-browser';
 import { LearningPathProgressNavComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-nav.component';
+import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
+import { UserNameAndLoginDTO } from 'app/core/user/user.model';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('LearningPathProgressNavComponent', () => {
     let fixture: ComponentFixture<LearningPathProgressNavComponent>;
@@ -9,11 +14,12 @@ describe('LearningPathProgressNavComponent', () => {
     let onRefreshStub: jest.SpyInstance;
     let onCenterViewStub: jest.SpyInstance;
     let onCloseStub: jest.SpyInstance;
+    let learningPath: LearningPathPageableSearchDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [LearningPathProgressNavComponent],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [LearningPathProgressNavComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         })
             .compileComponents()
@@ -23,12 +29,22 @@ describe('LearningPathProgressNavComponent', () => {
                 onRefreshStub = jest.spyOn(comp.onRefresh, 'emit');
                 onCenterViewStub = jest.spyOn(comp.onCenterView, 'emit');
                 onCloseStub = jest.spyOn(comp.onClose, 'emit');
+                learningPath = new LearningPathPageableSearchDTO();
+                learningPath.user = new UserNameAndLoginDTO();
+                learningPath.user.name = 'some arbitrary name';
+                learningPath.user.login = 'somearbitrarylogin';
+                comp.learningPath = learningPath;
                 fixture.detectChanges();
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(fixture).toBeTruthy();
+        expect(comp).toBeTruthy();
     });
 
     it('should emit refresh on click', () => {

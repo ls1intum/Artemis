@@ -160,8 +160,12 @@
                 "table": {
                     "name": "Name",
                     "login": "Login",
-                    "progress": "Fortschritt",
-                    "view": "Ansehen"
+                    "progress": "Fortschritt"
+                },
+                "progressNav": {
+                    "header": "Lernpfad",
+                    "refresh": "Refresh",
+                    "center": "Center view"
                 }
             },
             "sideBar": {

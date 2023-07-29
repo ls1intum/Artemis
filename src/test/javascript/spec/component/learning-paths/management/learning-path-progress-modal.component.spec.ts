@@ -6,6 +6,7 @@ import { LearningPathProgressModalComponent } from 'app/course/learning-paths/le
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { By } from '@angular/platform-browser';
 import { LearningPathProgressNavComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-nav.component';
+import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 
 describe('LearningPathProgressModalComponent', () => {
     let fixture: ComponentFixture<LearningPathProgressModalComponent>;
@@ -33,8 +34,8 @@ describe('LearningPathProgressModalComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display learning path graph if id is present', () => {
-        comp.learningPathId = 1;
+    it('should display learning path graph if learning path is present', () => {
+        comp.learningPath = { id: 1 } as LearningPathPageableSearchDTO;
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.graph')).nativeElement).toBeTruthy();
     });
