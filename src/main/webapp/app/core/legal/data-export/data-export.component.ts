@@ -26,7 +26,11 @@ export class DataExportComponent implements OnInit {
     isAdmin = false;
     dataExportId: number;
 
-    constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService) {}
+    constructor(
+        private dataExportService: DataExportService,
+        private accountService: AccountService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;

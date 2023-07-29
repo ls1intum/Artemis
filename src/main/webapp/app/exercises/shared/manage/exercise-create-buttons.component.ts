@@ -19,7 +19,10 @@ export class ExerciseCreateButtonsComponent implements OnInit {
     faPlus = faPlus;
     faFileImport = faFileImport;
 
-    constructor(private router: Router, private modalService: NgbModal) {}
+    constructor(
+        private router: Router,
+        private modalService: NgbModal,
+    ) {}
 
     ngOnInit(): void {
         if (this.exerciseType === ExerciseType.FILE_UPLOAD) {

@@ -68,7 +68,10 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     faDotCircle = faDotCircle;
     faCircleExclamation = faCircleExclamation;
 
-    constructor(private examChecklistService: ExamChecklistService, private websocketService: JhiWebsocketService) {}
+    constructor(
+        private examChecklistService: ExamChecklistService,
+        private websocketService: JhiWebsocketService,
+    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
