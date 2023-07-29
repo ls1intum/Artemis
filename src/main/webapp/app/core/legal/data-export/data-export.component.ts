@@ -38,7 +38,7 @@ export class DataExportComponent implements OnInit {
         private dataExportService: DataExportService,
         private accountService: AccountService,
         private alertService: AlertService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
     ) {}
 
     ngOnInit() {
