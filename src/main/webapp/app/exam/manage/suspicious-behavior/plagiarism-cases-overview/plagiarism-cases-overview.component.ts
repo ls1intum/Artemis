@@ -1,10 +1,6 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Router } from '@angular/router';
-import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
 
 @Component({
     selector: 'jhi-plagiarism-cases-overview',

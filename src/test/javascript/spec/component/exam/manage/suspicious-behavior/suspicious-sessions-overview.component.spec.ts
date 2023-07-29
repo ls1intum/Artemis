@@ -1,14 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
-import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
-import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 
 describe('SuspiciousSessionsComponent', () => {
@@ -25,7 +20,6 @@ describe('SuspiciousSessionsComponent', () => {
     } as SuspiciousExamSessions;
     let component: SuspiciousSessionsOverviewComponent;
     let fixture: ComponentFixture<SuspiciousSessionsOverviewComponent>;
-    let suspiciousSessionService: SuspiciousSessionsService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -36,7 +30,6 @@ describe('SuspiciousSessionsComponent', () => {
 
         fixture = TestBed.createComponent(SuspiciousSessionsOverviewComponent);
         component = fixture.componentInstance;
-        suspiciousSessionService = TestBed.inject(SuspiciousSessionsService);
         fixture.detectChanges();
     });
 

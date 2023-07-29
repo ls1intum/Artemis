@@ -132,17 +132,27 @@ public class ExamSession extends AbstractAuditingEntity {
     }
 
     @JsonIgnore
-    public boolean sameIpAddress(ExamSession other) {
+    public boolean hasSameIpAddress(ExamSession other) {
+        if (other == null) {
+            return false;
+        }
+
         return getIpAddressAsIpAddress() != null && getIpAddressAsIpAddress().equals(other.getIpAddressAsIpAddress());
     }
 
     @JsonIgnore
-    public boolean sameBrowserFingerprint(ExamSession other) {
+    public boolean hasSameBrowserFingerprint(ExamSession other) {
+        if (other == null) {
+            return false;
+        }
         return getBrowserFingerprintHash() != null && getBrowserFingerprintHash().equals(other.getBrowserFingerprintHash());
     }
 
     @JsonIgnore
-    public boolean sameUserAgent(ExamSession other) {
+    public boolean hasSameUserAgent(ExamSession other) {
+        if (other == null) {
+            return false;
+        }
         return getUserAgent() != null && getUserAgent().equals(other.getUserAgent());
     }
 }

@@ -96,16 +96,16 @@ public class ExamSessionService {
             }
             Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsByExamIdAndExamSession(examId, examSession);
             if (!relatedExamSessions.isEmpty()) {
-                determineSuspiciousReasons(examSession, relatedExamSessions);
+                addSuspiciousReasons(examSession, relatedExamSessions);
                 relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         });
 
-        return convertResultToDTO(suspiciousExamSessions);
+        return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
 
-    private Set<SuspiciousExamSessionsDTO> convertResultToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
         Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
         suspiciousExamSessions.forEach(suspiciousExamSession -> {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
@@ -120,17 +120,24 @@ public class ExamSessionService {
         return suspiciousExamSessionsDTO;
     }
 
-    private void determineSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+    /**
+     * Adds suspicious reasons to exam session we compare with and the related exam sessions.
+     * We already know that the exam sessions are suspicious, but we still have to determine what's the reason for that.
+     *
+     * @param session             exam session we compare with
+     * @param relatedExamSessions related exam sessions
+     */
+    private void addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
         for (var relatedExamSession : relatedExamSessions) {
-            if (relatedExamSession.sameBrowserFingerprint(session)) {
+            if (relatedExamSession.hasSameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
             }
-            if (relatedExamSession.sameIpAddress(session)) {
+            if (relatedExamSession.hasSameIpAddress(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
             }
-            if (relatedExamSession.sameUserAgent(session)) {
+            if (relatedExamSession.hasSameUserAgent(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
             }

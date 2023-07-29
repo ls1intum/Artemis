@@ -190,10 +190,10 @@ public class PlagiarismResource {
      * @param exerciseId the id of the exercise
      * @return the number of plagiarism results
      */
-    @GetMapping("exercises/{exerciseId}/plagiarism-results")
+    @GetMapping("exercises/{exerciseId}/plagiarism-results-count")
     @EnforceAtLeastInstructor
     public long getNumberOfPlagiarismResultsForExercise(@PathVariable("exerciseId") long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         return plagiarismResultRepository.countByExerciseId(exerciseId);
     }

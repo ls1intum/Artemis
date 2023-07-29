@@ -25,7 +25,7 @@
                     <td>{{ session.ipAddress }}</td>
                     <td>{{ session.createdDate | artemisDate }}</td>
                     <td>
-                        <a id="student-exam-session-{{ i }}" [routerLink]="getStudentExamLink(session.studentExam!)">
+                        <a [routerLink]="getStudentExamLink(session.studentExam!)">
                             {{ session.studentExam?.id }}
                         </a>
                     </td>

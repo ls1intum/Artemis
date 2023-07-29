@@ -167,7 +167,7 @@ describe('Plagiarism Cases Service', () => {
         fakeAsync(() => {
             const numberOfResultsExercise = 2;
             service.getNumberOfPlagiarismCasesForExercise(textExercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exercises/1/plagiarism-cases' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exercises/1/plagiarism-cases-count' });
             req.flush(numberOfResultsExercise);
             tick();
         }),

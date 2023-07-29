@@ -139,7 +139,7 @@ export class PlagiarismCasesService {
         } else {
             courseId = exercise.course!.id!;
         }
-        const exerciseId = exercise?.id;
-        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases`);
+        const exerciseId = exercise!.id;
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
     }
 }

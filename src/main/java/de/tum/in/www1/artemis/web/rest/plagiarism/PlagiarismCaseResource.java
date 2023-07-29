@@ -133,12 +133,12 @@ public class PlagiarismCaseResource {
      * @param exerciseId the id of the exercise
      * @return the number of plagiarism cases for the given exercise
      */
-    @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases")
+    @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases-count")
     @EnforceAtLeastInstructor
     public long getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to get number of plagiarism cases for exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         return plagiarismCaseRepository.countByExerciseId(exerciseId);

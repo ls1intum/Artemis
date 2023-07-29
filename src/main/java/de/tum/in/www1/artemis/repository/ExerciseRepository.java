@@ -350,6 +350,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(long courseId, long userId);
 
+    /**
+     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}
+     *
+     * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
+     * @return a list of exercises with potential plagiarism
+     */
     @Query("""
                 SELECT e
                 FROM Exercise e

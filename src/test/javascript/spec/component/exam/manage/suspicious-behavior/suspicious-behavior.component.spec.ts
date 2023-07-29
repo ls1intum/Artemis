@@ -53,8 +53,20 @@ describe('SuspiciousBehaviorComponent', () => {
 
     const suspiciousSessions = {
         examSessions: [
-            { id: 1, userAgent: 'user-agent', ipAddress: '192.168.0.0', suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT] },
-            { id: 2, suspiciousReasons: [SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_IP_ADDRESS], userAgent: 'user-agent', ipAddress: '192.168.0.0' },
+            {
+                id: 1,
+                userAgent: 'user-agent',
+                ipAddress: '192.168.0.0',
+                browserFingerprintHash: 'abc',
+                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+            },
+            {
+                id: 2,
+                suspiciousReasons: [SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                userAgent: 'user-agent',
+                ipAddress: '192.168.0.0',
+                browserFingerprintHash: 'abc',
+            },
         ],
     } as SuspiciousExamSessions;
 
@@ -94,10 +106,13 @@ describe('SuspiciousBehaviorComponent', () => {
 
     it('should navigate to suspicious sessions on click', () => {
         const routerSpy = jest.spyOn(router, 'navigate');
+        component.suspiciousSessions = [suspiciousSessions];
         fixture.detectChanges();
         fixture.debugElement.nativeElement.querySelector('#view-sessions-btn').click();
         expect(routerSpy).toHaveBeenCalledOnce();
-        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 1, 'exams', 2, 'suspicious-behavior', 'suspicious-sessions'], { state: { suspiciousSessions: [] } });
+        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 1, 'exams', 2, 'suspicious-behavior', 'suspicious-sessions'], {
+            state: { suspiciousSessions: [suspiciousSessions] },
+        });
     });
 
     it('should retrieve plagiarism cases/results onInit', () => {

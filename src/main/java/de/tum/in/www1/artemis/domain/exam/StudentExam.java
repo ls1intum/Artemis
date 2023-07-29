@@ -158,6 +158,12 @@ public class StudentExam extends AbstractAuditingEntity {
         this.examSessions = examSessions;
     }
 
+    /**
+     * Adds the given exam session to the student exam
+     *
+     * @param examSession the exam session to add
+     * @return the student exam with the added exam session
+     */
     public StudentExam addExamSession(ExamSession examSession) {
         this.examSessions.add(examSession);
         examSession.setStudentExam(this);

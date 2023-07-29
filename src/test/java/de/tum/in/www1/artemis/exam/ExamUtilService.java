@@ -429,7 +429,7 @@ public class ExamUtilService {
         examSession.setUserAgent(userAgent);
         examSession.setStudentExam(studentExam);
         examSession = examSessionRepository.save(examSession);
-        studentExam.addExamSession(examSession);
+        studentExam = studentExam.addExamSession(examSession);
         studentExamRepository.save(studentExam);
         return examSession;
     }
