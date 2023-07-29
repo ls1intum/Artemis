@@ -83,7 +83,8 @@ public class ExamSessionService {
     public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
-        examSessions.forEach(examSession -> {
+
+        for (var examSession : examSessions) {
             boolean alreadyContained = false;
             for (var suspiciousExamSession : suspiciousExamSessions) {
                 if (suspiciousExamSession.examSessions().contains(examSession)) {
@@ -92,7 +93,7 @@ public class ExamSessionService {
                 }
             }
             if (alreadyContained) {
-                return;
+                continue;
             }
             Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsByExamIdAndExamSession(examId, examSession);
             if (!relatedExamSessions.isEmpty()) {
@@ -100,23 +101,23 @@ public class ExamSessionService {
                 relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
-        });
+        }
 
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
 
     private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
         Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
-        suspiciousExamSessions.forEach(suspiciousExamSession -> {
+        for (var suspiciousExamSession : suspiciousExamSessions) {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
-            suspiciousExamSession.examSessions().forEach(examSession -> {
+            for (var examSession : suspiciousExamSession.examSessions()) {
                 examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getSessionToken(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(),
                         examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(),
                         new StudentExamWithIdAndUserDTO(examSession.getStudentExam().getId(),
                                 new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin()))));
-            });
-            suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
-        });
+                suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
+            }
+        }
         return suspiciousExamSessionsDTO;
     }
 
