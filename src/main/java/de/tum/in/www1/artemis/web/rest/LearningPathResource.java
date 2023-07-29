@@ -22,9 +22,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathRecommendationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @RestController
@@ -169,5 +167,24 @@ public class LearningPathResource {
         else {
             return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.getId(), -1, LearningPathRecommendationDTO.RecommendationType.EXERCISE));
         }
+    }
+
+    /**
+     * GET /courses/:courseId/learning-path-health : Gets the health status of learning paths for the course.
+     *
+     * @param courseId the id of the course for which the health status should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the health status
+     */
+    @GetMapping("/courses/{courseId}/learning-path-health")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
+            throw new AccessForbiddenException("You are not allowed to access the health status of learning paths for this course.");
+        }
+
+        return ResponseEntity.ok(learningPathService.getHealthStatusForCourse(course));
     }
 }

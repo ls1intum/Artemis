@@ -36,9 +36,7 @@ import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathRecommendationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -156,6 +154,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", null, Course.class, HttpStatus.FORBIDDEN);
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
+        request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
@@ -427,5 +426,17 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/recommendation", HttpStatus.OK, LearningPathRecommendationDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the health status. The correctness of the health status is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetHealthStatusForCourse() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.OK, LearningPathHealthDTO.class);
     }
 }

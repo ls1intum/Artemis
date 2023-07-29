@@ -72,4 +72,11 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     default LearningPath findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
         return findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
     }
+
+    @Query("""
+            SELECT COUNT (learningPath)
+            FROM LearningPath learningPath
+            WHERE learningPath.course.id = :#{#courseId}
+            """)
+    Long countByCourseId(@Param("courseId") long courseId);
 }

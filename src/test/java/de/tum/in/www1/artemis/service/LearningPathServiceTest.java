@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.LearningPathUtilService;
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -26,11 +28,16 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "learningpathservice";
 
     @Autowired
     LearningPathService learningPathService;
@@ -56,6 +63,12 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     CompetencyRepository competencyRepository;
 
+    @Autowired
+    UserUtilService userUtilService;
+
+    @Autowired
+    CourseRepository courseRepository;
+
     private Course course;
 
     private void generateAndAssert(NgxLearningPathDTO expected) {
@@ -73,17 +86,17 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @BeforeEach
+    void setAuthorizationForRepositoryRequests() {
+        SecurityUtils.setAuthorizationObject();
+    }
+
+    @BeforeEach
     void setup() {
         course = courseUtilService.createCourse();
     }
 
     @Nested
     class GenerateNgxRepresentationBaseTest {
-
-        @BeforeEach
-        void setAuthorizationForRepositoryRequests() {
-            SecurityUtils.setAuthorizationObject();
-        }
 
         @Test
         void testEmptyLearningPath() {
@@ -162,11 +175,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         Set<NgxLearningPathDTO.Edge> expectedEdges;
 
         Set<NgxLearningPathDTO.Cluster> expectedClusters;
-
-        @BeforeEach
-        void setAuthorizationForRepositoryRequests() {
-            SecurityUtils.setAuthorizationObject();
-        }
 
         @BeforeEach
         void setup() {
@@ -274,11 +282,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Nested
     class RecommendationTest {
 
-        @BeforeEach
-        void setAuthorizationForRepositoryRequests() {
-            SecurityUtils.setAuthorizationObject();
-        }
-
         @Test
         void testGetRecommendationEmpty() {
             competencyUtilService.createCompetency(course);
@@ -295,6 +298,40 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
             learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPath.getId());
             assertThat(learningPathService.getRecommendation(learningPath)).isNotNull();
+        }
+    }
+
+    @Nested
+    class HeathCheckTest {
+
+        @BeforeEach
+        void setup() {
+            userUtilService.addUsers(TEST_PREFIX, 5, 1, 1, 1);
+            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
+                    TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+            course = courseRepository.save(course);
+        }
+
+        @Test
+        void testHealthStatusDisabled() {
+            var healthStatus = learningPathService.getHealthStatusForCourse(course);
+            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.DISABLED);
+        }
+
+        @Test
+        void testHealthStatusOK() {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            var healthStatus = learningPathService.getHealthStatusForCourse(course);
+            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.OK);
+        }
+
+        @Test
+        void testHealthStatusMissing() {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            userUtilService.addStudent(TEST_PREFIX + "tumuser", TEST_PREFIX + "student1337");
+            var healthStatus = learningPathService.getHealthStatusForCourse(course);
+            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.MISSING);
+            assertThat(healthStatus.missingLearningPaths()).isEqualTo(1);
         }
     }
 }

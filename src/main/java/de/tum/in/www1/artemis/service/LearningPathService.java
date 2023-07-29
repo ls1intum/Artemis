@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -409,5 +410,27 @@ public class LearningPathService {
                         competency.getExercises().stream()
                                 .filter(exercise -> !exerciseRepository.findByIdWithStudentParticipationsElseThrow(exercise.getId()).isCompletedFor(learningPath.getUser()))))
                 .findFirst().orElse(null);
+    }
+
+    /**
+     * Gets the health status of learning paths for the given course.
+     *
+     * @param course the course for which the health status should be generated
+     * @return dto containing the health status and additional information (missing learning paths) if needed
+     */
+    public LearningPathHealthDTO getHealthStatusForCourse(Course course) {
+        if (!course.getLearningPathsEnabled()) {
+            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.DISABLED);
+        }
+
+        var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        var numberOfLearningPaths = learningPathRepository.countByCourseId(course.getId());
+
+        if (numberOfStudents.equals(numberOfLearningPaths)) {
+            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.OK);
+        }
+        else {
+            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.MISSING, numberOfStudents - numberOfLearningPaths);
+        }
     }
 }
