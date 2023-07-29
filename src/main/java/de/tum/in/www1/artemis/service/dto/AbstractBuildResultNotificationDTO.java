@@ -54,6 +54,8 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
 
+    public abstract boolean isTestCaseChange();
+
     /**
      * Gets the build jobs that are part of the build result.
      *

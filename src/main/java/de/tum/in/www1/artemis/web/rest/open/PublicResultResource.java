@@ -20,7 +20,9 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
@@ -53,15 +55,18 @@ public class PublicResultResource {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
+
     public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ResultService resultService, TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService) {
+            ProgrammingMessagingService programmingMessagingService, Optional<ContinuousIntegrationResultService> continuousIntegrationResultService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.resultService = resultService;
         this.testwiseCoverageService = testwiseCoverageService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
+        this.continuousIntegrationResultService = continuousIntegrationResultService;
     }
 
     /**
@@ -88,6 +93,8 @@ public class PublicResultResource {
         // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
+
+        var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
 
         // Retrieving the plan key can fail if e.g. the requestBody is malformed. In this case nothing else can be done.
         String planKey;
@@ -120,7 +127,7 @@ public class PublicResultResource {
                 // If the solution participation was updated, also trigger the template participation build.
                 // This method will return without triggering the build if the submission is not of type TEST.
                 var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
-                triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission);
+                triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission, buildResult);
 
                 // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
                 if (Boolean.TRUE.equals(participation.getProgrammingExercise().isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(result.isSuccessful())) {
@@ -146,11 +153,11 @@ public class PublicResultResource {
      * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
      * @param submission            ProgrammingSubmission
      */
-    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
+    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission, AbstractBuildResultNotificationDTO buildResult) {
         log.info("triggerTemplateBuildIfTestCasesChanged programmingExerciseId {}, submission {}, results {}", programmingExerciseId, submission, submission.getResults());
         // We only trigger the template build when the test repository was changed.
         // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
-        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
+        if (!buildResult.isTestCaseChange()) {
             return;
         }
         try {

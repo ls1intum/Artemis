@@ -113,6 +113,15 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return buildLogEntries;
     }
 
+    @Override
+    public boolean isTestCaseChange() {
+        boolean noAssignmentChange = getBuild().vcs().stream().filter(repo -> ASSIGNMENT_REPO_NAME.equals(repo.repositoryName))
+                .anyMatch(repo -> repo.commits == null || repo.commits.isEmpty());
+        boolean testCaseChange = getBuild().vcs().stream().filter(repo -> TEST_REPO_NAME.equals(repo.repositoryName))
+                .anyMatch(repo -> repo.commits != null && !repo.commits.isEmpty());
+        return noAssignmentChange && testCaseChange;
+    }
+
     @JsonIgnore
     @Override
     public List<? extends BuildJobDTOInterface> getBuildJobs() {

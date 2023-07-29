@@ -102,6 +102,12 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
+    public boolean isTestCaseChange() {
+        // TODO LOCALVC_CI: Implement determining if only test cases changed
+        return false;
+    }
+
+    @Override
     public List<? extends BuildJobDTOInterface> getBuildJobs() {
         return jobs;
     }
