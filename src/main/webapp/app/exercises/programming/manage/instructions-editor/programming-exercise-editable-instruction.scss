@@ -34,8 +34,10 @@
 
     &__save {
         position: absolute;
-        top: 1px;
+        top: 0;
         right: 0;
+        padding-top: 0;
+        padding-bottom: 0;
     }
 
     &__status {

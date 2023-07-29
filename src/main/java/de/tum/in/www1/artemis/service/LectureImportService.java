@@ -57,6 +57,7 @@ public class LectureImportService {
         lecture.setDescription(importedLecture.getDescription());
         lecture.setStartDate(importedLecture.getStartDate());
         lecture.setEndDate(importedLecture.getEndDate());
+        lecture.setVisibleDate(importedLecture.getVisibleDate());
 
         lecture = lectureRepository.save(lecture);
         course.addLectures(lecture);

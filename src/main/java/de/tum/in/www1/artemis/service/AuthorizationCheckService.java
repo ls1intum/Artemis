@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -35,6 +35,8 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
+    private final ExamDateService examDateService;
+
     // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
@@ -43,9 +45,10 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.examDateService = examDateService;
 
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
@@ -493,7 +496,7 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
-            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().get());
+            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }
 
@@ -566,6 +569,25 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the passed user is allowed to see the given lecture
+     *
+     * @param lecture the lecture that needs to be checked
+     * @param user    the user whose permissions should be checked
+     */
+    public void checkIsAllowedToSeeLectureElseThrow(@NotNull Lecture lecture, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        if (isAdmin(user)) {
+            return;
+        }
+        Course course = lecture.getCourse();
+        if (isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents())) {
+            return;
+        }
+
+        throw new AccessForbiddenException();
+    }
+
+    /**
      * Determines if a user is allowed to see a lecture unit
      *
      * @param lectureUnit the lectureUnit for which to check permission
@@ -629,25 +651,36 @@ public class AuthorizationCheckService {
      */
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
-                && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
-                && result.getCompletionDate() != null;
+                && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 
     /**
      * Checks if the user is allowed to see the exam result. Returns true if
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
-     * - OR if the exam has not ended
+     * - OR if the exam is a test exam
+     * - OR if the exam has not ended (including individual working time extensions)
      * - OR if the exam has already ended and the results were published
      *
-     * @param exercise - Exercise that the result is requested for
-     * @param user     - User that requests the result
+     * @param exercise             - Exercise that the result is requested for
+     * @param studentParticipation - used to retrieve the individual exam working time
+     * @param user                 - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
-    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
-        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
-                || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
-                        || exercise.getExerciseGroup().getExam().resultsPublished());
+    public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
+        if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
+            return true;
+        }
+        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        if (!examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
+            // students can always see their results during the exam.
+            return true;
+        }
+        if (exam.isTestExam()) {
+            // results for test exams are always visible
+            return true;
+        }
+        return exam.resultsPublished();
     }
 
     /**

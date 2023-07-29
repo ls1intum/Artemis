@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -148,12 +149,13 @@ public class NotificationSettingsService {
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
             TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
             TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST,
-            NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED);
+            NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, CONVERSATION_NEW_MESSAGE,
+            CONVERSATION_NEW_REPLY_MESSAGE);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
     private static final Set<NotificationType> INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT = Set.of(QUIZ_EXERCISE_STARTED, NEW_EXERCISE_POST, NEW_LECTURE_POST,
-            NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST);
+            NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
@@ -169,7 +171,7 @@ public class NotificationSettingsService {
      */
     public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
             NotificationSettingsCommunicationChannel communicationChannel) {
-        List<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Collections.singletonList(user), communicationChannel);
+        Set<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Set.of(user), communicationChannel);
         return !users.isEmpty();
     }
 
@@ -181,12 +183,12 @@ public class NotificationSettingsService {
      * @param communicationChannel which channel to use (e.g. email or webapp or push)
      * @return filtered user list
      */
-    public List<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, List<User> users,
+    public Set<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, Set<User> users,
             NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
         Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
-                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(user -> user.getId()).toList());
+                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
         Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
         return users.stream().filter(user -> {
@@ -202,7 +204,7 @@ public class NotificationSettingsService {
 
             Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
             return !deactivatedTypes.contains(type);
-        }).toList();
+        }).collect(Collectors.toSet());
     }
 
     /**

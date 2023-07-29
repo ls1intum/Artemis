@@ -73,7 +73,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
-        verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
+        verify(websocketMessagingService).sendMessage(websocketTopic(participation), List.of());
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
@@ -82,7 +82,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
         participationTeamWebsocketService.triggerSendOnlineTeamStudents(participation.getId());
-        verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
     }
 
     @Test
@@ -95,7 +95,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor2);
         participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
 
-        verify(messagingTemplate, times(3)).convertAndSend(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(websocketTopic(participation), List.of());
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was removed from destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }

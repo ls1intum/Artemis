@@ -474,14 +474,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
-            // Programming exercises should only have one automatic result
+
+            StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+            Submission submission = participation.getSubmissions().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                // Programming exercises should only have one automatic result
+                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+                assertThat(participation.getSubmissions()).hasSize(1);
+                assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
-                // All other exercises have only one visible result now
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+                // All other exercises have no visible result
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(submission.getResults()).isEmpty();
             }
         }
     }
@@ -699,6 +704,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitle();
     }
 
     @Test
@@ -706,23 +712,35 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetExerciseTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
+        testGetExamExerciseTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExerciseTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
+        // course exercise
         testGetExerciseTitle();
+
+        // exam exercise
+        testGetExamExerciseTitle();
     }
 
     private void testGetExerciseTitle() throws Exception {
         Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
-        exerciseRepository.save(exercise);
+        exercise = exerciseRepository.save(exercise);
 
         final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    private void testGetExamExerciseTitle() throws Exception {
+        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final String expectedTitle = textExercise.getExerciseGroup().getTitle();
+        final String title = request.get("/api/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(expectedTitle);
     }
 
     @Test

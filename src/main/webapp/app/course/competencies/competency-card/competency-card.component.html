@@ -22,6 +22,7 @@
                 <h4 class="m-0">
                     {{ competency.title }}
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+                    <span *ngIf="competency.optional" id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
                 </h4>
                 <p *ngIf="competency.description" class="m-0">{{ competency.description }}</p>
                 <div *ngIf="isPrerequisite && competency.course">
@@ -29,6 +30,12 @@
                     <span class="badge bg-secondary">{{ competency.course.semester }}</span>
                 </div>
                 <ng-content></ng-content>
+            </div>
+            <div *ngIf="!isPrerequisite && competency.softDueDate" class="col-sm col py-2" style="max-width: fit-content">
+                <span style="vertical-align: middle"> {{ 'artemisApp.competency.competencyCard.softDueDate' | artemisTranslate }} </span>
+                <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
+                    {{ competency.softDueDate | artemisTimeAgo }}
+                </span>
             </div>
             <div *ngIf="!isPrerequisite" class="col-sm col text-end py-1 px-2" style="max-width: 95px">
                 <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>

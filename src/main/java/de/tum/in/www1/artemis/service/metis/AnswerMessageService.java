@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -20,8 +19,10 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -47,18 +48,22 @@ public class AnswerMessageService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final ConversationRepository conversationRepository;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
-            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
-            ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
+            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, ConversationRepository conversationRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
@@ -71,25 +76,27 @@ public class AnswerMessageService extends PostingService {
      * @return created answer message that was persisted
      */
     public AnswerPost createAnswerMessage(Long courseId, AnswerPost answerMessage) {
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User author = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
+        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), author.getId());
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
-        var course = preCheckUserAndCourseForMessaging(user, courseId);
+        var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         if (conversation instanceof Channel channel) {
-            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
+            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
         // use post from database rather than user input
         answerMessage.setPost(post);
         // set author to current user
-        answerMessage.setAuthor(user);
+        answerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
@@ -100,7 +107,7 @@ public class AnswerMessageService extends PostingService {
         if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
             usersInvolved.add(post.getAuthor());
         }
-        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, user));
+        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
         return savedAnswerMessage;
     }
 
@@ -184,7 +191,7 @@ public class AnswerMessageService extends PostingService {
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setConversation(conversation);
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
     }
 
     /**

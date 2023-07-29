@@ -802,7 +802,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getStudentGroupName());
@@ -886,7 +886,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/tutors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
@@ -900,7 +900,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/editors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getEditorGroupName());
@@ -914,7 +914,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/instructors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());

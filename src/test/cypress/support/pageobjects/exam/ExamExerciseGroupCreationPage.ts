@@ -74,7 +74,7 @@ export class ExamExerciseGroupCreationPage {
                             undefined,
                             title,
                             undefined,
-                            'de.test',
+                            undefined,
                             undefined,
                             additionalData.progExerciseAssessmentType,
                         )

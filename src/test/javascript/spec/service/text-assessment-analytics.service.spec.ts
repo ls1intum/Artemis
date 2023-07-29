@@ -63,13 +63,13 @@ describe('TextAssessmentAnalytics Service', () => {
 
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
-        service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
+        service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectOne({ url: `api/event-insights/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = false;
-        service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
+        service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectNone({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
     }));
 
@@ -77,7 +77,7 @@ describe('TextAssessmentAnalytics Service', () => {
         service.analyticsEnabled = true;
         location = TestBed.inject(Location);
         const pathSpy = jest.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
-        service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
+        service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectNone({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
         expect(pathSpy).toHaveBeenCalledOnce();
     }));
@@ -98,7 +98,7 @@ describe('TextAssessmentAnalytics Service', () => {
         const errorStub = jest.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError(() => error));
         const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
 
-        service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
+        service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
 
         expect(errorStub).toHaveBeenCalledOnce();
         expect(consoleErrorMock).toHaveBeenCalledOnce();

@@ -71,7 +71,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         SecurityUtils.setAuthorizationObject();
         programmingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).get();
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
         bambooRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -175,7 +175,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
             assertThat(testCase.getWeight()).isEqualTo(1.0);
@@ -185,8 +185,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         }
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
 
-        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }
 
     @Test
@@ -216,12 +216,12 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
 
-        assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
+        assertThat(testCaseRepository.findById(testCase.getId()).orElseThrow().getWeight()).isEqualTo(400);
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
-        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

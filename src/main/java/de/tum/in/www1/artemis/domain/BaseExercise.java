@@ -166,16 +166,6 @@ public abstract class BaseExercise extends DomainObject {
         return mode == ExerciseMode.TEAM;
     }
 
-    /**
-     * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
-     *
-     * @return true if the assessment due date is in the past, otherwise false
-     */
-    @JsonIgnore
-    public boolean isAssessmentDueDateOver() {
-        return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
-    }
-
     @Nullable
     public ZonedDateTime getExampleSolutionPublicationDate() {
         return exampleSolutionPublicationDate;
@@ -252,6 +242,7 @@ public abstract class BaseExercise extends DomainObject {
      *
      * @return the sanitized exercise title
      **/
+    @JsonIgnore
     public String getSanitizedExerciseTitle() {
         if (title == null) {
             return "exercise";

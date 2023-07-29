@@ -237,14 +237,6 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
-    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
-
-    public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
-
-    public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
-
-    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
-
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
@@ -283,6 +275,11 @@ public final class Constants {
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
+
+    /**
+     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     */
+    public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
     private Constants() {
     }

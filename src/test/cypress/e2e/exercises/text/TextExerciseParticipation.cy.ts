@@ -9,7 +9,7 @@ describe('Text exercise participation', () => {
     let course: Course;
     let exercise: TextExercise;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -34,8 +34,8 @@ describe('Text exercise participation', () => {
             textExerciseEditor.shouldShowNumberOfWords(0);
             textExerciseEditor.shouldShowNumberOfCharacters(0);
             textExerciseEditor.typeSubmission(exercise.id!, submission);
-            textExerciseEditor.shouldShowNumberOfWords(100);
-            textExerciseEditor.shouldShowNumberOfCharacters(591);
+            textExerciseEditor.shouldShowNumberOfWords(74);
+            textExerciseEditor.shouldShowNumberOfCharacters(451);
             textExerciseEditor.submit().then((request: Interception) => {
                 expect(request.response!.body.text).to.eq(submission);
                 expect(request.response!.body.submitted).to.be.true;
@@ -44,10 +44,7 @@ describe('Text exercise participation', () => {
         });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

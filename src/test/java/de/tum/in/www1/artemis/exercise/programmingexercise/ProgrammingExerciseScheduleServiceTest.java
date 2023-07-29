@@ -100,12 +100,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
     }
 
     @AfterEach
@@ -137,8 +137,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
-            verify(programmingExerciseParticipationService, timeout(timeoutInMs).times(callCount)).lockStudentParticipation(programmingExercise,
-                    programmingExerciseStudentParticipation);
+            verify(programmingExerciseParticipationService, timeout(timeoutInMs).times(callCount)).lockStudentParticipation(programmingExerciseStudentParticipation);
         }
     }
 
@@ -164,7 +163,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS);
         // Instructor build should have been triggered.
-        verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, timeout(dueDateDelayMS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
@@ -214,7 +213,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryAndParticipationOperation(true, delayMS * 2);
-        verify(programmingTriggerService, timeout(delayMS * 2).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, timeout(delayMS * 2)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
@@ -245,15 +244,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
         programmingExerciseRepository.save(programmingExercise);
 
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise2);
-
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verifyLockStudentRepositoryAndParticipationOperation(true, delayMS);
-        verify(programmingTriggerService, timeout(5000).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, timeout(5000)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
@@ -285,7 +279,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExerciseRepository.save(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -295,7 +289,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
-        verify(programmingExerciseGradingService, timeout(5000).times(1)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
+        verify(programmingExerciseGradingService, timeout(5000)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // make sure to trigger the update only for participants who do not have got an individual due date
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
@@ -309,7 +303,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), dueDateDelayMS));
         programmingExerciseRepository.save(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -317,7 +311,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);   // ok
 
         verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS / 2);
-        verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, timeout(dueDateDelayMS)).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests, but also buildAfterDueDate => do not update results, but use the results created on additional build run
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
@@ -346,7 +340,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS / 2);
         if (hasBuildAndTestAfterDueDate) {
-            verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+            verify(programmingTriggerService, timeout(dueDateDelayMS)).triggerInstructorBuildForExercise(programmingExercise.getId());
         }
         else {
             verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
@@ -366,7 +360,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExerciseRepository.save(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(gitService, timeout(5000).times(1)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+        verify(gitService, timeout(5000)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
     }
 
     @Test
@@ -379,12 +373,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         setupProgrammingExerciseDates(now, delayMS / 2, null);
         var login = TEST_PREFIX + "student3";
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS, login);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         var studentParticipationsRegularDueDate = getParticipationsWithoutIndividualDueDate();
-        assertThat(studentParticipationsRegularDueDate).hasSize(2).allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
+        assertThat(studentParticipationsRegularDueDate).hasSize(2).allMatch(participation -> !participation.getStudent().orElseThrow().getLogin().equals(login));
 
         var studentParticipationIndividualDueDate = getParticipation(login);
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotNull();
@@ -409,11 +403,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         setupProgrammingExerciseDates(now, delayMS / 2, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
 
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);      // ok
@@ -429,7 +423,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // after build and test date: no individual build and test actions are scheduled
         verify(programmingTriggerService, never()).triggerBuildForParticipations(List.of(participationIndividualDueDate));
-        verify(programmingTriggerService, timeout(2 * SCHEDULER_TASK_TRIGGER_DELAY_MS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, timeout(2 * SCHEDULER_TASK_TRIGGER_DELAY_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
@@ -442,14 +436,13 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         setupProgrammingExerciseDates(now, delayMS / 2, delayMS);
         // individual due date after build and test date
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // special scheduling for both lock and build and test
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE),
-                any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
     }
 
     @Test
@@ -462,18 +455,18 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // no build and test date, but after_due_date tests ⇒ score update needed
         setupProgrammingExerciseDates(now, delayMS / 2, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(5000)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
     }
 
@@ -486,18 +479,18 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(5000)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
 
         // remove due date and schedule again
@@ -528,12 +521,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         setupProgrammingExerciseDates(now, delayMS, null);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(5000).times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
 
         // remove individual due date and schedule again
         participationIndividualDueDate.setIndividualDueDate(null);
@@ -544,7 +537,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // called twice: first time when removing potential old schedules before scheduling, second time only cancelling
         verify(scheduleService, timeout(5000).times(2)).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participationIndividualDueDate.getId(),
                 ParticipationLifecycle.DUE);
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
     }
 
     @Test
@@ -557,12 +550,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         setupProgrammingExerciseDates(now, delayMS / 2, null);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(5000).times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
 
         // change individual due date and schedule again
         participationIndividualDueDate.setIndividualDueDate(plusMillis(now, 3 * delayMS));
@@ -584,18 +577,18 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(5000)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
 
         // change exercise due date and schedule again
@@ -622,11 +615,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * delayMS, TEST_PREFIX + "student3");
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(5000).times(1)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(5000)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
     }
 
@@ -646,10 +639,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
-        verify(scheduleService, timeout(5000).times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.RELEASE);
-        verify(scheduleService, timeout(5000).times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
-        verify(scheduleService, timeout(5000).times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
-        verify(scheduleService, timeout(5000).times(1)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
+        verify(scheduleService, timeout(5000)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.RELEASE);
+        verify(scheduleService, timeout(5000)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
+        verify(scheduleService, timeout(5000)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        verify(scheduleService, timeout(5000)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
     }
 
     @Test
@@ -669,7 +662,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         instanceMessageReceiveService.processExamWorkingTimeChangeDuringConduction(studentExam.getId());
 
-        verify(versionControlService, timeout(200).times(1)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
+        verify(versionControlService, timeout(200)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
                 participation.getStudents());
     }
 
@@ -712,7 +705,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     private StudentParticipation getParticipation(String login) {
-        return programmingExercise.getStudentParticipations().stream().filter(participation -> login.equals(participation.getStudent().get().getLogin())).findFirst().get();
+        return programmingExercise.getStudentParticipations().stream().filter(participation -> login.equals(participation.getStudent().orElseThrow().getLogin())).findFirst()
+                .orElseThrow();
     }
 
     private List<StudentParticipation> getParticipationsWithoutIndividualDueDate() {

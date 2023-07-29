@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -324,17 +325,9 @@ public class ExamUtilService {
     }
 
     public Channel addExamChannel(Exam exam, String channelName) {
-        Channel channel = new Channel();
-        channel.setCourse(exam.getCourse());
-        channel.setName(channelName);
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+        Channel channel = ConversationFactory.generateChannel(exam.getCourse(), channelName);
         channel.setExam(exam);
-        channel = conversationRepository.save(channel);
-        exam.setChannelName(channelName);
-        return channel;
+        return conversationRepository.save(channel);
     }
 
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
@@ -377,7 +370,7 @@ public class ExamUtilService {
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
         for (int i = 0; i <= 4; i++) {
-            ExamFactory.generateExerciseGroup(true, exam);
+            ExamFactory.generateExerciseGroupWithTitle(true, exam, "Group " + i);
         }
         exam.setNumberOfExercisesInExam(5);
         exam.setExamMaxPoints(5 * 5);
@@ -430,6 +423,10 @@ public class ExamUtilService {
         return addStudentExamWithUser(exam, studentUser, 0);
     }
 
+    public StudentExam addStudentExamForTestExam(Exam exam, String userLogin) {
+        return addStudentExamForTestExam(exam, userUtilService.getUserByLogin(userLogin));
+    }
+
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);
@@ -469,8 +466,8 @@ public class ExamUtilService {
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
 
-        QuizExercise quizExercise1 = quizExerciseUtilService.createQuizForExam(exerciseGroup1);
-        QuizExercise quizExercise2 = quizExerciseUtilService.createQuizForExam(exerciseGroup1);
+        QuizExercise quizExercise1 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
+        QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
@@ -555,7 +552,7 @@ public class ExamUtilService {
             exam = examRepository.save(exam);
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
-            QuizExercise quizExercise = quizExerciseUtilService.createQuizForExam(exerciseGroup3);
+            QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
             exerciseRepo.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }
@@ -572,15 +569,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
@@ -598,15 +595,15 @@ public class ExamUtilService {
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
-        Course courseDB = optionalCourse.get();
+        Course courseDB = optionalCourse.orElseThrow();
 
         Optional<Exam> optionalExam = examRepository.findById(exam.getId());
         assertThat(optionalCourse).as("exam can be retrieved").isPresent();
-        Exam examDB = optionalExam.get();
+        Exam examDB = optionalExam.orElseThrow();
 
         Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
         assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
-        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.orElseThrow();
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());

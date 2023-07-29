@@ -8,7 +8,7 @@
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.cit.tum.de/dev/guidelines/language-guidelines/).
-- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/guidelines/development-process/#naming-conventions-for-github-pull-requests).
+- [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.cit.tum.de/dev/development-process/#naming-conventions-for-github-pull-requests).
 #### Server
 - [ ] **Important**: I implemented the changes with a very good performance and prevented too many (unnecessary) database calls.
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/).
@@ -68,8 +68,8 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
-- [ ] I confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
-- [ ] I confirm that the server changes (in particular related to database calls) are implemented with a very good performance
+- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
+- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance
 #### Code Review
 - [ ] Code Review 1
 - [ ] Code Review 2

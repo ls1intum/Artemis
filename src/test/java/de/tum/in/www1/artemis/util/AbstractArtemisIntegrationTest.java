@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
@@ -87,9 +86,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
-    protected SimpMessageSendingOperations messagingTemplate;
-
-    @SpyBean
     protected ProgrammingTriggerService programmingTriggerService;
 
     @SpyBean
@@ -133,7 +129,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
-    @AfterEach()
+    @AfterEach
     void stopQuizScheduler() {
         quizScheduleService.stopSchedule();
         quizScheduleService.clearAllQuizData();
@@ -146,8 +142,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     protected void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
-                websocketMessagingService, messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService,
-                programmingExerciseParticipationService, urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
+                websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
+                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
     }
 
     @Override

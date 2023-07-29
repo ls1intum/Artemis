@@ -46,6 +46,8 @@ $input-group-addon-color: $gray-500;
 $input-group-addon-bg: $gray-700;
 $form-check-input-border: none;
 $form-file-button-color: $white;
+$form-file-button-bg: $gray-600;
+$form-file-button-hover-bg: #666;
 
 $dropdown-bg: $gray-900;
 $dropdown-border-color: $gray-700;
@@ -148,6 +150,11 @@ $navbar-light-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.
 $tooltip-color: $white;
 
 // === END BOOTSTRAP ===
+
+// Navigation Tab Bar
+$tab-bar-color: $gray-500;
+$tab-bar-color-hover: $gray-300;
+$tab-bar-color-active: lighten($primary, 20);
 
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
@@ -502,10 +509,6 @@ $exam-participation-footer-connected-background: #114d4f;
 $exam-participation-footer-disconnected-background: #6c4e05;
 $exam-text-exam-summary-background: transparent;
 
-// Exam Monitoring
-$exam-monitoring-card-border-color: $border-color;
-$exam-monitoring-card-footer-background-color: rgba($white, 0.02);
-
 // Assessment
 $textblock-assessment-span-hover-background: $gray-700;
 $textblock-assessment-text-feedback-positive-color: $success;
@@ -519,15 +522,7 @@ $textblock-assessment-text-feedback-neutral-background: $gray-800;
 $textblock-assessment-text-feedback-neutral-active-decoration: $gray-100;
 $textblock-assessment-text-feedback-highlighted-color: $gray-100;
 $textblock-assessment-text-feedback-highlighted-background: darkblue;
-$textblock-assessment-text-feedback-conflicting-color: $gray-100;
-$textblock-assessment-text-feedback-conflicting-background: $warning;
-$textblock-assessment-text-feedback-conflicting-active-decoration: $gray-100;
 $textblock-assessment-textblock-feedback-editor-active-border: $gray-600;
-$textblock-feedback-editor-feedback-positive-color: #3579b2;
-$textblock-feedback-editor-feedback-positive-background-color: $gray-800;
-$textblock-feedback-editor-feedback-neutral-color: $gray-100;
-$textblock-feedback-editor-feedback-neutral-background-color: $gray-900;
-$textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 $textblock-feedback-editor-dropdown-hover: $gray-700;
 $manual-text-selection-span-hover-background-color: $gray-700;
 

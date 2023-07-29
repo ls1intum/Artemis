@@ -7,8 +7,6 @@
             [validateDatesFunction]="onDatesValuesChanged"
             [lecture]="lecture"
             [isSaving]="isSaving"
-            [startDate]="startDate"
-            [endDate]="endDate"
         ></jhi-lecture-update-wizard>
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isShowingWizardMode">
             <div class="d-flex">
@@ -35,7 +33,8 @@
                     [(title)]="lecture.title"
                     [(channelName)]="lecture.channelName"
                     channelNamePrefix="lecture-"
-                    [hideChannelName]="this.lecture.id !== undefined && this.lecture.channelName === undefined"
+                    [hideChannelName]="lecture.id !== undefined && lecture.channelName === undefined"
+                    [initChannelName]="lecture.id === undefined"
                 ></jhi-title-channel-name>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
@@ -48,6 +47,15 @@
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
+                            [(ngModel)]="lecture.visibleDate"
+                            (valueChange)="onDatesValuesChanged()"
+                            name="visibleDate"
+                            id="visible-date"
+                        ></jhi-date-time-picker>
+                    </div>
+                    <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"

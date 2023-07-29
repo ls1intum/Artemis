@@ -14,10 +14,10 @@ const examData = {
     endDate: dayjs().add(2, 'day'),
     numberOfExercises: 4,
     maxPoints: 40,
-    startText: 'Cypress exam start text',
-    endText: 'Cypress exam end text',
-    confirmationStartText: 'Cypress exam confirmation start text',
-    confirmationEndText: 'Cypress exam confirmation end text',
+    startText: 'Exam start text',
+    endText: 'Exam end text',
+    confirmationStartText: 'Exam confirmation start text',
+    confirmationEndText: 'Exam confirmation end text',
 };
 
 const editedExamData = {
@@ -27,10 +27,10 @@ const editedExamData = {
     endDate: dayjs().add(4, 'day'),
     numberOfExercises: 3,
     maxPoints: 30,
-    startText: 'Edited cypress exam start text',
-    endText: 'Edited cypress exam end text',
-    confirmationStartText: 'Edited cypress exam confirmation start text',
-    confirmationEndText: 'Edited cypress exam confirmation end text',
+    startText: 'Edited exam start text',
+    endText: 'Edited exam end text',
+    confirmationStartText: 'Edited exam confirmation start text',
+    confirmationEndText: 'Edited exam confirmation end text',
 };
 
 const dateFormat = 'MMM D, YYYY HH:mm';
@@ -39,7 +39,7 @@ describe('Exam creation/deletion', () => {
     let course: Course;
     let examId: number;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -52,7 +52,7 @@ describe('Exam creation/deletion', () => {
 
     it('Creates an exam', () => {
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
+        courseManagement.openExamsOfCourse(course.id!);
 
         examManagement.createNewExam();
         examCreation.setTitle(examData.title);
@@ -106,7 +106,7 @@ describe('Exam creation/deletion', () => {
 
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExam(examId);
             examDetails.deleteExam(examData.title);
             examManagement.getExamSelector(examData.title).should('not.exist');
@@ -124,10 +124,10 @@ describe('Exam creation/deletion', () => {
 
         it('Edits an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExam(examId);
-            cy.get('#exam-detail-title').contains(examData.title);
-            cy.get('#editButton').click();
+            examManagement.getExamTitle().contains(examData.title);
+            examManagement.clickEdit();
 
             examCreation.setTitle(editedExamData.title);
             examCreation.setVisibleDate(editedExamData.visibleDate);
@@ -170,9 +170,7 @@ describe('Exam creation/deletion', () => {
         });
     });
 
-    after(() => {
-        if (course) {
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });

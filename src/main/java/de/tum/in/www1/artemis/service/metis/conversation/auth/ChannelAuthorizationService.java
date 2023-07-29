@@ -165,7 +165,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public boolean hasChannelModerationRights(@NotNull Long channelId, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
-        return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), userToCheck);
+        return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.orElseThrow().getCourse(), userToCheck);
     }
 
     /**
@@ -180,7 +180,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         var userToCheck = getUserIfNecessary(user);
         var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
         var channelFromDb = channelRepository.findById(channel.getId());
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.get().getCourse(), userToCheck);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.orElseThrow().getCourse(), userToCheck);
         var isChannelModerator = isChannelModerator(channel.getId(), userToCheck.getId());
 
         var isPrivateChannel = Boolean.FALSE.equals(channel.getIsPublic());
