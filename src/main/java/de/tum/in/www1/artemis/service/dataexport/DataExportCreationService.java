@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.dataexport;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -56,10 +58,12 @@ public class DataExportCreationService {
 
     private final DataExportCommunicationDataService dataExportCommunicationDataService;
 
+    private final ResourceLoaderService resourceLoaderService;
+
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
             SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
             DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
-            DataExportCommunicationDataService dataExportCommunicationDataService) {
+            DataExportCommunicationDataService dataExportCommunicationDataService, ResourceLoaderService resourceLoaderService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
         this.singleUserNotificationService = singleUserNotificationService;
@@ -70,6 +74,7 @@ public class DataExportCreationService {
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
         this.dataExportsPath = dataExportsPath;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
@@ -78,7 +83,7 @@ public class DataExportCreationService {
      *
      * @param dataExport the data export to be created
      **/
-    private DataExport createDataExportWithContent(DataExport dataExport) throws IOException {
+    private DataExport createDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
@@ -87,9 +92,16 @@ public class DataExportCreationService {
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
+        addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
         fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
         return finishDataExportCreation(dataExport, dataExportPath);
+    }
+
+    private void addReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
+        var readmeInDataExportPath = workingDirectory.resolve("README.md");
+        var readmeTemplatePath = Path.of("templates", "dataexport", "README.md");
+        Files.copy(resourceLoaderService.getResourceFilePath(readmeTemplatePath), readmeInDataExportPath);
     }
 
     /**
