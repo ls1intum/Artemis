@@ -1670,6 +1670,8 @@ class ProgrammingExerciseIntegrationTestService {
         userUtilService.changeUser(userPrefix + "instructor1");
 
         await().untilAsserted(() -> {
+            // login again since this is executed on another thread
+            userUtilService.changeUser(userPrefix + "instructor1");
             var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
             assertThat(notifications).as("Instructor get notified that unlock operations were successful")
                     .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
