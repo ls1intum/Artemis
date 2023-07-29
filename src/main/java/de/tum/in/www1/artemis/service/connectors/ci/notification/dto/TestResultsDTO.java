@@ -175,11 +175,6 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public boolean isTestCaseChange() {
-        return false;
-    }
-
-    @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(getLogs());
         return filterBuildLogs(buildLogs);

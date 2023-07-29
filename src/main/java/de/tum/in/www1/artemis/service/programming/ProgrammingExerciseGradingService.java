@@ -123,27 +123,13 @@ public class ProgrammingExerciseGradingService {
      */
     @Nullable
     public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
-        var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
-        return processNewProgrammingExerciseResult(participation, buildResult);
-    }
-
-    /**
-     * Uses the given requestBody to extract the relevant information from it.
-     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
-     * extracted from the feedbacks & the result is updated with the information from the test cases.
-     *
-     * @param participation the participation for which the build was finished
-     * @param buildResult   DTO containing the build result and its feedback items
-     * @return result after compilation (can only be null in case an error occurs)
-     */
-    @Nullable
-    public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull AbstractBuildResultNotificationDTO buildResult) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
+            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            Result newResult = continuousIntegrationResultService.orElseThrow().createResultFromBuildResult(buildResult, participation);
+            Result newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
