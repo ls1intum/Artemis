@@ -74,6 +74,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -1071,12 +1072,12 @@ public class ProgrammingExerciseTestService {
 
         startProgrammingExercise_correctInitializationState(INDIVIDUAL);
 
-        final VersionControlService.RepositoryPermissions permissions;
+        final VersionControlRepositoryPermission permissions;
         if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
-            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+            permissions = VersionControlRepositoryPermission.REPO_WRITE;
         }
         else {
-            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+            permissions = VersionControlRepositoryPermission.REPO_READ;
         }
 
         final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
