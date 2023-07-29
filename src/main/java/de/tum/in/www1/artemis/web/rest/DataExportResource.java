@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -12,8 +11,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -91,13 +88,19 @@ public class DataExportResource {
      */
     @GetMapping("data-exports/{dataExportId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
-        DataExport dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
-        currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        checkDataExportCanBeDownloaded(dataExport);
-        Resource resource = dataExportService.downloadDataExport(dataExport);
-        File finalZipFile = Path.of(dataExport.getFilePath()).toFile();
-        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+    public Resource downloadDataExport(DataExport dataExport) {
+        dataExport.setDownloadDate(ZonedDateTime.now());
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport = dataExportRepository.save(dataExport);
+        var filePath = Path.of(dataExport.getFilePath());
+        var finalZipFile = filePath.toFile();
+        try {
+            return new InputStreamResource(new FileInputStream(finalZipFile));
+        }
+        catch (FileNotFoundException e) {
+            log.error("Could not find data export file", e);
+            throw new InternalServerErrorException("Could not find data export file");
+        }
     }
 
     private void checkDataExportCanBeDownloaded(DataExport dataExport) {
