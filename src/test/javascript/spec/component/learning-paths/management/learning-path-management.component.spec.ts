@@ -106,16 +106,14 @@ describe('LearningPathManagementComponent', () => {
     }));
 
     it('should enable learning paths and load data', fakeAsync(() => {
-        const disabledCourse = Object.assign({}, course);
-        disabledCourse.learningPathsEnabled = false;
-        findCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: disabledCourse }))).mockReturnValueOnce(course);
+        getCourseLearningPathsEnabledStub.mockReturnValueOnce(of(new HttpResponse({ body: false }))).mockReturnValueOnce(of(new HttpResponse({ body: true })));
         fixture.detectChanges();
         comp.ngOnInit();
         comp.enableLearningPaths();
         expect(enableLearningPathsStub).toHaveBeenCalledOnce();
-        expect(enableLearningPathsStub).toHaveBeenCalledWith(course.id);
-        expect(findCourseStub).toHaveBeenCalledTimes(3);
-        expect(comp.course.learningPathsEnabled).toBeTruthy();
+        expect(enableLearningPathsStub).toHaveBeenCalledWith(courseId);
+        expect(getCourseLearningPathsEnabledStub).toHaveBeenCalledTimes(3);
+        expect(comp.learningPathsEnabled).toBeTruthy();
     }));
 
     it('should set content to paging result on sort', fakeAsync(() => {
