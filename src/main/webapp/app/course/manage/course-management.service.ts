@@ -134,16 +134,6 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
-    /**
-     * finds a course with the given id and eagerly loaded learning pahts
-     * @param courseId the id of the course to be found
-     */
-    findWithLearningPaths(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/with-learning-paths`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
-    }
-
     // TODO: separate course overview and course management REST API calls in a better way
     /**
      * finds all courses using a GET request
@@ -694,5 +684,13 @@ export class CourseManagementService {
         course?.lectures?.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title));
         course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
         course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
+    }
+
+    /**
+     * retrieves if the course with the given id has enabled learning paths
+     * @param courseId the id of the course
+     */
+    getCourseLearningPathsEnabled(courseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/learning-paths-enabled`, { observe: 'response' });
     }
 }

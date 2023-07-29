@@ -12,7 +12,6 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
@@ -21,7 +20,7 @@ describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
     let comp: LearningPathManagementComponent;
     let courseManagementService: CourseManagementService;
-    let findCourseStub: jest.SpyInstance;
+    let getCourseLearningPathsEnabledStub: jest.SpyInstance;
     let pagingService: LearningPathPagingService;
     let sortService: SortService;
     let searchForLearningPathsStub: jest.SpyInstance;
@@ -29,9 +28,9 @@ describe('LearningPathManagementComponent', () => {
     let searchResult: SearchResult<LearningPath>;
     let state: PageableSearch;
     let learningPath: LearningPath;
-    let course: Course;
     let learningPathService: LearningPathService;
     let enableLearningPathsStub: jest.SpyInstance;
+    let courseId: number;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(NgbPagination)],
@@ -55,7 +54,7 @@ describe('LearningPathManagementComponent', () => {
                 fixture = TestBed.createComponent(LearningPathManagementComponent);
                 comp = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                findCourseStub = jest.spyOn(courseManagementService, 'findWithLearningPaths');
+                getCourseLearningPathsEnabledStub = jest.spyOn(courseManagementService, 'getCourseLearningPathsEnabled');
                 pagingService = TestBed.inject(LearningPathPagingService);
                 sortService = TestBed.inject(SortService);
                 searchForLearningPathsStub = jest.spyOn(pagingService, 'searchForLearningPaths');
@@ -72,11 +71,9 @@ describe('LearningPathManagementComponent', () => {
     beforeEach(() => {
         fixture.detectChanges();
         learningPath = new LearningPath();
-        learningPath.id = 1;
-        course = new Course();
-        course.id = 1;
-        course.learningPathsEnabled = true;
-        findCourseStub.mockReturnValue(of(new HttpResponse({ body: course })));
+        learningPath.id = 2;
+        courseId = 1;
+        getCourseLearningPathsEnabledStub.mockReturnValue(of(new HttpResponse({ body: true })));
         searchResult = { numberOfPages: 3, resultsOnPage: [learningPath] };
         state = {
             page: 1,
@@ -99,12 +96,12 @@ describe('LearningPathManagementComponent', () => {
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
 
-    it('should load course on init', fakeAsync(() => {
+    it('should load learning paths enabled on init', fakeAsync(() => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(findCourseStub).toHaveBeenCalledWith(1);
-            expect(comp.course).toEqual(course);
+            expect(getCourseLearningPathsEnabledStub).toHaveBeenCalledWith(courseId);
+            expect(comp.learningPathsEnabled).toBeTrue();
         });
     }));
 
@@ -126,7 +123,7 @@ describe('LearningPathManagementComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = false;
             tick(10);
-            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.DESCENDING }, 1);
+            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.DESCENDING }, courseId);
             expect(comp.listSorting).toBeFalse();
         });
     }));
@@ -136,7 +133,7 @@ describe('LearningPathManagementComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, page: 5 }, course.id);
+            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, page: 5 }, courseId);
             expect(comp.page).toBe(5);
         });
     }));
@@ -149,7 +146,7 @@ describe('LearningPathManagementComponent', () => {
             tick(10);
             expect(searchForLearningPathsStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, course.id);
+            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, courseId);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -159,7 +156,7 @@ describe('LearningPathManagementComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.USER_LOGIN;
             tick(10);
-            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.USER_LOGIN }, course.id);
+            expect(searchForLearningPathsStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.USER_LOGIN }, courseId);
             expect(comp.sortedColumn).toEqual(TableColumn.USER_LOGIN);
         });
     }));

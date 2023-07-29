@@ -205,8 +205,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         @Test
         void testSingleMatches() {
             competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_START, -1, ""));
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_END, -1, ""));
+            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_START, null, ""));
+            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathService.getInEdgeId(competency1.getId()), LearningPathService.getMatchingClusterStartNodeId(0),
                     LearningPathService.getCompetencyStartNodeId(competency1.getId())));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathService.getOutEdgeId(competency1.getId()), LearningPathService.getCompetencyEndNodeId(competency1.getId()),
@@ -226,8 +226,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
             competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
             competencyUtilService.addRelation(competency2, CompetencyRelation.RelationType.MATCHES, competency3);
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_START, -1, ""));
-            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_END, -1, ""));
+            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterStartNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_START, null, ""));
+            expectedNodes.add(new NgxLearningPathDTO.Node(LearningPathService.getMatchingClusterEndNodeId(0), NgxLearningPathDTO.NodeType.COMPETENCY_END, null, ""));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathService.getInEdgeId(competency1.getId()), LearningPathService.getMatchingClusterStartNodeId(0),
                     LearningPathService.getCompetencyStartNodeId(competency1.getId())));
             expectedEdges.add(new NgxLearningPathDTO.Edge(LearningPathService.getOutEdgeId(competency1.getId()), LearningPathService.getCompetencyEndNodeId(competency1.getId()),

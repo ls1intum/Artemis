@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
 import { LearningPathRecommendationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs/operators';
 

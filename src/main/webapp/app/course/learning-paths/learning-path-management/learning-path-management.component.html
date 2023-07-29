@@ -6,7 +6,7 @@
 
 <div *ngIf="!isLoading">
     <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
-    <div *ngIf="!course?.learningPathsEnabled">
+    <div *ngIf="!learningPathsEnabled">
         <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
         <div [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate">
             <button
@@ -21,7 +21,7 @@
             </button>
         </div>
     </div>
-    <div *ngIf="course?.learningPathsEnabled">
+    <div *ngIf="learningPathsEnabled">
         <div class="form-group form-inline">
             <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search">Search for Learning Path:</span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningPath" type="text" />
