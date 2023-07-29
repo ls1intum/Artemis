@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
+import static java.util.Comparator.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -240,7 +241,8 @@ public class ProgrammingExerciseResultTestService {
         assertThat(submissions).hasSize(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
-        var scaFeedbackComparator = Comparator.comparing(Feedback::getDetailText).thenComparing(Feedback::getText).thenComparing(Feedback::getReference);
+        var scaFeedbackComparator = comparing(Feedback::getDetailText, nullsFirst(naturalOrder())).thenComparing(Feedback::getText, nullsFirst(naturalOrder()))
+                .thenComparing(Feedback::getReference, nullsFirst(naturalOrder()));
 
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
