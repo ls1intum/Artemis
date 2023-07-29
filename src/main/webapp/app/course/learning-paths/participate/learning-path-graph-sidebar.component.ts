@@ -25,12 +25,12 @@ export class LearningPathGraphSidebarComponent implements AfterViewInit {
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
 
     ngAfterViewInit(): void {
-        // allows the conversation sidebar to be resized towards the right-hand side
+        // allows the sidebar to be resized towards the right-hand side
         interact('.expanded-graph')
             .resizable({
                 edges: { left: false, right: '.draggable-right', bottom: false, top: false },
                 modifiers: [
-                    // Set maximum width of the conversation sidebar
+                    // Set maximum width of the sidebar
                     interact.modifiers!.restrictSize({
                         min: { width: 230, height: 0 },
                         max: { width: 500, height: 4000 },
