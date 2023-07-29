@@ -60,7 +60,7 @@ public class GitlabRequestMockProvider {
     private URL gitlabServerUrl;
 
     @Value("${artemis.version-control.health-api-token}")
-    private String ciHealthToken;
+    private String healthToken;
 
     private final RestTemplate restTemplate;
 
@@ -342,7 +342,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
-        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").queryParam("token", ciHealthToken).build().toUri();
+        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").queryParam("token", healthToken).build().toUri();
         final var response = new ObjectMapper().writeValueAsString(Map.of("status", healthStatus));
         mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
     }
