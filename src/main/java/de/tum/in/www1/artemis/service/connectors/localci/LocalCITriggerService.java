@@ -58,7 +58,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
             programmingMessagingService.notifyUserAboutNewResult(result, participation);
         });
     }

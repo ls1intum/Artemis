@@ -79,7 +79,7 @@ public class PublicResultResource {
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
     public ResponseEntity<?> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
-        log.debug("Received result notify (NEW)");
+        log.info("Received result notify (NEW): {}", requestBody);
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             throw new AccessForbiddenException(); // Only allow endpoint when using correct token
@@ -111,11 +111,10 @@ public class PublicResultResource {
         }
 
         // Process the new result from the build result.
-        Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
-        if (optResult.isPresent()) {
-            Result result = optResult.get();
+        if (result != null) {
 
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 // If the solution participation was updated, also trigger the template participation build.
@@ -148,6 +147,7 @@ public class PublicResultResource {
      * @param submission            ProgrammingSubmission
      */
     private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
+        log.info("triggerTemplateBuildIfTestCasesChanged programmingExerciseId {}, submission {}, results {}", programmingExerciseId, submission, submission.getResults());
         // We only trigger the template build when the test repository was changed.
         // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
         if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
