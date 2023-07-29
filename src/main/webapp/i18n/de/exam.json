@@ -615,9 +615,9 @@
                 "title": "Verdächtiges Verhalten",
                 "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
                 "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
-                "suspiciousSessionCriterion1": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
-                "suspiciousSessionCriterion2": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
-                "suspiciousSessionCriterion3": "Es gibt mehrere Sitzungen mit demselben User-Agent, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionIpAddress": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionBrowserFingerprint": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionUserAgent": "Es gibt mehrere Sitzungen mit demselben User-Agent, die nicht derselben Studierendenklausur zugeordnet sind",
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",

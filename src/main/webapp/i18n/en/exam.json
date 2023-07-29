@@ -615,11 +615,11 @@
             },
             "suspiciousBehavior": {
                 "title": "Suspicious Behavior",
-                "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
+                "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
                 "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
-                "suspiciousSessionCriterion1": "Multiple sessions with the same IP address belong to a different students' exams",
-                "suspiciousSessionCriterion2": "Multiple sessions with the same browser fingerprint belong to different students' exams",
-                "suspiciousSessionCriterion3": "Multiple sessions with the same user agent belong to a different students' exams",
+                "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
+                "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessionCriterionUserAgent": "Multiple sessions with the same user agent belong to different students' exams",
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
