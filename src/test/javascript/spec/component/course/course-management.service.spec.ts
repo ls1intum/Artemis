@@ -26,7 +26,6 @@ import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Result } from 'app/entities/result.model';
-import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -201,18 +200,6 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
-        tick();
-    }));
-
-    it('should find course with learning paths', fakeAsync(() => {
-        course.learningPathsEnabled = true;
-        course.learningPaths = [new LearningPath()];
-        returnedFromService = { ...course };
-        courseManagementService
-            .findWithLearningPaths(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-learning-paths`, returnedFromService, course);
         tick();
     }));
 

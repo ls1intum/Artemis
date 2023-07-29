@@ -131,15 +131,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesById(long courseId);
 
-    @Query("""
-            SELECT c
-            FROM Course c
-                LEFT JOIN FETCH c.learningPaths lp
-                LEFT JOIN FETCH lp.user
-            WHERE c.id = :courseId
-            """)
-    Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
     Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
 
@@ -405,11 +396,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
-    @NotNull
-    default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
-        return findWithEagerLearningPathsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
