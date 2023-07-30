@@ -61,8 +61,8 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String ciToken;
 
-    @Value("${artemis.version-control.health-api-token}")
-    private Optional<String> ciHealthToken;
+    @Value("${artemis.version-control.health-api-token:#{null}}")
+    private Optional<String> healthToken;
 
     private final UserRepository userRepository;
 
@@ -510,7 +510,7 @@ public class GitLabService extends AbstractVersionControlService {
     public ConnectorHealth health() {
         try {
             UriComponentsBuilder builder = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString());
-            ciHealthToken.ifPresent(token -> builder.queryParam("token", token));
+            healthToken.ifPresent(token -> builder.queryParam("token", token));
             URI uri = builder.build().toUri();
 
             final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);

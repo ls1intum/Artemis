@@ -35,6 +35,14 @@ public class ModelingExerciseFactory {
         return modelingExercise;
     }
 
+    public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup, String title) {
+        var modelingExercise = (ModelingExercise) ExerciseFactory.populateExerciseForExam(new ModelingExercise(), exerciseGroup, title);
+        modelingExercise.setDiagramType(diagramType);
+        modelingExercise.setExampleSolutionModel("This is my example solution model");
+        modelingExercise.setExampleSolutionExplanation("This is my example solution model");
+        return modelingExercise;
+    }
+
     public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
         ApollonDiagram apollonDiagram = new ApollonDiagram();
         apollonDiagram.setDiagramType(diagramType);
