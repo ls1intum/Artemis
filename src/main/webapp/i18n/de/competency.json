@@ -172,8 +172,8 @@
                 },
                 "progressNav": {
                     "header": "Lernpfad",
-                    "refresh": "Refresh",
-                    "center": "Center view"
+                    "refresh": "Aktualisieren",
+                    "center": "Zentrieren"
                 }
             },
             "sideBar": {

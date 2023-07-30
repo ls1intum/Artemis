@@ -78,5 +78,5 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             FROM LearningPath learningPath
             WHERE learningPath.course.id = :#{#courseId}
             """)
-    Long countByCourseId(@Param("courseId") long courseId);
+    long countByCourseId(@Param("courseId") long courseId);
 }

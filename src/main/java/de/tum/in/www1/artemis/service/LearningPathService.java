@@ -435,10 +435,10 @@ public class LearningPathService {
             return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.DISABLED);
         }
 
-        var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        var numberOfLearningPaths = learningPathRepository.countByCourseId(course.getId());
+        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        long numberOfLearningPaths = learningPathRepository.countByCourseId(course.getId());
 
-        if (numberOfStudents.equals(numberOfLearningPaths)) {
+        if (numberOfStudents == numberOfLearningPaths) {
             return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.OK);
         }
         else {
