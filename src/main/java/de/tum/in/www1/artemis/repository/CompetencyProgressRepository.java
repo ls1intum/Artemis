@@ -56,7 +56,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE cp.learningGoal.id IN :competencyIds
                 AND cp.user.id = :userId
             """)
-    List<CompetencyProgress> findAllByCompetencyIdsAndUserId(@Param("competencyIds") Set<Long> competencyIds, @Param("userId") Long userId);
+    Set<CompetencyProgress> findAllByCompetencyIdsAndUserId(@Param("competencyIds") Set<Long> competencyIds, @Param("userId") long userId);
 
     @Query("""
             SELECT AVG(cp.confidence)

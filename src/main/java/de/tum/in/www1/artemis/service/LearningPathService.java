@@ -28,6 +28,17 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearch
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+/**
+ * Service Implementation for managing Learning Paths.
+ * <p>
+ * This includes
+ * <ul>
+ * <li>the generation of learning paths in courses,</li>
+ * <li>performing pageable searches for learning paths,</li>
+ * <li>generation of the Ngx representation of learning paths,</li>
+ * <li>and the computation of recommended learning objects for a specific learning path.</li>
+ * </ul>
+ */
 @Service
 public class LearningPathService {
 
@@ -402,14 +413,15 @@ public class LearningPathService {
      * @param learningPath the learning path for which the recommendation should be computed
      * @return recommended learning object
      */
-    public LearningObject getRecommendation(@NotNull LearningPath learningPath) {
-        return learningPath.getCompetencies().stream()
+    public Optional<LearningObject> getRecommendation(@NotNull LearningPath learningPath) {
+        LearningObject learningObject = learningPath.getCompetencies().stream()
                 .flatMap(competency -> Stream.concat(
                         competency.getLectureUnits().stream()
                                 .filter(lectureUnit -> !lectureUnitRepository.findWithEagerCompletedUsersByIdElseThrow(lectureUnit.getId()).isCompletedFor(learningPath.getUser())),
                         competency.getExercises().stream()
                                 .filter(exercise -> !exerciseRepository.findByIdWithStudentParticipationsElseThrow(exercise.getId()).isCompletedFor(learningPath.getUser()))))
                 .findFirst().orElse(null);
+        return Optional.ofNullable(learningObject);
     }
 
     /**

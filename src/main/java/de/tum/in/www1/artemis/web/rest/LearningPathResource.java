@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -175,16 +174,16 @@ public class LearningPathResource {
         if (!user.getId().equals(learningPath.getUser().getId())) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
-        LearningObject recommendation = learningPathService.getRecommendation(learningPath);
-        if (recommendation == null) {
+        final var recommendation = learningPathService.getRecommendation(learningPath);
+        if (recommendation.isEmpty()) {
             return ResponseEntity.ok(new LearningPathRecommendationDTO(-1, -1, LearningPathRecommendationDTO.RecommendationType.EMPTY));
         }
-        else if (recommendation instanceof LectureUnit lectureUnit) {
-            return ResponseEntity
-                    .ok(new LearningPathRecommendationDTO(recommendation.getId(), lectureUnit.getLecture().getId(), LearningPathRecommendationDTO.RecommendationType.LECTURE_UNIT));
+        else if (recommendation.get() instanceof LectureUnit lectureUnit) {
+            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.get().getId(), lectureUnit.getLecture().getId(),
+                    LearningPathRecommendationDTO.RecommendationType.LECTURE_UNIT));
         }
         else {
-            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.getId(), -1, LearningPathRecommendationDTO.RecommendationType.EXERCISE));
+            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.get().getId(), -1, LearningPathRecommendationDTO.RecommendationType.EXERCISE));
         }
     }
 

@@ -55,40 +55,40 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private CourseUtilService courseUtilService;
 
     @Autowired
-    CompetencyUtilService competencyUtilService;
+    private CompetencyUtilService competencyUtilService;
 
     @Autowired
-    PageableSearchUtilService pageableSearchUtilService;
+    private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
-    LearningPathRepository learningPathRepository;
+    private LearningPathRepository learningPathRepository;
 
     @Autowired
-    ExerciseUtilService exerciseUtilService;
+    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
-    TextExerciseUtilService textExerciseUtilService;
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    ParticipationUtilService participationUtilService;
+    private ParticipationUtilService participationUtilService;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    LectureUtilService lectureUtilService;
+    private LectureUtilService lectureUtilService;
 
     @Autowired
-    GradingCriterionRepository gradingCriterionRepository;
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
-    LectureUnitService lectureUnitService;
+    private LectureUnitService lectureUnitService;
 
     @Autowired
-    CompetencyProgressService competencyProgressService;
+    private CompetencyProgressService competencyProgressService;
 
     @Autowired
-    LearningPathUtilService learningPathUtilService;
+    private LearningPathUtilService learningPathUtilService;
 
     private Course course;
 
@@ -98,7 +98,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private TextUnit textUnit;
 
-    private final int NUMBER_OF_STUDENTS = 5;
+    private static final int NUMBER_OF_STUDENTS = 5;
 
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
