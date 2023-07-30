@@ -85,7 +85,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         }
         // Only create a user if it doesn't already exist.
         if (getUser(user.getLogin()) != null) {
-            throw new JenkinsException("Cannot create user: " + user.getLogin() + " because the login already exists");
+            log.debug("Cannot create user: {} because the login already exists", user.getLogin());
+            return;
         }
 
         // Make sure the user login contains legal characters.

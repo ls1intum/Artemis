@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -9,9 +10,9 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.in.www1.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -19,7 +20,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "DD")
-@JsonTypeName("drag-and-drop")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
@@ -109,5 +109,9 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
     @Override
     public String toString() {
         return "DragAndDropSubmittedAnswer{" + "id=" + getId() + "}";
+    }
+
+    public Set<DnDMapping> toDnDMapping() {
+        return getMappings().stream().map(mapping -> new DnDMapping(mapping.getDragItem().getId(), mapping.getDropLocation().getId())).collect(Collectors.toSet());
     }
 }

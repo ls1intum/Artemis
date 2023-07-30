@@ -5,7 +5,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
@@ -25,13 +24,13 @@ public class QuizMessagingService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     public QuizMessagingService(MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter, GroupNotificationService groupNotificationService,
-            SimpMessageSendingOperations messagingTemplate) {
+            WebsocketMessagingService websocketMessagingService) {
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
         this.groupNotificationService = groupNotificationService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -57,7 +56,7 @@ public class QuizMessagingService {
                 if ("start-batch".equals(quizChange) && quizBatch != null) {
                     destination = destination + "/" + quizBatch.getId();
                 }
-                messagingTemplate.send(destination, MessageBuilder.withPayload(payload).build());
+                websocketMessagingService.sendMessage(destination, MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);
             }
         }
