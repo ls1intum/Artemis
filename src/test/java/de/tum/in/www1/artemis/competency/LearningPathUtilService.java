@@ -20,16 +20,16 @@ import de.tum.in.www1.artemis.service.LearningPathService;
 public class LearningPathUtilService {
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    LearningPathService learningPathService;
+    private LearningPathService learningPathService;
 
     @Autowired
-    LearningPathRepository learningPathRepository;
+    private LearningPathRepository learningPathRepository;
 
     @Autowired
-    CompetencyRepository competencyRepository;
+    private CompetencyRepository competencyRepository;
 
     /**
      * Enable and generate learning paths for course.

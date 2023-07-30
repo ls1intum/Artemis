@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class LearningPath extends DomainObject {
 
+    // number in [0, 100] representing the progress in percentage
     @Column(name = "progress")
     private int progress;
 

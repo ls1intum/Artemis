@@ -41,7 +41,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
-import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
@@ -210,9 +209,6 @@ public class CourseTestService {
 
     @Autowired
     private TeamUtilService teamUtilService;
-
-    @Autowired
-    private LearningPathUtilService learningPathUtilService;
 
     private static final int numberOfStudents = 8;
 

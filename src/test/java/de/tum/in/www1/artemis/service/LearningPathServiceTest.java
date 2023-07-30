@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
@@ -33,28 +32,25 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    LearningPathService learningPathService;
+    private LearningPathService learningPathService;
 
     @Autowired
-    LearningPathUtilService learningPathUtilService;
+    private LearningPathUtilService learningPathUtilService;
 
     @Autowired
-    CourseUtilService courseUtilService;
+    private CourseUtilService courseUtilService;
 
     @Autowired
-    CompetencyUtilService competencyUtilService;
+    private CompetencyUtilService competencyUtilService;
 
     @Autowired
-    LearningPathRepository learningPathRepository;
+    private LearningPathRepository learningPathRepository;
 
     @Autowired
-    LectureUtilService lectureUtilService;
+    private LectureUtilService lectureUtilService;
 
     @Autowired
-    ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    CompetencyRepository competencyRepository;
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private Course course;
 
@@ -284,7 +280,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             competencyUtilService.createCompetency(course);
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
             learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPath.getId());
-            assertThat(learningPathService.getRecommendation(learningPath)).isNull();
+            assertThat(learningPathService.getRecommendation(learningPath)).isEmpty();
         }
 
         @Test
@@ -294,7 +290,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourse(course);
             learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPath.getId());
-            assertThat(learningPathService.getRecommendation(learningPath)).isNotNull();
+            assertThat(learningPathService.getRecommendation(learningPath)).isPresent();
         }
     }
 }
