@@ -33,7 +33,7 @@ class ContinuousPlagiarismControlResultsService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlResultsService.class);
 
-    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN = "ContinuousPlagiarismControl:";
+    private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN = "Continuous Plagiarism Control:";
 
     private static final String CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_TEXT_EN = format(
             "%s Suspicion of plagiarism! Score reduced to 0. To fix this issue modify your submission before the due date of the exercise.",
