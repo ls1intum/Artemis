@@ -34,6 +34,12 @@ describe('LearningPathService', () => {
         expect(putStub).toHaveBeenCalledWith('api/courses/1/learning-paths/enable', null, { observe: 'response' });
     });
 
+    it('should send request to the server to generate missing learning paths for course', () => {
+        learningPathService.generateMissingLearningPathsForCourse(1).subscribe();
+        expect(putStub).toHaveBeenCalledOnce();
+        expect(putStub).toHaveBeenCalledWith('api/courses/1/learning-paths/generate-missing', null, { observe: 'response' });
+    });
+
     it('should send a request to the server to get learning path id of the current user in the course', () => {
         learningPathService.getLearningPathId(1).subscribe();
         expect(getStub).toHaveBeenCalledOnce();
@@ -50,5 +56,11 @@ describe('LearningPathService', () => {
         learningPathService.getRecommendation(1).subscribe();
         expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith('api/learning-path/1/recommendation', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get health status of learning paths for course', () => {
+        learningPathService.getHealthStatusForCourse(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/courses/1/learning-path-health', { observe: 'response' });
     });
 });

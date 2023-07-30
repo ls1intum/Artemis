@@ -5,22 +5,20 @@ import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
+import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
     let comp: LearningPathManagementComponent;
-    let courseManagementService: CourseManagementService;
-    let getCourseLearningPathsEnabledStub: jest.SpyInstance;
     let pagingService: LearningPathPagingService;
     let sortService: SortService;
     let searchForLearningPathsStub: jest.SpyInstance;
@@ -30,6 +28,9 @@ describe('LearningPathManagementComponent', () => {
     let learningPath: LearningPath;
     let learningPathService: LearningPathService;
     let enableLearningPathsStub: jest.SpyInstance;
+    let generateMissingLearningPathsForCourseStub: jest.SpyInstance;
+    let getHealthStatusForCourseStub: jest.SpyInstance;
+    let health: LearningPathHealthDTO;
     let courseId: number;
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,21 +47,20 @@ describe('LearningPathManagementComponent', () => {
                         },
                     },
                 },
-                MockProvider(CourseManagementService),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LearningPathManagementComponent);
                 comp = fixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
-                getCourseLearningPathsEnabledStub = jest.spyOn(courseManagementService, 'getCourseLearningPathsEnabled');
                 pagingService = TestBed.inject(LearningPathPagingService);
                 sortService = TestBed.inject(SortService);
                 searchForLearningPathsStub = jest.spyOn(pagingService, 'searchForLearningPaths');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
                 learningPathService = TestBed.inject(LearningPathService);
                 enableLearningPathsStub = jest.spyOn(learningPathService, 'enableLearningPaths');
+                generateMissingLearningPathsForCourseStub = jest.spyOn(learningPathService, 'generateMissingLearningPathsForCourse');
+                getHealthStatusForCourseStub = jest.spyOn(learningPathService, 'getHealthStatusForCourse');
             });
     });
 
@@ -73,7 +73,6 @@ describe('LearningPathManagementComponent', () => {
         learningPath = new LearningPath();
         learningPath.id = 2;
         courseId = 1;
-        getCourseLearningPathsEnabledStub.mockReturnValue(of(new HttpResponse({ body: true })));
         searchResult = { numberOfPages: 3, resultsOnPage: [learningPath] };
         state = {
             page: 1,
@@ -85,6 +84,9 @@ describe('LearningPathManagementComponent', () => {
         };
         searchForLearningPathsStub.mockReturnValue(of(searchResult));
         enableLearningPathsStub.mockReturnValue(of(new HttpResponse<void>()));
+        generateMissingLearningPathsForCourseStub.mockReturnValue(of(new HttpResponse<void>()));
+        health = new LearningPathHealthDTO(HealthStatus.OK);
+        getHealthStatusForCourseStub.mockReturnValue(of(new HttpResponse({ body: health })));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -96,24 +98,39 @@ describe('LearningPathManagementComponent', () => {
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
 
-    it('should load learning paths enabled on init', fakeAsync(() => {
+    it('should load health status on init', fakeAsync(() => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(getCourseLearningPathsEnabledStub).toHaveBeenCalledWith(courseId);
-            expect(comp.learningPathsEnabled).toBeTrue();
+            expect(getHealthStatusForCourseStub).toHaveBeenCalledWith(courseId);
+            expect(comp.health).toEqual(health);
         });
     }));
 
     it('should enable learning paths and load data', fakeAsync(() => {
-        getCourseLearningPathsEnabledStub.mockReturnValueOnce(of(new HttpResponse({ body: false }))).mockReturnValueOnce(of(new HttpResponse({ body: true })));
+        const healthDisabled = new LearningPathHealthDTO(HealthStatus.DISABLED);
+        getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthDisabled }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
         fixture.detectChanges();
         comp.ngOnInit();
+        expect(comp.health).toEqual(healthDisabled);
         comp.enableLearningPaths();
         expect(enableLearningPathsStub).toHaveBeenCalledOnce();
         expect(enableLearningPathsStub).toHaveBeenCalledWith(courseId);
-        expect(getCourseLearningPathsEnabledStub).toHaveBeenCalledTimes(3);
-        expect(comp.learningPathsEnabled).toBeTruthy();
+        expect(getHealthStatusForCourseStub).toHaveBeenCalledTimes(3);
+        expect(comp.health).toEqual(health);
+    }));
+
+    it('should generate missing learning paths and load data', fakeAsync(() => {
+        const healthMissing = new LearningPathHealthDTO(HealthStatus.MISSING);
+        getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthMissing }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        expect(comp.health).toEqual(healthMissing);
+        comp.generateMissing();
+        expect(generateMissingLearningPathsForCourseStub).toHaveBeenCalledOnce();
+        expect(generateMissingLearningPathsForCourseStub).toHaveBeenCalledWith(courseId);
+        expect(getHealthStatusForCourseStub).toHaveBeenCalledTimes(3);
+        expect(comp.health).toEqual(health);
     }));
 
     it('should set content to paging result on sort', fakeAsync(() => {

@@ -152,6 +152,14 @@
             "learningPathButton": "Learning Paths",
             "manageLearningPaths": {
                 "title": "Learning Path Management",
+                "health": {
+                    "missing": {
+                        "title": "Missing Learning Paths",
+                        "body": "Some student's have not generated their Learning Paths yet. This is not critical. Their Learning Paths will be created once they request their learning path for the first time.",
+                        "action": "Generate",
+                        "hint": "Generate missing Learning Paths"
+                    }
+                },
                 "isDisabled": "Learning Paths are currently disabled for this course.",
                 "enable": "Enable Learning Paths",
                 "enableHint": "The creation of Learning Paths for every student may take a few minutes.",

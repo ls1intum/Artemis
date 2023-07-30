@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { debounceTime, finalize, switchMap, tap } from 'rxjs/operators';
@@ -11,9 +10,10 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
+import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 
 export enum TableColumn {
     ID = 'ID',
@@ -30,7 +30,7 @@ export class LearningPathManagementComponent implements OnInit {
     isLoading = false;
 
     courseId: number;
-    learningPathsEnabled: boolean;
+    health: LearningPathHealthDTO;
 
     searchLoading = false;
     readonly column = TableColumn;
@@ -49,10 +49,10 @@ export class LearningPathManagementComponent implements OnInit {
 
     // icons
     faSort = faSort;
+    faTriangleExclamation = faTriangleExclamation;
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
         private learningPathService: LearningPathService,
         private alertService: AlertService,
         private pagingService: LearningPathPagingService,
@@ -124,8 +124,8 @@ export class LearningPathManagementComponent implements OnInit {
     private loadData() {
         this.isLoading = true;
 
-        this.courseManagementService
-            .getCourseLearningPathsEnabled(this.courseId)
+        this.learningPathService
+            .getHealthStatusForCourse(this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -133,8 +133,8 @@ export class LearningPathManagementComponent implements OnInit {
             )
             .subscribe({
                 next: (res) => {
-                    this.learningPathsEnabled = res.body!;
-                    if (this.learningPathsEnabled) {
+                    this.health = res.body!;
+                    if (this.health.status !== HealthStatus.DISABLED) {
                         this.performSearch(this.sort, 0);
                         this.performSearch(this.search, 300);
                     }
@@ -145,19 +145,22 @@ export class LearningPathManagementComponent implements OnInit {
 
     enableLearningPaths() {
         this.isLoading = true;
-        this.learningPathService
-            .enableLearningPaths(this.courseId)
-            .pipe(
-                finalize(() => {
-                    this.loadData();
-                }),
-            )
-            .subscribe({
-                next: () => {
-                    this.learningPathsEnabled = true;
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        this.learningPathService.enableLearningPaths(this.courseId).subscribe({
+            next: () => {
+                this.loadData();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    generateMissing() {
+        this.isLoading = true;
+        this.learningPathService.generateMissingLearningPathsForCourse(this.courseId).subscribe({
+            next: () => {
+                this.loadData();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -207,4 +210,6 @@ export class LearningPathManagementComponent implements OnInit {
         });
         modalRef.componentInstance.learningPath = learningPath;
     }
+
+    protected readonly HealthStatus = HealthStatus;
 }

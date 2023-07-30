@@ -6,11 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.CompetencyRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.LearningPathService;
 
 /**
@@ -30,6 +29,9 @@ public class LearningPathUtilService {
 
     @Autowired
     CompetencyRepository competencyRepository;
+
+    @Autowired
+    UserRepository userRepository;
 
     /**
      * Enable and generate learning paths for course.
@@ -67,5 +69,23 @@ public class LearningPathUtilService {
         LearningPath learningPath = new LearningPath();
         learningPath.setCompetencies(competencies);
         return learningPathRepository.save(learningPath);
+    }
+
+    /**
+     * Deletes all learning paths of given user.
+     *
+     * @param user the user for which all learning paths should be deleted
+     */
+    public void deleteLearningPaths(User user) {
+        learningPathRepository.deleteAll(user.getLearningPaths());
+    }
+
+    /**
+     * Deletes all learning paths of all given user.
+     *
+     * @param users the users for which all learning paths should be deleted
+     */
+    public void deleteLearningPaths(Iterable<User> users) {
+        users.forEach(this::deleteLearningPaths);
     }
 }

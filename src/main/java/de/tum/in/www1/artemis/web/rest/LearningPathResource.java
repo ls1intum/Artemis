@@ -54,7 +54,7 @@ public class LearningPathResource {
      * PUT /courses/:courseId/learning-paths/enable : Enables and generates learning paths for the course
      *
      * @param courseId the id of the course for which the learning paths should be enabled
-     * @return the ResponseEntity with status 200 (OK) and with body the updated course
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/courses/{courseId}/learning-paths/enable")
     @EnforceAtLeastInstructor
@@ -68,8 +68,27 @@ public class LearningPathResource {
 
         course.setLearningPathsEnabled(true);
         learningPathService.generateLearningPaths(course);
-        course = courseRepository.save(course);
+        courseRepository.save(course);
 
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /courses/:courseId/learning-paths/generate-missing : Generates missing learning paths for the course
+     *
+     * @param courseId the id of the course for which the learning paths should be created
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("/courses/{courseId}/learning-paths/generate-missing")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
+        Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        if (!course.getLearningPathsEnabled()) {
+            throw new BadRequestException("Learning paths not enabled for this course.");
+        }
+        learningPathService.generateLearningPaths(course);
         return ResponseEntity.ok().build();
     }
 

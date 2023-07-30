@@ -151,7 +151,8 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", null, Course.class, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/enable", null, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.FORBIDDEN);
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
@@ -226,7 +227,28 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testEnableLearningPathsAlreadyEnabled() throws Exception {
         course.setLearningPathsEnabled(true);
         courseRepository.save(course);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/learning-paths/enable", course, Course.class, HttpStatus.BAD_REQUEST);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/enable", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGenerateMissingLearningPathsForCourse() throws Exception {
+        course.setLearningPathsEnabled(true);
+        courseRepository.save(course);
+        final var students = userRepository.getStudents(course);
+        students.stream().map(User::getId).map(userRepository::findWithLearningPathsByIdElseThrow).forEach(learningPathUtilService::deleteLearningPaths);
+        request.put("/api/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.OK);
+        students.forEach(user -> {
+            user = userRepository.findWithLearningPathsByIdElseThrow(user.getId());
+            assertThat(user.getLearningPaths().size()).isEqualTo(1);
+        });
+
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGenerateMissingLearningPathsForCourseNotEnabled() throws Exception {
+        request.put("/api/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

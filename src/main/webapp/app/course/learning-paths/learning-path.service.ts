@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LearningPathRecommendationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs/operators';
+import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathService {
@@ -12,6 +13,10 @@ export class LearningPathService {
 
     enableLearningPaths(courseId: number): Observable<HttpResponse<void>> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
+    }
+
+    generateMissingLearningPathsForCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/generate-missing`, null, { observe: 'response' });
     }
 
     getLearningPathId(courseId: number) {
@@ -37,5 +42,9 @@ export class LearningPathService {
 
     getRecommendation(learningPathId: number) {
         return this.httpClient.get<LearningPathRecommendationDTO>(`${this.resourceURL}/learning-path/${learningPathId}/recommendation`, { observe: 'response' });
+    }
+
+    getHealthStatusForCourse(courseId: number) {
+        return this.httpClient.get<LearningPathHealthDTO>(`${this.resourceURL}/courses/${courseId}/learning-path-health`, { observe: 'response' });
     }
 }
