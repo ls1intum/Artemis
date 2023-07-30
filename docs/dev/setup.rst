@@ -603,8 +603,8 @@ instead of the TUM defaults:
 Hermes Service
 --------------
 
-Push notifications for the mobile Android and iOS clients relies on the Hermes_ service.
-To enable push notifications the seperate Hermes_ service needs to be started separately and special configuration on the Artemis instance is required.
+Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
+To enable push notifications the Hermes_ service needs to be started separately and special configuration on the Artemis instance is required.
 
 To run Hermes_ you need to clone the `Hermes repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
 
@@ -622,7 +622,7 @@ To run both APNS and Firebase configure the Environment Variables for both.
 
 The Hermes service is running on a dedicated machine and is addressed via
 HTTPS. We need to extend the Artemis configuration in the file
-``src/main/resources/config/application-artemis.yml`` like so:
+``src/main/resources/config/application-artemis.yml`` like:
 
 .. code:: yaml
 
