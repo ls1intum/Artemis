@@ -50,7 +50,7 @@ describe('Course management', () => {
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'cypress' + uid;
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            courseManagementRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
@@ -201,7 +201,7 @@ describe('Course management', () => {
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'cypress' + uid;
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            courseManagementRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
@@ -261,7 +261,7 @@ describe('Course management', () => {
                 cy.fixture('course/icon.png', 'base64')
                     .then(Cypress.Blob.base64StringToBlob)
                     .then((blob) => {
-                        courseManagementRequest.createCourse(false, undefined, undefined, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob).then((response) => {
+                        courseManagementRequest.createCourse({ iconFileName: 'icon.png', iconFile: blob }).then((response) => {
                             course = convertModelAfterMultiPart(response);
                         });
                     });
