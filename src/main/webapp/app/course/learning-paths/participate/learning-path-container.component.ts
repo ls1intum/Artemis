@@ -47,7 +47,7 @@ export class LearningPathContainerComponent implements OnInit {
     ngOnInit() {
         if (!this.courseId) {
             this.activatedRoute.parent!.parent!.params.subscribe((params) => {
-                this.courseId = +params['courseId'];
+                this.courseId = params['courseId'];
             });
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {

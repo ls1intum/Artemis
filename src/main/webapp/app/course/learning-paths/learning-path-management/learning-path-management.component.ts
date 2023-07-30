@@ -114,7 +114,7 @@ export class LearningPathManagementComponent implements OnInit {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.activatedRoute.parent!.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
+            this.courseId = params['courseId'];
             if (this.courseId) {
                 this.loadData();
             }

@@ -154,7 +154,7 @@
                 "title": "Learning Path Management",
                 "isDisabled": "Learning Paths are currently disabled for this course.",
                 "enable": "Enable Learning Paths",
-                "enableHint": "The creation of Learning Paths for every student may take a few minutes.",
+                "enableHint": "The creation of Learning Paths for every student may take a moment.",
                 "search": "Search for Learning Path:",
                 "table": {
                     "name": "Name",
