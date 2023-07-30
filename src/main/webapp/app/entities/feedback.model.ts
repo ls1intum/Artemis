@@ -21,6 +21,8 @@ export enum FeedbackType {
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
+const CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN = 'Continuous Plagiarism Control:';
+const CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE = 'Kontinuierliche Plagiatskontrolle:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -103,6 +105,14 @@ export class Feedback implements BaseEntity {
             return false;
         }
         return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+    }
+
+    public static isContinuousPlagiarismControlFeedback(that: Feedback): boolean {
+        const text = that.text;
+        if (!text) {
+            return false;
+        }
+        return text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN) || text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE);
     }
 
     public static hasDetailText(that: Feedback): boolean {
