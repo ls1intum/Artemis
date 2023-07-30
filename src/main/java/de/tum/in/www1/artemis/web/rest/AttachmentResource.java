@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -132,19 +131,6 @@ public class AttachmentResource {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(attachment);
-    }
-
-    /**
-     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
-     *
-     * @param lectureId the id of the lecture
-     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
-     */
-    @GetMapping("lectures/{lectureId}/attachments")
-    @EnforceAtLeastTutor
-    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
-        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     /**

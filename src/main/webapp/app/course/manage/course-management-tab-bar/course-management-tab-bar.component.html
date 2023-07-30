@@ -9,7 +9,14 @@
             <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
         </a>
-        <a class="tab-link" *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
+        <a
+            class="tab-link"
+            *ngIf="course.isAtLeastEditor"
+            [jhiProfileToggleHide]="ProfileToggle.LECTURE"
+            [routerLink]="['/course-management', course.id, 'lectures']"
+            id="lectures"
+            routerLinkActive="active"
+        >
             <fa-icon [icon]="faFilePdf"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
         </a>

@@ -16,16 +16,14 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
@@ -72,9 +70,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ConversationService conversationService, ChannelRepository channelRepository) {
+            ConversationService conversationService, ChannelRepository channelRepository, AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -85,6 +85,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.conversationService = conversationService;
         this.channelRepository = channelRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -318,8 +319,8 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
-    @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasRole('TA')")
+    @GetMapping("/lectures/{lectureId}/attachments")
+    @EnforceAtLeastTutor
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
         return attachmentRepository.findAllByLectureId(lectureId);
