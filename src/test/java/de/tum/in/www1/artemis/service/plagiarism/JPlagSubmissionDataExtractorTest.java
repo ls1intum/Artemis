@@ -31,7 +31,8 @@ class JPlagSubmissionDataExtractorTest {
         var quizExercise = new QuizExercise();
 
         // expect
-        assertThatThrownBy(() -> extractor.getAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, quizExercise)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> extractor.retrieveAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, quizExercise))
+                .isInstanceOf(IllegalStateException.class);
         verifyNoInteractions(submissionRepository);
     }
 
@@ -43,7 +44,8 @@ class JPlagSubmissionDataExtractorTest {
         var modelingExercise = new ModelingExercise();
 
         // expect
-        assertThatThrownBy(() -> extractor.getAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, modelingExercise)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> extractor.retrieveAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, modelingExercise))
+                .isInstanceOf(IllegalStateException.class);
         verifyNoInteractions(submissionRepository);
     }
 
@@ -59,7 +61,7 @@ class JPlagSubmissionDataExtractorTest {
         var textExercise = new TextExercise();
 
         // when
-        extractor.getAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, textExercise);
+        extractor.retrieveAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, textExercise);
 
         // then
         verifyNoInteractions(submissionRepository);
@@ -84,7 +86,7 @@ class JPlagSubmissionDataExtractorTest {
         var programmingExercise = new ProgrammingExercise();
 
         // when
-        extractor.getAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, programmingExercise);
+        extractor.retrieveAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, programmingExercise);
 
         // then
         assertThat(plagiarismSubmission).extracting(PlagiarismSubmission::getSubmissionId).isEqualTo(123L);
@@ -104,7 +106,7 @@ class JPlagSubmissionDataExtractorTest {
         var programmingExercise = new ProgrammingExercise();
 
         // when
-        extractor.getAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, programmingExercise);
+        extractor.retrieveAndSetSubmissionIdAndStudentLogin(plagiarismSubmission, jPlagSubmission, programmingExercise);
 
         // then
         verifyNoInteractions(submissionRepository);

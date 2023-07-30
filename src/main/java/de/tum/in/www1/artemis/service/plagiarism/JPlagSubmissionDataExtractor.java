@@ -28,15 +28,15 @@ class JPlagSubmissionDataExtractor {
         this.submissionRepository = submissionRepository;
     }
 
-    void getAndSetSubmissionIdAndStudentLogin(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission, Exercise exercise) {
+    void retrieveAndSetSubmissionIdAndStudentLogin(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission, Exercise exercise) {
         switch (exercise.getExerciseType()) {
-            case TEXT -> getAndSetSubmissionIdAndStudentLoginForTextExercise(submission, jplagSubmission);
-            case PROGRAMMING -> getAndSetSubmissionIdAndStudentLoginForProgramingExercise(submission, jplagSubmission);
+            case TEXT -> retrieveAndSetSubmissionIdAndStudentLoginForTextExercise(submission, jplagSubmission);
+            case PROGRAMMING -> retrieveAndSetSubmissionIdAndStudentLoginForProgramingExercise(submission, jplagSubmission);
             default -> throw new IllegalStateException("Unexpected exercise type: " + exercise.getExerciseType());
         }
     }
 
-    private static void getAndSetSubmissionIdAndStudentLoginForTextExercise(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission) {
+    private static void retrieveAndSetSubmissionIdAndStudentLoginForTextExercise(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission) {
         var jplagSubmissionNameData = extractJPlagSubmissionNameData(jplagSubmission);
         long submissionId = DEFAULT_SUBMISSION_ID;
         var studentLogin = DEFAULT_STUDENT_LOGIN;
@@ -55,7 +55,7 @@ class JPlagSubmissionDataExtractor {
         submission.setStudentLogin(studentLogin);
     }
 
-    private void getAndSetSubmissionIdAndStudentLoginForProgramingExercise(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission) {
+    private void retrieveAndSetSubmissionIdAndStudentLoginForProgramingExercise(PlagiarismSubmission<TextSubmissionElement> submission, Submission jplagSubmission) {
         var jplagSubmissionNameData = extractJPlagSubmissionNameData(jplagSubmission);
         long submissionId = DEFAULT_SUBMISSION_ID;
         var studentLogin = DEFAULT_STUDENT_LOGIN;
