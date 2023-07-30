@@ -20,6 +20,7 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     hasError: boolean;
     loaded = false;
     showLoadingsProgress = true;
+    multiple = false;
 
     constructor(public linkPreviewService: LinkPreviewService, public linkifyService: LinkifyService) {}
 
@@ -62,6 +63,7 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
                         this.hasError = false;
                         this.loaded = true;
                         this.showLoadingsProgress = false;
+                        this.multiple = this.linkPreviews.length > 1;
                     },
                 });
             });

@@ -20,7 +20,7 @@
                     <p class="preview-description">{{ linkPreview.description }}</p>
                 </div>
 
-                <div class="preview-image" *ngIf="linkPreview.image">
+                <div class="preview-image" *ngIf="linkPreview.image && !multiple">
                     <img [src]="linkPreview.image" alt="Preview Image" />
                 </div>
             </div>

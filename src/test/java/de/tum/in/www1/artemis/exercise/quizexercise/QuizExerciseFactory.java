@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 
 /**
  * Factory for creating QuizExercises and related objects.
@@ -176,7 +178,11 @@ public class QuizExerciseFactory {
     }
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
-        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
+        return generateQuizExercise(releaseDate, dueDate, null, quizMode, course);
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
         quizExercise.setTitle("my cool quiz title");
 
         quizExercise.setProblemStatement(null);
@@ -294,6 +300,12 @@ public class QuizExerciseFactory {
         }
         quizExercise.setRandomizeQuestionOrder(true);
 
+        return quizExercise;
+    }
+
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        quizExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
         return quizExercise;
     }
 
@@ -510,5 +522,44 @@ public class QuizExerciseFactory {
         quizSubmission.submissionDate(submissionDate);
 
         return quizSubmission;
+    }
+
+    @NotNull
+    public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        return quizExercise;
+    }
+
+    /**
+     * creates a quiz submissions and adds submitted answer to it
+     *
+     * @param quizQuestion the quiz question we want to add the submission to
+     * @param correct      should the generated answer be correct or not
+     * @return the created quiz submission
+     */
+    public static QuizSubmission generateQuizSubmissionWithSubmittedAnswer(QuizQuestion quizQuestion, boolean correct) {
+        QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
+        quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, correct));
+
+        return quizSubmission;
+    }
+
+    /**
+     * sets the quiz question id associated to the quiz submission answer to null
+     *
+     * @param quizSubmission quiz submission with answer
+     */
+    public static void setQuizQuestionToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.setQuizQuestion(null));
+    }
+
+    /**
+     * sets the quiz question id associated to the quiz submission answer to null
+     *
+     * @param quizSubmission quiz submission with answer
+     */
+    public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
+        quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
     }
 }

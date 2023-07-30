@@ -70,7 +70,7 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
             }
-            if (err.status === 0) {
+            if (err.status === 0 || err.status === 504) {
                 return throwError(() => new ConnectionError());
             }
             return throwError(() => err);

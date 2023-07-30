@@ -9,14 +9,12 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * A DragAndDropQuestionStatistic.
  */
 @Entity
 @DiscriminatorValue(value = "DD")
-@JsonTypeName("drag-and-drop")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
 

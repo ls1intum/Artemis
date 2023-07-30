@@ -21,7 +21,7 @@
             >
                 <th scope="row">{{ i + 1 }}</th>
                 <td>
-                    <span *ngIf="exercise.title">{{ exercise.title }}</span>
+                    <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                 </td>
                 <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
                 <td>

@@ -12,7 +12,6 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
@@ -63,9 +63,9 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
+            PostSimilarityComparisonStrategy postContentCompareStrategy, WebsocketMessagingService websocketMessagingService, PlagiarismCaseService plagiarismCaseService,
             PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -104,7 +104,7 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             sendNotification(savedPost, course);
-            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course, null);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
@@ -114,7 +114,7 @@ public class PostService extends PostingService {
             plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
         }
         else {
-            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course, null);
             sendNotification(savedPost, course);
         }
 
@@ -149,7 +149,7 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
-            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course);
+            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course, null);
         }
 
         boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
@@ -184,11 +184,11 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as newly created post in the new context
-            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course, null);
         }
         else {
             // in case the context did not change we emit with trigger a post update via websocket
-            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
         }
         return updatedPost;
     }
@@ -219,7 +219,7 @@ public class PostService extends PostingService {
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
@@ -317,7 +317,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course, null);
     }
 
     /**

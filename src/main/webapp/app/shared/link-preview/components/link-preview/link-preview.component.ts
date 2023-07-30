@@ -16,6 +16,7 @@ export class LinkPreviewComponent implements OnInit {
     @Input() hasError: boolean;
     @Input() posting?: Posting;
     @Input() isReply?: boolean;
+    @Input() multiple?: boolean;
 
     isAuthorOfOriginalPost: boolean;
 
