@@ -97,6 +97,7 @@ public class LearningPathResource {
 
     /**
      * GET /courses/:courseId/learning-path-id : Gets the id of the learning path.
+     * If the learning path has not been generated although the course has learning paths enabled, the corresponding learning path will be created.
      *
      * @param courseId the id of the course from which the learning path id should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
@@ -110,8 +111,18 @@ public class LearningPathResource {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
+
+        // generate learning path if missing
         User user = userRepository.getUser();
-        LearningPath learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), user.getId());
+        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
+        LearningPath learningPath;
+        if (learningPathOptional.isEmpty()) {
+            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+            learningPath = learningPathService.generateLearningPathForUser(course, user);
+        }
+        else {
+            learningPath = learningPathOptional.get();
+        }
         return ResponseEntity.ok(learningPath.getId());
     }
 

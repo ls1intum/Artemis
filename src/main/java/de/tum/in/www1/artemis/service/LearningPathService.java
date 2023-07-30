@@ -75,11 +75,11 @@ public class LearningPathService {
      * @param course course that defines the learning path
      * @param user   student for which the learning path is generated
      */
-    public void generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
+    public LearningPath generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
         var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
         // the learning path has not to be generated if it already exits
         if (existingLearningPath.isPresent()) {
-            return;
+            return existingLearningPath.get();
         }
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
@@ -88,6 +88,7 @@ public class LearningPathService {
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
         log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
         updateLearningPathProgress(persistedLearningPath);
+        return persistedLearningPath;
     }
 
     /**
