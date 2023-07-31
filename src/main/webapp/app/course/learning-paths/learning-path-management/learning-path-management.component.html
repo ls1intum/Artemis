@@ -8,7 +8,7 @@
     <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
     <div *ngIf="health.status === HealthStatus.DISABLED">
         <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
-        <div [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate">
+        <div>
             <button
                 id="enable-learning-paths-button"
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
@@ -16,6 +16,7 @@
                 class="btn btn-primary"
                 (click)="enableLearningPaths()"
                 jhiTranslate="artemisApp.learningPath.manageLearningPaths.enable"
+                [ngbTooltip]="'artemisApp.learningPath.manageLearningPaths.enableHint' | artemisTranslate"
             >
                 Enable
             </button>
