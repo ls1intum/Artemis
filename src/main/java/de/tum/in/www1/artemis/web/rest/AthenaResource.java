@@ -59,7 +59,7 @@ public class AthenaResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<TextBlockRef>> getFeedbackSuggestions(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<List<TextBlockRef>> getFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
