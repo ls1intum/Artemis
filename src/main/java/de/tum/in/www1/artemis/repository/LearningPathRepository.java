@@ -76,7 +76,7 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     @Query("""
             SELECT COUNT (learningPath)
             FROM LearningPath learningPath
-            WHERE learningPath.course.id = :#{#courseId}
+            WHERE learningPath.course.id = :courseId AND learningPath.user.isDeleted = false AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
             """)
-    long countByCourseId(@Param("courseId") long courseId);
+    long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 }

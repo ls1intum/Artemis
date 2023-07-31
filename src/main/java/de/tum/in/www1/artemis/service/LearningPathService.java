@@ -436,7 +436,7 @@ public class LearningPathService {
         }
 
         long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        long numberOfLearningPaths = learningPathRepository.countByCourseId(course.getId());
+        long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
 
         if (numberOfStudents == numberOfLearningPaths) {
             return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.OK);

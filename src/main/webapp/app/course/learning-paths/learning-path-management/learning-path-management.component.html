@@ -22,7 +22,7 @@
             </button>
         </div>
     </div>
-    <div *ngIf="health.status === HealthStatus.MISSING" class="card text-bg-warning mb-1">
+    <div *ngIf="health.status === HealthStatus.MISSING" class="card text-bg-warning mb-3">
         <div class="card-body">
             <h5 class="card-title">{{ 'artemisApp.learningPath.manageLearningPaths.health.missing.title' | artemisTranslate }}</h5>
             <p class="card-text">{{ 'artemisApp.learningPath.manageLearningPaths.health.missing.body' | artemisTranslate }}</p>
