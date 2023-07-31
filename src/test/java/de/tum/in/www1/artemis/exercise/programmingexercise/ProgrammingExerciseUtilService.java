@@ -200,7 +200,7 @@ public class ProgrammingExerciseUtilService {
             String title, String shortName) {
         var course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, title, shortName, null);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
@@ -209,16 +209,26 @@ public class ProgrammingExerciseUtilService {
         return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
-            ProgrammingLanguage programmingLanguage) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC");
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ZonedDateTime assessmentDueDate) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA, assessmentDueDate);
     }
 
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
-            ProgrammingLanguage programmingLanguage, String title, String shortName) {
+            ProgrammingLanguage programmingLanguage, ZonedDateTime assessmentDueDate) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC", assessmentDueDate);
+    }
+
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
+            ProgrammingLanguage programmingLanguage) {
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage, "Programming", "TSTEXC", null);
+    }
+
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
+            ProgrammingLanguage programmingLanguage, String title, String shortName, ZonedDateTime assessmentDueDate) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
         ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis,
                 programmingLanguage);
+        programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

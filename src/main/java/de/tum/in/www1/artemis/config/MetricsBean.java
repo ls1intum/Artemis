@@ -108,16 +108,35 @@ public class MetricsBean {
     }
 
     private void registerWebsocketMetrics() {
+        // Publish the number of currently (via WebSockets) connected sessions
+        Gauge.builder("artemis.instance.websocket.sessions", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
+        // TODO: DEPRECATED metric with same value - Should be removed after October 2023
+        Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
+                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
+
         // Publish the number of currently (via WebSockets) connected users
-        Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketUserCount).strongReference(true)
-                .description("Number of users connected to this Artemis instance").register(meterRegistry);
+        Gauge.builder("artemis.global.websocket.users", userRegistry, MetricsBean::extractWebsocketUserCount).strongReference(true)
+                .description("Number of users connected to all Artemis instances").register(meterRegistry);
+
+        // Publish the number of existing WS subscriptions
+        Gauge.builder("artemis.global.websocket.subscriptions", userRegistry, MetricsBean::extractWebsocketSubscriptionCount).strongReference(true)
+                .description("Number of subscriptions created on all Artemis instances").register(meterRegistry);
     }
 
-    private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {
+    private static double extractWebsocketUserCount(SimpUserRegistry userRegistry) {
+        return userRegistry.getUserCount();
+    }
+
+    private static double extractWebsocketSessionCount(WebSocketHandler webSocketHandler) {
         if (webSocketHandler instanceof SubProtocolWebSocketHandler subProtocolWebSocketHandler) {
             return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
         }
         return -1;
+    }
+
+    private static double extractWebsocketSubscriptionCount(SimpUserRegistry userRegistry) {
+        return userRegistry.getUsers().stream().flatMap(user -> user.getSessions().stream()).map(session -> session.getSubscriptions().size()).reduce(0, Integer::sum);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

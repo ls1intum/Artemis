@@ -1,6 +1,6 @@
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 import { MODELING_EDITOR_CANVAS } from '../exercises/modeling/ModelingEditor';
-import { BASE_API, EXERCISE_TYPE, PUT } from '../../constants';
+import { BASE_API, ExerciseType, PUT } from '../../constants';
 
 const ASSESSMENT_CONTAINER = '#modeling-assessment-container';
 
@@ -22,11 +22,11 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     rejectComplaint(response: string, examMode: false) {
-        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Modeling);
+        return super.rejectComplaint(response, examMode, ExerciseType.MODELING);
     }
 
     acceptComplaint(response: string, examMode: false) {
-        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Modeling);
+        return super.acceptComplaint(response, examMode, ExerciseType.MODELING);
     }
 
     submitExample() {
