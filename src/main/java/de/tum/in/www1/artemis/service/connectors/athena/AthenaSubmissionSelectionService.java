@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 
 /**
@@ -101,8 +101,8 @@ public class AthenaSubmissionSelectionService {
             }
             return Optional.of(response.submissionId);
         }
-        catch (NetworkingError networkingError) {
-            log.error("Error while calling Athena: {}", networkingError.getMessage());
+        catch (NetworkingException networkingException) {
+            log.error("Error while calling Athena: {}", networkingException.getMessage());
         }
         catch (HttpClientErrorException httpClientErrorException) {
             // We don't want to crash because of this because it would break the assessment process

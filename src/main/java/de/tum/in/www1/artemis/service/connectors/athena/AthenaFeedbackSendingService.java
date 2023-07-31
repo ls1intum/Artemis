@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -118,8 +118,8 @@ public class AthenaFeedbackSendingService {
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
-        catch (NetworkingError networkingError) {
-            log.error("Error while calling Athena: {}", networkingError.getMessage());
+        catch (NetworkingException networkingException) {
+            log.error("Error while calling Athena: {}", networkingException.getMessage());
         }
     }
 

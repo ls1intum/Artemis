@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 
 /**
  * Connector to Athena, a remote Artemis service that can create semi-automatic feedback suggestions for tutors.
@@ -46,9 +46,9 @@ class AthenaConnector<RequestType, ResponseType> {
      * @param url           Athena api endpoint
      * @param requestObject request body as POJO
      * @return response body from Athena
-     * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
+     * @throws NetworkingException exception in case of unsuccessful responses or responses without a body.
      */
-    private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingError {
+    private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingException {
         long start = System.currentTimeMillis();
         log.debug("Calling Athena.");
 
@@ -60,12 +60,12 @@ class AthenaConnector<RequestType, ResponseType> {
         final ResponseEntity<ResponseType> response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
 
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-            throw new NetworkingError("An Error occurred while calling Remote Artemis Service. Check Remote Logs for debugging information.");
+            throw new NetworkingException("An Error occurred while calling Remote Artemis Service. Check Remote Logs for debugging information.");
         }
 
         final ResponseType responseBody = response.getBody();
         if (responseBody == null) {
-            throw new NetworkingError("An Error occurred while calling Athena (response is null).");
+            throw new NetworkingException("An Error occurred while calling Athena (response is null).");
         }
         log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
 
@@ -79,16 +79,16 @@ class AthenaConnector<RequestType, ResponseType> {
      * @param requestObject request body as POJO
      * @param maxRetries    how many times to retry in case of an unsuccessful request.
      * @return response body from Athena
-     * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
+     * @throws NetworkingException exception in case of unsuccessful responses or responses without a body.
      */
-    ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, int maxRetries) throws NetworkingError {
+    ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, int maxRetries) throws NetworkingException {
         for (int retries = 0;; retries++) {
             try {
                 return invoke(url, requestObject);
             }
-            catch (NetworkingError | ResourceAccessException error) {
+            catch (NetworkingException | ResourceAccessException error) {
                 if (retries >= maxRetries) {
-                    throw new NetworkingError("An error occurred while calling Athena: " + error.getMessage(), error);
+                    throw new NetworkingException("An error occurred while calling Athena: " + error.getMessage(), error);
                 }
             }
         }

@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
@@ -125,7 +125,7 @@ public class AthenaSubmissionSendingService {
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
-        catch (NetworkingError error) {
+        catch (NetworkingException error) {
             log.error("Error while calling Athena: {}", error.getMessage());
         }
     }

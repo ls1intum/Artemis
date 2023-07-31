@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -70,7 +70,7 @@ public class AthenaFeedbackSuggestionsService {
      * @param submission the submission the suggestions are fetched for
      * @return a list of feedback suggestions
      */
-    public List<TextBlockRef> getFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingError {
+    public List<TextBlockRef> getFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         log.info("Calling Athena with exercise and submission.");
@@ -94,7 +94,7 @@ public class AthenaFeedbackSuggestionsService {
                 return ref;
             }).toList();
         }
-        catch (NetworkingError error) {
+        catch (NetworkingException error) {
             log.error("Error while calling Athena: {}", error.getMessage());
             throw error;
         }

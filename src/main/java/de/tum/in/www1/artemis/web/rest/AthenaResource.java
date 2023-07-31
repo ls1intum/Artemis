@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.TextBlockRef;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -69,7 +69,7 @@ public class AthenaResource {
             List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
             return ResponseEntity.ok(feedbackSuggestions);
         }
-        catch (NetworkingError e) {
+        catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }

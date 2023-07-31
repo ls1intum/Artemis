@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 
 class AthenaFeedbackSuggestionsServiceTest extends AthenaTest {
 
@@ -32,7 +32,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AthenaTest {
     }
 
     @Test
-    void testFeedbackSuggestions() throws NetworkingError {
+    void testFeedbackSuggestions() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
