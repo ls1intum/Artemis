@@ -9,7 +9,7 @@ import org.springframework.boot.actuate.health.Status;
 
 class AthenaHealthIndicatorTest extends AthenaTest {
 
-    private final String MODULE_EXAMPLE = "module_example";
+    private final String MODULE = "module_example";
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle
 
@@ -23,7 +23,7 @@ class AthenaHealthIndicatorTest extends AthenaTest {
         athenaRequestMockProvider.mockHealthStatusSuccess(true);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(GREEN_CIRCLE);
+        assertThat(health.getDetails().get(MODULE).toString()).contains(GREEN_CIRCLE);
     }
 
     @Test
@@ -31,7 +31,7 @@ class AthenaHealthIndicatorTest extends AthenaTest {
         athenaRequestMockProvider.mockHealthStatusSuccess(false);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(RED_CIRCLE);
+        assertThat(health.getDetails().get(MODULE).toString()).contains(RED_CIRCLE);
     }
 
     @Test
