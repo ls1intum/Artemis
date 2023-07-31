@@ -604,15 +604,17 @@ Hermes Service
 --------------
 
 Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
-To enable push notifications the Hermes_ service needs to be started separately and special configuration on the Artemis instance is required.
+To enable push notifications the Hermes service needs to be started separately and special configuration on the Artemis instance is required.
 
-To run Hermes_ you need to clone the `Hermes repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
+To run Hermes you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
 
 The following environment variables need to be updated for push notifications to Apple devices:
 
 * ``APNS_CERTIFICATE_PATH``: String - Path to the APNs certificate .p12 file as described `here <https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns>`_
 * ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
-* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false) Furthermore the <APNS_Key>.p8 needs to be mounted into the Docker under the above specified path.
+* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
 
 To run the services for Android support the following environment variable is required:
 
