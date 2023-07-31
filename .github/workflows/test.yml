@@ -49,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+    - uses: actions/checkout@v3
     - name: Run server-tests
       uses: './.github/actions/run-test'
       with:
@@ -75,6 +76,7 @@ jobs:
       concurrency:
           group: server-tests-mysql
       steps:
+          - uses: actions/checkout@v3
           - name: Run server-tests
             uses: './.github/actions/run-test'
             with:
@@ -88,6 +90,7 @@ jobs:
       concurrency:
           group: server-tests-postgres
       steps:
+          - uses: actions/checkout@v3
           - name: Run server-tests
             uses: './.github/actions/run-test'
             with:
