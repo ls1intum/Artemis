@@ -62,7 +62,7 @@ public class AutomaticProgrammingExerciseCleanupService {
      * cleans up old build plans on the continuous integration server and old local git repositories on the Artemis server at 3:00:00 am in the night in form of a repeating "cron"
      * job
      */
-    @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
+    @Scheduled(cron = "${artemis.scheduling.programming-exercises-cleanup-time:0 0 3 * * *}") // execute this every night at 3:00:00 am
     public void cleanup() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
