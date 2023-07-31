@@ -115,8 +115,8 @@ public class ExamSessionService {
                         examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(),
                         new StudentExamWithIdAndUserDTO(examSession.getStudentExam().getId(),
                                 new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin()))));
-                suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
             }
+            suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
         }
         return suspiciousExamSessionsDTO;
     }
