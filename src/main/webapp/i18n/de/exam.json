@@ -641,8 +641,9 @@
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
         },
-        "timeline": {
-            "title": "Klausurverlauf von {{ username }}"
+        "examTimeline": {
+            "title": "Klausurverlauf von {{ username }}",
+            "breadcrumb": "Klausurverlauf"
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",

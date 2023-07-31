@@ -101,7 +101,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
 
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExamSubmissionComponent;
-        activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
+        if (activeProgrammingComponent) {
+            activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
+        }
     }
 
     private setupRangeSlider() {
@@ -184,18 +186,20 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             }
         }
 
-        if (this.isSubmissionVersion(exerciseChange.submission)) {
-            const submissionVersion = exerciseChange.submission as SubmissionVersion;
-            this.selectedTimestamp = submissionVersion.createdDate.toDate().getTime();
-        } else if (this.isFileUploadSubmission(exerciseChange.submission)) {
-            const fileUploadSubmission = exerciseChange.submission as FileUploadSubmission;
-            this.selectedTimestamp = fileUploadSubmission.submissionDate!.toDate().getTime();
-        } else {
-            const programmingSubmission = exerciseChange.submission as ProgrammingSubmission;
-            this.selectedTimestamp = programmingSubmission.submissionDate!.toDate().getTime();
+        if (exerciseChange.submission) {
+            if (this.isSubmissionVersion(exerciseChange.submission)) {
+                const submissionVersion = exerciseChange.submission as SubmissionVersion;
+                this.selectedTimestamp = submissionVersion.createdDate.toDate().getTime();
+            } else if (this.isFileUploadSubmission(exerciseChange.submission)) {
+                const fileUploadSubmission = exerciseChange.submission as FileUploadSubmission;
+                this.selectedTimestamp = fileUploadSubmission.submissionDate!.toDate().getTime();
+            } else {
+                const programmingSubmission = exerciseChange.submission as ProgrammingSubmission;
+                this.selectedTimestamp = programmingSubmission.submissionDate!.toDate().getTime();
+            }
+            this.currentSubmission = exerciseChange.submission;
+            this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
         }
-        this.currentSubmission = exerciseChange.submission;
-        this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
     }
 
     private findFirstSubmission(): FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined {
@@ -233,8 +237,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
 
     private updateFileUploadExerciseView() {
         const fileUploadComponent = this.activePageComponent as FileUploadExamSubmissionComponent;
-        fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
-        fileUploadComponent.updateViewFromSubmission();
+        if (fileUploadComponent) {
+            fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
+            fileUploadComponent.updateViewFromSubmission();
+        }
     }
 
     private activateActiveComponent() {

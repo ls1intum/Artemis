@@ -274,7 +274,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/student-exams/:studentExamId/timeline',
+        path: ':examId/student-exams/:studentExamId/exam-timeline',
         component: StudentExamTimelineComponent,
         resolve: {
             studentExam: StudentExamResolve,
