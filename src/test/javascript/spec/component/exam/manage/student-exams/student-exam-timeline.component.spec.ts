@@ -106,8 +106,9 @@ describe('Student Exam Timeline Component', () => {
             .mockReturnValueOnce(of([submissionVersion]) as unknown as Observable<SubmissionVersion[]>);
         component.studentExam = studentExamValue;
         component.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
-            expect([submissionVersion, programmingSubmission1, fileUploadSubmission1]).toContain(results[0]);
+            expect(results).toEqual([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]);
         });
+        tick();
         expect(submissionServiceSpy).toHaveBeenCalledTimes(2);
         expect(submissionVersionServiceSpy).toHaveBeenCalledOnce();
         expect(submissionVersionServiceSpy).toHaveBeenCalledWith(2);
@@ -116,7 +117,7 @@ describe('Student Exam Timeline Component', () => {
     it('should fetch submission versions and submission versions on init using retrieveSubmissionData', fakeAsync(() => {
         const retrieveDataSpy = jest
             .spyOn(component, 'retrieveSubmissionDataAndTimeStamps')
-            .mockReturnValue(of([submissionVersion, programmingSubmission1, fileUploadSubmission1]) as unknown as Observable<SubmissionVersion[] | Submission[]>);
+            .mockReturnValue(of([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]) as unknown as Observable<(SubmissionVersion[] | Submission[])[]>);
         component.ngOnInit();
         tick();
         fixture.detectChanges();

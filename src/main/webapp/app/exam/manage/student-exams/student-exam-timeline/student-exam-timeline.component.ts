@@ -8,7 +8,7 @@ import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { Observable, Subscription, map, merge, mergeMap, toArray } from 'rxjs';
+import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -67,7 +67,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.exerciseIndex = 0;
         this.pageComponentVisited = new Array(this.studentExam.exercises!.length).fill(false);
         this.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
-            results.forEach((result) => {
+            const allSubmissions = results.flat();
+            allSubmissions.forEach((result) => {
                 //workaround because instanceof does not work.
                 if (this.isSubmissionVersion(result)) {
                     const submissionVersion = result as SubmissionVersion;
@@ -85,8 +86,9 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             });
             this.sortTimeStamps();
             this.setupRangeSlider();
-            const firstSubmission = this.findFirstSubmissionForFirstExercise(this.studentExam.exercises![this.exerciseIndex]);
+            const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
+            this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
             this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, firstSubmission);
         });
     }
@@ -150,7 +152,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                 );
             }
         });
-        return merge(...submissionObservables);
+        return forkJoin(...submissionObservables);
     }
 
     /**
@@ -196,14 +198,17 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.initializeExercise(exerciseChange.exercise!, exerciseChange.submission);
     }
 
-    private findFirstSubmissionForFirstExercise(exercise: Exercise): FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined {
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            return this.programmingSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
-        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            return this.fileUploadSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
-        } else {
-            return this.submissionVersions.find((submission) => submission.createdDate.isSame(this.submissionTimeStamps[0]));
+    private findFirstSubmission(): FileUploadSubmission | SubmissionVersion | ProgrammingSubmission | undefined {
+        const submissionVersion = this.submissionVersions.find((submission) => submission.createdDate.isSame(this.submissionTimeStamps[0]));
+        if (!submissionVersion) {
+            const programmingSubmission = this.programmingSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
+            if (!programmingSubmission) {
+                return this.fileUploadSubmissions.find((submission) => submission.submissionDate?.isSame(this.submissionTimeStamps[0]));
+            } else {
+                return programmingSubmission;
+            }
         }
+        return submissionVersion;
     }
 
     initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined) {
@@ -363,5 +368,15 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             }
         }
         return timestampWithSmallestDiff;
+    }
+
+    private findExerciseIndex(firstSubmission: FileUploadSubmission | SubmissionVersion | ProgrammingSubmission) {
+        if (this.isSubmissionVersion(firstSubmission)) {
+            const submissionVersion = firstSubmission as SubmissionVersion;
+            return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === submissionVersion.submission.participation?.exercise?.id);
+        } else {
+            const submission = firstSubmission as FileUploadSubmission | ProgrammingSubmission;
+            return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === submission.participation?.exercise?.id);
+        }
     }
 }
