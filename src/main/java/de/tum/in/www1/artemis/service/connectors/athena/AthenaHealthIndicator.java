@@ -35,12 +35,12 @@ public class AthenaHealthIndicator implements HealthIndicator {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
-    private record AthenaModuleHealth(String type, boolean healthy, String url) {
+    private record AthenaModuleHealth(String exerciseType, boolean healthy, String url) {
     }
 
     private static String moduleHealthToString(AthenaModuleHealth moduleHealth) {
         var healthString = moduleHealth.healthy ? GREEN_CIRCLE : RED_CIRCLE;
-        healthString += " " + moduleHealth.url + " (" + moduleHealth.type + ")";
+        healthString += " " + moduleHealth.url + " (" + moduleHealth.exerciseType + ")";
         return healthString;
     }
 
