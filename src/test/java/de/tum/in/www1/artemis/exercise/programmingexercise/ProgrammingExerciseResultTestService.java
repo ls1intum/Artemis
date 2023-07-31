@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 import static java.util.Comparator.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -32,7 +30,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -253,38 +250,6 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
-    // Test
-    // TODO: why is this test not invoked at all?
-    public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
-        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(result).isNotNull();
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
-        var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification) - 3;  // 3 of those should be filtered
-        assertThat(((ProgrammingSubmission) result.getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
-    }
-
-    // Test
-    // TODO: why is this test not invoked at all?
-    public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
-        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(result).isNotNull();
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
-        var expectedNoOfLogs = 0; // No logs should be stored because the build was successful
-        assertThat(((ProgrammingSubmission) result.getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
-    }
-
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
         buildLogEntryRepository.deleteAll();
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -402,23 +367,6 @@ public class ProgrammingExerciseResultTestService {
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isNotNull();
-    }
-
-    // Test
-    // TODO: why is this test not invoked at all?
-    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
-            throws Exception {
-        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
-        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
-
-        postResult(resultNotification);
-
-        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
-
-        Result result = resultArgumentCaptor.getValue();
-        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
