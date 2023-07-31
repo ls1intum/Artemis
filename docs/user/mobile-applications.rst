@@ -143,6 +143,7 @@ By pressing the "Select" button the app checks if it can connect successfully to
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
+
 Users may receive push notifications on their iOS devices. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
 
   .. image:: native-applications/iOS/initial_login_notification_configuration.png
