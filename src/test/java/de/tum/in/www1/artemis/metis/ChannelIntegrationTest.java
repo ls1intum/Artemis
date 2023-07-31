@@ -16,13 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
@@ -49,6 +50,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -783,6 +793,35 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(exerciseChannel.getExercise()).isNull();
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
+        Course course = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(course);
+        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+
+        Channel returnedLectureChannel = request.get("/api/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+
+        assertThat(returnedLectureChannel).isNotNull();
+        assertThat(returnedLectureChannel.getId()).isEqualTo(lectureChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getExerciseChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
+        Course course = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(course);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
+
+        Channel returnedExerciseChannel = request.get("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+
+        assertThat(returnedExerciseChannel).isNotNull();
+        assertThat(returnedExerciseChannel.getId()).isEqualTo(exerciseChannel.getId());
     }
 
     @Test
