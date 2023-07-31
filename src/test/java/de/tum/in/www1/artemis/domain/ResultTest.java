@@ -11,10 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
@@ -24,16 +26,24 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     List<Feedback> feedbackList;
 
+    private Course course;
+
     Double offsetByTenThousandth = 0.0001;
 
     @Autowired
-    AssessmentService assessmentService;
+    private AssessmentService assessmentService;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
         Feedback feedback2 = new Feedback();
@@ -46,7 +56,7 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         feedback5.setCredits(3.0);
         feedbackList = List.of(feedback1, feedback2, feedback3, feedback4, feedback5);
 
-        Course course = new Course();
+        course = courseUtilService.addEmptyCourse();
         course.setAccuracyOfScores(1);
         result.setParticipation(new StudentParticipation().exercise(new TextExercise().course(course)));
     }
@@ -115,20 +125,39 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void keepTestNamesWhenExerciseSettingActive() {
-        ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setShowTestNamesToStudents(true);
+    void testRemoveTestCaseNames() {
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
+        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(2)).detailText("This is wrong.");
+
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setExercise(programmingExercise);
+        participation.setExercise(exercise);
+        result.setParticipation(participation);
+        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
+
+        result.filterSensitiveFeedbacks(true);
+
+        assertThat(result.getFeedbacks()).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
+    }
+
+    @Test
+    void keepTestNamesWhenExerciseSettingActive() {
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
+        exercise.setShowTestNamesToStudents(true);
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exercise);
         result.setParticipation(participation);
 
-        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).text("test()");
-        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).text("test2()").detailText("This is wrong.");
+        Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.get(0));
+        Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(1)).detailText("This is wrong.");
 
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
 
-        assertThat(result.getFeedbacks()).usingRecursiveFieldByFieldElementComparator().containsExactlyInAnyOrder(tst1, tst2);
+        assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() != null);
     }
 }

@@ -17,19 +17,26 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
     @Input() taskName: string;
+
+    /**
+     * array of test ids
+     */
     @Input()
     get tests() {
-        return this.testsValue;
+        return this.testIds;
     }
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
 
-    testsValue: string[];
+    testIds: number[];
     testCaseState: TestCaseState;
 
-    successfulTests: string[];
-    notExecutedTests: string[];
-    failedTests: string[];
+    /**
+     * Arrays of test case ids, grouped by their status in the given result.
+     */
+    successfulTests: number[];
+    notExecutedTests: number[];
+    failedTests: number[];
 
     hasMessage: boolean;
 
@@ -41,8 +48,8 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private modalService: NgbModal) {}
 
     // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
-    set tests(tests: string[]) {
-        this.testsValue = tests;
+    set tests(testIds: number[]) {
+        this.testIds = testIds;
         const {
             testCaseState,
             detailed: { successfulTests, notExecutedTests, failedTests },
@@ -51,20 +58,20 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         this.successfulTests = successfulTests;
         this.notExecutedTests = notExecutedTests;
         this.failedTests = failedTests;
-        this.hasMessage = this.hasTestMessage(tests);
+        this.hasMessage = this.hasTestMessage(testIds);
     }
 
     /**
      * Checks if any of the feedbacks have a detailText associated to them.
-     * @param tests the feedback names this should be checked for
+     * @param testIds the test case ids that should be checked for
      * @private
      */
-    private hasTestMessage(tests: string[]): boolean {
+    private hasTestMessage(testIds: number[]): boolean {
         if (!this.latestResult || !this.latestResult.feedbacks) {
             return false;
         }
         const feedbacks = this.latestResult.feedbacks;
-        return tests.some((test) => feedbacks.find((feedback) => feedback.text === test && feedback.detailText));
+        return testIds.some((testId: number) => feedbacks.find((feedback) => feedback.testCase?.id === testId && feedback.detailText));
     }
 
     /**

@@ -48,8 +48,6 @@ public class ProgrammingExerciseGradingService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingExerciseFeedbackService programmingExerciseFeedbackService;
-
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -82,9 +80,11 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
+    private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseFeedbackCreationService programmingExerciseFeedbackService, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
@@ -94,7 +94,7 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
-        this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
+        this.feedbackCreationService = programmingExerciseFeedbackService;
         this.websocketMessagingService = websocketMessagingService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -250,13 +250,6 @@ public class ProgrammingExerciseGradingService {
         boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
         boolean isStudentParticipation = !isSolutionParticipation && !isTemplateParticipation;
 
-        // Find out which test cases were executed and calculate the score according to their status and weight.
-        // This needs to be done as some test cases might not have been executed.
-        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-        if (isSolutionParticipation) {
-            extractTestCasesFromResult(programmingExercise, newResult);
-        }
-
         Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
 
         // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
@@ -334,22 +327,6 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
-     * through the websocket!
-     *
-     * @param exercise the programming exercise for which the test cases should be extracted from the new result
-     * @param result   from which to extract the test cases.
-     */
-    private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
-        boolean haveTestCasesChanged = programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
-        if (haveTestCasesChanged) {
-            // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
-            websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
-        }
-    }
-
-    /**
      * Updates an incoming result with the information of the exercises test cases. This update includes:
      * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
      * - Checking the due date and the visibility.
@@ -368,7 +345,8 @@ public class ProgrammingExerciseGradingService {
 
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            relevantTestCases = filterRelevantTestCasesForStudent(testCases, result.getParticipation());
+            relevantTestCases = filterRelevantTestCasesForStudent(testCases, result);
+            // TODO ensure that in the new way feedback is correctly filtered for students
         }
 
         // We only apply submission policies if it is a student participation
@@ -536,8 +514,9 @@ public class ProgrammingExerciseGradingService {
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
-    private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Participation participation) {
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+    private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Result result) {
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getParticipation());
+
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
 
@@ -666,7 +645,8 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Only keeps automatic feedbacks that also are associated with a test case.
+     * Only keeps automatic feedbacks that also are associated with a relevant test case.
+     * Used to remove feedbacks that are e.g. related to test cases with visibility = never.
      * <p>
      * Does not remove static code analysis feedback.
      *
@@ -674,8 +654,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCases of the programming exercise.
      */
     private void filterAutomaticFeedbacksWithoutTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
-        result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
-                && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
+        result.getFeedbacks().removeIf(feedback -> feedback.isTestFeedback() && testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
     }
 
     /**
@@ -686,8 +665,9 @@ public class ProgrammingExerciseGradingService {
      */
     private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
         for (Feedback feedback : result.getFeedbacks()) {
-            testCases.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())).findFirst()
-                    .ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
+            if (feedback.getTestCase() != null) {
+                feedback.setVisibility(feedback.getTestCase().getVisibility());
+            }
         }
     }
 
@@ -699,13 +679,13 @@ public class ProgrammingExerciseGradingService {
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> testCases) {
         List<Feedback> feedbacksForNotExecutedTestCases = testCases.stream().filter(testCase -> testCase.wasNotExecuted(result))
-                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).testCase(testCase).detailText("Test was not executed.")).toList();
 
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
     /**
-     * Checks which feedback entries have the same name and therefore indicate multiple testcases with the same name.
+     * Checks which feedback entries have the same connected testcase and therefore indicate multiple testcases with the same name.
      * These duplicate testcases are added as a feedback element to the result.
      * The instructor and tutors are notified via a group notification.
      *
@@ -714,20 +694,20 @@ public class ProgrammingExerciseGradingService {
      * @return true if result has duplicate test cases
      */
     private boolean createFeedbacksForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
-        Set<String> uniqueFeedbackNames = new HashSet<>();
-        Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
-                .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
-                // Set.add() returns false if the feedbackName.toLowerCase is already contained in the set
-                .filter(feedbackName -> !uniqueFeedbackNames.add(feedbackName.toLowerCase())).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> uniqueTestCases = new HashSet<>();
+        Set<ProgrammingExerciseTestCase> duplicateTestCases = result.getFeedbacks().stream()
+                .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getTestCase)
+                // Set.add() returns false if the test case is already present in the set
+                .filter(testCase -> !uniqueTestCases.add(testCase)).collect(Collectors.toSet());
 
-        if (!duplicateFeedbackNames.isEmpty()) {
+        if (!duplicateTestCases.isEmpty()) {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
-            List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
-                    .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
-                    .toList();
+            List<Feedback> feedbacksForDuplicateTestCases = duplicateTestCases.stream().map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC)
+                    .text(testCase.getTestName() + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false)).toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
+            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION
+                    + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(", "));
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
 
             return true;
@@ -825,7 +805,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase().equals(testCase)).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
@@ -1021,8 +1001,8 @@ public class ProgrammingExerciseGradingService {
             }
             categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);
         }
-        else if (FeedbackType.AUTOMATIC.equals(feedback.getType())) {
-            String testName = feedback.getText();
+        else if (FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null) {
+            String testName = feedback.getTestCase().getTestName();
             testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
             testCaseStatsMap.get(testName).updateWithFeedback(feedback);
         }

@@ -321,12 +321,12 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const feedbacks: Feedback[] = [];
 
         const feedback1 = new Feedback();
-        feedback1.text = 'TestName1';
+        feedback1.testCase = { testName: 'TestName1' };
         feedback1.positive = true;
         feedback1.type = FeedbackType.AUTOMATIC;
 
         const feedback2 = new Feedback();
-        feedback2.text = 'TestName2';
+        feedback2.testCase = { testName: 'TestName2' };
         feedback2.positive = false;
         feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
         feedback2.type = FeedbackType.AUTOMATIC;

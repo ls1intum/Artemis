@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -64,6 +65,7 @@ export class Feedback implements BaseEntity {
     public suggestedFeedbackReference?: string;
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
+    public testCase?: ProgrammingExerciseTestCase;
 
     // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
@@ -95,14 +97,14 @@ export class Feedback implements BaseEntity {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
     }
 
     public static isSubmissionPolicyFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
     public static hasDetailText(that: Feedback): boolean {

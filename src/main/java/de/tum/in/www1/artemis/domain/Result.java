@@ -475,15 +475,39 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
+        filterSensitiveFeedbacks(isBeforeDueDate, participation.getExercise());
+    }
+
+    /**
+     * Removes all feedback details that should not be passed to the student.
+     *
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param exercise        the exercise related to this result. Used to determine if test case names should be removed.
+     */
+    public void filterSensitiveFeedbacks(boolean isBeforeDueDate, Exercise exercise) {
         feedbacks.removeIf(Feedback::isInvisible);
 
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
 
-        // TODO: this is not good code!
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            filterTestCaseFeedback(programmingExercise);
+        }
+    }
+
+    private void filterTestCaseFeedback(ProgrammingExercise programmingExercise) {
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        if (!Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
+            testCaseFeedback.forEach(feedback -> {
+                if (feedback.getTestCase() != null) {
+                    feedback.getTestCase().setTestName(null);
+                }
+            });
+        }
+
         setTestCaseCount(testCaseFeedback.size());
+        // TODO: this is not good code!
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -450,11 +451,11 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().getScore()).isEqualTo(15);
-            assertThat(result.get().getFeedbacks()).anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.get().getFeedbacks()).anyMatch(feedback -> StringUtils.startsWith(feedback.getText(), SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
         else {
             assertThat(result.get().getScore()).isEqualTo(25);
-            assertThat(result.get().getFeedbacks()).noneMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.get().getFeedbacks()).allMatch(feedback -> feedback.getText() == null);
         }
     }
 
