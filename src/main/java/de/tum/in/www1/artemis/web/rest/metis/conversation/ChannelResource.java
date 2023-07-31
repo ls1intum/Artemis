@@ -4,9 +4,12 @@ import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.C
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +130,7 @@ public class ChannelResource extends ConversationManagementResource {
             channel.hideDetails();
         }
 
-        checkChannelMembership(channel, requestingUser.getId());
+        checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(channel);
     }
@@ -152,7 +155,7 @@ public class ChannelResource extends ConversationManagementResource {
             channel.hideDetails();
         }
 
-        checkChannelMembership(channel, requestingUser.getId());
+        checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(channel);
     }
@@ -432,11 +435,23 @@ public class ChannelResource extends ConversationManagementResource {
         return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
     }
 
-    private void checkChannelMembership(Channel channel, Long userId) {
-        if (channel != null && !conversationService.isMember(channel.getId(), userId)) {
-            // suppress error alert with skipAlert: true so that the client can display a custom error message
-            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
-                    true);
+    private void checkChannelMembership(Channel channel, @NotNull User user) {
+        if (channel != null && !conversationService.isMember(channel.getId(), user.getId())) {
+            if (!channel.getIsCourseWide()) {
+                // suppress error alert with skipAlert: true so that the client can display a custom error message
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel",
+                        "noAccessButCouldJoin", true);
+            }
+
+            ConversationParticipant conversationParticipant = new ConversationParticipant();
+            conversationParticipant.setUser(user);
+            conversationParticipant.setConversation(channel);
+            conversationParticipant.setIsModerator(false);
+            conversationParticipant.setIsHidden(false);
+            conversationParticipant.setIsFavorite(false);
+            conversationParticipant.setLastRead(ZonedDateTime.now());
+            conversationParticipant.setUnreadMessagesCount(0L);
+            conversationParticipantRepository.save(conversationParticipant);
         }
     }
 }
