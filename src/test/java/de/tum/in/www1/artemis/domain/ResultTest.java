@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.AssessmentService;
 
 class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -29,9 +28,6 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private Course course;
 
     Double offsetByTenThousandth = 0.0001;
-
-    @Autowired
-    private AssessmentService assessmentService;
 
     @Autowired
     private ResultRepository resultRepository;
