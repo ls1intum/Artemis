@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -18,8 +17,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSendingService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("athena & scheduling")
@@ -31,24 +30,23 @@ public class AthenaScheduleService {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final Environment env;
+    private final ProfileService profileService;
 
     private final Map<Long, ScheduledFuture<?>> scheduledAthenaTasks = new HashMap<>();
 
     private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
-    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, Environment env,
+    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, ProfileService profileService,
             AthenaSubmissionSendingService athenaSubmissionSendingService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseRepository = textExerciseRepository;
-        this.env = env;
+        this.profileService = profileService;
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
     }
 
     @PostConstruct
     private void scheduleRunningExercisesOnStartup() {
-        final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+        if (profileService.isDev()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
