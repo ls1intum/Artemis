@@ -73,7 +73,7 @@ class AthenaConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the Athena with a network call, but retry the request n times in case of an unsuccessful request.
+     * Invoke Athena with a network call, but retry the request n times in case of an unsuccessful request.
      *
      * @param url           Athena api endpoint
      * @param requestObject request body as POJO
