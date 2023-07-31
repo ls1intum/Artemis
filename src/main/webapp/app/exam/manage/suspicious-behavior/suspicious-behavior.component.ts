@@ -41,7 +41,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
         });
     }
 
-    retrievePlagiarismCases = () => {
+    private retrievePlagiarismCases = () => {
         this.exercises.forEach((exercise) => {
             this.plagiarismCasesService.getNumberOfPlagiarismCasesForExercise(exercise).subscribe((res) => {
                 this.plagiarismCasesPerExercise.computeIfAbsent(exercise, () => res);

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getExerciseUrlSegment } from 'app/entities/exercise.model';
 import { Router } from '@angular/router';
 
 @Component({
@@ -25,7 +25,7 @@ export class PlagiarismCasesOverviewComponent {
             this.examId,
             'exercise-groups',
             exerciseGroupId,
-            `${exerciseType}-exercises`,
+            getExerciseUrlSegment(exerciseType),
             exercise.id,
             'plagiarism',
         ]);
