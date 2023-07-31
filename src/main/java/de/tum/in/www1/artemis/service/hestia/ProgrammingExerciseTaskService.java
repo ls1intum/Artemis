@@ -298,6 +298,7 @@ public class ProgrammingExerciseTaskService {
         });
     }
 
+    // TODO: remove this
     public static void main(String[] args) {
         String test = """
                 [task][Task](test1)
