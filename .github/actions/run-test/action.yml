@@ -24,20 +24,23 @@ runs:
                 cache: 'gradle'
         -   name: Java Tests
             id: tests
-            run: set -o pipefail && SPRING_PROFILES_INCLUDE=${{ inputs.database }} ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+            run: set -o pipefail && SPRING_PROFILES_INCLUDE=${{inputs.database}} ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+            shell: bash
         -   name: Print failed tests
             if: failure()
             run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
+            shell: bash
         -   name: Count failed tests
             id: failedTestCounter
             if: failure()
             run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+            shell: bash
         -   name: Report action failure
             if: failure()
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - '${{ inputs.database }}
+                context: 'Test Run - '${{inputs.database}}
                 description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s) ❌'
                 state: 'failure'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
@@ -46,7 +49,7 @@ runs:
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - '${{ inputs.database }}
+                context: 'Test Run - '${{inputs.database}}
                 description: 'Test succeeded ✅'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
@@ -54,9 +57,10 @@ runs:
             uses: dorny/test-reporter@v1
             if: success() || failure()
             with:
-                name: ${{ inputs.database }} Tests
+                name: ${{inputs.database}} Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
         -   name: Number of Server Starts
             if: success() || failure()
             run: bash supporting_scripts/extract_number_of_server_starts.sh
+            shell: bash
