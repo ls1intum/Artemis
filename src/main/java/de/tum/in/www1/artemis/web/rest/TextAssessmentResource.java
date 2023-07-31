@@ -119,7 +119,6 @@ public class TextAssessmentResource extends AssessmentResource {
             final var exercise = (TextExercise) result.getParticipation().getExercise();
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
 
         return response;
