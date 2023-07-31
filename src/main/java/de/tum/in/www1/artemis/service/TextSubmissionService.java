@@ -134,9 +134,9 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {
-                // test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime)
                 var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
-                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) { // submission assessable?
+                // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
+                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) {
                     return submission;
                 }
                 else {
