@@ -51,7 +51,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run server-tests
-      uses: '.github/actions/run-test'
+      uses: './.github/actions/run-test'
       with:
         database: H2
     - name: "Codacy: Report coverage"
@@ -78,7 +78,7 @@ jobs:
       steps:
           - uses: actions/checkout@v3
           - name: Run server-tests
-            uses: '.github/actions/run-test'
+            uses: './.github/actions/run-test'
             with:
                 database: MySQL
 
@@ -92,7 +92,7 @@ jobs:
       steps:
           - uses: actions/checkout@v3
           - name: Run server-tests
-            uses: '.github/actions/run-test'
+            uses: './.github/actions/run-test'
             with:
                 database: PostgreSQL
 
