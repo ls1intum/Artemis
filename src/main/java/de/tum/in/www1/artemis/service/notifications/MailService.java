@@ -23,7 +23,10 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
@@ -47,6 +50,12 @@ public class MailService implements InstantNotificationService {
     private static final String USER = "user";
 
     private static final String BASE_URL = "baseUrl";
+
+    private static final String DATA_EXPORT = "dataExport";
+
+    private static final String DATA_EXPORTS = "dataExports";
+
+    private static final String REASON = "reason";
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -134,12 +143,51 @@ public class MailService implements InstantNotificationService {
      */
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
-        Context context = new Context(locale);
-        context.setVariable(USER, user);
-        context.setVariable(BASE_URL, artemisServerUrl);
+        Context context = createBaseContext(user, locale);
+        prepareTemplateAndSendEmail(user, templateName, titleKey, context);
+    }
+
+    /**
+     * Sends an email to a user (the internal admin user) about a failed data export creation.
+     *
+     * @param admin        the admin user
+     * @param templateName the name of the email template
+     * @param titleKey     the subject of the email
+     * @param dataExport   the data export that failed
+     * @param reason       the exception that caused the data export to fail
+     */
+    public void sendDataExportFailedEmailForAdmin(User admin, String templateName, String titleKey, DataExport dataExport, Exception reason) {
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(DATA_EXPORT, dataExport);
+        context.setVariable(REASON, reason);
+        prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
+    }
+
+    public void sendSuccessfulDataExportsEmailToAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(DATA_EXPORTS, dataExports);
+        prepareTemplateAndSendEmail(admin, templateName, titleKey, context);
+    }
+
+    private void prepareTemplateAndSendEmail(User admin, String templateName, String titleKey, Context context) {
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        sendEmail(user, subject, content, false, true);
+        sendEmail(admin, subject, content, false, true);
+    }
+
+    private void prepareTemplateAndSendEmailWithArgumentInSubject(User admin, String templateName, String titleKey, String argument, Context context) {
+        String content = templateEngine.process(templateName, context);
+        String subject = messageSource.getMessage(titleKey, new Object[] { argument }, context.getLocale());
+        sendEmail(admin, subject, content, false, true);
+    }
+
+    private Context createBaseContext(User admin, Locale locale) {
+        Context context = new Context(locale);
+        context.setVariable(USER, admin);
+        context.setVariable(BASE_URL, artemisServerUrl);
+        return context;
     }
 
     public void sendActivationEmail(User user) {
@@ -155,6 +203,16 @@ public class MailService implements InstantNotificationService {
     public void sendSAML2SetPasswordMail(User user) {
         log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
+    }
+
+    public void sendDataExportFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
+        log.debug("Sending data export failed email to admin email address '{}'", admin.getEmail());
+        sendDataExportFailedEmailForAdmin(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport, reason);
+    }
+
+    public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
+        log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
+        sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
     }
 
     // notification related
@@ -317,6 +375,8 @@ public class MailService implements InstantNotificationService {
                     .process("mail/notification/tutorialGroupBasicEmail", context);
             case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
+            case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);
+            case DATA_EXPORT_FAILED -> templateEngine.process("mail/notification/dataExportFailedEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }
