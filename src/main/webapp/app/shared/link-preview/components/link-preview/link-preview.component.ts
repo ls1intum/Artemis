@@ -3,6 +3,7 @@ import { LinkPreview } from 'app/shared/link-preview/services/link-preview.servi
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Posting } from 'app/entities/metis/posting.model';
+import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-link-preview',
@@ -35,10 +36,6 @@ export class LinkPreviewComponent implements OnInit {
      */
     removeLinkPreview(linkPreview: LinkPreview) {
         const urlToSearchFor = linkPreview.url;
-
-        // Regular expression pattern to match URLs
-        // eslint-disable-next-line no-useless-escape
-        const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
 
         if (this.posting) {
             // Find all URL matches in the text (in the content of the post)

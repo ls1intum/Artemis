@@ -10,6 +10,10 @@ export interface Link {
     isLinkPreviewRemoved?: boolean;
 }
 
+// Regular expression pattern to match URLs
+// eslint-disable-next-line no-useless-escape
+export const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
+
 @Injectable()
 export class LinkifyService {
     /**
@@ -19,10 +23,6 @@ export class LinkifyService {
      */
     find(text: string): Link[] {
         const linkableItems: Link[] = [];
-
-        // Regular expression pattern to match URLs
-        // eslint-disable-next-line no-useless-escape
-        const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
 
         // Find all URL matches in the text (in the content of the post)
         let match;

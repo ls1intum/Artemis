@@ -1,4 +1,12 @@
 <div *ngFor="let preview of linkPreviews; trackBy: trackLinks">
-    <jhi-link-preview [linkPreview]="preview" [showLoadingsProgress]="showLoadingsProgress" [hasError]="hasError" [loaded]="loaded" [posting]="posting" [isReply]="isReply" [multiple]="multiple">
+    <jhi-link-preview
+        [linkPreview]="preview"
+        [showLoadingsProgress]="showLoadingsProgress"
+        [hasError]="hasError"
+        [loaded]="loaded"
+        [posting]="posting"
+        [isReply]="isReply"
+        [multiple]="multiple"
+    >
     </jhi-link-preview>
 </div>
