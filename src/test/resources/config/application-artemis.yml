@@ -24,6 +24,7 @@ artemis:
         internal-admin:
             username: artemis_admin
             password: artemis_admin
+            email: "admin@localhost"
         registration:
             enabled: true
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z]{2,5}'
