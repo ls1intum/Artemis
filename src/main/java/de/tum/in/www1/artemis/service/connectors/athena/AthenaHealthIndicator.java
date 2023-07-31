@@ -26,6 +26,20 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle
 
+    private static final String ATHENA_URL_KEY = "url";
+
+    private static final String ATHENA_STATUS_KEY = "status";
+
+    private static final String ATHENA_MODULES_KEY = "modules";
+
+    private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
+
+    private static final String ATHENA_MODULE_URL_KEY = "url";
+
+    private static final String ATHENA_MODULE_EXERCISE_TYPE_KEY = "type";
+
+    private static final String ATHENA_MODULE_HEALTHY_KEY = "healthy";
+
     private final RestTemplate shortTimeoutRestTemplate;
 
     @Value("${artemis.athena.url}")
@@ -52,22 +66,23 @@ public class AthenaHealthIndicator implements HealthIndicator {
         ConnectorHealth health;
         try {
             final var response = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", JsonNode.class);
-            var isUp = response != null && response.get("status").asText().equals("ok");
+            final var athenaStatus = response != null ? response.get(ATHENA_STATUS_KEY).asText() : null;
+            var isUp = "ok".equals(athenaStatus);
             health = new ConnectorHealth(isUp);
             var additionalInfo = new HashMap<String, Object>();
-            additionalInfo.put("url", athenaUrl);
-            if (response != null) {
-                additionalInfo.put("assessment module manager", response.get("status").asText());
+            additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
+            if (athenaStatus != null) {
+                additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, athenaStatus);
                 additionalInfo.putAll(getAdditionalInfoForModules(response));
             }
             else {
-                additionalInfo.put("assessment module manager", "not available");
+                additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, "not available");
             }
             health.setAdditionalInfo(additionalInfo);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
-            health.setAdditionalInfo(Map.of("url", athenaUrl));
+            health.setAdditionalInfo(Map.of(ATHENA_URL_KEY, athenaUrl));
         }
 
         return health.asActuatorHealth();
@@ -78,12 +93,12 @@ public class AthenaHealthIndicator implements HealthIndicator {
      */
     private Map<String, Object> getAdditionalInfoForModules(JsonNode athenaHealthResponse) {
         var additionalModuleInfo = new HashMap<String, Object>();
-        if (athenaHealthResponse.has("modules")) {
-            JsonNode modules = athenaHealthResponse.get("modules");
+        if (athenaHealthResponse.has(ATHENA_MODULES_KEY)) {
+            JsonNode modules = athenaHealthResponse.get(ATHENA_MODULES_KEY);
             // keys are module names, values are description maps
             modules.fields().forEachRemaining(module -> {
-                var moduleHealth = new AthenaModuleHealth(module.getValue().get("type").asText(), module.getValue().get("healthy").asBoolean(),
-                        module.getValue().get("url").asText());
+                var moduleHealth = new AthenaModuleHealth(module.getValue().get(ATHENA_MODULE_EXERCISE_TYPE_KEY).asText(),
+                        module.getValue().get(ATHENA_MODULE_HEALTHY_KEY).asBoolean(), module.getValue().get(ATHENA_MODULE_URL_KEY).asText());
                 additionalModuleInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
             });
         }
