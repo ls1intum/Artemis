@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestion
  * REST controller for Athena feedback suggestions.
  */
 @RestController
-@RequestMapping("/api/athena")
+@RequestMapping("api/athena/")
 @Profile("athena")
 public class AthenaResource {
 
