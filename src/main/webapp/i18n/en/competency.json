@@ -155,7 +155,7 @@
                 "health": {
                     "missing": {
                         "title": "Missing Learning Paths",
-                        "body": "Some student's have not generated their Learning Paths yet. This is not critical. Their Learning Paths will be created once they request their learning path for the first time.",
+                        "body": "Some students have not generated their learning paths yet. This is not critical. Their learning paths will be created once they request their learning path for the first time.",
                         "action": "Generate",
                         "hint": "Generate missing Learning Paths"
                     }
