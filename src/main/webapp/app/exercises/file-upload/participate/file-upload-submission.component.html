@@ -5,6 +5,7 @@
     </span>
     <jhi-button
         submitbutton
+        id="submit"
         *ngIf="isOwnerOfParticipation"
         [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
@@ -76,7 +77,7 @@
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-    <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+    <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
     <p right-body class="mb-3 markdown-preview" *ngIf="fileUploadExercise!.problemStatement">
         <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
     </p>

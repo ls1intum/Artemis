@@ -12,7 +12,6 @@ import javax.validation.constraints.Size;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.domain.Submission;
  */
 @Entity
 @DiscriminatorValue(value = "M")
-@JsonTypeName("modeling")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingSubmission extends Submission {
 

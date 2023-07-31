@@ -499,7 +499,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
-        verifyNoInteractions(messagingTemplate);
+        verifyNoInteractions(websocketMessagingService);
     }
 
     @Test
@@ -516,7 +516,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
-        verifyNoInteractions(messagingTemplate);
+        verifyNoInteractions(websocketMessagingService);
     }
 
     @Test
@@ -539,7 +539,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
-        verifyNoInteractions(messagingTemplate);
+        verifyNoInteractions(websocketMessagingService);
     }
 
     @Test
@@ -832,7 +832,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private void checkQuizNotStarted(String path) {
         // check that quiz has not started now
         log.debug("// Check that the quiz has not started and submissions are not allowed");
-        verify(messagingTemplate, never()).send(eq(path), any());
+        verify(websocketMessagingService, never()).sendMessage(eq(path), any());
     }
 
     private void setupShortAnswerSubmission(ShortAnswerQuestion saQuestion, QuizSubmission submission, int amountOfCorrectAnswers) {

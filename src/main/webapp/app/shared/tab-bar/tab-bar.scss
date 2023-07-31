@@ -14,16 +14,17 @@
         text-decoration: none;
 
         padding-bottom: 2px;
-        margin: 0.5rem 0.5rem 0.5rem 0;
+        margin: 0.5rem 1rem 0.5rem 0;
+        border-bottom: 2px solid transparent;
 
         &:hover {
             color: var(--tab-bar-color-hover);
-            box-shadow: 0 2px 0 var(--tab-bar-color-hover);
+            border-bottom: 2px solid var(--tab-bar-color-hover);
         }
 
         &.active {
             color: var(--tab-bar-color-active);
-            box-shadow: 0 2px 0 var(--tab-bar-color-active);
+            border-bottom: 2px solid var(--tab-bar-color-active);
         }
 
         // Displays a red circle at the top right corner of the tab item.
@@ -37,6 +38,16 @@
             top: 0;
             right: 0;
             transform: translate(50%, -50%);
+        }
+
+        @media (max-width: 720px) {
+            .tab-link-text {
+                display: none;
+            }
+
+            fa-icon:first-child {
+                font-size: calc(var(--bs-body-font-size) * 1.6);
+            }
         }
     }
 
