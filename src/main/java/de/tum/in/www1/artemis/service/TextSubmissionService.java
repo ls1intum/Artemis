@@ -132,7 +132,7 @@ public class TextSubmissionService extends SubmissionService {
 
         // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
         if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
-            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmission(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
+            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {
                 var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
                 // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
