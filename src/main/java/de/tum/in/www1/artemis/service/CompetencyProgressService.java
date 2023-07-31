@@ -91,7 +91,7 @@ public class CompetencyProgressService {
         else {
             throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         }
-        updateProgressByLearningObject(learningObject, new HashSet<>(userRepository.getStudents(course)));
+        updateProgressByLearningObject(learningObject, userRepository.getStudents(course));
     }
 
     /**
@@ -276,6 +276,7 @@ public class CompetencyProgressService {
      * @return True if the user mastered the competency, false otherwise
      */
     public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
+        // weight taken from client
         final double weight = 2.0 / 3.0;
         final double mastery = (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();

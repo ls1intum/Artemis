@@ -21,12 +21,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Result } from 'app/entities/result.model';
-import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -49,7 +47,7 @@ describe('Course Management Service', () => {
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
     let scoresPerExerciseType: ScoresPerExerciseType;
-    let participationResult: Result;
+    let participationResult: ParticipationResultDTO;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -97,10 +95,8 @@ describe('Course Management Service', () => {
         courseForDashboard.quizScores = courseScores;
         courseForDashboard.textScores = courseScores;
         courseForDashboard.fileUploadScores = courseScores;
-        participationResult = new Result();
-        const participation = new StudentParticipation();
-        participation.id = 432;
-        participationResult.participation = participation;
+        participationResult = new ParticipationResultDTO();
+        participationResult.participationId = 432;
         courseForDashboard.participationResults = [participationResult];
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
@@ -201,18 +197,6 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
-        tick();
-    }));
-
-    it('should find course with learning paths', fakeAsync(() => {
-        course.learningPathsEnabled = true;
-        course.learningPaths = [new LearningPath()];
-        returnedFromService = { ...course };
-        courseManagementService
-            .findWithLearningPaths(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-learning-paths`, returnedFromService, course);
         tick();
     }));
 

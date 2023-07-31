@@ -12,30 +12,32 @@ public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> 
 
     public record Node(String id, NodeType type, long linkedResource, long linkedResourceParent, boolean completed, String label) {
 
-        public Node(String id, NodeType type, long linkedResource, boolean completed, String label) {
-            this(id, type, linkedResource, -1, completed, label);
+        public Node(String id, NodeType type, Long linkedResource, boolean completed, String label) {
+            this(id, type, linkedResource, null, completed, label);
         }
 
-        public Node(String id, NodeType type, long linkedResource, String label) {
+        public Node(String id, NodeType type, Long linkedResource, String label) {
             this(id, type, linkedResource, false, label);
         }
 
         public Node(String id, NodeType type, String label) {
-            this(id, type, -1, label);
+            this(id, type, null, label);
         }
 
-        public Node(String id, NodeType type, long linkedResource) {
+        public Node(String id, NodeType type, Long linkedResource) {
             this(id, type, linkedResource, "");
         }
 
         public Node(String id, NodeType type) {
-            this(id, type, -1);
+            this(id, type, null, "");
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Edge(String id, String source, String target) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Cluster(String id, String label, Set<String> childNodeIds) {
     }
 

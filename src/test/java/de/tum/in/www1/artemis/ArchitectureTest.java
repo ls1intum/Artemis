@@ -11,11 +11,13 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaAnnotation;
-import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.*;
 import com.tngtech.archunit.lang.*;
+
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -72,6 +74,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
             units.check(allClasses);
             parameters.check(allClasses);
         }
+    }
+
+    @Test
+    void testValidSimpMessageSendingOperationsUsage() {
+        ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
+                .beDeclaredIn(WebsocketMessagingService.class)
+                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
+        usage.check(productionClasses);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes

@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { debounceTime, finalize, switchMap, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -27,13 +26,11 @@ export enum TableColumn {
     selector: 'jhi-learning-path-management',
     templateUrl: './learning-path-management.component.html',
 })
-export class LearningPathManagementComponent implements OnInit, OnDestroy {
+export class LearningPathManagementComponent implements OnInit {
     isLoading = false;
 
     courseId: number;
-    course: Course;
-
-    courseSub: Subscription;
+    learningPathsEnabled: boolean;
 
     searchLoading = false;
     readonly column = TableColumn;
@@ -117,7 +114,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.activatedRoute.parent!.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
+            this.courseId = params['courseId'];
             if (this.courseId) {
                 this.loadData();
             }
@@ -127,25 +124,23 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
     private loadData() {
         this.isLoading = true;
 
-        this.courseSub = this.courseManagementService.findWithLearningPaths(this.courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
-
-            if (this.course.learningPathsEnabled) {
-                this.performSearch(this.sort, 0);
-                this.performSearch(this.search, 300);
-            }
-
-            this.isLoading = false;
-        });
-    }
-
-    /**
-     * On destroy unsubscribe all subscriptions.
-     */
-    ngOnDestroy() {
-        if (this.courseSub) {
-            this.courseSub.unsubscribe();
-        }
+        this.courseManagementService
+            .getCourseLearningPathsEnabled(this.courseId)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    this.learningPathsEnabled = res.body!;
+                    if (this.learningPathsEnabled) {
+                        this.performSearch(this.sort, 0);
+                        this.performSearch(this.search, 300);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     enableLearningPaths() {
@@ -159,7 +154,7 @@ export class LearningPathManagementComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: () => {
-                    this.course.learningPathsEnabled = true;
+                    this.learningPathsEnabled = true;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

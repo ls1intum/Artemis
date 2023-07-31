@@ -1039,7 +1039,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testFindWithLearningPaths_AsInstructor() throws Exception {
-        courseTestService.testFindWithLearningPaths_AsInstructor();
+    void testGetCourseLearningPathsEnabled_AsInstructor() throws Exception {
+        courseTestService.testGetCourseLearningPathsEnabled_AsInstructor();
     }
 }
