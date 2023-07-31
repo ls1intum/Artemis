@@ -88,7 +88,7 @@ class AthenaConnector<RequestType, ResponseType> {
             }
             catch (NetworkingError | ResourceAccessException error) {
                 if (retries >= maxRetries) {
-                    throw new NetworkingError("An Error occurred while calling Athena: " + error.getMessage(), error);
+                    throw new NetworkingError("An error occurred while calling Athena: " + error.getMessage(), error);
                 }
             }
         }
