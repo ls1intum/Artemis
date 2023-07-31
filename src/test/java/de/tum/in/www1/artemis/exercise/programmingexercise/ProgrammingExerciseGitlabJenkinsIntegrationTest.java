@@ -160,6 +160,18 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExercise_lockRepository_submissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_lockRepository_submissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExercise_none_submissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_none_submissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
