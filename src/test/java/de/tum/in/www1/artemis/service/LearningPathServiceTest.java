@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
@@ -105,7 +104,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             var competency = competencyUtilService.createCompetency(course);
             final var lectureUnit = lectureUtilService.createTextUnit();
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
-            final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, false, ProgrammingLanguage.JAVA, "Some Title", "someshortname");
+            final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
             competencyUtilService.linkExerciseToCompetency(competency, exercise);
             final var startNodeId = LearningPathService.getCompetencyStartNodeId(competency.getId());
             final var endNodeId = LearningPathService.getCompetencyEndNodeId(competency.getId());
