@@ -990,6 +990,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final Set<TextBlock> textBlocksSubmission1 = Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
                 new TextBlock().startIndex(36).endIndex(57).automatic());
         final TextBlock textBlockSubmission2 = new TextBlock().startIndex(0).endIndex(27).automatic();
+        for (TextBlock textBlock : textBlocksSubmission1) {
+            textBlock.computeId();
+        }
+        textBlockSubmission2.computeId();
 
         textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocksSubmission1, textSubmission1);
         textSubmission2 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
