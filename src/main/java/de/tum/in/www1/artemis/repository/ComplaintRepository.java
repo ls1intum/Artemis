@@ -33,6 +33,15 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             """)
     Optional<Complaint> findByResultSubmissionId(@Param("submissionId") Long submissionId);
 
+    @Query("""
+                        SELECT c FROM Complaint c
+                            LEFT JOIN c.result r
+                            LEFT JOIN r.submission s
+                            LEFT JOIN FETCH c.complaintResponse
+                        WHERE s.id = :#{#submissionId}
+            """)
+    Optional<Complaint> findWithEagerComplaintResponseByResultSubmissionId(@Param("submissionId") long submissionId);
+
     Optional<Complaint> findByResultId(Long resultId);
 
     @Query("""

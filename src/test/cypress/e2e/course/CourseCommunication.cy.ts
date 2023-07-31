@@ -4,9 +4,8 @@ import { courseCommunication, courseManagementRequest, navigationBar } from '../
 import { CourseWideContext } from '../../support/constants';
 import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
-import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
+import { titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
-import day from 'dayjs/esm';
 import { Channel } from '../../../../main/webapp/app/entities/metis/conversation/channel.model';
 
 describe('Course communication', () => {
@@ -16,31 +15,21 @@ describe('Course communication', () => {
     before('Create course', () => {
         cy.login(admin);
 
-        let uid = generateUUID();
-        const courseName = 'Course ' + uid;
-        const courseShortName = 'course' + uid;
-        courseManagementRequest
-            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
-            .then((response) => {
-                course = convertModelAfterMultiPart(response);
-                courseManagementRequest.addInstructorToCourse(course, instructor);
-                courseManagementRequest.addStudentToCourse(course, studentOne);
-                courseManagementRequest.addStudentToCourse(course, studentTwo);
-                courseManagementRequest.addStudentToCourse(course, studentThree);
-            });
+        courseManagementRequest.createCourse({ allowMessaging: false }).then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+        });
 
-        uid = generateUUID();
-        const courseWithMessagingName = 'Course ' + uid;
-        const courseWithMessagingShortName = 'course' + uid;
-        courseManagementRequest
-            .createCourse(false, courseWithMessagingName, courseWithMessagingShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
-            .then((response) => {
-                courseWithMessaging = convertModelAfterMultiPart(response);
-                courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
-            });
+        courseManagementRequest.createCourse().then((response) => {
+            courseWithMessaging = convertModelAfterMultiPart(response);
+            courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
+        });
     });
 
     describe('Course overview communication', () => {

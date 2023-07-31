@@ -1630,7 +1630,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             gradingScale.setGradeType(GradeType.BONUS);
         }
         else {
-            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }),
+            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }),
                     true, 1);
         }
         gradingScaleRepository.save(gradingScale);
