@@ -157,19 +157,24 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/file2': FileType.FILE,
             'folder2/folder3': FileType.FOLDER,
             'folder2/folder3/file3': FileType.FILE,
+            'folder2/folder3/folder4': FileType.FOLDER,
+            'folder2/folder3/folder4/folder5': FileType.FOLDER,
         };
         comp.compressFolders = true;
         comp.setupTreeview();
         fixture.detectChanges();
         // after compression
         expect(comp.filesTreeViewItem).toHaveLength(2);
-        expect(comp.filesTreeViewItem[0].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[0].children).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].children[0].children).toHaveLength(0);
         expect(comp.filesTreeViewItem[1].children).toHaveLength(2);
         expect(comp.filesTreeViewItem[1].children[0].children).toHaveLength(0);
-        expect(comp.filesTreeViewItem[1].children[1].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[1].children[1].children).toHaveLength(2);
+        expect(comp.filesTreeViewItem[1].children[1].children[0].children).toHaveLength(0);
+        expect(comp.filesTreeViewItem[1].children[1].children[1].children).toHaveLength(0);
         const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!;
-        expect(folder).toBeUndefined();
-        const file1 = comp.filesTreeViewItem.find(({ value }) => value === 'folder/file1')!;
+        expect(folder).toBeObject();
+        const file1 = folder.children.find(({ value }) => value === 'folder/file1')!;
         expect(file1).toBeObject();
         expect(file1.children).toEqual([]);
         const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
@@ -179,13 +184,18 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(file2).toBeDefined();
         expect(file2.children).toEqual([]);
         const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3')!;
-        expect(folder3).toBeUndefined();
-        const file3 = folder2.children.find(({ value }) => value === 'folder2/folder3/file3')!;
+        expect(folder3).toBeObject();
+        const file3 = folder3.children.find(({ value }) => value === 'folder2/folder3/file3')!;
         expect(file3).toBeDefined();
         expect(file3.children).toEqual([]);
+        const folder4 = folder3.children.find(({ value }) => value === 'folder2/folder3/folder4')!;
+        expect(folder4).toBeUndefined();
+        const folder5 = folder3.children.find(({ value }) => value === 'folder2/folder3/folder4/folder5')!;
+        expect(folder5).toBeObject();
+        expect(folder5.children).toEqual([]);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
-        expect(renderedFolders).toHaveLength(1);
+        expect(renderedFolders).toHaveLength(4);
         expect(renderedFiles).toHaveLength(3);
     });
 
