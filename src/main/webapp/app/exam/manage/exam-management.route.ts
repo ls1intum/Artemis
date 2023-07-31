@@ -783,7 +783,7 @@ export const examManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
-            pageTitle: 'artemisApp.exampleSubmission.home.LtiServicetitle',
+            pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
