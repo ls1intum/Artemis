@@ -10,7 +10,6 @@ import java.util.List;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -146,16 +145,5 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldGenerateTestwiseCoverageFileReport() throws Exception {
         var resultNotification = TestwiseCoverageTestUtil.generateBambooBuildResultWithCoverage();
         programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
-    @Disabled // TODO we should implement this in the future
-    void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
-        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
-        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"),
-                List.of("test3", "test4"), List.of());
-        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, messagingTemplate);
     }
 }

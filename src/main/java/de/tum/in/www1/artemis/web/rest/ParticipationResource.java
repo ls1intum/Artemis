@@ -508,8 +508,8 @@ public class ParticipationResource {
             instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
 
             // when changing the individual due date after the regular due date, the repository might already have been locked
-            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(participation -> programmingExerciseParticipationService
-                    .unlockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));
+            updatedParticipations.stream().filter(exerciseDateService::isBeforeDueDate).forEach(
+                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
             // the new due date may be in the past, students should no longer be able to make any changes
             updatedParticipations.stream().filter(exerciseDateService::isAfterDueDate).forEach(participation -> programmingExerciseParticipationService
                     .lockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation));

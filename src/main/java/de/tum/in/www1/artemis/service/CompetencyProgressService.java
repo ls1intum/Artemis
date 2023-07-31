@@ -91,7 +91,7 @@ public class CompetencyProgressService {
         else {
             throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         }
-        updateProgressByLearningObject(learningObject, new HashSet<>(userRepository.getStudents(course)));
+        updateProgressByLearningObject(learningObject, userRepository.getStudents(course));
     }
 
     /**
