@@ -44,7 +44,7 @@
         </a>
         <a class="tab-link" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'learning-path-management']" routerLinkActive="active">
             <fa-icon [icon]="faNetworkWired"></fa-icon>
-            <span jhiTranslate="artemisApp.learningPath.learningPathButton">Learning Paths</span>
+            <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton">Learning Paths</span>
         </a>
         <a class="tab-link" [routerLink]="['/course-management', course.id, 'assessment-dashboard']" routerLinkActive="active" [class.active]="shouldHighlightAssessmentLink()">
             <fa-icon [icon]="faUserCheck"></fa-icon>
