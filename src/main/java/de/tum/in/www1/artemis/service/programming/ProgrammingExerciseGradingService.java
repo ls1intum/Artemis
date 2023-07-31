@@ -707,7 +707,7 @@ public class ProgrammingExerciseGradingService {
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION
-                    + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(", "));
+                    + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining(", "));
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
 
             return true;
