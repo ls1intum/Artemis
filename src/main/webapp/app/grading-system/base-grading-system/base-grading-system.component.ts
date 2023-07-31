@@ -469,7 +469,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      */
     setBoundInclusivity(): void {
         this.lowerBoundInclusivity = this.gradingScale.gradeSteps.every((gradeStep) => {
-            return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
+            return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0 || gradeStep.lowerBoundPercentage === 100;
         });
     }
 
