@@ -34,9 +34,9 @@
                           AND feedback.text IS NOT NULL
                           AND feedback.reference IS NULL
                           AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%'
-                          AND (participation.exercise_id = e.id
-                            OR participation.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = e.id)
-                            OR participation.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = e.id)))
+                          AND (participation.exercise_id = exercise.id
+                            OR participation.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = exercise.id)
+                            OR participation.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = exercise.id)))
 
             UPDATE feedback
             <!-- Find the testcase by matching the text / test name and the exercise -->
