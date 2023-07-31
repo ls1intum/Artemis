@@ -151,6 +151,10 @@
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",
+            "breadcrumbs": {
+                "lectureUnit": "Vorlesungseinheit",
+                "exercise": "Aufgabe"
+            },
             "manageLearningPaths": {
                 "title": "Lernpfadmanagement",
                 "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",

@@ -150,6 +150,10 @@
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",
+            "breadcrumbs": {
+                "lectureUnit": "Lecture Unit",
+                "exercise": "Exercise"
+            },
             "manageLearningPaths": {
                 "title": "Learning Path Management",
                 "isDisabled": "Learning Paths are currently disabled for this course.",
