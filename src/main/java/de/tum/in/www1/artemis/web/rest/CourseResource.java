@@ -113,12 +113,15 @@ public class CourseResource {
 
     private final ChannelService channelService;
 
+    private final LearningPathService learningPathService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, ChannelService channelService) {
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, ChannelService channelService,
+            LearningPathService learningPathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -138,6 +141,7 @@ public class CourseResource {
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.channelService = channelService;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -1035,6 +1039,10 @@ public class CourseResource {
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
             channelService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
+            if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
+                Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+                learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
+            }
             return ResponseEntity.ok().body(null);
         }
         else {
