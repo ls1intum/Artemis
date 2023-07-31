@@ -13,7 +13,14 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 /**
- * Connector to Athena, a remote Artemis service.
+ * Connector to Athena, a remote Artemis service that can create semi-automatic feedback suggestions for tutors.
+ * <p>
+ * The connector will be used to
+ * - Send submissions to Athena
+ * - Send existing feedback to Athena
+ * - Request the next suggested submission to assess from Athena
+ * - Receive feedback suggestions from Athena
+ * <p>
  * As parameters, this class required DTO classes to serialize and deserialize POJOs to JSON and back.
  *
  * @param <RequestType>  DTO class, describing the body of the network request.
