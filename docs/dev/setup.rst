@@ -618,7 +618,9 @@ Furthermore the <APNS_Key>.p12 needs to be mounted into the Docker under the abo
 
 To run the services for Android support the following environment variable is required:
 
-* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json Furthermore the Firebase.json needs to be mounted into the Docker under the above specified path.
+* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json
+
+Furthermore the Firebase.json needs to be mounted into the Docker under the above specified path.
 
 To run both APNS and Firebase configure the Environment Variables for both.
 
