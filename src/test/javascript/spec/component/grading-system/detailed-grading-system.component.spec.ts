@@ -272,6 +272,21 @@ describe('Detailed Grading System Component', () => {
         expect(comp.lowerBoundInclusivity).toBeTrue();
     });
 
+    it('should determine lower bound inclusivity correctly when using a step above 100%', () => {
+        comp.gradingScale.gradeSteps.push({
+            gradeName: 'Super Excellent',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 150,
+            lowerBoundInclusive: false,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        });
+
+        comp.setBoundInclusivity();
+
+        expect(comp.lowerBoundInclusivity).toBeTrue();
+    });
+
     it('should not delete non-existing grading scale', () => {
         comp.existingGradingScale = false;
         const gradingSystemDeleteForCourseSpy = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse');
