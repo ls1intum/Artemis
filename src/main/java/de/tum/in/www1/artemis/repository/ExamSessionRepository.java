@@ -42,11 +42,9 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
     @Query("""
                 SELECT es
                 FROM ExamSession es
-                    LEFT JOIN FETCH es.studentExam se
-                    LEFT JOIN FETCH se.exam e
-                WHERE e.id = :examId
+                WHERE es.studentExam.exam.id = :examId
                     AND es.id <> :#{#examSession.id}
-                    AND se.id <> :#{#examSession.studentExam.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
                     AND (es.ipAddress = :#{#examSession.ipAddress}
                         OR es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
                         OR es.userAgent = :#{#examSession.userAgent})
