@@ -214,7 +214,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
 
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
         }
 
         return ResponseEntity.ok(newManualResult);

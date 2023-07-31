@@ -109,10 +109,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
-    List<User> findAllInGroupWithAuthorities(@Param("groupName") String groupName);
+    Set<User> findAllInGroupWithAuthorities(@Param("groupName") String groupName);
 
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
-    List<User> findAllInGroup(@Param("groupName") String groupName);
+    Set<User> findAllInGroup(@Param("groupName") String groupName);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -334,7 +334,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups AND user NOT IN :#{#ignoredUsers}")
-    List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
+    Set<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 
     @Query("""
             SELECT DISTINCT team.students AS student
@@ -543,9 +543,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get students by given course
      *
      * @param course object
-     * @return list of students for given course
+     * @return students for given course
      */
-    default List<User> getStudents(Course course) {
+    default Set<User> getStudents(Course course) {
         return findAllInGroupWithAuthorities(course.getStudentGroupName());
     }
 
@@ -553,9 +553,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get tutors by given course
      *
      * @param course object
-     * @return list of tutors for given course
+     * @return tutors for given course
      */
-    default List<User> getTutors(Course course) {
+    default Set<User> getTutors(Course course) {
         return findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName());
     }
 
@@ -563,9 +563,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get editors by given course
      *
      * @param course object
-     * @return list of editors for given course
+     * @return editors for given course
      */
-    default List<User> getEditors(Course course) {
+    default Set<User> getEditors(Course course) {
         return findAllInGroupWithAuthorities(course.getEditorGroupName());
     }
 
@@ -573,9 +573,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * Get all instructors for a given course
      *
      * @param course The course for which to fetch all instructors
-     * @return A list of all users that have the role of instructor in the course
+     * @return instructors for the given course
      */
-    default List<User> getInstructors(Course course) {
+    default Set<User> getInstructors(Course course) {
         return findAllInGroupWithAuthorities(course.getInstructorGroupName());
     }
 
@@ -584,9 +584,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param groupName     The group by which all users should get filtered
      * @param excludedUsers The users that should get ignored/excluded
-     * @return A list of filtered users
+     * @return users who are in the given group except the excluded ones
      */
-    default List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
+    default Set<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
         // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
         if (!excludedUsers.isEmpty()) {
             return findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
@@ -650,9 +650,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
-    }
-
-    default User findOneWithGroupsAndAuthoritiesByIdOrElseThrow(long userId) {
-        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 }
