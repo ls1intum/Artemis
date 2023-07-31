@@ -44,6 +44,8 @@ public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
+    private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+
     @Transient
     private transient FileService fileService = new FileService();
 
@@ -147,11 +149,11 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaint_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTextLimit = 2000;
+    private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintResponseTextLimit = 2000;
+    private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -478,12 +480,28 @@ public class Course extends DomainObject {
         this.maxComplaintTextLimit = maxComplaintTextLimit;
     }
 
+    @JsonIgnore
+    public int getMaxComplaintTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintTextLimit());
+        }
+        return getMaxComplaintTextLimit();
+    }
+
     public int getMaxComplaintResponseTextLimit() {
         return maxComplaintResponseTextLimit;
     }
 
     public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
         this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
+    }
+
+    @JsonIgnore
+    public int getMaxComplaintResponseTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintResponseTextLimit());
+        }
+        return getMaxComplaintResponseTextLimit();
     }
 
     public boolean getComplaintsEnabled() {

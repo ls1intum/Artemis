@@ -121,3 +121,6 @@ export const CONVERSATION_REMOVE_USER_CHANNEL_TITLE = 'artemisApp.singleUserNoti
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'artemisApp.groupNotification.title.liveExamExerciseUpdate';
 
 export const QUIZ_EXERCISE_STARTED_TEXT = 'artemisApp.groupNotification.text.quizExerciseStarted';
+
+export const DATA_EXPORT_CREATED_TITLE = 'artemisApp.singleUserNotification.title.dataExportCreated';
+export const DATA_EXPORT_FAILED_TITLE = 'artemisApp.singleUserNotification.title.dataExportFailed';
