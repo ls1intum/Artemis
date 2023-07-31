@@ -45,7 +45,7 @@
                                      fe
                                 WHERE programming_exercise_test_case.test_name = fe.text
                                   AND programming_exercise_test_case.exercise_id = fe.exercise_id
-                                  AND fe.id = feedback.id)
+                                  AND fe.id = id)
             WHERE feedback.type = 3 <!-- Automatic -->
                 AND feedback.text IS NOT NULL
                 AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
