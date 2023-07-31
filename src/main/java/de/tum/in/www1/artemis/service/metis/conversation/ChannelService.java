@@ -69,6 +69,22 @@ public class ChannelService {
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
             conversationParticipant.setIsModerator(true);
         }
+        // If the channel is course-wide, there might not be a participant entry for some users yet. They are created here.
+        if (channel.getIsCourseWide()) {
+            var matchingParticipantIds = matchingParticipants.stream().map(ConversationParticipant::getId).collect(Collectors.toSet());
+            var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
+            missingUsers.forEach(user -> {
+                ConversationParticipant conversationParticipant = new ConversationParticipant();
+                conversationParticipant.setUser(user);
+                conversationParticipant.setConversation(channel);
+                conversationParticipant.setIsModerator(true);
+                conversationParticipant.setIsHidden(false);
+                conversationParticipant.setIsFavorite(false);
+                conversationParticipant.setLastRead(ZonedDateTime.now());
+                conversationParticipant.setUnreadMessagesCount(0L);
+                matchingParticipants.add(conversationParticipant);
+            });
+        }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
     }
