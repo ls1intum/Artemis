@@ -195,6 +195,7 @@ public class PlagiarismResource {
     public long getNumberOfPlagiarismResultsForExercise(@PathVariable("exerciseId") long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return plagiarismResultRepository.countByExerciseId(exerciseId);
+        // every result can lead to two plagiarism cases, that's why we multiply by two
+        return plagiarismResultRepository.countByExerciseId(exerciseId) * 2;
     }
 }

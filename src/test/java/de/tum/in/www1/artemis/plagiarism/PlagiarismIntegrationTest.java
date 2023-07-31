@@ -216,21 +216,21 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructor_correct() throws Exception {
-        var results = request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.OK, Long.class);
-        assertThat(results).isEqualTo(1);
+        var results = request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results-count", HttpStatus.OK, Long.class);
+        assertThat(results).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
-        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.FORBIDDEN, Long.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results-count", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results", HttpStatus.FORBIDDEN, Long.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results-count", HttpStatus.FORBIDDEN, Long.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }
