@@ -116,6 +116,7 @@ public class ProgrammingExerciseImportBasicService {
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
         final Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
         updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
+        importSubmissionPolicy(importedExercise);
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
@@ -131,8 +132,6 @@ public class ProgrammingExerciseImportBasicService {
             importedExercise.setMode(ExerciseMode.INDIVIDUAL);
             importedExercise.setTeamAssignmentConfig(null);
         }
-
-        importSubmissionPolicy(importedExercise);
 
         // Re-adding auxiliary repositories
         final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
