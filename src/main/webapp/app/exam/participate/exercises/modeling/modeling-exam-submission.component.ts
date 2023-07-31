@@ -118,25 +118,28 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.explanationText = explanation;
     }
 
-    setSubmissionVersion(submission: SubmissionVersion): void {
+    async setSubmissionVersion(submission: SubmissionVersion): Promise<void> {
         this.submissionVersion = submission;
-        this.updateViewFromSubmissionVersion();
+        await this.updateViewFromSubmissionVersion();
     }
 
-    private updateViewFromSubmissionVersion() {
+    private async updateViewFromSubmissionVersion() {
         if (this.submissionVersion) {
             if (this.submissionVersion.content) {
                 // we need these string operations because we store the string like that in the database
                 // and need to remove the content that was added before the string is saved to the db to get valid JSON
                 let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
+                // if we do not wait here for apollon, the redux store might be undefined
+                await this.modelingEditor!.apollonEditor!.nextRender;
                 model = model.replace('Model: ', '');
                 // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.umlModel = JSON.parse(model);
+                // same as above regarding the string operations
+                this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
+
                 // if we do not call this, apollon doesn't show the updated model
                 this.changeDetectorReference.detectChanges();
             }
-            // same as above regarding the string operations
-            this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
         }
     }
 }

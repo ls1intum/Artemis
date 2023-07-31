@@ -232,7 +232,9 @@ describe('ModelingExamSubmissionComponent', () => {
         });
     });
 
-    it('should update the model on submission version change', () => {
+    it('should update the model on submission version change', async () => {
+        jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } } as unknown as ModelingEditorComponent);
+        jest.spyOn(comp.modelingEditor.apollonEditor, 'nextRender').mockImplementation(() => Promise.resolve());
         const submissionVersion = {
             content:
                 'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
@@ -246,7 +248,10 @@ describe('ModelingExamSubmissionComponent', () => {
             relationships: [],
             assessments: [],
         } as UMLModel;
-        comp.setSubmissionVersion(submissionVersion);
+        await comp.setSubmissionVersion(submissionVersion);
+        await fixture.whenStable();
+
+        expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel).toEqual(parsedModel);
         expect(comp.explanationText).toBe('explanation');
     });
