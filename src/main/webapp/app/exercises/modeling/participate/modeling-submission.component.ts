@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@palsch/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';

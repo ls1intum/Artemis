@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@palsch/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
@@ -11,7 +11,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { addDelay } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -80,7 +79,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
             this.languageHelper.language.subscribe(async (languageKey: string) => {
                 if (this.apollonEditor) {
-                    await addDelay(0);
+                    await this.apollonEditor.nextRender;
                     this.apollonEditor.locale = languageKey as Locale;
                 }
             });
