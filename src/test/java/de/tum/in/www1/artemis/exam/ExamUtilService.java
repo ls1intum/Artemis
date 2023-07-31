@@ -306,6 +306,23 @@ public class ExamUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Exam exam = ExamFactory.generateExam(course);
+        exam = examRepository.save(exam);
+        var registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(user);
+        registeredExamUser.setExam(exam);
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        exam.setNumberOfCorrectionRoundsInExam(1);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime resultsPublicationDate) {
         Exam exam = addExam(course, user, visibleDate, startDate, endDate);
         exam.setPublishResultsDate(resultsPublicationDate);

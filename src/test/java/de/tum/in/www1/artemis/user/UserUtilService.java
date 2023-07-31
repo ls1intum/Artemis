@@ -120,6 +120,21 @@ public class UserUtilService {
     }
 
     /**
+     * creates and saves users with passed registration numbers
+     *
+     * @param registrationNumbers registration numbers of users
+     * @param testPrefix          used to set the user login
+     * @return the created users
+     */
+    public List<User> setRegistrationNumberOfUsers(List<String> registrationNumbers, String testPrefix) {
+        List<User> students = new ArrayList<>();
+        for (int i = 1; i <= registrationNumbers.size(); i++) {
+            students.add(setRegistrationNumberOfUserAndSave(testPrefix + "student" + i, registrationNumbers.get(i - 1)));
+        }
+        return students;
+    }
+
+    /**
      * set the registration number of the user with the given login and saves the user in the repository
      *
      * @param login              login of the user, whose registration number will be changed

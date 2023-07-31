@@ -323,11 +323,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var savedExam = examUtilService.addExam(course1);
 
         List<String> registrationNumbers = Arrays.asList("1111111", "1111112", "1111113");
-        List<User> students = new ArrayList<>();
+        List<User> students = userUtilService.setRegistrationNumberOfUsers(registrationNumbers, TEST_PREFIX);
 
-        for (int i = 1; i < 4; i++) {
-            students.add(userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student" + i, registrationNumbers.get(i - 1)));
-        }
         User student1 = students.get(0);
         User student2 = students.get(1);
         User student3 = students.get(2);

@@ -168,6 +168,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
+        // The exercise must have a short name because otherwise the corresponding audit event is too long for the database
         textExerciseUtilService.renameTextExercise(textExercise, "1");
 
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, student1.getId());
