@@ -176,10 +176,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<DataExport> dataExports = new HashSet<>();
-
     public String getLogin() {
         return login;
     }
@@ -451,13 +447,5 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    public Set<DataExport> getDataExports() {
-        return dataExports;
-    }
-
-    public void setDataExports(Set<DataExport> dataExports) {
-        this.dataExports = dataExports;
     }
 }

@@ -379,11 +379,16 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param node Tree node
      */
     compressTree(node: FileTreeItem): FileTreeItem {
-        if (node.children && node.children.length === 1 && node.children[0].children) {
+        // If the node has only one child and that child is a folder, we can compress the tree.
+        if (node.children && node.children.length === 1 && this.repositoryFiles[node.children[0].value] === FileType.FOLDER) {
             return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
-        } else if (node.children) {
+        }
+        // If the node has children, we cannot compress it. However, we can try to compress its children.
+        else if (node.children) {
             return { ...node, children: node.children.map(this.compressTree.bind(this)) };
-        } else {
+        }
+        // If the node has no children, there is nothing to compress.
+        else {
             return node;
         }
     }
