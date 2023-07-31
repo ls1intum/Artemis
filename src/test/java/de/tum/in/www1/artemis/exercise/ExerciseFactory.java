@@ -56,6 +56,12 @@ public class ExerciseFactory {
         return exercise;
     }
 
+    public static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup, String title) {
+        var populatedExercise = populateExerciseForExam(exercise, exerciseGroup);
+        populatedExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
+        return populatedExercise;
+    }
+
     public static GradingCriterion generateGradingCriterion(String title) {
         var criterion = new GradingCriterion();
         criterion.setTitle(title);
