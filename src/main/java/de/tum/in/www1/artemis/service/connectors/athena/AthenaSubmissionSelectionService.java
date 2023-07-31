@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -107,6 +108,10 @@ public class AthenaSubmissionSelectionService {
         catch (HttpClientErrorException httpClientErrorException) {
             // We don't want to crash because of this because it would break the assessment process
             log.error("HTTP Client Error while calling Athena: {}", httpClientErrorException.getMessage());
+        }
+        catch (HttpServerErrorException httpServerErrorException) {
+            // We don't want to crash because of this because it would break the assessment process
+            log.error("HTTP Server Error while calling Athena: {}", httpServerErrorException.getMessage());
         }
 
         return Optional.empty();
