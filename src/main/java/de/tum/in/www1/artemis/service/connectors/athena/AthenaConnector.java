@@ -41,7 +41,7 @@ class AthenaConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the Athena with a network call.
+     * Invoke Athena with a network call.
      *
      * @param url           Athena api endpoint
      * @param requestObject request body as POJO
