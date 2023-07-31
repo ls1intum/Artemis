@@ -496,6 +496,9 @@ public class CourseService {
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getLearningPathsEnabled()) {
+            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+        }
         String courseGroupName = course.defineCourseGroupName(courseGroup);
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
@@ -506,6 +509,9 @@ public class CourseService {
             Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
+            }
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                learningPathService.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
 
