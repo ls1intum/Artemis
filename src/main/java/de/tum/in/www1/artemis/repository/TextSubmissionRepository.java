@@ -64,7 +64,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param exerciseId the ID of the exercise
      * @return Set of Text Submissions
      */
-    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "blocks" })
+    @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
     /**
@@ -74,7 +74,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param pageable   the pagination information for the query
      * @return Set of Text Submissions
      */
-    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "blocks" })
+    @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     Page<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
 
     @NotNull
