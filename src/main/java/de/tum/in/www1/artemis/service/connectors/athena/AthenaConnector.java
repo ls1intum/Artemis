@@ -64,6 +64,9 @@ class AthenaConnector<RequestType, ResponseType> {
         }
 
         final ResponseType responseBody = response.getBody();
+        if (responseBody == null) {
+            throw new NetworkingError("An Error occurred while calling Athena (response is null).");
+        }
         log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
 
         return responseBody;
