@@ -120,13 +120,14 @@ public class UserUtilService {
     }
 
     /**
-     * creates and saves users with passed registration numbers
+     * Updates students starting with suffix 1 with the respective registration numbers
+     * Users have to exist to be updated otherwise an IllegalArgumentException is thrown
      *
-     * @param registrationNumbers registration numbers of users
-     * @param testPrefix          used to set the user login
-     * @return the created users
+     * @param registrationNumbers registration numbers of users. Size controls the number of students getting updated.
+     * @param testPrefix          the prefix used for the student login
+     * @return the updated students
      */
-    public List<User> setRegistrationNumberOfUsers(List<String> registrationNumbers, String testPrefix) {
+    public List<User> setRegistrationNumberOfStudents(List<String> registrationNumbers, String testPrefix) {
         List<User> students = new ArrayList<>();
         for (int i = 1; i <= registrationNumbers.size(); i++) {
             students.add(setRegistrationNumberOfUserAndSave(testPrefix + "student" + i, registrationNumbers.get(i - 1)));
