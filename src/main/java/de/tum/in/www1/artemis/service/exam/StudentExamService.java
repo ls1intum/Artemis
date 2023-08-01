@@ -563,7 +563,7 @@ public class StudentExamService {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
