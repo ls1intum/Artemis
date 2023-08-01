@@ -111,21 +111,50 @@ The iOS application supports the following features:
 #. View your courses:
     #. Register in new courses
     #. View courses you have already registered for
+
 #. View the exercises of your courses:
     #. View exercise details and problem statement
     #. View submission feedback
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35201?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Exercise features on TUM-Live.
+    </iframe>
+
 #. View the lectures of your courses:
     #. View lecture details and learning units
     #. View and open attachments
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35199?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Lecture features on TUM-Live.
+    </iframe>
+
 #. Communicate via Messages:
     #. Create new posts
     #. Write replies
     #. Add emoji reactions
     #. Create new conversations
     #. Edit conversation settings
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35203?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Messaging features on TUM-Live.
+    </iframe>
+
 #. Receive push notifications:
     #. Optionally opt in and out of push notifications
     #. Choose which notifications you want to receive as push notifications
+    #. In-App notification center
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35202?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Push Notification features on TUM-Live.
+    </iframe>
 
 Installation
 ^^^^^^^^^^^^
