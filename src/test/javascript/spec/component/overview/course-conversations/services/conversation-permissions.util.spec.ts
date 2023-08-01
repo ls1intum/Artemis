@@ -91,7 +91,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('should return false if the channel is course wide', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isPublic: true, isArchived: true } as ChannelDTO)).toBeFalse();
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isCourseWide: true } as ChannelDTO)).toBeFalse();
             });
         });
 
