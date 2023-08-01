@@ -101,6 +101,13 @@ The iOS application supports the following features:
 #. Login:
     #. Select predefined and custom Artemis servers
     #. Login with username + password
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35200?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Login on TUM-Live.
+    </iframe>
+    
 #. View your courses:
     #. Register in new courses
     #. View courses you have already registered for
