@@ -305,13 +305,14 @@ public class ProgrammingExerciseExportService {
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        fileService.scheduleForDirectoryDeletion(outputDir, 5);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
 
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
      * <p>
-     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
+     * The repository download directory is used as the output directory and is destroyed after 10 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
      * @param includeTests flag that indicates whether the tests should also be exported
@@ -320,6 +321,7 @@ public class ProgrammingExerciseExportService {
      */
     public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
         Path uniquePath = fileService.getUniquePath(repoDownloadClonePath);
+        fileService.scheduleForDirectoryDeletion(uniquePath, 5);
         return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
@@ -335,6 +337,7 @@ public class ProgrammingExerciseExportService {
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        fileService.scheduleForDirectoryDeletion(outputDir, 5);
         return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, exportErrors);
     }
 

@@ -1260,6 +1260,26 @@ public class ProgrammingExerciseTestService {
         assertThat(zip).isNotNull();
     }
 
+    void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
+        generateProgrammingExerciseForExport(false);
+        addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        var auxRepos = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+        assertThat(auxRepos).hasSize(1);
+        var firstAuxRepo = auxRepos.get(0);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + firstAuxRepo.getId();
+        request.get(url, HttpStatus.OK, String.class);
+    }
+
+    void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
+        generateProgrammingExerciseForExport(false);
+        addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        var auxRepos = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+        assertThat(auxRepos).hasSize(1);
+        var firstAuxRepo = auxRepos.get(0);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + firstAuxRepo.getId();
+        request.get(url, HttpStatus.FORBIDDEN, String.class);
+    }
+
     // Test
     void exportInstructorRepositories_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
@@ -1422,6 +1442,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
