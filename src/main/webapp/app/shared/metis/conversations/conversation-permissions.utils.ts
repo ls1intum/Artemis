@@ -79,7 +79,8 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
         return false;
     }
     // the creator of a channel can not leave it
-    if (isChannelDto(conversation) && conversation?.isCreator === true) {
+    // if the channel is course-wide, you also cannot leave it
+    if (isChannelDto(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
         return false;
     }
     if (isOneToOneChatDto(conversation)) {
