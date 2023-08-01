@@ -9,7 +9,7 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => hasChannelModerationRights(channel);
+    const channelCheck = (channel: ChannelDTO): boolean => !channel.isCourseWide && hasChannelModerationRights(channel);
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
