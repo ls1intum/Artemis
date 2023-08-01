@@ -13,6 +13,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -29,7 +30,6 @@ export class LearningPathContainerComponent implements OnInit {
     lecture: Lecture | undefined;
     lectureUnit: LectureUnit | undefined;
     exercise: Exercise | undefined;
-    history: [number, number][] = [];
 
     // icons
     faChevronLeft = faChevronLeft;
@@ -42,6 +42,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
+        private learningPathHistoryStorageService: LearningPathHistoryStorageService,
     ) {}
 
     ngOnInit() {
@@ -57,9 +58,9 @@ export class LearningPathContainerComponent implements OnInit {
 
     onNextTask() {
         if (this.lectureUnit?.id) {
-            this.history.push([this.lectureUnit.id, this.lectureId!]);
+            this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
         } else if (this.exercise?.id) {
-            this.history.push([this.exercise.id, -1]);
+            this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
         }
         this.undefineAll();
         this.learningPathService.getRecommendation(this.learningPathId).subscribe((recommendationResponse) => {
@@ -82,16 +83,15 @@ export class LearningPathContainerComponent implements OnInit {
 
     onPrevTask() {
         this.undefineAll();
-        const task = this.history.pop();
-        if (!task) {
-            return;
-        } else {
-            this.learningObjectId = task[0];
-            this.lectureId = task[1];
-            if (task[1] == -1) {
-                this.loadExercise();
-            } else {
+        if (this.learningPathHistoryStorageService.hasPrevious(this.learningPathId)) {
+            const entry = this.learningPathHistoryStorageService.getPrevious(this.learningPathId);
+            if (entry instanceof LectureUnitEntry) {
+                this.learningObjectId = entry.lectureUnitId;
+                this.lectureId = entry.lectureId;
                 this.loadLectureUnit();
+            } else if (entry instanceof ExerciseEntry) {
+                this.learningObjectId = entry.exerciseId;
+                this.loadExercise();
             }
         }
     }
@@ -144,5 +144,9 @@ export class LearningPathContainerComponent implements OnInit {
             instance.courseId = this.courseId;
             instance.exerciseId = this.learningObjectId;
         }
+    }
+
+    hasPrevious() {
+        return this.learningPathHistoryStorageService.hasPrevious(this.learningPathId);
     }
 }

@@ -13,6 +13,7 @@ import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learni
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
+import { LearningPathHistoryStorageService } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
 
 const routes: Routes = [
     {

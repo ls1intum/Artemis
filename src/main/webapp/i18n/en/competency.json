@@ -156,10 +156,10 @@
             },
             "manageLearningPaths": {
                 "title": "Learning Path Management",
-                "isDisabled": "Learning Paths are currently disabled for this course.",
+                "isDisabled": "Learning paths are currently disabled for this course.",
                 "enable": "Enable Learning Paths",
-                "enableHint": "The creation of Learning Paths for every student may take a moment.",
-                "search": "Search for Learning Path:",
+                "enableHint": "The creation of learning paths for every student may take a moment.",
+                "search": "Search:",
                 "table": {
                     "name": "Name",
                     "login": "Login",
@@ -175,7 +175,9 @@
             "participate": {
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
                 "prev": "Previous",
-                "next": "Next"
+                "prevHint": "Return to your previous task",
+                "next": "Next",
+                "nextHint": "Go to next recommended task"
             }
         }
     }

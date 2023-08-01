@@ -160,7 +160,7 @@
                 "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
                 "enable": "Lernpfade aktivieren",
                 "enableHint": "Die Erstellung von Lernpfaden für alle Studierende kann einen Moment dauern.",
-                "search": "Suche nach Lernpfaden:",
+                "search": "Suche:",
                 "table": {
                     "name": "Name",
                     "login": "Login",
@@ -176,7 +176,9 @@
             "participate": {
                 "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
                 "prev": "Zurück",
-                "next": "Nächste"
+                "prevHint": "Zurück zur letzen Vorlesungseinheit oder Aufgabe",
+                "next": "Weiter",
+                "nextHint": "Weiter zur nächten Empfehlung"
             }
         }
     }

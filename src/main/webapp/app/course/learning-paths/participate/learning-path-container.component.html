@@ -11,7 +11,7 @@
         </div>
     </div>
 </div>
-<button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()">
+<button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()" [disabled]="hasPrevious()">
     <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="artemisApp.learningPath.participate.prev">Previous</span>
 </button>
 <button type="button" class="btn btn-primary next-button" (click)="onNextTask()">
