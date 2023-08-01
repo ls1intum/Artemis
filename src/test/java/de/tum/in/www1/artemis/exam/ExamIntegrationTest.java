@@ -1705,13 +1705,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         course.addExam(exam);
         course = courseRepo.save(course);
 
-        Channel channel = new Channel();
-        channel.setName("testchannel" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setIsArchived(false);
-        channel.setIsPublic(false);
-        channel.setIsAnnouncementChannel(false);
-        channel.setExam(exam);
-        channel = channelRepository.save(channel);
+        Channel examChannel = examUtilService.addExamChannel(exam, "test");
 
         int numberOfStudentsInCourse = userRepo.findAllInGroup(course.getStudentGroupName()).size();
 
@@ -1742,7 +1736,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Channel channelFromDB = channelRepository.findChannelByExamId(exam.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getExam()).isEqualTo(exam);
-        assertThat(channelFromDB.getName()).isEqualTo(channel.getName());
+        assertThat(channelFromDB.getName()).isEqualTo(examChannel.getName());
 
         // Check that the conversation participants are added correctly to the exercise channel
         await().until(() -> {

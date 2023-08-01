@@ -274,13 +274,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        Channel channel = new Channel();
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setExercise(fileUploadExercise);
-        channelRepository.save(channel);
+        exerciseUtilService.addChannelToExercise(fileUploadExercise);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -344,13 +338,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
         feedbackRepository.save(feedback);
 
-        Channel channel = new Channel();
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setExercise(fileUploadExercise);
-        channelRepository.save(channel);
+        exerciseUtilService.addChannelToExercise(fileUploadExercise);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 

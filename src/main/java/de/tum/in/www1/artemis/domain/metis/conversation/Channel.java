@@ -77,7 +77,7 @@ public class Channel extends Conversation {
      */
     @Column(name = "is_course_wide")
     @NotNull
-    private Boolean isCourseWide;
+    private Boolean isCourseWide = false;
 
     @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
