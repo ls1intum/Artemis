@@ -125,7 +125,7 @@ public class ConversationService {
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
 
-        var courseWideChannelsOfUser = channelRepository.findCourseWideChannelsWithoutUserParticipant(courseId, requestingUser.getId());
+        var courseWideChannelsOfUser = channelRepository.findCourseWideChannelWhereUserIsNotParticipant(courseId, requestingUser.getId());
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
         courseWideChannelsOfUser.forEach(channel -> {
             ConversationParticipant conversationParticipant = new ConversationParticipant();

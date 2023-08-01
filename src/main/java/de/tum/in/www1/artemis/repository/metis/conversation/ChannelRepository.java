@@ -62,7 +62,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
              AND channel.isCourseWide = true
              ORDER BY channel.name
             """)
-    Set<Channel> findCourseWideChannelsWithoutUserParticipant(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    Set<Channel> findCourseWideChannelWhereUserIsNotParticipant(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
              SELECT DISTINCT channel
