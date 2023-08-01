@@ -245,25 +245,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
     /**
-     * Fetches the courses the user is currently a member of, regardless if the course is active or not
-     * This is used for the data export only.
-     *
-     * @param isAdmin    whether the user to fetch the courses for is an admin (which gets all courses)
-     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
-     * @return a set of courses the user is a member of
-     */
-    @Query("""
-            SELECT c
-            FROM Course c
-            WHERE (:isAdmin = TRUE
-                   OR c.studentGroupName IN :userGroups
-                   OR c.teachingAssistantGroupName IN :userGroups
-                   OR c.editorGroupName IN :userGroups
-                   OR c.instructorGroupName IN :userGroups)
-            """)
-    Set<Course> getAllCoursesUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
-
-    /**
      * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
      * Users that are part of multiple groups are NOT counted multiple times.
      *
