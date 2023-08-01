@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBrain, faComments, faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java
