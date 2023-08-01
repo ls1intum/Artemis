@@ -118,7 +118,7 @@ The iOS application supports the following features:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35201?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35217?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Exercise features on TUM-Live.
     </iframe>
 
@@ -128,7 +128,7 @@ The iOS application supports the following features:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35199?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35218?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Lecture features on TUM-Live.
     </iframe>
 
@@ -141,7 +141,7 @@ The iOS application supports the following features:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35203?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Messaging features on TUM-Live.
     </iframe>
 
@@ -152,7 +152,7 @@ The iOS application supports the following features:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/35202?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35216?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Push Notification features on TUM-Live.
     </iframe>
 
