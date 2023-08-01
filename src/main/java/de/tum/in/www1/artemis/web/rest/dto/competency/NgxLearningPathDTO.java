@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NgxLearningPathDTO(Set<Node> nodes, Set<Edge> edges, Set<Cluster> clusters) {
 
-    public record Node(String id, NodeType type, long linkedResource, long linkedResourceParent, boolean completed, String label) {
+    public record Node(String id, NodeType type, Long linkedResource, Long linkedResourceParent, boolean completed, String label) {
 
         public Node(String id, NodeType type, Long linkedResource, boolean completed, String label) {
             this(id, type, linkedResource, null, completed, label);
