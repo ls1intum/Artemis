@@ -143,7 +143,7 @@ Additional notes on the controller methods:
 12. Use DTOs for data transfer
 ==============================
 
-Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and websocket messages. A DTO ...
+Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and WebSocket messages. A DTO ...
 
 Definition and Characteristics of DTOs:
 
