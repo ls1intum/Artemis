@@ -128,23 +128,23 @@ public class StudentExamService {
      * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
-     * @param existingStudentExam the existing student exam object in the database
-     * @param studentExam         the student exam object from the client which will be submitted (final submission)
-     * @param currentUser         the current user
+     * @param existingStudentExam   the existing student exam object in the database
+     * @param studentExamFromClient the student exam object from the client which will be submitted (final submission)
+     * @param currentUser           the current user
      * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
-    public ResponseEntity<StudentExam> submitStudentExam(StudentExam existingStudentExam, StudentExam studentExam, User currentUser) {
-        log.debug("Submit student exam with id {}", studentExam.getId());
+    public ResponseEntity<StudentExam> submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+        log.debug("Submit student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
-        submitStudentExam(studentExam);
+        submitStudentExam(studentExamFromClient);
         log.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         try {
             // in case there were last second changes, that have not been submitted yet.
-            saveSubmissions(studentExam, currentUser);
+            saveSubmissions(studentExamFromClient, currentUser);
         }
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
@@ -154,7 +154,7 @@ public class StudentExamService {
         start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
-        if (!studentExam.isTestRun()) {
+        if (!studentExamFromClient.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
@@ -167,12 +167,12 @@ public class StudentExamService {
         log.debug("    Lock student repositories in {}", formatDurationFrom(start));
 
         // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
-        if (studentExam.isTestRun() || studentExam.isTestExam()) {
+        if (studentExamFromClient.isTestRun() || studentExamFromClient.isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
-            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
+            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExamFromClient);
 
             // Trigger build for all programing participations
-            var currentStudentParticipations = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+            var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                     .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
@@ -182,7 +182,7 @@ public class StudentExamService {
             }
         }
 
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(studentExamFromClient);
     }
 
     private void submitStudentExam(StudentExam studentExam) {
@@ -211,7 +211,7 @@ public class StudentExamService {
             // there is an edge case in which the student exam does not contain the latest programming submission (e.g. when the user was offline in between)
             // we fetch the latest programming submission from the DB here and replace it in the participation of the exercise so that the latest one will be returned below
             try {
-                // TODO: does it really make sense here? the database read operation is not needed for the code below, but maybe later?
+                // TODO: is this code here really needed? It makes the request slower than necessary, also existingParticipations already includes all submissions
                 if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                     var studentParticipation = exercise.getStudentParticipations().iterator().next();
                     var latestSubmission = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()

@@ -549,8 +549,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.testRun = FALSE
-                AND p.student.id = :#{#studentId}
-                AND p.exercise in :#{#exercises}
+                AND p.student.id = :studentId
+                AND p.exercise in :exercises
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);

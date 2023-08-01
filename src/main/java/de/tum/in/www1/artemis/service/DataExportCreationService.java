@@ -358,7 +358,6 @@ public class DataExportCreationService {
         // --> we can delete it after use
         fileService.scheduleForDirectoryDeletion(tempRepoWorkingDir, 5);
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
-
     }
 
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
