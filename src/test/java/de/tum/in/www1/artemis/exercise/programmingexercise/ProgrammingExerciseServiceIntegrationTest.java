@@ -155,7 +155,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("submissionPolicyProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseBasis_withSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+    void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var imported = importExerciseBaseWithSubmissionPolicy(submissionPolicy);
         assertThat(imported.getSubmissionPolicy()).isNotNull();
         assertThat(imported.getSubmissionPolicy()).isInstanceOf(SubmissionPolicy.class);

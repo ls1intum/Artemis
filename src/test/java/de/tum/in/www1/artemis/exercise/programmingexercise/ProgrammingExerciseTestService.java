@@ -930,7 +930,7 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
-    void testImportProgrammingExercise_lockRepository_submissionPolicyChange() throws Exception {
+    void testImportProgrammingExerciseLockRepositorySubmissionPolicyChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
@@ -958,7 +958,7 @@ public class ProgrammingExerciseTestService {
         assertThat(sourceExercise.getSubmissionPolicy()).isNull();
     }
 
-    void testImportProgrammingExercise_none_submissionPolicyChange() throws Exception {
+    void testImportProgrammingExerciseNoneSubmissionPolicyChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
