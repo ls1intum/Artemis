@@ -297,7 +297,7 @@ public class CompetencyResource {
             lectureUnitRepository.save(lectureUnit);
         });
 
-        if (course.getComplaintsEnabled()) {
+        if (course.getLearningPathsEnabled()) {
             learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(competency, courseId);
         }
 
