@@ -162,7 +162,7 @@ describe('LearningPathContainerComponent', () => {
 
     it('should load previous lecture unit', () => {
         hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id, lectureUnit.id));
+        getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
         fixture.detectChanges();
         comp.onPrevTask();
         expect(findWithDetailsStub).toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe('LearningPathContainerComponent', () => {
 
     it('should load previous exercise', () => {
         hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id));
+        getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id!));
         fixture.detectChanges();
         comp.onPrevTask();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
