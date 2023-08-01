@@ -16,12 +16,13 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { User } from 'app/core/user/user.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+
 const memberTemplate = {
     id: 1,
     login: 'login',
