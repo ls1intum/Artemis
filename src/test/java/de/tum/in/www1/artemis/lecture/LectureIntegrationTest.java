@@ -142,7 +142,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
         courseUtilService.enableMessagingForCourse(course);
 
-        conversationUtilService.createChannel(course, "loremipsum");
+        conversationUtilService.createCourseWideChannel(course, "loremipsum");
 
         Lecture lecture = new Lecture();
         lecture.setTitle("loremIpsum");
@@ -196,7 +196,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         originalLecture.setEndDate(updatedDate);
         String channelName = "lecture-channel";
         // create channel with same name
-        conversationUtilService.createChannel(originalLecture.getCourse(), channelName);
+        conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), channelName);
         originalLecture.setChannelName(channelName);
         // lecture channel should be updated despite another channel with the same name
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);

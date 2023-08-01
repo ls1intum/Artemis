@@ -520,6 +520,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void grantChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void revokeChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/revoke-channel-moderator",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        assertUserAreNotChannelModerators(channel.getId(), "student1", "student2");
+        assertUserAreNotConversationMembers(channel.getId(), "student1", "student2");
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -901,11 +926,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // prepare channel in db
         if (shouldGrant) {
             this.revokeChannelModeratorRole(channel.getId(), "student1");
-            this.revokeChannelModeratorRole(channel.getId(), "student1");
+            this.revokeChannelModeratorRole(channel.getId(), "student2");
         }
         else {
             this.grantChannelModeratorRole(channel.getId(), "student1");
-            this.grantChannelModeratorRole(channel.getId(), "student1");
+            this.grantChannelModeratorRole(channel.getId(), "student2");
         }
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
 
