@@ -136,15 +136,16 @@ export class ExamExerciseImportComponent implements OnInit {
             //the title, short name of the exercise is no longer considered to be duplicated. In case it was duplicated
             //before, the set with duplicates has to be updated (checked again if any objects can be removed from the set)
             if (this.exercisesWithDuplicatedTitles.delete(exercise)) {
-                this.exercisesWithDuplicatedTitles.forEach((ex) => this.checkForDuplicatedTitlesOrShortNames(ex, true));
+                this.updateExercisesWithDuplicatedTitlesOrShortNamesSet(true);
             }
 
             if (this.exercisesWithDuplicatedShortNames.delete(exercise)) {
-                this.exercisesWithDuplicatedShortNames.forEach((ex) => this.checkForDuplicatedTitlesOrShortNames(ex, false));
+                this.updateExercisesWithDuplicatedTitlesOrShortNamesSet(false);
             }
         } else {
             this.selectedExercises!.get(exerciseGroup)!.add(exercise);
-            this.checkForDuplicatedTitlesOrShortNames(exercise, true);
+            this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
+            this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
         }
     }
 
@@ -232,53 +233,56 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     /**
-     * checks if the exercise is selected and checks for duplicated titles or short names
-     * @param exercise      the exercise we want to check if it has duplicates
-     * @param checkForTitle true if duplicated titles should be checked otherwise the short names are checked
+     * checks if there are any selected exercises with the same title or short name as the passed exercise
+     * @param exercise     exercise we want to use to check for duplications
      * @param exerciseGroup exercise group of the exercise
+     * @param checkForTitle true if the title should be checked, otherwise the short name is checked
      */
-    checkIfExerciseSelectedAndDuplicates(exercise: Exercise, checkForTitle: boolean, exerciseGroup: ExerciseGroup) {
+    checkForDuplicatedTitlesOrShortNames(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
         if (!this.exerciseIsSelected(exercise, exerciseGroup)) {
             return;
         }
-        this.checkForDuplicatedTitlesOrShortNames(exercise, checkForTitle);
-    }
+        const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
 
-    /**
-     * checks if there are any selected exercises with the same title or short name as the passed exercise
-     * @param exercise     exercise we want to use to check for duplications
-     * @param checkForTitle true if the title should be checked, otherwise the short name is checked
-     */
-    checkForDuplicatedTitlesOrShortNames(exercise: Exercise, checkForTitle: boolean) {
         let hasDuplicate = false;
         this.selectedExercises.forEach((exerciseGroup) => {
             exerciseGroup.forEach((ex) => {
-                if (ex.type == ExerciseType.PROGRAMMING && ex !== exercise) {
-                    if (checkForTitle && ex.title === exercise.title) {
+                if (ex.type === ExerciseType.PROGRAMMING && ex !== exercise) {
+                    if ((checkForTitle && ex.title === exercise.title) || (!checkForTitle && ex.shortName === exercise.shortName)) {
                         hasDuplicate = true;
-                        this.exercisesWithDuplicatedTitles.add(ex);
-                    } else if (ex.shortName === exercise.shortName) {
-                        hasDuplicate = true;
-                        this.exercisesWithDuplicatedShortNames.add(ex);
+                        setToCheck.add(ex);
                     }
                 }
             });
         });
 
+        //check if the exercise was a duplicate before
+        const duplicateBefore = setToCheck.delete(exercise);
         if (hasDuplicate) {
-            if (checkForTitle) {
-                this.exercisesWithDuplicatedTitles.add(exercise);
-            } else {
-                this.exercisesWithDuplicatedShortNames.add(exercise);
-            }
-        } else {
-            if (checkForTitle && this.exercisesWithDuplicatedTitles.delete(exercise)) {
-                //if the exercise had a duplicated title before we should check other exercises for duplicated titles and update them
-                this.exercisesWithDuplicatedTitles.forEach((ex) => this.checkForDuplicatedTitlesOrShortNames(ex, true));
-            } else if (this.exercisesWithDuplicatedShortNames.delete(exercise)) {
-                this.exercisesWithDuplicatedShortNames.forEach((ex) => this.checkForDuplicatedTitlesOrShortNames(ex, false));
-            }
+            setToCheck.add(exercise);
         }
+        if (duplicateBefore) {
+            this.updateExercisesWithDuplicatedTitlesOrShortNamesSet(checkForTitle);
+        }
+    }
+
+    updateExercisesWithDuplicatedTitlesOrShortNamesSet(checkForTitle: boolean) {
+        const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
+
+        setToCheck.forEach((exercise) => {
+            let hasDuplicate = false;
+            setToCheck.forEach((ex) => {
+                if (ex !== exercise) {
+                    if ((checkForTitle && ex.title === exercise.title) || (!checkForTitle && ex.shortName === exercise.shortName)) {
+                        hasDuplicate = true;
+                        return;
+                    }
+                }
+            });
+            if (!hasDuplicate) {
+                setToCheck.delete(exercise);
+            }
+        });
     }
 
     /**
