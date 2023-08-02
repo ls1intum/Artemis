@@ -64,11 +64,18 @@ public class RequestUtilService {
     }
 
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postWithMultipartFiles(path, paramValue, paramName, List.of(file), responseType, expectedStatus);
+    }
+
+    public <T, R> R postWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus)
+            throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         var builder = MockMvcRequestBuilders.multipart(new URI(path));
-        if (file != null) {
-            builder = builder.file(file);
+        if (files != null) {
+            for (MockMultipartFile file : files) {
+                builder = builder.file(file);
+            }
         }
         builder.file(json);
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
@@ -340,6 +347,11 @@ public class RequestUtilService {
 
     public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
             LinkedMultiValueMap<String, String> params) throws Exception {
+        return putWithMultipartFiles(path, paramValue, paramName, List.of(file), responseType, expectedStatus, params);
+    }
+
+    public <T, R> R putWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -347,8 +359,10 @@ public class RequestUtilService {
             request.setMethod(HttpMethod.PUT.toString());
             return request;
         });
-        if (file != null) {
-            builder.file(file);
+        if (files != null) {
+            for (MockMultipartFile file : files) {
+                builder.file(file);
+            }
         }
         if (params != null) {
             builder.params(params);
