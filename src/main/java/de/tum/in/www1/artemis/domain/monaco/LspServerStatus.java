@@ -14,6 +14,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LspServerStatus {
 
+    public LspServerStatus() {
+    }
+
+    public LspServerStatus(String url) {
+        this.url = url;
+    }
+
+    public LspServerStatus(String url, boolean healthy, boolean paused, int activeSessions, double cpuUsage) {
+        this.url = url;
+        this.healthy = healthy;
+        this.paused = paused;
+        this.activeSessions = activeSessions;
+        this.cpuUsage = cpuUsage;
+    }
+
     private String url;
 
     private boolean healthy;
@@ -35,10 +50,6 @@ public class LspServerStatus {
     private double cpuUsage;
 
     private Date timestamp;
-
-    public LspServerStatus(String url) {
-        this.url = url;
-    }
 
     public float getLoadAvg1() {
         return loadAvg1;
