@@ -143,6 +143,9 @@ public class WebsocketMessagingService {
 
             if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
                 result.filterSensitiveInformation();
+                participation.filterSensitiveInformation();
+                exercise.filterSensitiveInformation();
+                exercise.setCourse(null);
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
