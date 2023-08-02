@@ -60,6 +60,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     course?: Course;
     result?: Result;
     resultWithComplaint?: Result;
+    isLastResultByCpc: boolean;
 
     selectedEntities: string[];
     selectedRelationships: string[];
@@ -186,7 +187,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.result = getLatestSubmissionResult(this.submission);
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (this.submission.submitted && this.result && this.result.completionDate && !(this.isAfterAssessmentDueDate && this.submission.plagiarismDetected)) {
+        if (
+            this.submission.submitted &&
+            this.result &&
+            this.result.completionDate &&
+            !(this.isAfterAssessmentDueDate && Feedback.isContinuousPlagiarismControlFeedback(this.result.feedbacks?.[0]))
+        ) {
             this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                 this.assessmentResult = assessmentResult;
                 this.prepareAssessmentData();
@@ -484,6 +490,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 totalScore += feedback.credits!;
             }
             this.totalScore = totalScore;
+
+            const latestResultFeedback = this.assessmentResult.feedbacks[0];
+            this.isLastResultByCpc = Feedback.isContinuousPlagiarismControlFeedback(latestResultFeedback);
         }
     }
 

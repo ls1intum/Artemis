@@ -33,6 +33,10 @@
                     <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
                 </ng-container>
             </span>
+            <ng-container *ngIf="isLastResultByCpc && achievedPoints === 0">
+                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
+            </ng-container>
             <span *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
                 <div>
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}

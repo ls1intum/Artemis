@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -53,6 +54,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
+    isLastResultByCpc: boolean;
 
     // Icons
     faComment = faComment;
@@ -118,6 +120,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
         this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+        this.isLastResultByCpc = Feedback.isContinuousPlagiarismControlFeedback(this.gradedParticipation?.results?.last()?.feedbacks?.[0]);
     }
 
     /**
