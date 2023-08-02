@@ -7,6 +7,6 @@ import { LearningPathManagementComponent } from 'app/course/learning-paths/learn
 @NgModule({
     imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, ArtemisSharedComponentModule],
     declarations: [LearningPathManagementComponent],
-    exports: [],
+    exports: [LearningPathManagementComponent],
 })
 export class ArtemisLearningPathsModule {}
