@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.legal;
+package de.tum.in.www1.artemis.service.scheduled;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.service.scheduled.DataExportScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 @ExtendWith(MockitoExtension.class)
