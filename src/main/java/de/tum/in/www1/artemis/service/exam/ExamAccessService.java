@@ -63,6 +63,7 @@ public class ExamAccessService {
     public StudentExam getExamInCourseElseThrow(Long courseId, Long examId) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
+        // TODO: we should distinguish the whole method between test exam and real exam to improve the readability of the code
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
@@ -105,12 +106,13 @@ public class ExamAccessService {
             // Check that the current user is registered for the test exam. Otherwise, the student can self-register
             examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         }
-        else {
-            // Check that the current user is registered for the exam
-            if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-                throw new AccessForbiddenException(ENTITY_NAME, examId);
-            }
-        }
+        // else {
+        // NOTE: this check is not necessary because we already checked before that there is a student exam in this case for the current user
+        // Check that the current user is registered for the exam
+        // if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+        // throw new AccessForbiddenException(ENTITY_NAME, examId);
+        // }
+        // }
 
         return studentExam;
     }

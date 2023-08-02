@@ -789,19 +789,31 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     /**
-     * Get all participations for the given studentExam and exercises combined with their submissions, but without results and assessors.
+     * Get all participations for the given studentExam and exercises (not necessarily all exercise of the student exam)
+     * Combines the participations with their submissions, but without results and assessors.
+     * Distinguishes between student exams and test runs and only loads the respective participations
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results
+     */
+    default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam, List<Exercise> exercises) {
+        if (studentExam.isTestRun()) {
+            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissions(studentExam.getUser().getId(), exercises);
+        }
+        else {
+            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(studentExam.getUser().getId(), exercises);
+        }
+    }
+
+    /**
+     * Get all participations for all exercises of the given studentExam combined with their submissions, but without results and assessors.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
      * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {
-        if (studentExam.isTestRun()) {
-            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissions(studentExam.getUser().getId(), studentExam.getExercises());
-        }
-        else {
-            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
-        }
+        return findByStudentExamWithEagerSubmissions(studentExam, studentExam.getExercises());
     }
 
     /**

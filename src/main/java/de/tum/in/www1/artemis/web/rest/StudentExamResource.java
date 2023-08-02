@@ -229,22 +229,25 @@ public class StudentExamResource {
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
         long start = System.nanoTime();
         log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.getId());
 
+        // 1. DB Call: read
         User currentUser = userRepository.getUser();
         // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
         if (!Objects.equals(studentExamFromClient.getUser().getId(), currentUser.getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
 
+        // 2. DB Call: read
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
         checkExamConfigElseThrow(studentExamFromClient, examId, courseId);
 
         if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
-            throw new ConflictException("You have already submitted.", "studentExam", "alreadySubmitted");
+            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
+            return ResponseEntity.ok().build();
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
@@ -255,13 +258,13 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        var response = studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
         messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
-        return response;
+        return ResponseEntity.ok().build();
     }
 
     /**

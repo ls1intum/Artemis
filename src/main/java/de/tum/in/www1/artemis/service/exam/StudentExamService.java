@@ -20,8 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -131,13 +129,13 @@ public class StudentExamService {
      * @param existingStudentExam   the existing student exam object in the database
      * @param studentExamFromClient the student exam object from the client which will be submitted (final submission)
      * @param currentUser           the current user
-     * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
-    public ResponseEntity<StudentExam> submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+    public void submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
         log.debug("Submit student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
+        // 3. DB Call: write
         submitStudentExam(studentExamFromClient);
         log.debug("    Set student exam to submitted in {}", formatDurationFrom(start));
 
@@ -156,7 +154,7 @@ public class StudentExamService {
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
         if (!studentExamFromClient.isTestRun()) {
             try {
-                // lock the programming exercise repository access (important in case of early exam submissions)
+                // lock the programming exercise repository access (important in case of early exam submissions), only when the student hands in early
                 lockStudentRepositories(currentUser, existingStudentExam);
             }
             catch (Exception e) {
@@ -165,24 +163,25 @@ public class StudentExamService {
         }
 
         log.debug("    Lock student repositories in {}", formatDurationFrom(start));
+        // NOTE: from here on, we only handle test runs and test exams
 
-        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
-        if (studentExamFromClient.isTestRun() || studentExamFromClient.isTestExam()) {
-            // immediately evaluate quiz participations for test runs and test exams
-            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExamFromClient);
-
-            // Trigger build for all programing participations
-            var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                    .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
-                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
-
-            if (!currentStudentParticipations.isEmpty()) {
-                // Delay to ensure that "Building and testing" is shown in the client
-                scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
-            }
+        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
+            return;
         }
 
-        return ResponseEntity.ok(studentExamFromClient);
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
+        // immediately evaluate quiz participations for test runs and test exams
+        examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExamFromClient);
+
+        // Trigger build for all programing participations
+        var currentStudentParticipations = studentExamFromClient.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), currentUser.getId()).stream())
+                .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
+
+        if (!currentStudentParticipations.isEmpty()) {
+            // Delay to ensure that "Building and testing" is shown in the client
+            scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
+        }
     }
 
     private void submitStudentExam(StudentExam studentExam) {
@@ -193,12 +192,19 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
+        // we only need to save submissions for modeling, text and quiz exercises;
+        var relevantExercises = studentExam.getExercises().stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        if (relevantExercises.isEmpty()) {
+            // nothing to save
+            return;
+        }
+        // 4. DB Call: read
+        List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
-                saveSubmission(currentUser, existingParticipations, exercise);
+                saveSubmission(currentUser, existingRelevantParticipations, exercise);
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
@@ -206,22 +212,9 @@ public class StudentExamService {
         }
     }
 
-    private void saveSubmission(User currentUser, List<StudentParticipation> existingParticipations, Exercise exercise) {
+    private void saveSubmission(User currentUser, List<StudentParticipation> existingRelevantParticipations, Exercise exercise) {
         if (exercise instanceof ProgrammingExercise) {
-            // there is an edge case in which the student exam does not contain the latest programming submission (e.g. when the user was offline in between)
-            // we fetch the latest programming submission from the DB here and replace it in the participation of the exercise so that the latest one will be returned below
-            try {
-                // TODO: is this code here really needed? It makes the request slower than necessary, also existingParticipations already includes all submissions
-                if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
-                    var studentParticipation = exercise.getStudentParticipations().iterator().next();
-                    var latestSubmission = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
-                            .findFirst();
-                    latestSubmission.ifPresent(programmingSubmission -> studentParticipation.setSubmissions(Set.of(programmingSubmission)));
-                }
-            }
-            catch (Exception ex) {
-                log.error("An error occurred when trying to find the latest submissions for programming exercise {} for user {}", exercise.getId(), currentUser.getLogin());
-            }
+            // programming submissions are only saved during submit in their respective submission page or git push
             return;
         }
         if (exercise instanceof FileUploadExercise) {
@@ -234,8 +227,8 @@ public class StudentExamService {
             // this object comes from the client
             StudentParticipation studentParticipationFromClient = exercise.getStudentParticipations().iterator().next();
             // this object comes from the database
-            StudentParticipation existingParticipationInDatabase = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipationFromClient.getId())).findFirst()
-                    .orElseThrow();
+            StudentParticipation existingParticipationInDatabase = existingRelevantParticipations.stream().filter(p -> p.getId().equals(studentParticipationFromClient.getId()))
+                    .findFirst().orElseThrow();
             // if exactly one submission exists we save the submission
             if (studentParticipationFromClient.getSubmissions() != null && studentParticipationFromClient.getSubmissions().size() == 1) {
                 // check that the current user owns the participation
@@ -274,6 +267,7 @@ public class StudentExamService {
                     }
 
                     // load quiz submissions for existing participation to be able to compare them in saveSubmission
+                    // 5. DB Call: read
                     submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
 
                     QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
