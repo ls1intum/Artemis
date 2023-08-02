@@ -335,6 +335,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
             .submitStudentExam(this.courseId, this.examId, this.studentExam)
+            // TODO: this REST request now returns 200 ok (void payload) if everything is good, then show a button (potentially delayed) so that the student can navigate into the exam summary
             .pipe(
                 timeout({
                     each: 20000,
