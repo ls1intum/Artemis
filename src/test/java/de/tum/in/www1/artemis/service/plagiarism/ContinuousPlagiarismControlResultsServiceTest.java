@@ -19,15 +19,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 class ContinuousPlagiarismControlResultsServiceTest {
 
-    private final SubmissionRepository submissionRepository = mock();
-
     private final ResultRepository resultRepository = mock();
 
-    private final ContinuousPlagiarismControlResultsService service = new ContinuousPlagiarismControlResultsService(submissionRepository, resultRepository);
+    private final ContinuousPlagiarismControlResultsService service = new ContinuousPlagiarismControlResultsService(resultRepository);
 
     @Test
     void shouldCorrectlySetPlagiarismDetectedAndAddResult() {
@@ -39,7 +36,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
         // and: existing past result for no plagiarism submission
         var pastResult = new Result();
         var feedback = new Feedback();
-        feedback.setText("ContinuousPlagiarismControl: other feedback");
+        feedback.setText("Continuous Plagiarism Control: other feedback");
         pastResult.setFeedbacks(List.of(feedback));
         when(resultRepository.findAllWithFeedbackBySubmissionId(3L)).thenReturn(List.of(pastResult));
 
@@ -47,9 +44,6 @@ class ContinuousPlagiarismControlResultsServiceTest {
         service.handleCpcResult(result);
 
         // then
-        verify(submissionRepository).setPlagiarismDetected(true, 1L);
-        verify(submissionRepository).setPlagiarismDetected(true, 2L);
-        verify(submissionRepository).setPlagiarismDetected(false, 3L);
         verify(resultRepository, times(2)).save(any());
         verify(resultRepository, times(1)).delete(pastResult);
     }

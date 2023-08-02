@@ -8,11 +8,9 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
@@ -372,11 +370,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE Submission s set s.plagiarismDetected = :plagiarismDetected where s.id = :submissionId")
-    void setPlagiarismDetected(@Param("plagiarismDetected") boolean plagiarismDetected, @Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the

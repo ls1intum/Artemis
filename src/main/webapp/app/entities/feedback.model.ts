@@ -107,12 +107,15 @@ export class Feedback implements BaseEntity {
         return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
     }
 
-    public static isContinuousPlagiarismControlFeedback(that: Feedback): boolean {
-        const text = that.text;
-        if (!text) {
+    public static isContinuousPlagiarismControlFeedback(that?: Feedback): boolean {
+        if (!that || !that?.text) {
             return false;
         }
-        return text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN) || text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE);
+        return (
+            that.type === FeedbackType.AUTOMATIC &&
+            !that.positive &&
+            (that.text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN) || that?.text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE))
+        );
     }
 
     public static hasDetailText(that: Feedback): boolean {
