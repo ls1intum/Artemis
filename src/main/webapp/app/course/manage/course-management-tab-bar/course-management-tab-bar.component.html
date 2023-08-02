@@ -42,7 +42,13 @@
             <fa-icon [icon]="faFlag"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton">Competencies</span>
         </a>
-        <a class="tab-link" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'learning-path-management']" routerLinkActive="active">
+        <a
+            class="tab-link"
+            [jhiFeatureToggleLink]="FeatureToggle.LearningPaths"
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'learning-path-management']"
+            routerLinkActive="active"
+        >
             <fa-icon [icon]="faNetworkWired"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton">Learning Paths</span>
         </a>

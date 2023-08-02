@@ -11,8 +11,6 @@ import { LearningPathPagingService } from 'app/course/learning-paths/learning-pa
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 
 export enum TableColumn {
@@ -57,7 +55,6 @@ export class LearningPathManagementComponent implements OnInit {
         private alertService: AlertService,
         private pagingService: LearningPathPagingService,
         private sortService: SortService,
-        private modalService: NgbModal,
     ) {}
 
     get page(): number {
@@ -203,13 +200,7 @@ export class LearningPathManagementComponent implements OnInit {
         }
     }
     viewLearningPath(learningPath: LearningPathPageableSearchDTO) {
-        const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'learning-path-modal',
-        });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.learningPath = learningPath;
+        // todo: part of future pr
     }
 
     protected readonly HealthStatus = HealthStatus;

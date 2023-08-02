@@ -8,15 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -109,93 +105,6 @@ public class LearningPathResource {
         }
 
         return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, course));
-    }
-
-    /**
-     * GET /courses/:courseId/learning-path-id : Gets the id of the learning path.
-     * If the learning path has not been generated although the course has learning paths enabled, the corresponding learning path will be created.
-     *
-     * @param courseId the id of the course from which the learning path id should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
-     */
-    @GetMapping("/courses/{courseId}/learning-path-id")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
-        log.debug("REST request to get learning path id for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.isStudentInCourse(course, null);
-        if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
-        }
-
-        // generate learning path if missing
-        User user = userRepository.getUser();
-        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
-        LearningPath learningPath;
-        if (learningPathOptional.isEmpty()) {
-            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-            learningPath = learningPathService.generateLearningPathForUser(course, user);
-        }
-        else {
-            learningPath = learningPathOptional.get();
-        }
-        return ResponseEntity.ok(learningPath.getId());
-    }
-
-    /**
-     * GET /learning-path/:learningPathId : Gets the ngx representation of the learning path.
-     *
-     * @param learningPathId the id of the learning path that should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
-     */
-    @GetMapping("/learning-path/{learningPathId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<NgxLearningPathDTO> getNgxLearningPath(@PathVariable Long learningPathId) {
-        log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
-        Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
-        if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
-        }
-        if (authorizationCheckService.isStudentInCourse(course, null)) {
-            final var user = userRepository.getUser();
-            if (!user.getId().equals(learningPath.getUser().getId())) {
-                throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-            }
-        }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
-            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-        }
-        NgxLearningPathDTO graph = learningPathService.generateNgxRepresentation(learningPath);
-        return ResponseEntity.ok(graph);
-    }
-
-    /**
-     * GET /learning-path/:learningPathId/recommendation : Gets the next recommended learning object for the learning path.
-     *
-     * @param learningPathId the id of the learning path from which the recommendation should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the recommended learning object
-     */
-    @GetMapping("/learning-path/{learningPathId}/recommendation")
-    @EnforceAtLeastStudent
-    public ResponseEntity<LearningPathRecommendationDTO> getRecommendation(@PathVariable Long learningPathId) {
-        log.debug("REST request to get recommendation for learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsByIdElseThrow(learningPathId);
-        final var user = userRepository.getUser();
-        if (!user.getId().equals(learningPath.getUser().getId())) {
-            throw new AccessForbiddenException("You are not allowed to access another users learning path.");
-        }
-        final var recommendation = learningPathService.getRecommendation(learningPath);
-        if (recommendation.isEmpty()) {
-            return ResponseEntity.ok(new LearningPathRecommendationDTO(-1, -1, LearningPathRecommendationDTO.RecommendationType.EMPTY));
-        }
-        else if (recommendation.get() instanceof LectureUnit lectureUnit) {
-            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.get().getId(), lectureUnit.getLecture().getId(),
-                    LearningPathRecommendationDTO.RecommendationType.LECTURE_UNIT));
-        }
-        else {
-            return ResponseEntity.ok(new LearningPathRecommendationDTO(recommendation.get().getId(), -1, LearningPathRecommendationDTO.RecommendationType.EXERCISE));
-        }
     }
 
     /**
