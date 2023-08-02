@@ -17,11 +17,9 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -123,6 +121,8 @@ public class WebsocketMessagingService {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
+        var originalSubmission = result.getSubmission();
+        result.setSubmission(null);
 
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
@@ -147,13 +147,6 @@ public class WebsocketMessagingService {
                 var students = studentParticipation.getStudents();
 
                 result.filterSensitiveInformation();
-                participation.filterSensitiveInformation();
-                exercise.filterSensitiveInformation();
-
-                ExerciseGroup exerciseGroup = exercise.getExerciseGroup();
-                Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                exercise.setExerciseGroup(null);
-                exercise.setCourse(null);
 
                 students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
@@ -162,14 +155,6 @@ public class WebsocketMessagingService {
 
                 students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
-
-                // Reconnect the exercise group / course again since the participation gets used after calling this method
-                if (exerciseGroup != null) {
-                    exercise.setExerciseGroup(exerciseGroup);
-                }
-                else {
-                    exercise.setCourse(course);
-                }
             }
         }
 
@@ -182,6 +167,7 @@ public class WebsocketMessagingService {
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);
+        result.setSubmission(originalSubmission);
     }
 
     /**
