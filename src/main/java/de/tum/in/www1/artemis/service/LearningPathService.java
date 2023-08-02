@@ -45,22 +45,12 @@ public class LearningPathService {
 
     private final CourseRepository courseRepository;
 
-    private final CompetencyRelationRepository competencyRelationRepository;
-
-    private final LectureUnitRepository lectureUnitRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            CourseRepository courseRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
-            ExerciseRepository exerciseRepository) {
+            CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseRepository = courseRepository;
-        this.competencyRelationRepository = competencyRelationRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -75,10 +65,11 @@ public class LearningPathService {
     }
 
     /**
-     * Generate learning path for the user in the course
+     * Generate learning path for the user in the course if the learning path is not present
      *
      * @param course course that defines the learning path
      * @param user   student for which the learning path is generated
+     * @return the learning path of the user
      */
     public LearningPath generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
         var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
