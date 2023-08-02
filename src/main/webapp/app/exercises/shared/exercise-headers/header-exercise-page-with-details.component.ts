@@ -8,7 +8,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -16,6 +16,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -50,11 +51,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
     public numberOfSubmissions: number;
+    public isLastResultByCpc: boolean;
 
     icon: IconProp;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private sortService: SortService) {}
 
@@ -107,6 +110,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+                this.isLastResultByCpc = Feedback.isContinuousPlagiarismControlFeedback(latestRatedResult.feedbacks?.[0]);
             }
         }
     }

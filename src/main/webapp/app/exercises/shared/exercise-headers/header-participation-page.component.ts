@@ -7,6 +7,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -68,7 +69,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
                     getCourseFromExercise(this.exercise),
                 );
             }
-            this.plagiarismDetected = !!this.participation?.submissions?.[0].plagiarismDetected;
+            this.plagiarismDetected = Feedback.isContinuousPlagiarismControlFeedback(this.participation?.results?.[0]?.feedbacks?.[0]);
         }
     }
 }

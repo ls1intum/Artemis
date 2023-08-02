@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlFeedbackHelper.isCpcFeedback;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -568,9 +570,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
-            return Set.of();
+            return findOnlyCpcResultsOrEmpty(participation);
         }
         return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+    }
+
+    private static Set<Result> findOnlyCpcResultsOrEmpty(Participation participation) {
+        return participation.getResults().stream().filter(result -> result.getFeedbacks().size() == 1).filter(result -> isCpcFeedback(result.getFeedbacks().get(0)))
+                .max(Comparator.naturalOrder()).map(Set::of).orElse(Set.of());
     }
 
     /**

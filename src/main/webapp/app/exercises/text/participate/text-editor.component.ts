@@ -153,13 +153,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
+    get isLastResultByCpc(): boolean {
+        return Feedback.isContinuousPlagiarismControlFeedback(this.result?.feedbacks?.[0]);
+    }
+
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
             !this.examMode &&
-            (!this.result || this.submission.plagiarismDetected) &&
+            (!this.result || this.isLastResultByCpc) &&
             (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
