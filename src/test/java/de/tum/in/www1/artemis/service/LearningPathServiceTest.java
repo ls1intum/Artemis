@@ -45,10 +45,10 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     private CourseUtilService courseUtilService;
 
     @Autowired
-    UserUtilService userUtilService;
+    private UserUtilService userUtilService;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;

@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningPathRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningPathService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
@@ -32,19 +32,12 @@ public class LearningPathResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRepository userRepository;
-
     private final LearningPathService learningPathService;
 
-    private final LearningPathRepository learningPathRepository;
-
-    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            LearningPathService learningPathService, LearningPathRepository learningPathRepository) {
+    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userRepository = userRepository;
         this.learningPathService = learningPathService;
-        this.learningPathRepository = learningPathRepository;
     }
 
     /**
@@ -54,6 +47,7 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/courses/{courseId}/learning-paths/enable")
+    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
@@ -77,6 +71,7 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/courses/{courseId}/learning-paths/generate-missing")
+    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
@@ -97,6 +92,7 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
     @GetMapping("/courses/{courseId}/learning-paths")
+    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
@@ -116,6 +112,7 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the health status
      */
     @GetMapping("/courses/{courseId}/learning-path-health")
+    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
         log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
