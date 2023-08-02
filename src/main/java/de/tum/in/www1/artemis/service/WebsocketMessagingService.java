@@ -17,9 +17,11 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -145,6 +147,10 @@ public class WebsocketMessagingService {
                 result.filterSensitiveInformation();
                 participation.filterSensitiveInformation();
                 exercise.filterSensitiveInformation();
+
+                ExerciseGroup exerciseGroup = exercise.getExerciseGroup();
+                Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                exercise.setExerciseGroup(null);
                 exercise.setCourse(null);
 
                 studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
@@ -154,6 +160,14 @@ public class WebsocketMessagingService {
 
                 studentParticipation.getStudents().stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+
+                // Reconnect the exercise group / course again since the participation gets used after calling this method
+                if (exerciseGroup != null) {
+                    exercise.setExerciseGroup(exerciseGroup);
+                }
+                else {
+                    exercise.setCourse(course);
+                }
             }
         }
 
