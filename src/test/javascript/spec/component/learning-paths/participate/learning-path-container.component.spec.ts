@@ -18,6 +18,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -33,6 +34,12 @@ describe('LearningPathContainerComponent', () => {
     let exerciseService: ExerciseService;
     let exercise: Exercise;
     let getExerciseDetailsStub: jest.SpyInstance;
+    let historyService: LearningPathHistoryStorageService;
+    let storeLectureUnitStub: jest.SpyInstance;
+    let storeExerciseStub: jest.SpyInstance;
+    let hasPreviousStub: jest.SpyInstance;
+    let getPreviousStub: jest.SpyInstance;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(LearningPathGraphSidebarComponent), MockModule(RouterModule)],
@@ -72,6 +79,12 @@ describe('LearningPathContainerComponent', () => {
                 exercise.id = 4;
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+                historyService = TestBed.inject(LearningPathHistoryStorageService);
+                storeLectureUnitStub = jest.spyOn(historyService, 'storeLectureUnit');
+                storeExerciseStub = jest.spyOn(historyService, 'storeExercise');
+                hasPreviousStub = jest.spyOn(historyService, 'hasPrevious');
+                getPreviousStub = jest.spyOn(historyService, 'getPrevious');
 
                 fixture.detectChanges();
             });
@@ -124,7 +137,9 @@ describe('LearningPathContainerComponent', () => {
         comp.lecture = lecture;
         fixture.detectChanges();
         comp.onNextTask();
-        expect(comp.history).toEqual([[lectureUnit.id!, lecture.id!]]);
+        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
+        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id);
+        expect(storeExerciseStub).not.toHaveBeenCalled();
     });
 
     it('should store current exercise in history', () => {
@@ -132,17 +147,22 @@ describe('LearningPathContainerComponent', () => {
         comp.exercise = exercise;
         fixture.detectChanges();
         comp.onNextTask();
-        expect(comp.history).toEqual([[exercise.id!, -1]]);
+        expect(storeLectureUnitStub).not.toHaveBeenCalled();
+        expect(storeExerciseStub).toHaveBeenCalledOnce();
+        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id);
     });
 
     it('should load no previous task if history is empty', () => {
+        expect(historyService.hasPrevious(learningPathId)).toBeFalsy();
         comp.onPrevTask();
+        expect(getPreviousStub).not.toHaveBeenCalled();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
         expect(getExerciseDetailsStub).not.toHaveBeenCalled();
     });
 
     it('should load previous lecture unit', () => {
-        comp.history = [[lectureUnit.id!, lecture.id!]];
+        hasPreviousStub.mockReturnValue(true);
+        getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
         fixture.detectChanges();
         comp.onPrevTask();
         expect(findWithDetailsStub).toHaveBeenCalled();
@@ -151,7 +171,8 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should load previous exercise', () => {
-        comp.history = [[exercise.id!, -1]];
+        hasPreviousStub.mockReturnValue(true);
+        getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id!));
         fixture.detectChanges();
         comp.onPrevTask();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
