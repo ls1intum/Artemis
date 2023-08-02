@@ -16,8 +16,7 @@ services:
             postgresql:
                 condition: service_healthy
         env_file:
-            - ./artemis/config/cypress.env
-            - ./artemis/config/postgres.env
+            - ./artemis/config/cypress-postgres.env
 
     nginx:
         extends:
@@ -43,6 +42,7 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
+            CYPRESS_DB_TYPE: "Postgres"
             SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:postgres"
 

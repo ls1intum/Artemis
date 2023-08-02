@@ -35,7 +35,6 @@ const courseData = {
 
 const editedCourseData = {
     title: '',
-    shortName: '',
     testCourse: false,
 };
 
@@ -43,24 +42,20 @@ const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 describe('Course management', () => {
-    beforeEach(() => {
-        cy.login(admin, '/');
-        const uid = generateUUID();
-        courseData.title = 'Cypress course' + uid;
-        courseData.shortName = 'cypress' + uid;
-    });
-
     describe('Manual student selection', () => {
         let course: Course;
 
-        beforeEach(() => {
+        before('Create course', () => {
             cy.login(admin, '/');
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            const uid = generateUUID();
+            courseData.title = 'Course ' + uid;
+            courseData.shortName = 'cypress' + uid;
+            courseManagementRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
 
-        it('Adds a student manually to the course', () => {
+        it('Manually adds and removes a student', () => {
             const username = studentOne.username;
             navigationBar.openCourseManagement();
             courseManagement.openCourse(course.id!);
@@ -69,14 +64,9 @@ describe('Course management', () => {
             navigationBar.openCourseManagement();
             courseManagement.openCourse(course.id!);
             courseManagement.getCourseStudentGroupName().contains(`artemis-${course.shortName}-students (1)`);
-        });
 
-        it('Removes a student manually from the course', () => {
-            const username = studentOne.username;
-            courseManagementRequest.addStudentToCourse(course, studentOne);
             navigationBar.openCourseManagement();
             courseManagement.openStudentOverviewOfCourse(course.id!);
-            courseManagement.getRegisteredStudents().contains(username).should('be.visible');
             courseManagement.removeFirstUser();
             courseManagement.getRegisteredStudents().contains(username).should('not.exist');
             navigationBar.openCourseManagement();
@@ -84,7 +74,7 @@ describe('Course management', () => {
             courseManagement.getCourseStudentGroupName().contains(`artemis-${course.shortName}-students (0)`);
         });
 
-        after(() => {
+        after('Delete course', () => {
             courseManagementRequest.deleteCourse(course, admin);
         });
     });
@@ -93,10 +83,10 @@ describe('Course management', () => {
         let course: Course;
         let course2: Course;
 
-        beforeEach(() => {
+        beforeEach('Set course title and shortname', () => {
             cy.login(admin, '/');
             const uid = generateUUID();
-            courseData.title = 'Cypress course' + uid;
+            courseData.title = 'Course ' + uid;
             courseData.shortName = 'cypress' + uid;
         });
 
@@ -205,18 +195,21 @@ describe('Course management', () => {
 
     describe('Course edit', () => {
         let course: Course;
-        const uid = generateUUID();
-        editedCourseData.title = 'Cypress course' + uid;
-        editedCourseData.shortName = 'cypress' + uid;
 
-        beforeEach(() => {
+        before('Create course', () => {
             cy.login(admin, '/');
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            const uid = generateUUID();
+            courseData.title = 'Course ' + uid;
+            courseData.shortName = 'cypress' + uid;
+            courseManagementRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
 
         it('Edits a existing course', () => {
+            const uid = generateUUID();
+            editedCourseData.title = 'Course ' + uid;
+
             navigationBar.openCourseManagement();
             courseManagement.openCourse(course.id!);
             courseManagement.openCourseEdit();
@@ -244,8 +237,8 @@ describe('Course management', () => {
     describe('Course deletion', () => {
         let course: Course;
 
-        before(() => {
-            cy.login(admin);
+        before('Create course', () => {
+            cy.login(admin, '/');
             courseManagementRequest.createCourse().then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
@@ -260,44 +253,56 @@ describe('Course management', () => {
     });
 
     describe('Course icon deletion', () => {
-        let course: Course;
+        describe('Course within icon', () => {
+            let course: Course;
 
-        before('Creates course with icon', () => {
-            cy.login(admin, '/');
-            cy.fixture('course/icon.png', 'base64')
-                .then(Cypress.Blob.base64StringToBlob)
-                .then((blob) => {
-                    courseManagementRequest
-                        .createCourse(false, courseData.title, courseData.shortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
-                        .then((response) => {
+            before('Creates course with icon', () => {
+                cy.login(admin, '/');
+                cy.fixture('course/icon.png', 'base64')
+                    .then(Cypress.Blob.base64StringToBlob)
+                    .then((blob) => {
+                        courseManagementRequest.createCourse({ iconFileName: 'icon.png', iconFile: blob }).then((response) => {
                             course = convertModelAfterMultiPart(response);
                         });
+                    });
+            });
+
+            it('Deletes an existing course icon', () => {
+                navigationBar.openCourseManagement();
+                courseManagement.openCourse(course.id!);
+                courseManagement.clickEditCourse();
+                courseManagement.removeIconFromCourse();
+                courseManagement.updateCourse(course).then(() => {
+                    courseManagement.clickEditCourse();
+                    courseManagement.checkCourseHasNoIcon();
                 });
+            });
+
+            after('Delete course', () => {
+                courseManagementRequest.deleteCourse(course, admin);
+            });
         });
 
-        it('Deletes an existing course icon', () => {
-            navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.clickEditCourse();
-            courseManagement.removeIconFromCourse();
-            courseManagement.updateCourse(course).then(() => {
+        describe('Course without icon', () => {
+            let course: Course;
+
+            before('Creates course without icon', () => {
+                cy.login(admin, '/');
+                courseManagementRequest.createCourse().then((response) => {
+                    course = convertModelAfterMultiPart(response);
+                });
+            });
+
+            it('Deletes not existing course icon', () => {
+                navigationBar.openCourseManagement();
+                courseManagement.openCourse(course.id!);
                 courseManagement.clickEditCourse();
                 courseManagement.checkCourseHasNoIcon();
             });
-        });
 
-        it('Deletes not existing course icon', () => {
-            courseManagementRequest.createCourse().then((response) => {
-                course = convertModelAfterMultiPart(response);
+            after('Delete courses', () => {
+                courseManagementRequest.deleteCourse(course, admin);
             });
-            navigationBar.openCourseManagement();
-            courseManagement.openCourse(course.id!);
-            courseManagement.clickEditCourse();
-            courseManagement.checkCourseHasNoIcon();
-        });
-
-        after('Delete course', () => {
-            courseManagementRequest.deleteCourse(course, admin);
         });
     });
 });
