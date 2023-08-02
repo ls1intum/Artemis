@@ -4,7 +4,6 @@ import { Observable, Subject } from 'rxjs';
 import { LspConfigModel } from 'app/exercises/programming/shared/code-editor/model/lsp-config.model';
 import { FileSubmission } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
-import { LspStatus } from 'app/entities/lsp-status.model';
 
 const resourceUrl = 'api/monaco/';
 
@@ -13,25 +12,6 @@ export class CodeEditorMonacoService {
     runSubject = new Subject<string>();
     refreshSubject = new Subject<FileSubmission>();
     constructor(private http: HttpClient) {}
-
-    /**
-     * Retrieves a list of registered LSP servers
-     */
-    getLspServers(): Observable<Array<string>> {
-        return this.http.get<Array<string>>(resourceUrl + 'list', {
-            headers: { 'Content-Type': 'application/json', observe: 'response' },
-        });
-    }
-
-    /**
-     * Retrieves the status of all registered LSP servers
-     */
-    getLspServersStatus(updateMetrics: boolean): Observable<Array<LspStatus>> {
-        return this.http.get<Array<LspStatus>>(resourceUrl + 'status', {
-            headers: { 'Content-Type': 'application/json', observe: 'response' },
-            params: { update: updateMetrics },
-        });
-    }
 
     /**
      * Initializes the LSP by cloning the provided participation's repository to
@@ -105,41 +85,5 @@ export class CodeEditorMonacoService {
      */
     refresh(files: FileSubmission) {
         this.refreshSubject.next(files);
-    }
-
-    /**
-     * Adds a new LSP Server
-     * @param serverUrl of the server to add
-     */
-    addServer(serverUrl: string) {
-        return this.http.post<LspStatus>(
-            resourceUrl + `add`,
-            {},
-            {
-                params: new HttpParams().set('monacoServerUrl', serverUrl),
-            },
-        );
-    }
-
-    /**
-     * Requests to pause/resume a given LSP Server
-     * @param serverUrl of the server to pause/resume
-     */
-    pauseServer(serverUrl: string) {
-        return this.http.put<boolean>(
-            resourceUrl + `pause`,
-            {},
-            {
-                params: new HttpParams().set('monacoServerUrl', serverUrl),
-            },
-        );
-    }
-
-    /**
-     * This is a temporary feature to log the user's choice of editor to use.
-     * This will be remove in future
-     */
-    registerEditorsChoice(choice: number) {
-        return this.http.post<void>(resourceUrl + `log-editor-choice/${choice}`, {}, {});
     }
 }

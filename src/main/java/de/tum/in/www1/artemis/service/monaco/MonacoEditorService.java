@@ -2,33 +2,19 @@ package de.tum.in.www1.artemis.service.monaco;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.BadRequestException;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.nimbusds.jose.shaded.json.JSONObject;
-
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.monaco.LspConfig;
 import de.tum.in.www1.artemis.domain.monaco.LspServerStatus;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -48,40 +34,17 @@ public class MonacoEditorService {
 
     private final Logger log = LoggerFactory.getLogger(MonacoEditorService.class);
 
-    @Value("${artemis.monaco.token:#{null}}")
-    private Optional<String> integrationServerToken;
-
-    private final HttpClient client;
-
-    private final List<LspServerStatus> lspServersStatus = new ArrayList<>();
-
     private final ParticipationRepository participationRepository;
 
-    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private final LspService lspService;
 
-    private static final String lspInitEndpoint = "/init-lsp";
-
-    private static final String terminalInitEndpoint = "/init-terminal";
-
-    private static final String forwardUpdatesEndpoint = "/update-files";
-
-    private static final String forwardRenameEndpoint = "/rename-file";
-
-    private static final String forwardRemovalEndpoint = "/remove-file";
-
-    private static final String lspHealthEndpoint = "/health";
-
-    public MonacoEditorService(@Value("${artemis.monaco.lsp-servers:#{null}}") List<String> integrationServerUrls, ParticipationRepository participationRepository) {
-        this.client = HttpClientBuilder.create().build();
+    public MonacoEditorService(ParticipationRepository participationRepository, LspService lspService) {
         this.participationRepository = participationRepository;
-        integrationServerUrls.forEach(url -> this.lspServersStatus.add(new LspServerStatus(url)));
-
-        ses.scheduleAtFixedRate(() -> refreshLspStatus(true), 0, 5, TimeUnit.MINUTES);
+        this.lspService = lspService;
     }
 
     /**
-     * Method that sends a request to a given LSP server, to initialize a participation
-     * by cloning its repository locally.
+     * Requests the initialization of a participation to an external monaco server
      *
      * @param participation to initialize
      * @return The configuration parameters of the initialized LSP participation
@@ -89,13 +52,11 @@ public class MonacoEditorService {
     public LspConfig initLsp(Participation participation) throws IOException, LspException {
         ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
 
-        String url = this.getIntegrationServerUrl();
-
-        JSONObject lspInitRequest = new JSONObject();
-        lspInitRequest.put("repoUrl", programmingParticipation.getRepositoryUrl());
+        String url = this.lspService.getLspServerUrl();
+        String repositoryUrl = programmingParticipation.getRepositoryUrl();
 
         try {
-            HttpResponse response = this.sendRequest(new HttpPost(url + this.lspInitEndpoint), lspInitRequest, false, false);
+            HttpResponse response = this.lspService.initLsp(url, repositoryUrl);
 
             if (response.getStatusLine().getStatusCode() != 200) {
                 EntityUtils.consumeQuietly(response.getEntity());
@@ -103,20 +64,19 @@ public class MonacoEditorService {
             }
 
             LspConfig responseConfig = new ObjectMapper().readValue(response.getEntity().getContent(), LspConfig.class);
-            responseConfig.setServerUrl(new URL(this.getIntegrationServerUrl()));
+            responseConfig.setServerUrl(new URL(url));
 
             return responseConfig;
         }
         catch (LspException e) {
-            Optional<LspServerStatus> suspectUnhealthy = this.lspServersStatus.stream().filter(status -> status.getUrl().equals(url)).findFirst();
-            suspectUnhealthy.ifPresent(this::checkLspServerHealth);
+            Optional<LspServerStatus> suspectUnhealthy = this.lspService.getLspServersStatus(false).stream().filter(status -> status.getUrl().equals(url)).findFirst();
+            suspectUnhealthy.ifPresent(this.lspService::checkLspServerHealth);
             throw e;
         }
     }
 
     /**
-     * Method used to request the initialization of a dedicated terminal on an external
-     * monaco integration server.
+     * Requests the initialization of a dedicated terminal to an external monaco server
      *
      * @param participation the participation used to initialize the terminal with
      * @param serverUrl     Url of the external server to send the initialization request to
@@ -126,20 +86,14 @@ public class MonacoEditorService {
         ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
         this.validateServerUrl(serverUrl);
 
-        String url = serverUrl + this.terminalInitEndpoint;
+        String repositoryUrl = programmingParticipation.getRepositoryUrl();
+        ProgrammingExercise programmingExercise = programmingParticipation.getProgrammingExercise();
 
-        JSONObject terminalInitRequest = new JSONObject();
-        terminalInitRequest.put("repoUrl", programmingParticipation.getRepositoryUrl());
-        terminalInitRequest.put("programmingLanguage", programmingParticipation.getProgrammingExercise().getProgrammingLanguage().name());
-        if (programmingParticipation.getProgrammingExercise().getProjectType() != null) {
-            terminalInitRequest.put("projectType", programmingParticipation.getProgrammingExercise().getProjectType().name());
-        }
-
-        HttpResponse response = this.sendRequest(new HttpPost(url), terminalInitRequest, true, false);
+        HttpResponse response = this.lspService.initTerminal(serverUrl, repositoryUrl, programmingExercise);
 
         if (response.getStatusLine().getStatusCode() == 200) {
             LspConfig responseConfig = new ObjectMapper().readValue(response.getEntity().getContent(), LspConfig.class);
-            responseConfig.setServerUrl(new URL(this.getIntegrationServerUrl()));
+            responseConfig.setServerUrl(new URL(serverUrl));
 
             return responseConfig;
         }
@@ -152,11 +106,10 @@ public class MonacoEditorService {
             EntityUtils.consumeQuietly(response.getEntity());
             throw new LspException("LSP responded with HTTP " + response.getStatusLine().getStatusCode());
         }
-
     }
 
     /**
-     * Overloaded method retrieving the participation and calling the actual 'forwardFileUpdates" method
+     * Overloaded method retrieving the participation and calling the actual 'forwardFileUpdates' method
      *
      * @param participationId The ID of the participation
      * @param fileUpdates     The list of files updates to forward
@@ -178,14 +131,9 @@ public class MonacoEditorService {
         ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
         this.validateServerUrl(serverUrl);
 
-        String url = serverUrl + this.forwardUpdatesEndpoint;
-
-        JSONObject filesUpdateRequest = new JSONObject();
-        filesUpdateRequest.put("repoUrl", programmingParticipation.getRepositoryUrl());
-        filesUpdateRequest.put("changes", fileUpdates);
-
+        String repositoryUrl = programmingParticipation.getRepositoryUrl();
         try {
-            this.sendRequest(new HttpPut(url), filesUpdateRequest, false, true);
+            this.lspService.forwardFileUpdates(serverUrl, repositoryUrl, fileUpdates);
         }
         catch (IOException e) {
             this.log.warn("Error while forwarding files updates to external server at '{}'. Reason: {}", serverUrl, e.getMessage());
@@ -203,15 +151,9 @@ public class MonacoEditorService {
         ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
         this.validateServerUrl(serverUrl);
 
-        String url = serverUrl + this.forwardRenameEndpoint;
-
-        JSONObject fileRenamingRequest = new JSONObject();
-        fileRenamingRequest.put("repoUrl", programmingParticipation.getRepositoryUrl());
-        fileRenamingRequest.put("previous", fileMove.currentFilePath());
-        fileRenamingRequest.put("new", fileMove.newFilename());
-
+        String repositoryUrl = programmingParticipation.getRepositoryUrl();
         try {
-            this.sendRequest(new HttpPut(url), fileRenamingRequest, false, true);
+            this.lspService.forwardFileRename(serverUrl, repositoryUrl, fileMove);
         }
         catch (IOException e) {
             this.log.warn("Error while forwarding file rename to external server at '{}'. Reason: {}", serverUrl, e.getMessage());
@@ -229,220 +171,12 @@ public class MonacoEditorService {
         ProgrammingExerciseParticipation programmingParticipation = this.validationCheck(participation);
         this.validateServerUrl(serverUrl);
 
-        String url = serverUrl + this.forwardRemovalEndpoint;
-
-        JSONObject fileRemovalRequest = new JSONObject();
-        fileRemovalRequest.put("repoUrl", programmingParticipation.getRepositoryUrl());
-        fileRemovalRequest.put("filename", filename);
-
+        String repositoryUrl = programmingParticipation.getRepositoryUrl();
         try {
-            this.sendRequest(new HttpPut(url), fileRemovalRequest, false, true);
+            this.lspService.forwardFileRemoval(serverUrl, repositoryUrl, filename);
         }
         catch (IOException e) {
             this.log.warn("Error while forwarding file removal to external server at '{}'. Reason: {}", serverUrl, e.getMessage());
-        }
-    }
-
-    /**
-     * Creates and sent a request ready to be sent to the given URL
-     *
-     * @param request   The request object to send
-     * @param body      The body of the request
-     * @param noTimeout Optional parameter disabling the timeouts used otherwise
-     * @return The Http request object
-     * @throws IOException on encoding errors
-     */
-    private HttpResponse sendRequest(HttpEntityEnclosingRequestBase request, JSONObject body, boolean noTimeout, boolean consumeEntity) throws IOException {
-        RequestConfig.Builder requestConfig = RequestConfig.custom();
-
-        if (!noTimeout) {
-            requestConfig.setConnectionRequestTimeout(20000);
-            requestConfig.setConnectTimeout(20000);
-            requestConfig.setSocketTimeout(20000);
-            request.setConfig(requestConfig.build());
-        }
-
-        request.setEntity(new StringEntity(body.toJSONString(), ContentType.create("application/json", "utf-8")));
-        appendApiTokenHeader(request);
-
-        HttpResponse response = this.client.execute(request);
-
-        if (consumeEntity) {
-            EntityUtils.consumeQuietly(response.getEntity());
-        }
-
-        return response;
-    }
-
-    /**
-     * Appends the 'x-api-token' header to the request with
-     * the corresponding base64 econded token
-     *
-     * @param request to append the API token header to
-     */
-    private void appendApiTokenHeader(HttpRequest request) {
-        integrationServerToken.ifPresent((token) -> {
-            request.setHeader("x-api-token", Base64.encodeBase64String(token.getBytes(StandardCharsets.UTF_8)));
-        });
-    }
-
-    /**
-     * Returns the URL of an LSP server, which is chosen based on the
-     * current CPU usage
-     *
-     * @return A URL to the less loaded LSP server
-     */
-    private String getIntegrationServerUrl() {
-        if (this.lspServersStatus.isEmpty()) {
-            throw new LspException("Not available");
-        }
-
-        this.refreshLspStatus(false);
-
-        List<LspServerStatus> healthyRunningServers = this.lspServersStatus.stream().filter(status -> (status.isHealthy() && !status.isPaused())).collect(Collectors.toList());
-
-        if (healthyRunningServers.size() == 0) {
-            this.refreshLspStatus(true);
-            healthyRunningServers = this.lspServersStatus.stream().filter(status -> (status.isHealthy() && !status.isPaused())).collect(Collectors.toList());
-        }
-
-        if (healthyRunningServers.size() == 0) {
-            throw new LspException("Not available");
-        }
-
-        double minValue = Integer.MAX_VALUE;
-        String serverUrl = healthyRunningServers.get(0).getUrl();
-
-        for (LspServerStatus entry : healthyRunningServers) {
-            if (entry.getCpuUsage() < minValue) {
-                minValue = entry.getCpuUsage();
-                serverUrl = entry.getUrl();
-            }
-        }
-
-        return serverUrl;
-    }
-
-    /**
-     * Returns a list of registered external LSP servers
-     *
-     * @return List of LSP servers' URL
-     */
-    public List<String> getLspServers() {
-        return this.lspServersStatus.stream().map(LspServerStatus::getUrl).toList();
-    }
-
-    /**
-     * Returns the status of all registered LSP servers
-     *
-     * @param updateMetrics If set to true, the statuses of the LSP server is updated before retrieval
-     * @return Map containing the LSP server's URL as Key and status as value
-     */
-    public List<LspServerStatus> getLspServersStatus(boolean updateMetrics) {
-        if (updateMetrics) {
-            refreshLspStatus(true);
-        }
-        return this.lspServersStatus;
-    }
-
-    /**
-     * Checks the status of the given LSP server URL and adds
-     * it if healthy. Otherwise, null is returned.
-     *
-     * @param serverUrl The URL of the server to add
-     * @return The status of the newly added server, or null if unhealthy
-     */
-    public LspServerStatus addLspServer(String serverUrl) {
-        if (this.lspServersStatus.stream().noneMatch(status -> status.getUrl().equals(serverUrl))) {
-            LspServerStatus newServer = this.checkLspServerHealth(new LspServerStatus(serverUrl));
-            if (newServer.isHealthy()) {
-                this.lspServersStatus.add(newServer);
-                return newServer;
-            }
-        }
-        throw new LspException("Unable to connecth to the new server");
-    }
-
-    /**
-     * Pause/Resume a given server by setting its property accordingly
-     *
-     * @param serverUrl The URL of the server to pause/resume
-     * @return The new paused state of the server
-     */
-    public boolean pauseLspServer(String serverUrl) {
-        Optional<LspServerStatus> optionalServer = this.lspServersStatus.stream().filter(status -> status.getUrl().equals(serverUrl)).findFirst();
-
-        if (optionalServer.isPresent()) {
-            LspServerStatus serverStatus = optionalServer.get();
-            int index = this.lspServersStatus.indexOf(serverStatus);
-            serverStatus.setPaused(!serverStatus.isPaused());
-            this.lspServersStatus.set(index, serverStatus);
-            return serverStatus.isPaused();
-        }
-        else {
-            throw new LspException("Server not found");
-        }
-    }
-
-    /**
-     * Refreshes the status of all registered LSP servers which haven't been checked
-     * in the last 5 minutes.
-     *
-     * @param force Refreshes the LSP status for all servers, including
-     *                  unhealthy ones or not reachable ones.
-     *
-     */
-    private void refreshLspStatus(boolean force) {
-        for (int i = 0; i < this.lspServersStatus.size(); i++) {
-            LspServerStatus status = this.lspServersStatus.get(i);
-            if (force || status.getTimestamp() == null || (status.getTimestamp() != null && status.getTimestamp().before(new Date(System.currentTimeMillis() - (5 * 60 * 1000))))
-                    || this.lspServersStatus.stream().noneMatch(LspServerStatus::isHealthy)) {
-                this.lspServersStatus.set(i, this.checkLspServerHealth(status));
-            }
-        }
-    }
-
-    /**
-     * Checks the health of an LSP server and returns its
-     * current status
-     *
-     * @param serverStatus The url to the LSP server to check
-     * @return the current server's status
-     */
-    private LspServerStatus checkLspServerHealth(LspServerStatus serverStatus) {
-        HttpGet request = new HttpGet(serverStatus.getUrl() + this.lspHealthEndpoint);
-        integrationServerToken.ifPresent((token) -> request.setHeader("authorization", token));
-
-        RequestConfig.Builder requestConfig = RequestConfig.custom();
-        requestConfig.setConnectionRequestTimeout(3000);
-        requestConfig.setConnectTimeout(3000);
-        requestConfig.setSocketTimeout(3000);
-        request.setConfig(requestConfig.build());
-
-        try {
-            appendApiTokenHeader(request);
-            HttpResponse response = this.client.execute(request);
-
-            if (response.getStatusLine().getStatusCode() != 200) {
-                EntityUtils.consumeQuietly(response.getEntity());
-                throw new LspException("Server responded with code:".concat(String.valueOf(response.getStatusLine().getStatusCode())));
-            }
-            LspServerStatus serverHealth = new ObjectMapper().readValue(response.getEntity().getContent(), LspServerStatus.class);
-            serverHealth.setUrl(serverStatus.getUrl());
-            serverHealth.setHealthy(true);
-            serverHealth.setPaused(serverStatus.isPaused());
-            serverHealth.setTimestamp(new Date());
-
-            EntityUtils.consumeQuietly(response.getEntity());
-            return serverHealth;
-        }
-        catch (LspException | IOException e) {
-            log.warn("Error occurred while checking health of {} : {}", serverStatus.getUrl(), e.getMessage());
-            LspServerStatus unhealthyStatus = new LspServerStatus(serverStatus.getUrl());
-            unhealthyStatus.setHealthy(false);
-            unhealthyStatus.setPaused(serverStatus.isPaused());
-            unhealthyStatus.setTimestamp(new Date());
-            return unhealthyStatus;
         }
     }
 
@@ -468,7 +202,7 @@ public class MonacoEditorService {
      * @param serverUrl The serverUrl to validate
      */
     private void validateServerUrl(String serverUrl) {
-        if (this.lspServersStatus.stream().noneMatch(lspServer -> lspServer.getUrl().equals(serverUrl))) {
+        if (this.lspService.getLspServersUrl().stream().noneMatch(lspServer -> lspServer.equals(serverUrl))) {
             throw new BadRequestException();
         }
     }

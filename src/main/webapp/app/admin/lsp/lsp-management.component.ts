@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { CodeEditorMonacoService } from 'app/exercises/programming/shared/code-editor/service/code-editor-monaco.service';
 import { LspStatus } from 'app/entities/lsp-status.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { faPause, faPlay, faPlus, faSync } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AddServerModalComponent } from 'app/admin/lsp/add-server-modal.component';
+import { LspService } from 'app/admin/lsp/lsp.service';
 
 @Component({
     selector: 'jhi-lsp',
@@ -21,7 +21,7 @@ export class LspManagementComponent implements OnInit {
     faPause = faPause;
     faPlay = faPlay;
 
-    constructor(private monacoService: CodeEditorMonacoService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(private lspService: LspService, private alertService: AlertService, private modalService: NgbModal) {}
 
     ngOnInit(): void {
         this.refresh(true);
@@ -29,7 +29,7 @@ export class LspManagementComponent implements OnInit {
 
     refresh(updateMetrics: boolean) {
         this.isLoading = true;
-        this.monacoService.getLspServersStatus(updateMetrics).subscribe({
+        this.lspService.getLspServersStatus(updateMetrics).subscribe({
             next: (servers) => {
                 this.serversStatus = servers;
                 this.serversStatus.map((status) => (status.memUsage = Math.round(((status.totalMem - status.freeMem) / status.totalMem) * 100) || 0));
@@ -57,7 +57,7 @@ export class LspManagementComponent implements OnInit {
                     this.alertService.warning('artemisApp.lsp.alerts.serverExisting');
                     return;
                 }
-                this.monacoService.addServer(serverUrl).subscribe({
+                this.lspService.addServer(serverUrl).subscribe({
                     next: (state) => this.serversStatus.push(state),
                     error: () => this.alertService.error('artemisApp.lsp.alerts.errorServerAdd'),
                 });
@@ -71,6 +71,6 @@ export class LspManagementComponent implements OnInit {
      * @param serverStatus of the server to stop
      */
     pauseServer(serverStatus: LspStatus) {
-        this.monacoService.pauseServer(serverStatus.url!).subscribe((pauseState) => (serverStatus.paused = pauseState));
+        this.lspService.pauseServer(serverStatus.url!).subscribe((pauseState) => (serverStatus.paused = pauseState));
     }
 }
