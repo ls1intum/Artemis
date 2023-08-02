@@ -116,7 +116,10 @@ public class ProgrammingExerciseImportBasicService {
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
         final Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
         updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
+
+        // Set up new exercise submission policy before the solution entries are imported
         importSubmissionPolicy(importedExercise);
+        // Having the submission policy in place prevents errors
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
