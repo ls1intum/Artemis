@@ -217,8 +217,9 @@ public class ProgrammingPlagiarismDetectionService {
                 throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
             }
         }
-
-        cleanupResourcesAsync(programmingExercise, repositories, targetPath);
+        finally {
+            cleanupResourcesAsync(programmingExercise, repositories, targetPath);
+        }
         return result;
     }
 

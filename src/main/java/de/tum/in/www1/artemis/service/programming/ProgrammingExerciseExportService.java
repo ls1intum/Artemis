@@ -312,7 +312,7 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
      * <p>
-     * The repository download directory is used as the output directory and is destroyed after 10 minutes.
+     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
      * @param includeTests flag that indicates whether the tests should also be exported
