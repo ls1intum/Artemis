@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningPathRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
@@ -34,10 +36,17 @@ public class LearningPathResource {
 
     private final LearningPathService learningPathService;
 
-    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService) {
+    private final LearningPathRepository learningPathRepository;
+
+    private final UserRepository userRepository;
+
+    public LearningPathResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, LearningPathService learningPathService,
+            LearningPathRepository learningPathRepository, UserRepository userRepository) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
+        this.learningPathRepository = learningPathRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -132,6 +141,7 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
     @GetMapping("/learning-path/{learningPathId}")
+    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getNgxLearningPath(@PathVariable Long learningPathId) {
         log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
