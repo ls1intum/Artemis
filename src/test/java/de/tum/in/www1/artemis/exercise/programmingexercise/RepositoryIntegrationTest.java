@@ -659,7 +659,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
-        studentRepository.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+        gitService.commit(studentRepository.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
         assertThat(studentRepository.getAllLocalCommits().get(0)).isNotEqualTo(studentRepository.getAllOriginCommits().get(0));
@@ -698,7 +698,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
-        studentRepository.localGit.commit().setMessage("local").call();
+        gitService.commit(studentRepository.localGit).setMessage("local").call();
 
         // Create file in the remote repository and commit it
         Path remoteFilePath = Path.of(studentRepository.originRepoFile + "/" + fileName);
@@ -706,7 +706,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // write content to the created file
         FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
         gitService.stageAllChanges(remoteRepo);
-        studentRepository.originGit.commit().setMessage("remote").call();
+        gitService.commit(studentRepository.originGit).setMessage("remote").call();
 
         // Merge the two and a conflict will occur
         studentRepository.localGit.fetch().setRemote("origin").call();

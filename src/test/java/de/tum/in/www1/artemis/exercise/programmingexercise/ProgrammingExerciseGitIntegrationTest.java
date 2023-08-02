@@ -81,13 +81,13 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
         // the following 2 lines prepare the generation of the structural test oracle
         var testJsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
-        localGit.commit().setMessage("add test.json").setAuthor("test", "test@test.com").call();
+        gitService.commit(localGit).setMessage("add test.json").setAuthor("test", "test@test.com").call();
         var testJsonFilePath2 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
-        localGit.commit().setMessage("add test2.json").setAuthor("test", "test@test.com").call();
+        gitService.commit(localGit).setMessage("add test2.json").setAuthor("test", "test@test.com").call();
         var testJsonFilePath3 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
-        localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
+        gitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());

@@ -15,11 +15,13 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -51,6 +53,9 @@ public class GitUtilService {
 
     private Git remoteGit;
 
+    @Autowired
+    private GitService gitService;
+
     /**
      * Initializes the repository with three dummy files
      */
@@ -73,7 +78,7 @@ public class GitUtilService {
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
-            remoteGit.commit().setMessage("initial commit").call();
+            gitService.commit(remoteGit).setMessage("initial commit").call();
 
             // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
@@ -201,7 +206,7 @@ public class GitUtilService {
         try {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
-            git.commit().setMessage("new commit").call();
+            gitService.commit(git).setMessage("new commit").call();
         }
         catch (GitAPIException ignored) {
         }

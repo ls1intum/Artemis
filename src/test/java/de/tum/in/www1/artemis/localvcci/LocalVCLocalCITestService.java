@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -71,6 +72,9 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private GitService gitService;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -364,7 +368,7 @@ public class LocalVCLocalCITestService {
         Path testFilePath = localRepositoryFolder.resolve(fileName);
         Files.createFile(testFilePath);
         localGit.add().addFilepattern(".").call();
-        RevCommit commit = localGit.commit().setMessage("Add " + fileName).call();
+        RevCommit commit = gitService.commit(localGit).setMessage("Add " + fileName).call();
         return commit.getId().getName();
     }
 

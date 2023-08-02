@@ -85,7 +85,7 @@ public class LocalRepository {
         Path filePath = localRepoPath.resolve("test.txt");
         Files.createFile(filePath);
         localGit.add().addFilepattern("test.txt").call();
-        localGit.commit().setMessage("Initial commit").call();
+        localGit.commit().setSign(false).setMessage("Initial commit").call();
         localGit.push().setRemote("origin").call();
     }
 

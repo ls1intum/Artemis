@@ -391,7 +391,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
-        testRepo.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+        gitService.commit(testRepo.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
         assertThat(testRepo.getAllLocalCommits().get(0)).isNotEqualTo(testRepo.getAllOriginCommits().get(0));
@@ -430,7 +430,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
-        testRepo.localGit.commit().setMessage("local").call();
+        gitService.commit(testRepo.localGit).setMessage("local").call();
 
         // Create file in the remote repository and commit it
         Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);
@@ -438,7 +438,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         // write content to the created file
         FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
         gitService.stageAllChanges(remoteRepo);
-        testRepo.originGit.commit().setMessage("remote").call();
+        gitService.commit(testRepo.originGit).setMessage("remote").call();
 
         // Merge the two and a conflict will occur
         testRepo.localGit.fetch().setRemote("origin").call();
