@@ -144,6 +144,8 @@ public class WebsocketMessagingService {
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
             if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
+                var students = studentParticipation.getStudents();
+
                 result.filterSensitiveInformation();
                 participation.filterSensitiveInformation();
                 exercise.filterSensitiveInformation();
@@ -153,12 +155,12 @@ public class WebsocketMessagingService {
                 exercise.setExerciseGroup(null);
                 exercise.setCourse(null);
 
-                studentParticipation.getStudents().stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
 
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
-                studentParticipation.getStudents().stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                         .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
 
                 // Reconnect the exercise group / course again since the participation gets used after calling this method
