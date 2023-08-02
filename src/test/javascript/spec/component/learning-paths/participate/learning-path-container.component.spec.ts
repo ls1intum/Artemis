@@ -225,7 +225,9 @@ describe('LearningPathContainerComponent', () => {
         fixture.detectChanges();
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
-        expect(comp.history).toEqual([[lectureUnit.id!, lecture.id!]]);
+        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
+        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id!);
+        expect(storeExerciseStub).not.toHaveBeenCalled();
     });
 
     it('should handle store current exercise in history on node click', () => {
@@ -234,6 +236,8 @@ describe('LearningPathContainerComponent', () => {
         fixture.detectChanges();
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
-        expect(comp.history).toEqual([[exercise.id!, -1]]);
+        expect(storeLectureUnitStub).not.toHaveBeenCalled();
+        expect(storeExerciseStub).toHaveBeenCalledOnce();
+        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id!);
     });
 });

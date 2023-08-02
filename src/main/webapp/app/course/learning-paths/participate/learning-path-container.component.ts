@@ -153,9 +153,9 @@ export class LearningPathContainerComponent implements OnInit {
     onNodeClicked(node: NgxLearningPathNode) {
         if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
             if (this.lectureUnit?.id) {
-                this.history.push([this.lectureUnit.id, this.lectureId!]);
+                this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
             } else if (this.exercise?.id) {
-                this.history.push([this.exercise.id, -1]);
+                this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
             }
             this.undefineAll();
             this.learningObjectId = node.linkedResource!;
