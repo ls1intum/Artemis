@@ -166,6 +166,7 @@ public class LectureUtilService {
 
     public TextUnit createTextUnit() {
         TextUnit textUnit = new TextUnit();
+        textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
     }

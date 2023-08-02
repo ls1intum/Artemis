@@ -1036,4 +1036,10 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     void testEditCourseRemoveExistingIcon() throws Exception {
         courseTestService.testEditCourseRemoveExistingIcon();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseLearningPathsEnabled_AsInstructor() throws Exception {
+        courseTestService.testGetCourseLearningPathsEnabled_AsInstructor();
+    }
 }

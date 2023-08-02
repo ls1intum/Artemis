@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -48,6 +49,14 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findEagerByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT cp
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id IN :competencyIds
+                AND cp.user.id = :userId
+            """)
+    Set<CompetencyProgress> findAllByCompetencyIdsAndUserId(@Param("competencyIds") Set<Long> competencyIds, @Param("userId") long userId);
 
     @Query("""
             SELECT AVG(cp.confidence)

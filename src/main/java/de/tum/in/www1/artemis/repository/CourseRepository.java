@@ -131,6 +131,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<Course> findWithEagerLearningPathsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
+    Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
@@ -162,6 +168,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
+
+    @Query("""
+                SELECT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations
+                    LEFT JOIN FETCH course.competencies
+                    LEFT JOIN FETCH course.learningPaths
+                WHERE course.id = :courseId
+            """)
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
@@ -271,6 +287,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
+    @NotNull
+    default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
      *
@@ -359,6 +380,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

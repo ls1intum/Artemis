@@ -65,7 +65,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.showRelations = this.accountService.isAdmin(); // beta feature
         this.activatedRoute.parent!.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
+            this.courseId = params['courseId'];
             if (this.courseId) {
                 this.loadData();
             }

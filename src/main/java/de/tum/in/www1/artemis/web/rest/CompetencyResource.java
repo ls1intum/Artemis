@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.CompetencyService;
+import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -66,10 +67,12 @@ public class CompetencyResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LearningPathService learningPathService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LearningPathService learningPathService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -80,6 +83,7 @@ public class CompetencyResource {
         this.competencyProgressRepository = competencyProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.competencyProgressService = competencyProgressService;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -221,6 +225,10 @@ public class CompetencyResource {
 
         linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
 
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, courseId);
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
@@ -248,6 +256,10 @@ public class CompetencyResource {
         competencyToImport.setCourse(course);
         competencyToImport.setId(null);
         competencyToImport = competencyRepository.save(competencyToImport);
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.linkCompetencyToLearningPathsOfCourse(competencyToImport, courseId);
+        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + competencyToImport.getId())).body(competencyToImport);
     }
@@ -284,6 +296,10 @@ public class CompetencyResource {
             lectureUnit.getCompetencies().remove(competency);
             lectureUnitRepository.save(lectureUnit);
         });
+
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(competency, courseId);
+        }
 
         competencyRepository.deleteById(competency.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
