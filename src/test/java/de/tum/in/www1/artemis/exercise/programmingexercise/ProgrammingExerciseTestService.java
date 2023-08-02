@@ -342,6 +342,7 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
+
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
@@ -618,11 +619,11 @@ public class ProgrammingExerciseTestService {
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
+    private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
-        auxiliaryRepositoryRepository.save(repository);
+        return auxiliaryRepositoryRepository.save(repository);
     }
 
     // TEST
@@ -1262,21 +1263,24 @@ public class ProgrammingExerciseTestService {
 
     void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
         generateProgrammingExerciseForExport(false);
-        addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        var auxRepos = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
-        assertThat(auxRepos).hasSize(1);
-        var firstAuxRepo = auxRepos.get(0);
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + firstAuxRepo.getId();
+        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        setupAuxRepoMock(auxRepo);
+        setupRepositoryMocks(exercise);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
         request.get(url, HttpStatus.OK, String.class);
+    }
+
+    private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), (Path) any(), anyBoolean());
     }
 
     void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
         generateProgrammingExerciseForExport(false);
-        addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        var auxRepos = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
-        assertThat(auxRepos).hasSize(1);
-        var firstAuxRepo = auxRepos.get(0);
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + firstAuxRepo.getId();
+        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
         request.get(url, HttpStatus.FORBIDDEN, String.class);
     }
 
