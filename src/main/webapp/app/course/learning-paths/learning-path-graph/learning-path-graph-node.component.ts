@@ -7,6 +7,7 @@ import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-
     templateUrl: './learning-path-graph-node.component.html',
 })
 export class LearningPathGraphNodeComponent {
+    @Input() courseId: number;
     @Input() node: NgxLearningPathNode;
 
     //icons

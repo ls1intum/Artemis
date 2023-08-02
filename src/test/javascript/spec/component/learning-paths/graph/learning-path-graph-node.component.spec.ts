@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
+import { MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph-node.component';
 import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 
 describe('LearningPathGraphNodeComponent', () => {
     let fixture: ComponentFixture<LearningPathGraphNodeComponent>;
@@ -11,7 +13,7 @@ describe('LearningPathGraphNodeComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [LearningPathGraphNodeComponent],
+            declarations: [LearningPathGraphNodeComponent, MockDirective(StickyPopoverDirective)],
             providers: [],
         })
             .compileComponents()

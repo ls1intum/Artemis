@@ -226,7 +226,7 @@ public class LearningPathService {
         // generate nodes and edges for lecture units
         competency.getLectureUnits().forEach(lectureUnit -> {
             currentCluster.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
-                    lectureUnit.getId(), lectureUnit.isCompletedFor(learningPath.getUser()), lectureUnit.getName()));
+                    lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.isCompletedFor(learningPath.getUser()), lectureUnit.getName()));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitInEdgeId(competency.getId(), lectureUnit.getId()), startNodeId,
                     getLectureUnitNodeId(competency.getId(), lectureUnit.getId())));
             edges.add(new NgxLearningPathDTO.Edge(getLectureUnitOutEdgeId(competency.getId(), lectureUnit.getId()), getLectureUnitNodeId(competency.getId(), lectureUnit.getId()),

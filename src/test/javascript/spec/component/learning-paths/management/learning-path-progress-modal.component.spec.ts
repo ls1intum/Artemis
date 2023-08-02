@@ -35,6 +35,7 @@ describe('LearningPathProgressModalComponent', () => {
     });
 
     it('should display learning path graph if learning path is present', () => {
+        comp.courseId = 2;
         comp.learningPath = { id: 1 } as LearningPathPageableSearchDTO;
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.graph')).nativeElement).toBeTruthy();

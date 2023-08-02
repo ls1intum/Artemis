@@ -8,8 +8,10 @@ import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-
     templateUrl: './learning-path-progress-modal.component.html',
 })
 export class LearningPathProgressModalComponent {
+    @Input() courseId: number;
     @Input() learningPath: LearningPathPageableSearchDTO;
     @ViewChild('learningPathGraphComponent') learningPathGraphComponent: LearningPathGraphComponent;
+
     constructor(private activeModal: NgbActiveModal) {}
 
     close() {

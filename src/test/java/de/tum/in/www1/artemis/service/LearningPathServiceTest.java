@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -115,7 +113,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         @Test
         void testCompetencyWithLectureUnitAndExercise() {
             var competency = competencyUtilService.createCompetency(course);
+            var lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
             final var lectureUnit = lectureUtilService.createTextUnit();
+            lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
             final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
             competencyUtilService.linkExerciseToCompetency(competency, exercise);
@@ -266,7 +266,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private static NgxLearningPathDTO.Node getNodeForLectureUnit(Competency competency, LectureUnit lectureUnit) {
         return new NgxLearningPathDTO.Node(LearningPathService.getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT,
-                lectureUnit.getId(), lectureUnit.getName());
+                lectureUnit.getId(), lectureUnit.getLecture().getId(), false, lectureUnit.getName());
     }
 
     private static NgxLearningPathDTO.Node getNodeForExercise(Competency competency, Exercise exercise) {

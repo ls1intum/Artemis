@@ -13,7 +13,13 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <jhi-learning-path-graph #learningPathGraphComponent *ngIf="learningPathId" [learningPathId]="learningPathId"></jhi-learning-path-graph>
+                <jhi-learning-path-graph
+                    #learningPathGraphComponent
+                    *ngIf="learningPathId"
+                    [courseId]="courseId"
+                    [learningPathId]="learningPathId"
+                    (nodeClicked)="nodeClicked.emit($event)"
+                ></jhi-learning-path-graph>
             </div>
         </div>
         <div class="draggable-right">

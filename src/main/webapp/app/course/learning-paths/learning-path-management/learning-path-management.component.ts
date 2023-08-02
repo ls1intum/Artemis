@@ -208,6 +208,7 @@ export class LearningPathManagementComponent implements OnInit {
             backdrop: 'static',
             windowClass: 'learning-path-modal',
         });
+        modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.learningPath = learningPath;
     }
 
