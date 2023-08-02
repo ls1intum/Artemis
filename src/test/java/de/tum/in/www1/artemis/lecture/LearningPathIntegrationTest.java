@@ -387,4 +387,54 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetHealthStatusForCourse() throws Exception {
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.OK, LearningPathHealthDTO.class);
     }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetNgxLearningPathForLearningPathsDisabled() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        course.setLearningPathsEnabled(false);
+        courseRepository.save(course);
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetNgxLearningPathForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetNgxLearningPathAsStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetNgxLearningPathAsInstructor() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
+    }
 }
