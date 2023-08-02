@@ -44,9 +44,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private static final String TEST_PREFIX = "fileintegration";
 
     @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
     private AttachmentRepository attachmentRepo;
 
     @Autowired
@@ -280,23 +277,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         attachmentUnit.setLecture(lecture);
         Attachment attachment = attachmentUnit.getAttachment();
         attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        String attachmentPath = attachment.getLink();
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
         attachmentUnit = attachmentUnitRepo.save(attachmentUnit);
 
         request.get(attachmentUnit.getAttachment().getLink(), HttpStatus.OK, String.class);
-    }
-
-    private AttachmentUnit createLectureWithAttachmentUnit() {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
-
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        lecture.addLectureUnit(attachmentUnit);
-
-        lectureRepo.save(lecture);
-        return attachmentUnit;
     }
 
     @Test
