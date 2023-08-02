@@ -10,13 +10,18 @@ public class LoggingDiscriminator implements Discriminator<ILoggingEvent> {
 
     private static final String KEY = "logFileName";
 
-    private static String value = "unknown-test";
+    private InheritableThreadLocal<String> value = new InheritableThreadLocal<>();
+
+    private String lastValue = "unknown";
 
     private boolean isStarted;
 
     @Override
     public String getDiscriminatingValue(ILoggingEvent iLoggingEvent) {
-        return value;
+        if (value.get() == null) {
+            return lastValue;
+        }
+        return value.get();
     }
 
     @Override
@@ -44,7 +49,8 @@ public class LoggingDiscriminator implements Discriminator<ILoggingEvent> {
      *
      * @param newValue usually a combination of the test class name and test method name
      */
-    static void setValue(String newValue) {
-        value = newValue;
+    void setValue(String newValue) {
+        lastValue = newValue;
+        value.set(newValue);
     }
 }
