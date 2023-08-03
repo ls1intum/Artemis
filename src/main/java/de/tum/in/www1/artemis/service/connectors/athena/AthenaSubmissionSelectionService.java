@@ -102,16 +102,9 @@ public class AthenaSubmissionSelectionService {
             }
             return Optional.of(response.submissionId);
         }
-        catch (NetworkingException networkingException) {
-            log.error("Error while calling Athena: {}", networkingException.getMessage());
-        }
-        catch (HttpClientErrorException httpClientErrorException) {
+        catch (NetworkingException | HttpClientErrorException | HttpServerErrorException exception) {
             // We don't want to crash because of this because it would break the assessment process
-            log.error("HTTP Client Error while calling Athena: {}", httpClientErrorException.getMessage());
-        }
-        catch (HttpServerErrorException httpServerErrorException) {
-            // We don't want to crash because of this because it would break the assessment process
-            log.error("HTTP Server Error while calling Athena: {}", httpServerErrorException.getMessage());
+            log.error("Exception occurred while calling Athena: {}", exception.getMessage());
         }
 
         return Optional.empty();

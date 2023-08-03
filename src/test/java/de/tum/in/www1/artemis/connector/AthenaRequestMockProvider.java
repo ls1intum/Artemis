@@ -109,6 +109,15 @@ public class AthenaRequestMockProvider {
     }
 
     /**
+     * Mocks the /select_submission API from Athena used to retrieve the selected submission for manual assessment
+     * with a server error.
+     */
+    public void mockGetSelectedSubmissionAndExpectServerError() {
+        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission")).andExpect(method(HttpMethod.POST))
+                .andRespond(withServerError());
+    }
+
+    /**
      * Mocks the /feedbacks API from Athena used to submit feedbacks for a submission
      *
      * @param expectedContents The expected contents of the request

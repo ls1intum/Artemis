@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
@@ -67,5 +68,11 @@ class AthenaSubmissionSelectionServiceTest extends AthenaTest {
         textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testSubmissionSelectionWithException() {
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectServerError();
+        assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())));
     }
 }
