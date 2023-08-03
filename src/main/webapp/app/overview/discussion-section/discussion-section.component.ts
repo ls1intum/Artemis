@@ -70,11 +70,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.course = this.exercise?.course ?? this.lecture?.course;
             this.metisService.setCourse(this.course);
             this.metisService.setPageType(this.pageType);
-            if (routeParams.params.courseId) {
-                this.setChannel(routeParams.params.courseId);
-            } else if (this.course?.id) {
-                this.setChannel(this.course.id);
-            }
+            this.setChannel(routeParams.params.courseId);
             this.createEmptyPost();
             this.resetFormGroup();
         });

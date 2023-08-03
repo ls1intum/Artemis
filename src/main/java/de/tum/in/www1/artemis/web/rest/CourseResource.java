@@ -1212,19 +1212,4 @@ public class CourseResource {
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
-
-    /**
-     * GET /courses/:courseId/learning-paths-enabled Get a course by id with eagerly loaded learning paths
-     *
-     * @param courseId the id of the course
-     * @return the course with eagerly loaded learning paths
-     */
-    @GetMapping("courses/{courseId}/learning-paths-enabled")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Boolean> getCourseLearningPathsEnabled(@PathVariable Long courseId) {
-        log.debug("REST request to get if course has learning paths enabled : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(course.getLearningPathsEnabled());
-    }
 }

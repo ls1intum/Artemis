@@ -23,7 +23,6 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -48,7 +47,6 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
-        StickyPopoverDirective,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -74,7 +72,6 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
         CompetencySelectionComponent,
-        StickyPopoverDirective,
     ],
 })
 export class ArtemisSharedModule {}

@@ -33,9 +33,7 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
  * This includes
  * <ul>
  * <li>the generation of learning paths in courses,</li>
- * <li>performing pageable searches for learning paths,</li>
- * <li>generation of the Ngx representation of learning paths,</li>
- * <li>and the computation of recommended learning objects for a specific learning path.</li>
+ * <li>and performing pageable searches for learning paths.</li>
  * </ul>
  */
 @Service

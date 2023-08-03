@@ -69,7 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
-    public exerciseId: number;
+    private exerciseId: number;
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
@@ -142,12 +142,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
-            if (params['exerciseId']) {
-                this.exerciseId = parseInt(params['exerciseId'], 10);
-            }
-            if (params['courseId']) {
-                this.courseId = parseInt(params['courseId'], 10);
-            }
+            this.exerciseId = parseInt(params['exerciseId'], 10);
+            this.courseId = parseInt(params['courseId'], 10);
             this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             this.accountService.identity().then((user: User) => {
                 this.currentUser = user;

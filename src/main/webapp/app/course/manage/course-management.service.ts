@@ -685,12 +685,4 @@ export class CourseManagementService {
         course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
         course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
     }
-
-    /**
-     * retrieves if the course with the given id has enabled learning paths
-     * @param courseId the id of the course
-     */
-    getCourseLearningPathsEnabled(courseId: number): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/learning-paths-enabled`, { observe: 'response' });
-    }
 }
