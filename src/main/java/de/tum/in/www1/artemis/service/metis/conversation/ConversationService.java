@@ -125,25 +125,9 @@ public class ConversationService {
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
 
-        var courseWideChannelsOfUser = channelRepository.findCourseWideChannelWhereUserIsNotParticipant(courseId, requestingUser.getId());
-        Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
-        courseWideChannelsOfUser.forEach(channel -> {
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(requestingUser);
-            conversationParticipant.setConversation(channel);
-            conversationParticipant.setUnreadMessagesCount(0L);
-            conversationParticipant.setLastRead(ZonedDateTime.now());
-            conversationParticipant.setIsFavorite(false);
-            conversationParticipant.setIsHidden(false);
-            conversationParticipant.setIsModerator(false);
-            newConversationParticipants.add(conversationParticipant);
-        });
-        conversationParticipantRepository.saveAll(newConversationParticipants);
-
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(groupChatsOfUser);
-        conversations.addAll(courseWideChannelsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);

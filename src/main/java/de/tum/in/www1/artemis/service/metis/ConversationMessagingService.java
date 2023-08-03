@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -162,7 +163,23 @@ public class ConversationMessagingService extends PostingService {
 
         var requestingUser = userRepository.getUser();
         if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
+            Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
+
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+                ConversationParticipant conversationParticipant = new ConversationParticipant();
+                conversationParticipant.setUser(requestingUser);
+                conversationParticipant.setConversation(conversation);
+                conversationParticipant.setIsModerator(false);
+                conversationParticipant.setIsHidden(false);
+                conversationParticipant.setIsFavorite(false);
+                conversationParticipant.setLastRead(ZonedDateTime.now());
+                conversationParticipant.setUnreadMessagesCount(0L);
+                conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+
         }
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)

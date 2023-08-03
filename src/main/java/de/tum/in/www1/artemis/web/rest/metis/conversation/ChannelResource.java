@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.C
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -436,22 +435,12 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     private void checkChannelMembership(Channel channel, @NotNull User user) {
-        if (channel != null && !conversationService.isMember(channel.getId(), user.getId())) {
-            if (!channel.getIsCourseWide()) {
-                // suppress error alert with skipAlert: true so that the client can display a custom error message
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel",
-                        "noAccessButCouldJoin", true);
-            }
-
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(channel);
-            conversationParticipant.setIsModerator(false);
-            conversationParticipant.setIsHidden(false);
-            conversationParticipant.setIsFavorite(false);
-            conversationParticipant.setLastRead(ZonedDateTime.now());
-            conversationParticipant.setUnreadMessagesCount(0L);
-            conversationParticipantRepository.save(conversationParticipant);
+        if (channel == null || channel.getIsCourseWide() || conversationService.isMember(channel.getId(), user.getId())) {
+            return;
         }
+
+        // suppress error alert with skipAlert: true so that the client can display a custom error message
+        throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
+                true);
     }
 }
