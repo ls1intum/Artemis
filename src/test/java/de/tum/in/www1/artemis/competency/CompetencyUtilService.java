@@ -47,6 +47,21 @@ public class CompetencyUtilService {
     }
 
     /**
+     * create and save competency with the passed arguments.
+     *
+     * @param course   the course we want to use the competency in
+     * @param exercise the exercise of the competency
+     * @return newly created competency
+     */
+    public Competency createCompetencyWithExercise(Course course, Exercise exercise) {
+        Competency competency = new Competency();
+        competency.setTitle("ExampleCompetency");
+        competency.setCourse(course);
+        competency.addExercise(exercise);
+        return competencyRepo.save(competency);
+    }
+
+    /**
      * Creates competency and links it to the course.
      *
      * @param course course the competency will be linked to
