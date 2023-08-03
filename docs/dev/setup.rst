@@ -617,7 +617,7 @@ The following environment variables need to be updated for push notifications to
 * ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
 * ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
 
-Furthermore the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
+Furthermore, the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
 
 To run the services for Android support the following environment variable is required:
 
