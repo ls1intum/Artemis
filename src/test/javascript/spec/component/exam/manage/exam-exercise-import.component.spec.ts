@@ -403,7 +403,7 @@ describe('Exam Exercise Import Component', () => {
 
         it.each([true, false])('should ignore unselected exercises', (duplicatedTitles) => {
             const duplicatesToCheck = duplicatedTitles ? component.exercisesWithDuplicatedTitles : component.exercisesWithDuplicatedShortNames;
-            component.selectedExercises.get(exerciseGroup6).delete(programmingExercise3);
+            component.selectedExercises.get(exerciseGroup6)?.delete(programmingExercise3);
 
             if (duplicatedTitles) {
                 programmingExercise3.title = programmingExercise.title;

@@ -144,8 +144,10 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         } else {
             this.selectedExercises!.get(exerciseGroup)!.add(exercise);
-            this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
-            this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
+                this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
+            }
         }
     }
 
