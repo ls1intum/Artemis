@@ -76,13 +76,18 @@
                         <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                     </a>
                     <a
-                        *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments"
+                        *ngIf="
+                            (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                                programmingExercise.assessmentType === AssessmentType.MANUAL ||
+                                programmingExercise.allowComplaintsForAutomaticAssessments) &&
+                            isAfterExerciseDueDate
+                        "
                         [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
                         class="btn btn-info btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -10,12 +10,13 @@ import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faChartBar, faListAlt, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
 })
-export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
+export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit, OnChanges {
     @Input()
     exercise: Exercise;
 
@@ -30,6 +31,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     teamBaseResource: string;
     baseResource: string;
     shortBaseResource: string;
+    isAfterExerciseDueDate = false;
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
@@ -121,5 +123,13 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         } else {
             this.router.navigateByUrl(`/course-management/${this.course.id}/exams/${this.exercise.exerciseGroup?.exam?.id}/exercise-groups`);
         }
+    }
+
+    /**
+     * Checks if the due date of this exercise is over
+     */
+    ngOnChanges(): void {
+        const now = dayjs();
+        this.isAfterExerciseDueDate = now.isAfter(this.exercise.dueDate);
     }
 }
