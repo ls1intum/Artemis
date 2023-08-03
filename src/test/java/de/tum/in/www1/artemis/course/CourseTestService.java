@@ -3129,26 +3129,4 @@ public class CourseTestService {
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
     }
-
-    // Test
-    public void testGetCourseLearningPathsEnabled_AsInstructor() throws Exception {
-        String testSuffix = "getlearningpathsenabled";
-        adjustUserGroupsToCustomGroups(testSuffix);
-
-        var course1 = courseUtilService.createCourse();
-        adjustCourseGroups(course1, testSuffix);
-        course1.setLearningPathsEnabled(true);
-        course1 = courseRepo.save(course1);
-
-        var course2 = courseUtilService.createCourse();
-        adjustCourseGroups(course2, testSuffix);
-        course2.setLearningPathsEnabled(false);
-        course2 = courseRepo.save(course2);
-
-        final var result1 = request.get("/api/courses/" + course1.getId() + "/learning-paths-enabled", HttpStatus.OK, Boolean.class);
-        assertThat(result1).isTrue();
-
-        final var result2 = request.get("/api/courses/" + course2.getId() + "/learning-paths-enabled", HttpStatus.OK, Boolean.class);
-        assertThat(result2).isFalse();
-    }
 }

@@ -98,7 +98,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findWithLearningPathsById(long id);
+    Optional<User> findWithLearningPathsById(long userId);
 
     @Query("SELECT count(*) FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
