@@ -305,7 +305,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Start loading feedback suggestions from Athena
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
-    private loadFeedbackSuggestions(): void {
+    loadFeedbackSuggestions(): void {
         if (this.assessments.length > 0) {
             return;
         }
