@@ -168,6 +168,11 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Progress"
+                },
+                "progressNav": {
+                    "header": "Learning Path",
+                    "refresh": "Refresh",
+                    "center": "Center view"
                 }
             }
         }
