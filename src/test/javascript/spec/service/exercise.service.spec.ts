@@ -520,4 +520,23 @@ describe('Exercise Service', () => {
             method: 'PUT',
         });
     });
+
+    it('should correctly send the exercise name to the title service', () => {
+        const entityTitleService = TestBed.inject(EntityTitleService);
+        const examExerciseForStudent = { id: 1, title: 'exercise', exerciseGroup: { id: 1, title: 'exercise group' } } as Exercise;
+        const examExerciseForTutor = { ...examExerciseForStudent, isAtLeastTutor: true } as Exercise;
+        const courseExerciseForStudent = { ...examExerciseForStudent, exerciseGroup: undefined, course: { id: 2, title: 'course' } } as Exercise;
+        const courseExerciseForTutor = { ...courseExerciseForStudent, isAtLeastTutor: true } as Exercise;
+        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setTitle');
+        service.sendExerciseTitleToTitleService(examExerciseForStudent);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise group');
+        service.sendExerciseTitleToTitleService(examExerciseForTutor);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        service.sendExerciseTitleToTitleService(courseExerciseForStudent);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
+        service.sendExerciseTitleToTitleService(courseExerciseForTutor);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
+    });
 });

@@ -192,7 +192,7 @@ describe('UserManagementComponent', () => {
 
         expect(identitySpy).toHaveBeenCalledOnce();
         expect(profileSpy).toHaveBeenCalledOnce();
-        expect(comp.currentAccount).toEqual({ id: 99 });
+        expect(comp.currentAccount).toEqual({ id: 99, login: 'admin' });
 
         expect(comp.page).toBe(1);
         expect(comp.predicate).toBe('id');

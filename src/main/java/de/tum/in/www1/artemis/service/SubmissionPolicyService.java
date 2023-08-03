@@ -246,7 +246,7 @@ public class SubmissionPolicyService {
     private void unlockParticipationsWhenSubmissionsGreaterLimit(ProgrammingExercise exercise, int submissionLimit) {
         for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
             if (getParticipationSubmissionCount(studentParticipation) >= submissionLimit) {
-                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(exercise, (ProgrammingExerciseStudentParticipation) studentParticipation);
+                programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) studentParticipation);
             }
         }
     }

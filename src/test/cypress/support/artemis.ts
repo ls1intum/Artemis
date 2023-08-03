@@ -68,3 +68,8 @@ export const quizExerciseCreation = pageObjects.exercise.quiz.creation;
 export const quizExerciseMultipleChoice = pageObjects.exercise.quiz.multipleChoice;
 export const quizExerciseShortAnswerQuiz = pageObjects.exercise.quiz.shortAnswer;
 export const quizExerciseDragAndDropQuiz = pageObjects.exercise.quiz.dragAndDrop;
+
+export const fileUploadExerciseCreation = pageObjects.exercise.fileUpload.creation;
+export const fileUploadExerciseEditor = pageObjects.exercise.fileUpload.editor;
+export const fileUploadExerciseAssessment = pageObjects.assessment.fileUpload;
+export const fileUploadExerciseFeedback = pageObjects.exercise.fileUpload.feedback;

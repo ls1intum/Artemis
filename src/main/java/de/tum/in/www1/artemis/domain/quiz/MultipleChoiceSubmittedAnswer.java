@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -10,9 +11,9 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,7 +21,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "MC")
-@JsonTypeName("multiple-choice")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
@@ -102,5 +102,9 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     @Override
     public String toString() {
         return "MultipleChoiceSubmittedAnswer{" + "id=" + getId() + "}";
+    }
+
+    public Set<Long> toSelectedIds() {
+        return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
     }
 }
