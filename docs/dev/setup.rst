@@ -609,7 +609,7 @@ To enable push notifications the Hermes service needs to be started separately a
 Configure and start Hermes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To run Hermes you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
+To run Hermes, you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
 
 The following environment variables need to be updated for push notifications to Apple devices:
 
