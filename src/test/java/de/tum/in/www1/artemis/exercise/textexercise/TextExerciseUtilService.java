@@ -164,6 +164,20 @@ public class TextExerciseUtilService {
         return course;
     }
 
+    /**
+     * renames the passed text exercise using the passed title
+     *
+     * @param textExercise exercise to be renamed
+     * @param title        new title of the exercise
+     * @return the renamed exercise
+     */
+    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+        textExercise.setTitle(title);
+        textExerciseRepository.save(textExercise);
+
+        return textExercise;
+    }
+
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
     }
@@ -306,5 +320,17 @@ public class TextExerciseUtilService {
         course = courseRepo.save(course);
         exerciseRepo.save(finishedTextExercise);
         return course;
+    }
+
+    /**
+     * creates and saves a text exercise for an exam
+     *
+     * @param exerciseGroup exercise group to which the text exercise should be added
+     * @return newly created text exercise
+     */
+    public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+        return textExercise;
     }
 }

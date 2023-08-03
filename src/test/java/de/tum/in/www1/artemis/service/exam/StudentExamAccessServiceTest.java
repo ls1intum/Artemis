@@ -116,7 +116,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamIsLive() {
         // Exam is not visible.
-        Exam examNotStarted = examUtilService.addExam(course1, student1, ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
+        Exam examNotStarted = examUtilService.addExamWithUser(course1, student1, false, ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2),
+                ZonedDateTime.now().plusHours(3));
         assertThatExceptionOfType(AccessForbiddenException.class)
                 .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotStarted.getId(), student1, false, true));
 
@@ -127,7 +128,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
                 .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1, student1));
 
         // Exam has ended. After exam has ended, it should still be retrievable by the students to see their participation
-        Exam examEnded = examUtilService.addExam(course1, student1, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        Exam examEnded = examUtilService.addExamWithUser(course1, student1, false, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3),
+                ZonedDateTime.now().minusHours(1));
         StudentExam studentExamEnded = examUtilService.addStudentExam(examEnded);
         studentExamEnded.setUser(student1);
         studentExamRepository.save(studentExamEnded);
@@ -144,7 +146,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserIsRegisteredForExam() {
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        Exam examNotRegistered = examUtilService.addExam(course1, student2, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        Exam examNotRegistered = examUtilService.addExamWithUser(course1, student2, false, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1),
+                ZonedDateTime.now().plusHours(1));
         assertThatExceptionOfType(AccessForbiddenException.class)
                 .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), student1, false, true));
 
