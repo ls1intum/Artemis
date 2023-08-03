@@ -17,13 +17,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
-class AthenaSubmissionSendingServiceTest extends AthenaTest {
+class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     private static final Language DEFAULT_SUBMISSION_LANGUAGE = Language.ENGLISH;
 

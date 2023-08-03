@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
-class AthenaHealthIndicatorTest extends AthenaTest {
+import de.tum.in.www1.artemis.AbstractAthenaTest;
+
+class AthenaHealthIndicatorTest extends AbstractAthenaTest {
 
     private final String moduleExample = "module_example";
 

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
-class AthenaFeedbackSendingServiceTest extends AthenaTest {
+class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private TextBlockRepository textBlockRepository;

@@ -1,11 +1,10 @@
-package de.tum.in.www1.artemis.service.connectors.athena;
+package de.tum.in.www1.artemis;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -13,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 /**
  * Base class for Athena tests providing common functionality
  */
-public abstract class AthenaTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public abstract class AbstractAthenaTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.athena.url}")
     protected String athenaUrl;

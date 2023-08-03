@@ -11,15 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.connectors.athena.AthenaTest;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AthenaResourceIntegrationTest extends AthenaTest {
+class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "feedbackintegration";
 

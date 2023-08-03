@@ -9,12 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 
-class AthenaFeedbackSuggestionsServiceTest extends AthenaTest {
+class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Autowired
     private AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
