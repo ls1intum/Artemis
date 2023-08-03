@@ -73,16 +73,6 @@ export class TextAssessmentAreaComponent implements OnChanges {
     }
 
     /**
-     * It is called if the assessment for a text block is deleted. So, textBlockRef is deleted
-     * @param ref - TextBlockRef that has a deleted assessment(feedback).
-     */
-    removeTextBlockRef(ref: TextBlockRef): void {
-        const index = this.textBlockRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
-        this.textBlockRefs.splice(index, 1);
-        this.textBlockRefsAddedRemoved.emit();
-    }
-
-    /**
      * It is called when a text block is selected.
      * @param ref - selected TextBlockRef
      */
