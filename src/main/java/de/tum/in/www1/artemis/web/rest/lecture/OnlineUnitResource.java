@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
 @RequestMapping("/api")
-@Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Profile("!decoupling || lecture")
 public class OnlineUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);

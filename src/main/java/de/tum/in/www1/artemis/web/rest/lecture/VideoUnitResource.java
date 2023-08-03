@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
 @RequestMapping("/api")
-@Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Profile("!decoupling || lecture")
 public class VideoUnitResource {
 
     @Value("${jhipster.clientApp.name}")

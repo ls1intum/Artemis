@@ -21,6 +21,9 @@ import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+/**
+ * Service that manages the synchronization of available profiles between the different instances of an Artemis cluster.
+ */
 @Service
 public class ProfileToggleService {
 
@@ -51,10 +54,12 @@ public class ProfileToggleService {
 
             @Override
             public void init(InitialMembershipEvent event) {
+                // Nothing to do
             }
 
             @Override
             public void memberAdded(MembershipEvent membershipEvent) {
+                // Nothing to do
             }
 
             @Override

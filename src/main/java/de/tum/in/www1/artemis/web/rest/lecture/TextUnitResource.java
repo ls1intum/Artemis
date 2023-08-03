@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api")
-@Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Profile("!decoupling || lecture")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")
