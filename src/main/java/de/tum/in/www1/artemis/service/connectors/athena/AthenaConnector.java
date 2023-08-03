@@ -62,7 +62,7 @@ class AthenaConnector<RequestType, ResponseType> {
             response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
         }
         catch (ResourceAccessException e) {
-            log.error("Athena did not respond successfully in time: {}", e.getMessage());
+            log.error("Athena did not respond successfully in time: {}, stack trace: {}", e.getMessage(), e.getStackTrace());
             throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.");
         }
 
