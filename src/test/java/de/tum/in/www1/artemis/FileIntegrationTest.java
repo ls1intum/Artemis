@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -465,8 +466,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         // Collect unity freshly from the database to prevent issues when persisting the lecture again
-        lecture.setLectureUnits(
-                attachmentUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit).collect(Collectors.toList()));
+        lecture.setLectureUnits(attachmentUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
+                .collect(Collectors.toCollection(ArrayList::new)));
 
         return lecture;
     }
