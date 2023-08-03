@@ -625,7 +625,7 @@ To run the services for Android support the following environment variable is re
 
 Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
 
-To run both APNS and Firebase configure the Environment Variables for both.
+To run both APNS and Firebase, configure the environment variables for both.
 
 To start Hermes, run the ``docker compose up`` command in the folder where the ``docker-compose`` file is located.
 
