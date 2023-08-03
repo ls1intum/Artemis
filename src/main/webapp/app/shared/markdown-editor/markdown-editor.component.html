@@ -95,7 +95,7 @@
                                 <span class="default-font-size">{{ command.buttonTranslationString | artemisTranslate }}</span>
                                 <fa-icon [icon]="faAngleDown" class="ms-1"></fa-icon>
                             </button>
-                            <mat-menu #subMenuExercise="matMenu" type="button">
+                            <mat-menu #subMenuExercise="matMenu" type="button" [jhiProfileToggleHide]="ProfileToggle.LECTURE">
                                 <button
                                     mat-button
                                     *ngIf="!command.getValues() || command.getValues().length === 0"

@@ -38,6 +38,7 @@ import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -73,6 +74,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
+
+    ProfileToggle = ProfileToggle;
+
     // This ref is used for entering the fullscreen mode.
     @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
     @ViewChild('aceEditor', { static: false })
