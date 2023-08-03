@@ -4,8 +4,6 @@ import { Observable, of, switchMap } from 'rxjs';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
-type FeedbackSuggestionsResponseType = HttpResponse<TextBlockRef[]>;
-
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
     public resourceUrl = 'api/athena';
@@ -18,13 +16,15 @@ export class AthenaService {
      * @param exerciseId the id of the exercise
      * @param submissionId the id of the submission
      */
-    getFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<FeedbackSuggestionsResponseType | TextBlockRef[]> {
+    getFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<TextBlockRef[]> {
         return this.profileService.getProfileInfo().pipe(
             switchMap((profileInfo) => {
                 if (!profileInfo.activeProfiles.includes('athena')) {
-                    return of([]);
+                    return of([] as TextBlockRef[]);
                 }
-                return this.http.get<TextBlockRef[]>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' });
+                return this.http
+                    .get<TextBlockRef[]>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
+                    .pipe(switchMap((res: HttpResponse<TextBlockRef[]>) => of(res.body!)));
             }),
         );
     }
