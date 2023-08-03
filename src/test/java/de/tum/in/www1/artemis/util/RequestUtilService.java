@@ -64,7 +64,7 @@ public class RequestUtilService {
     }
 
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
-        return postWithMultipartFiles(path, paramValue, paramName, List.of(file), responseType, expectedStatus);
+        return postWithMultipartFiles(path, paramValue, paramName, file != null ? List.of(file) : null, responseType, expectedStatus);
     }
 
     public <T, R> R postWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus)
@@ -347,7 +347,7 @@ public class RequestUtilService {
 
     public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
             LinkedMultiValueMap<String, String> params) throws Exception {
-        return putWithMultipartFiles(path, paramValue, paramName, List.of(file), responseType, expectedStatus, params);
+        return putWithMultipartFiles(path, paramValue, paramName, file != null ? List.of(file) : null, responseType, expectedStatus, params);
     }
 
     public <T, R> R putWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus,
