@@ -366,12 +366,35 @@ public class ConversationService {
      *
      * @param conversationId the id of the conversation
      * @param requestingUser the user that wants to switch the favorite status
-     * @param isFavorite     the new favorite status
+     * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean isFavorite) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
-        participation.setIsFavorite(isFavorite);
-        conversationParticipantRepository.save(participation);
+    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+
+        if (participation.isEmpty()) {
+            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+                ConversationParticipant conversationParticipant = new ConversationParticipant();
+                conversationParticipant.setUser(requestingUser);
+                conversationParticipant.setConversation(conversation);
+                conversationParticipant.setIsModerator(false);
+                conversationParticipant.setIsHidden(false);
+                conversationParticipant.setIsFavorite(favoriteStatus);
+                conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(10));
+                conversationParticipant.setUnreadMessagesCount(0L);
+                conversationParticipantRepository.save(conversationParticipant);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+        }
+        else {
+            ConversationParticipant conversationParticipant = participation.get();
+            conversationParticipant.setIsFavorite(favoriteStatus);
+            conversationParticipantRepository.save(conversationParticipant);
+        }
+
     }
 
     /**
@@ -382,9 +405,31 @@ public class ConversationService {
      * @param hiddenStatus   the new hidden status
      */
     public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
-        participation.setIsHidden(hiddenStatus);
-        conversationParticipantRepository.save(participation);
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+
+        if (participation.isEmpty()) {
+            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+                ConversationParticipant conversationParticipant = new ConversationParticipant();
+                conversationParticipant.setUser(requestingUser);
+                conversationParticipant.setConversation(conversation);
+                conversationParticipant.setIsModerator(false);
+                conversationParticipant.setIsHidden(hiddenStatus);
+                conversationParticipant.setIsFavorite(false);
+                conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(10));
+                conversationParticipant.setUnreadMessagesCount(0L);
+                conversationParticipantRepository.save(conversationParticipant);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+        }
+        else {
+            ConversationParticipant conversationParticipant = participation.get();
+            conversationParticipant.setIsHidden(hiddenStatus);
+            conversationParticipantRepository.save(conversationParticipant);
+        }
     }
 
     /**
