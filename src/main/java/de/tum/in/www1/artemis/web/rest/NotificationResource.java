@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -74,6 +75,8 @@ public class NotificationResource {
     @GetMapping("notifications")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
+        log.info("Load notifications");
+        long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
@@ -92,6 +95,7 @@ public class NotificationResource {
                     deactivatedTitles, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        log.info("Load notifications done in {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }

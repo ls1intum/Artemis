@@ -119,6 +119,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
+    // TODO: why do we call this at all? seems we do this for every student at the end of the exam. If at all, we should only load this when results have been published
     private tryLoadPlagiarismCaseInfosForStudent() {
         const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
         if (exerciseIds?.length && this.courseId) {
