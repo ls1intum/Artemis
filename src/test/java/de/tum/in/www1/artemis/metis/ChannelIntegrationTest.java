@@ -780,7 +780,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(exerciseChannel.getExercise().getId()).isEqualTo(exercise.getId());
+        assertThat(exerciseChannel.getExercise()).isNull();
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
     }
@@ -806,7 +806,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(lectureChannel.getLecture().getId()).isEqualTo(lecture.getId());
+        assertThat(lectureChannel.getLecture()).isNull();
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         lectureRepository.deleteById(lecture.getId());

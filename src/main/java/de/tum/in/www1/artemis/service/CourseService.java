@@ -808,7 +808,7 @@ public class CourseService {
      * @return list of users
      */
     @NotNull
-    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
+    public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
         usersInGroup.forEach(user -> {
@@ -1014,7 +1014,7 @@ public class CourseService {
      *
      * @param usersInGroup user whose variables are removed
      */
-    private void removeUserVariables(List<User> usersInGroup) {
+    private void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
             user.setLastNotificationRead(null);
             user.setActivationKey(null);
