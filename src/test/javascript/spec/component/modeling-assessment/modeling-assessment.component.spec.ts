@@ -226,6 +226,7 @@ describe('ModelingAssessmentComponent', () => {
         const spy = jest.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
         await fixture.whenStable();
+        await comp.ngAfterViewInit();
         for (let i = 0; i < elementCounts.length; i++) {
             expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
         }
@@ -251,8 +252,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
-
+        await comp.ngAfterViewInit();
         expect(comp.apollonEditor).not.toBeNull();
 
         const apollonModel = comp.apollonEditor!.model;
@@ -274,6 +274,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
         await fixture.whenStable();
+        await comp.apollonEditor!.nextRender;
         await comp.ngOnChanges(changes);
         expect(apollonSpy).toHaveBeenCalledWith(newModel);
     });
@@ -288,7 +289,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngOnChanges(changes);
-        await comp.apollonEditor!.nextRender;
+        await comp.ngAfterViewInit();
 
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
