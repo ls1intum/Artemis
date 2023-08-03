@@ -24,7 +24,13 @@ export class AthenaService {
                 }
                 return this.http
                     .get<TextBlockRef[]>(`${this.resourceUrl}/exercises/${exerciseId}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
-                    .pipe(switchMap((res: HttpResponse<TextBlockRef[]>) => of(res.body!)));
+                    .pipe(switchMap((res: HttpResponse<TextBlockRef[]>) => of(res.body!)))
+                    .pipe(
+                        switchMap((feedbackSuggestions) => {
+                            // Make real TextBlockRef objects out of the plain objects
+                            return of(feedbackSuggestions.map((feedbackSuggestion) => new TextBlockRef(feedbackSuggestion.block!, feedbackSuggestion.feedback)));
+                        }),
+                    );
             }),
         );
     }
