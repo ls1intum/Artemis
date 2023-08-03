@@ -80,4 +80,15 @@ describe('TextAssessmentAreaComponent', () => {
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs).toHaveLength(5);
     });
+
+    it('should remove TextBlockRef if text block is deleted', () => {
+        component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
+        jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
+
+        component.removeTextBlockRef(component.textBlockRefs[0]);
+        fixture.detectChanges();
+
+        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
+        expect(component.textBlockRefs).toHaveLength(3);
+    });
 });

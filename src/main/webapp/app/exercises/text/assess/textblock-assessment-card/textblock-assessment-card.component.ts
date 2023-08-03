@@ -26,6 +26,7 @@ export class TextblockAssessmentCardComponent {
 
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
+    @Output() didDelete = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
 
     constructor(
@@ -65,6 +66,9 @@ export class TextblockAssessmentCardComponent {
     unselect(): void {
         this.didSelect.emit(undefined);
         delete this.textBlockRef.feedback;
+        if (this.textBlockRef.block!.type === TextBlockType.MANUAL && this.textBlockRef.deletable) {
+            this.didDelete.emit(this.textBlockRef);
+        }
         this.feedbackDidChange();
     }
 
