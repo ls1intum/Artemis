@@ -72,7 +72,7 @@ class AthenaSubmissionSelectionServiceTest extends AthenaTest {
 
     @Test
     void testSubmissionSelectionWithException() {
-        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectServerError();
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException();
         assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())));
     }
 }

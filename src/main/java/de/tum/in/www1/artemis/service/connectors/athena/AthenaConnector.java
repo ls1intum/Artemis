@@ -57,10 +57,18 @@ class AthenaConnector<RequestType, ResponseType> {
 
         final HttpEntity<RequestType> httpRequestEntity = new HttpEntity<>(requestObject, headers);
 
-        final ResponseEntity<ResponseType> response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
+        ResponseEntity<ResponseType> response;
+        try {
+            response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
+        }
+        catch (ResourceAccessException e) {
+            log.error("Athena did not respond successfully in time: {}", e.getMessage());
+            throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.");
+        }
 
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-            throw new NetworkingException("An Error occurred while calling Remote Artemis Service. Check Remote Logs for debugging information.");
+            log.error("Athena responded with an error: {}", response);
+            throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.");
         }
 
         final ResponseType responseBody = response.getBody();

@@ -112,9 +112,9 @@ public class AthenaRequestMockProvider {
      * Mocks the /select_submission API from Athena used to retrieve the selected submission for manual assessment
      * with a server error.
      */
-    public void mockGetSelectedSubmissionAndExpectServerError() {
+    public void mockGetSelectedSubmissionAndExpectNetworkingException() {
         mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission")).andExpect(method(HttpMethod.POST))
-                .andRespond(withServerError());
+                .andRespond(withException(new SocketTimeoutException("Mocked SocketTimeoutException")));
     }
 
     /**
