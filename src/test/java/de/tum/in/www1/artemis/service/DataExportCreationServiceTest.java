@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.legal;
+package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -43,8 +43,8 @@ import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.service.DataExportCreationService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
+import de.tum.in.www1.artemis.service.dataexport.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
@@ -167,8 +167,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
+        Predicate<Path> readmeMd = path -> "README.md".equals(path.getFileName().toString());
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
-        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(courseDir);
+        assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir);
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))

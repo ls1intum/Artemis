@@ -8,10 +8,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { SortService } from 'app/shared/service/sort.service';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -35,6 +36,9 @@ export class LectureComponent implements OnInit {
     activeFilters = new Set<LectureDateFilter>();
     readonly filterType = LectureDateFilter;
 
+    predicate: string;
+    ascending: boolean;
+
     documentationType = DocumentationType.Lecture;
 
     // Icons
@@ -44,6 +48,7 @@ export class LectureComponent implements OnInit {
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
+    faSort = faSort;
 
     constructor(
         protected lectureService: LectureService,
@@ -51,7 +56,11 @@ export class LectureComponent implements OnInit {
         private router: Router,
         private alertService: AlertService,
         private modalService: NgbModal,
-    ) {}
+        private sortService: SortService,
+    ) {
+        this.predicate = 'id';
+        this.ascending = true;
+    }
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -111,6 +120,10 @@ export class LectureComponent implements OnInit {
         this.applyFilters();
     }
 
+    sortRows() {
+        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
+    }
+
     private loadAll() {
         this.lectureService
             .findAllByCourseId(this.courseId)
@@ -162,6 +175,6 @@ export class LectureComponent implements OnInit {
             this.filteredLectures = filteredLectures;
         }
 
-        this.filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
+        this.sortRows();
     }
 }
