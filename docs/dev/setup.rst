@@ -604,7 +604,7 @@ Hermes Service
 --------------
 
 Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
-To enable push notifications the Hermes service needs to be started separately and special configuration on the Artemis instance is required.
+To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
 
 Configure and start Hermes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
