@@ -88,6 +88,8 @@ In order to setup cypress locally, we need to follow these steps:
     :alt: Cypress cypress-open-screenshot
 
   You can now click on any test suite and it should run. 
+
+.. warning::
   **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
   since it will create the necessary users.
 
@@ -143,9 +145,9 @@ the actual run and can tremendously help debug failing E2E tests.
 Sometimes the video can be a little bit to fast to debug easily. Just download the video on your 
 computer and play it with a video player, that allows you to slow the video down. 
 
-  .. note::
-    For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug 
-    it before this period to get access to the video. 
+.. note::
+  For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug 
+  it before this period to get access to the video. 
 
 
 Best practice when writing new E2E tests
