@@ -30,9 +30,6 @@ public class LearningPathUtilService {
     @Autowired
     private CompetencyRepository competencyRepository;
 
-    @Autowired
-    UserRepository userRepository;
-
     /**
      * Enable and generate learning paths for course.
      *

@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearch
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class LearningPathResource {
 
     private final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
@@ -40,15 +40,15 @@ public class LearningPathResource {
     }
 
     /**
-     * PUT /courses/:courseId/learning-paths/enable : Enables and generates learning paths for the course
+     * PUT courses/:courseId/learning-paths/enable : Enables and generates learning paths for the course
      *
      * @param courseId the id of the course for which the learning paths should be enabled
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/courses/{courseId}/learning-paths/enable")
+    @PutMapping("courses/{courseId}/learning-paths/enable")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -64,15 +64,15 @@ public class LearningPathResource {
     }
 
     /**
-     * PUT /courses/:courseId/learning-paths/generate-missing : Generates missing learning paths for the course
+     * PUT courses/:courseId/learning-paths/generate-missing : Generates missing learning paths for the course
      *
      * @param courseId the id of the course for which the learning paths should be created
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/courses/{courseId}/learning-paths/generate-missing")
+    @PutMapping("courses/{courseId}/learning-paths/generate-missing")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -84,16 +84,16 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-paths : Gets all the learning paths of a course. The result is pageable.
+     * GET courses/:courseId/learning-paths : Gets all the learning paths of a course. The result is pageable.
      *
      * @param courseId the id of the course for which the learning paths should be fetched
      * @param search   the pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
-    @GetMapping("/courses/{courseId}/learning-paths")
+    @GetMapping("courses/{courseId}/learning-paths")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable Long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -105,12 +105,12 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /courses/:courseId/learning-path-health : Gets the health status of learning paths for the course.
+     * GET courses/:courseId/learning-path-health : Gets the health status of learning paths for the course.
      *
      * @param courseId the id of the course for which the health status should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the health status
      */
-    @GetMapping("/courses/{courseId}/learning-path-health")
+    @GetMapping("courses/{courseId}/learning-path-health")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
