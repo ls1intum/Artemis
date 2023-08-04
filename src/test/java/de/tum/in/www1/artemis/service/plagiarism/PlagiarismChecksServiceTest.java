@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,7 @@ class PlagiarismChecksServiceTest {
 
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
-    private final PlagiarismChecksService service = new PlagiarismChecksService(textPlagiarismDetectionService, programmingLanguageFeatureService,
+    private final PlagiarismChecksService service = new PlagiarismChecksService(textPlagiarismDetectionService, Optional.of(programmingLanguageFeatureService),
             programmingPlagiarismDetectionService, modelingPlagiarismDetectionService, plagiarismResultRepository);
 
     @Test
