@@ -87,6 +87,14 @@ export class ProfileToggleService {
     }
 
     /**
+     * Getter method for the active profiles toggles with synchronous response.
+     * Will check that the passed profile is enabled
+     */
+    getProfileToggleActiveInstant(profile: ProfileToggle): boolean {
+        return this.getProfileTogglesActiveInstant([profile]);
+    }
+
+    /**
      * Getter method for the active profiles toggles as an observable.
      * Will check that all passed profiles are enabled
      */
@@ -102,6 +110,20 @@ export class ProfileToggleService {
             }),
             distinctUntilChanged(),
         );
+    }
+
+    /**
+     * Getter method for the active profiles toggles with synchronous response.
+     * Will check that all passed profiles are enabled
+     */
+    getProfileTogglesActiveInstant(profiles: ProfileToggle[]): boolean {
+        const activeProfiles = this.subject.value;
+        if (activeProfiles.includes(ProfileToggle.DECOUPLING)) {
+            // If the 'Decoupling' proxy-profile is set -> Decoupling is activated -> Apply logic
+            return profiles.every((profile) => activeProfiles.includes(profile));
+        }
+        // If the 'Decoupling' profile is not present -> No separation of logic -> Always allowed
+        return true;
     }
 
     /**

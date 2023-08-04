@@ -5,6 +5,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
+import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -29,7 +30,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(private metisService: MetisService) {}
+    constructor(private metisService: MetisService, private profileToggleService: ProfileToggleService) {}
 
     /**
      * on initialization: calculate posting parts to be displayed
@@ -88,7 +89,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
                     queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
                 } else if (
-                    ReferenceType.LECTURE === referenceType ||
+                    (ReferenceType.LECTURE === referenceType && this.profileToggleService.getProfileToggleActiveInstant(ProfileToggle.LECTURE)) ||
                     ReferenceType.PROGRAMMING === referenceType ||
                     ReferenceType.MODELING === referenceType ||
                     ReferenceType.QUIZ === referenceType ||
