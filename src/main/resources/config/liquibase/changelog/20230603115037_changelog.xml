@@ -7,7 +7,7 @@
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="plagiarism_checks_configPK"/>
             </column>
-            <column name="continuous_plagiarism_control_enabled" type="bit" defaultValue="0">
+            <column name="continuous_plagiarism_control_enabled" type="boolean" defaultValue="false">
                 <constraints nullable="false" />
             </column>
             <column name="minimum_score" type="INT">
