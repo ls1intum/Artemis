@@ -30,6 +30,12 @@ public class TextExerciseFactory {
         return textExercise;
     }
 
+    public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var textExercise = (TextExercise) ExerciseFactory.populateExerciseForExam(new TextExercise(), exerciseGroup, title);
+        textExercise.setExampleSolution("This is my example solution");
+        return textExercise;
+    }
+
     /**
      * Generate a set of specified size containing TextBlocks with the same text
      *

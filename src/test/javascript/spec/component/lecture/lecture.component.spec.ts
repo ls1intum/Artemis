@@ -20,6 +20,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -45,36 +46,44 @@ describe('Lecture', () => {
         pastLecture = new Lecture();
         pastLecture.id = 6;
         pastLecture.endDate = yesterday;
+        pastLecture.title = 'introduction to Computer Science';
 
         pastLecture2 = new Lecture();
         pastLecture2.id = 7;
         pastLecture2.startDate = lastWeek;
         pastLecture2.endDate = yesterday;
+        pastLecture2.title = 'Data Structures';
 
         currentLecture = new Lecture();
         currentLecture.id = 4;
         currentLecture.startDate = yesterday;
         currentLecture.endDate = tomorrow;
+        currentLecture.title = 'Algorithms';
 
         currentLecture2 = new Lecture();
         currentLecture2.id = 5;
         currentLecture2.startDate = yesterday;
+        currentLecture2.title = 'operating Systems';
 
         currentLecture3 = new Lecture();
         currentLecture3.id = 3;
         currentLecture3.endDate = tomorrow;
+        currentLecture3.title = 'computer Networks';
 
         futureLecture = new Lecture();
         futureLecture.id = 2;
         futureLecture.startDate = tomorrow;
+        futureLecture.title = 'Database Systems';
 
         futureLecture2 = new Lecture();
         futureLecture2.id = 8;
         futureLecture2.startDate = tomorrow;
         futureLecture2.endDate = nextWeek;
+        futureLecture2.title = 'Artificial Intelligence';
 
         unspecifiedLecture = new Lecture();
         unspecifiedLecture.id = 1;
+        unspecifiedLecture.title = 'machine Learning';
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -86,6 +95,7 @@ describe('Lecture', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
+                MockDirective(SortDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -227,5 +237,16 @@ describe('Lecture', () => {
         lectureComponent.toggleFilters([LectureDateFilter.UNSPECIFIED]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
+    });
+
+    it.each([
+        { predicate: 'id', ascending: false, expected: [8, 7, 6, 5, 4, 3, 2, 1] },
+        { predicate: 'title', ascending: true, expected: [4, 8, 3, 7, 2, 6, 1, 5] },
+    ])('should sort rows', ({ predicate, ascending, expected }) => {
+        lectureComponent.filteredLectures = [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture];
+        lectureComponent.predicate = predicate;
+        lectureComponent.ascending = ascending;
+        lectureComponent.sortRows();
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual(expected);
     });
 });
