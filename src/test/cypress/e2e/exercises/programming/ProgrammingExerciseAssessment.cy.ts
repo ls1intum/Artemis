@@ -30,7 +30,7 @@ describe('Programming exercise assessment', () => {
 
     before('Creates a programming exercise and makes a student submission', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
@@ -38,18 +38,14 @@ describe('Programming exercise assessment', () => {
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
             courseManagementRequest
-                .createProgrammingExercise(
-                    { course },
-                    undefined,
-                    false,
-                    dayjs(),
-                    dueDate,
-                    undefined,
-                    undefined,
-                    undefined,
-                    assessmentDueDate,
-                    ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
-                )
+                .createProgrammingExercise({
+                    course,
+                    recordTestwiseCoverage: false,
+                    releaseDate: dayjs(),
+                    dueDate: dueDate,
+                    assessmentDate: assessmentDueDate,
+                    assessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                })
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
                     cy.login(studentOne);
