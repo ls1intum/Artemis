@@ -623,7 +623,7 @@
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
-                    "number": "This exam has {{numberOfSuspiciousSessions}} suspicious sessions.",
+                    "number": "This exam has {{ numberOfSuspiciousSessions }} suspicious sessions.",
                     "reasons": "Reasons",
                     "case": "Case"
                 }

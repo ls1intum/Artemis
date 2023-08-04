@@ -577,7 +577,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können im Verdächtiges Verhalten Dashboard eingesehen werden."
+                    "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
@@ -621,7 +621,7 @@
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",
-                    "number": "Diese Klausur hat {{numberOfSuspiciousSessions}} verdächtige Sitzungen.",
+                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Sitzungen.",
                     "reasons": "Gründe",
                     "case": "Fall"
                 }

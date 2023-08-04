@@ -431,6 +431,17 @@ public class ExamUtilService {
         return studentExam;
     }
 
+    /**
+     * Adds an exam session with the given parameters to the given student exam, associates the exam session with the given student exam and saves both entities in the database.
+     *
+     * @param studentExam        the student exam to which the exam session should be added
+     * @param sessionToken       the session token of the exam session
+     * @param ipAddress          the IP address of the exam session
+     * @param browserFingerprint the browser fingerprint hash of the exam session
+     * @param instanceId         the instance id of the exam session
+     * @param userAgent          the user agent of the exam session
+     * @return the exam session that was added to the student exam
+     */
     public ExamSession addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
