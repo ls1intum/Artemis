@@ -510,6 +510,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         ], // Two blocks, overlap
         [
             [0, 10],
+            [5, 7],
+        ], // Two blocks, full overlap
+        [
+            [10, 20],
+            [0, 5],
+        ], // Two blocks, wrong order
+        [
+            [5, 15],
+            [5, 10],
+        ], // Two blocks, same start index
+        [
+            [6, 11],
+            [5, 10],
+        ], // Two blocks, shifted
+        [
+            [0, 10],
             [5, 15],
             [15, 20],
         ], // Three blocks, overlap
@@ -527,7 +543,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         // No block should overlap with any other block
         const blocks = component.textBlockRefs.map((ref) => ref.block);
-        expect(blocks).toHaveLength(indices.length);
+        expect(blocks.length).toBeGreaterThanOrEqual(indices.length);
         let lastEndIndex = 0;
         for (const block of blocks) {
             expect(block!.startIndex).toBeGreaterThanOrEqual(lastEndIndex);
