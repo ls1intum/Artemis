@@ -351,12 +351,9 @@ public class DataExportCreationService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
         List<String> exportRepoErrors = new ArrayList<>();
-        var tempRepoWorkingDir = fileService.getUniquePath(repoClonePath.toString());
+        var tempRepoWorkingDir = fileService.getTemporaryUniquePath(repoClonePath.toString(), 10);
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
-        // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
-        // --> we can delete it after use
-        fileService.scheduleForDirectoryDeletion(tempRepoWorkingDir, 5);
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
 
     }
