@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -21,6 +21,8 @@ export enum FeedbackType {
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
+const CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN = 'Continuous Plagiarism Control:';
+const CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE = 'Kontinuierliche Plagiatskontrolle:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -103,6 +105,17 @@ export class Feedback implements BaseEntity {
             return false;
         }
         return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+    }
+
+    public static isContinuousPlagiarismControlFeedback(that?: Feedback): boolean {
+        if (!that || !that?.text) {
+            return false;
+        }
+        return (
+            that.type === FeedbackType.AUTOMATIC &&
+            !that.positive &&
+            (that.text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN) || that?.text.startsWith(CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE))
+        );
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -213,6 +226,8 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
         feedbackText = feedback.text;
     }
 
+    // escape special characters like "<", ">", "&" to render them correctly
+    feedbackText = escapeString(feedbackText);
     return convertToHtmlLinebreaks(feedbackText);
 };
 /**

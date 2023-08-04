@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import static java.util.Objects.requireNonNullElse;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -77,10 +75,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
-
-    @Column(name = "plagiarism_detected")
-    @JsonView(QuizView.Before.class)
-    private Boolean plagiarismDetected;
 
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
@@ -337,10 +331,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getResultWithComplaint() {
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
-    }
-
-    public boolean getPlagiarismDetected() {
-        return requireNonNullElse(plagiarismDetected, false);
     }
 
     @Override

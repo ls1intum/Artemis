@@ -7,6 +7,7 @@ import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -15,7 +16,6 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Result } from 'app/entities/result.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
 import { CourseStatisticsComponent, NgxExercise } from 'app/overview/course-statistics/course-statistics.component';
@@ -360,7 +360,7 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: Result = { rated: true, score: 100 };
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
         jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
@@ -384,7 +384,7 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: Result = { rated: true, score: 100 };
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
         jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
@@ -480,7 +480,7 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should filter optional exercises correctly', () => {
-            const mockParticipationResult: Result = { rated: true, score: 100 };
+            const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
             jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 

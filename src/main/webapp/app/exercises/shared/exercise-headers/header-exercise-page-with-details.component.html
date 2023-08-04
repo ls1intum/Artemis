@@ -28,11 +28,11 @@
                     [includedInOverallScore]="exercise.includedInOverallScore"
                     class="me-2"
                 ></jhi-included-in-score-badge>
-                <ng-container *ngIf="studentParticipation?.submissions?.[0]?.plagiarismDetected && achievedPoints === 0">
-                    <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-                    <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
-                </ng-container>
             </span>
+            <ng-container *ngIf="isLastResultByCpc && achievedPoints === 0">
+                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
+            </ng-container>
             <span *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
                 <div>
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}

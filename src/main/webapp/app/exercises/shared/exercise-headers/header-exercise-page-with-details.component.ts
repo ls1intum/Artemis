@@ -16,6 +16,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -50,6 +51,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
     public numberOfSubmissions: number;
+    public isLastResultByCpc: boolean;
 
     icon: IconProp;
 
@@ -108,6 +110,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+                this.isLastResultByCpc = Feedback.isContinuousPlagiarismControlFeedback(latestRatedResult.feedbacks?.[0]);
             }
         }
     }
