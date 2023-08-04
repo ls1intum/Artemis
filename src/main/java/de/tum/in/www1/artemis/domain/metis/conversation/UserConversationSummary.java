@@ -2,17 +2,17 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 
 public class UserConversationSummary {
 
-    private Long channelId;
+    private Channel channel;
 
     private Long unreadMessagesCount;
 
-    public UserConversationSummary(Long channelId, Long unreadMessagesCount) {
-        this.channelId = channelId;
+    public UserConversationSummary(Channel channel, Long unreadMessagesCount) {
+        this.channel = channel;
         this.unreadMessagesCount = unreadMessagesCount;
     }
 
-    public Long getChannelId() {
-        return channelId;
+    public Channel getChannelId() {
+        return channel;
     }
 
     public Long getUnreadMessagesCount() {
