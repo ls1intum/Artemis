@@ -94,8 +94,58 @@ In order to setup cypress locally, we need to follow these steps:
 
 Debug using Sorry Cypress
 -------------------------
-In order to debug failing E2E Cypress tests with a dashboard (called Sorry Cypress), please follow the instructions
-on confluence: https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
+
+Since the E2E tests are sometimes hard to debug, we provide a dashboard, that allows to inspect the 
+CI run and even watch a video of the UI interaction with Artemis in that run. 
+
+It's based on Sorry Cypress a open source and selfhostable alternative to the paid cypress cloud.
+
+The dashboard itself can be access here: https://sorry-cypress.ase.cit.tum.de/
+
+To access it, you need these basic auth credentials (sorry cypress itself does not provide an auth 
+system, so we are forced to use nginx basic auth here). You can find these credentials on our confluence page:
+
+https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
+
+After that you will see the initial dashboard without any useful information. 
+
+You first have to select a project in the left sidebar (mysql or postgresql):
+
+  .. figure:: cypress/sorry-cypress-dashboard.png
+    :align: center
+    :alt: Sorry Cypress dashboard
+
+Now you get a list of the last runs. In the top right you can enter your branch name to filter the runs.
+
+  .. figure:: cypress/sorry-cypress-runs.png
+    :align: center
+    :alt: Sorry Cypress last runs
+
+The name of the run consists of the branch name followed by the run # . The last part is MySQL or 
+PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL  runs. 
+
+If you now click on the run, you can see detailed information about the test suites (corresponding 
+to components within Artemis). For each suite there is information about the run time, the successful/failed/flaky/skipped/ignored tests:
+
+  .. figure:: cypress/sorry-cypress-run.png
+    :align: center
+    :alt: Sorry Cypress single run
+
+If you want to further debug one test suite, just click on it.  
+
+  .. figure:: cypress/sorry-cypress-test.png
+    :align: center
+    :alt: Sorry Cypress single test
+
+Here you can see the single tests on the left and a video on the right. This is a screen capture of 
+the actual run and can tremendously help debug failing E2E tests. 
+
+Sometimes the video can be a little bit to fast to debug easily. Just download the video on your 
+computer and play it with a video player, that allows you to slow the video down. 
+
+  .. note::
+    For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug 
+    it before this period to get access to the video. 
 
 
 Best Practice when writing new E2E tests
