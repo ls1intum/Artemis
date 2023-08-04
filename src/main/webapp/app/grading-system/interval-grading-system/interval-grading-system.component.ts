@@ -48,7 +48,7 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
     getDefaultGradingScale() {
         const defaultGradingScale = super.getDefaultGradingScale();
         const stickyGradeStep = {
-            gradeName: '1.0+',
+            gradeName: '1.0',
             lowerBoundPercentage: 100,
             upperBoundPercentage: 200,
             lowerBoundInclusive: false,

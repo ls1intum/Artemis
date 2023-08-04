@@ -173,9 +173,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return the name/title of the exercise or null if the exercise does not exist
      */
     @Query("""
-            SELECT e.title
-            FROM Exercise e
-            WHERE e.id = :exerciseId
+            SELECT
+                CASE WHEN exerciseGroup IS NOT NULL
+                     THEN exerciseGroup.title
+                     ELSE exercise.title
+                END AS title
+            FROM Exercise exercise
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+            WHERE exercise.id = :exerciseId
             """)
     @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
@@ -329,23 +334,23 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
-     * Finds all exercises of a course where the user has participated in.
+     * Finds all exercises stored in Artemis the user has participated in.
      * Currently only used for the data export
      *
-     * @param courseId the id of the course
-     * @param userId   the id of the user
+     * @param userId the id of the user
      * @return a set of exercises the user has participated in with eager participations, submissions, results and feedbacks
      */
     @Query("""
-            SELECT e
-            FROM Course c
-                LEFT JOIN  c.exercises e
-                LEFT JOIN FETCH e.studentParticipations p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks
-            WHERE c.id = :courseId
-                  AND p.student.id = :userId
-            """)
-    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(long courseId, long userId);
+             SELECT e
+             FROM Course c
+                 LEFT JOIN  c.exercises e
+                 LEFT JOIN FETCH e.studentParticipations p
+                 LEFT JOIN p.team.students students
+                 LEFT JOIN FETCH p.submissions s
+                 LEFT JOIN FETCH s.results r
+                 LEFT JOIN FETCH r.feedbacks
+            WHERE p.student.id = :userId
+                  OR students.id = :userId
+             """)
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(long userId);
 }

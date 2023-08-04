@@ -8,6 +8,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
@@ -241,10 +243,11 @@ public abstract class BaseExercise extends DomainObject {
      *
      * @return the sanitized exercise title
      **/
+    @JsonIgnore
     public String getSanitizedExerciseTitle() {
         if (title == null) {
             return "exercise";
         }
-        return title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
+        return StringUtil.sanitizeStringForFileName(title);
     }
 }

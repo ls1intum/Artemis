@@ -799,7 +799,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
     }
 
     @Test
@@ -897,14 +897,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         result.setScore(100D);
         resultRepository.save(result);
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
 
         var response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
 
         var responseParticipation = response.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
 
-        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test

@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -110,8 +109,6 @@ public class ExamResource {
 
     private final ExamImportService examImportService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final CustomAuditEventRepository auditEventRepository;
 
     private final ChannelService channelService;
@@ -120,8 +117,8 @@ public class ExamResource {
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
-            StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
-            CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository) {
+            StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
+            ChannelRepository channelRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -138,7 +135,6 @@ public class ExamResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
         this.examImportService = examImportService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -170,10 +166,6 @@ public class ExamResource {
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
         Exam savedExam = examRepository.save(exam);
-
-        if (savedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
-        }
 
         Channel createdChannel = channelService.createExamChannel(savedExam, exam.getChannelName());
         channelService.registerUsersToChannelAsynchronously(false, savedExam.getCourse(), createdChannel);
@@ -218,14 +210,6 @@ public class ExamResource {
         Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
         Exam savedExam = examRepository.save(updatedExam);
-
-        if (updatedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(savedExam.getId());
-        }
-        else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(savedExam.getId());
-        }
-        examMonitoringScheduleService.notifyMonitoringUpdate(savedExam.getId(), updatedExam.isMonitoring());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
@@ -276,11 +260,6 @@ public class ExamResource {
 
         // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
-
-        // Step 5: Set Exam Monitoring
-        if (examCopied.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(examCopied.getId());
-        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examCopied.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
@@ -675,11 +654,6 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        if (exam.isMonitoring()) {
-            // Cancel schedule of exam monitoring
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
-        }
-
         examDeletionService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
@@ -700,19 +674,9 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        if (exam.isMonitoring()) {
-            // Cancel schedule of exam monitoring
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
-        }
-
         examDeletionService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examService.setExamProperties(returnExam);
-
-        if (returnExam.isMonitoring()) {
-            // Schedule exam monitoring
-            instanceMessageSendService.sendExamMonitoringSchedule(examId);
-        }
 
         return ResponseEntity.ok(returnExam);
     }
@@ -780,8 +744,6 @@ public class ExamResource {
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
 
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -826,8 +788,6 @@ public class ExamResource {
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
 
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
         log.info("Generated {} missing student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }

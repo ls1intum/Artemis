@@ -4,9 +4,7 @@ import static org.springframework.test.util.AssertionErrors.assertEquals;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +49,7 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
 
         cleanupService.performCleanup();
 
-        List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Collections.singletonList(user), PushNotificationDeviceType.FIREBASE);
+        List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
 
         assertEquals("The result is not correct", Collections.singletonList(valid), result);
     }
