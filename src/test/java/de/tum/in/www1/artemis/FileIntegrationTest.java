@@ -126,7 +126,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragAndDropBackgroundFile() throws Exception {
-        courseUtilService.addEmptyCourse();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
@@ -189,7 +188,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         userUtilService.changeUser(TEST_PREFIX + "student1");
         FileUploadSubmission savedSubmission = request.postWithMultipartFiles("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", fileUploadSubmission,
                 "submission", List.of(file), FileUploadSubmission.class, HttpStatus.OK);
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         return savedSubmission;
     }
@@ -402,7 +401,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lecture.getLectureUnits().add(0, unit3);
         lectureRepo.save(lecture);
 
-        // The test setup needs at least TA right for creating a lecture with files.
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
         try (PDDocument mergedDoc = retrieveMergeResult(lecture)) {
