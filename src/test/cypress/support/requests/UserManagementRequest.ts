@@ -1,4 +1,4 @@
-import { BASE_API, POST } from '../constants';
+import { BASE_API, GET, POST } from '../constants';
 import { UserRole } from '../users';
 
 /**
@@ -24,6 +24,14 @@ export class UserManagementRequests {
             url: BASE_API + 'admin/users',
             method: POST,
             body: user,
+        });
+    }
+
+    getUser(username: string) {
+        return cy.request({
+            url: BASE_API + `users/${username}`,
+            method: GET,
+            failOnStatusCode: false,
         });
     }
 }
