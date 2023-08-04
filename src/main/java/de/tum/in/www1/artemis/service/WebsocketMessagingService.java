@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
