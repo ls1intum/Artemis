@@ -21,10 +21,7 @@
         <!-- Exercise Dashboard -->
         <a
             *ngIf="
-                (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                    exercise.assessmentType === AssessmentType.MANUAL ||
-                    exercise.allowComplaintsForAutomaticAssessments) &&
-                isAfterExerciseDueDate
+                exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments
             "
             [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id"
             class="btn btn-info btn-sm me-1"

@@ -77,10 +77,9 @@
                     </a>
                     <a
                         *ngIf="
-                            (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                                programmingExercise.assessmentType === AssessmentType.MANUAL ||
-                                programmingExercise.allowComplaintsForAutomaticAssessments) &&
-                            isAfterExerciseDueDate
+                            programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                            programmingExercise.assessmentType === AssessmentType.MANUAL ||
+                            programmingExercise.allowComplaintsForAutomaticAssessments
                         "
                         [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
                         class="btn btn-info btn-sm me-1"

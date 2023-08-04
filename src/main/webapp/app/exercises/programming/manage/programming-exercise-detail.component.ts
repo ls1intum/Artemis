@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -59,7 +59,7 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy, OnChanges {
+export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
     readonly ActionType = ActionType;
     readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
@@ -91,7 +91,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy, On
     removedLineCount: number;
     isLoadingDiffReport: boolean;
     isBuildPlanEditable = false;
-    isAfterExerciseDueDate = false;
 
     plagiarismCheckSupported = false; // default value
 
@@ -478,13 +477,5 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy, On
                 });
             },
         });
-    }
-
-    /**
-     * Checks if the due date of this exercise is over
-     */
-    ngOnChanges() {
-        const now = dayjs();
-        this.isAfterExerciseDueDate = now.isAfter(this.programmingExercise.dueDate);
     }
 }
