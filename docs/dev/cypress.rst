@@ -106,7 +106,6 @@ The dashboard itself can be access here: https://sorry-cypress.ase.cit.tum.de/
 
 To access it, you need these basic auth credentials (sorry cypress itself does not provide an auth 
 system, so we are forced to use nginx basic auth here). You can find these credentials on our confluence page:
-
 https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
 
 After that you will see the initial dashboard without any useful information. 
