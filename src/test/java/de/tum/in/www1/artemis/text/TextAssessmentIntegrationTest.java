@@ -1259,7 +1259,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
+        final Map<String, TextBlock> blocksSubmission = textSubmissions.stream().flatMap(submission -> submission.getBlocks().stream())
+                .collect(Collectors.toMap(TextBlock::getId, block -> block));
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
@@ -1307,6 +1308,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
     }
 }
