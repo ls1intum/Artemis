@@ -4,6 +4,7 @@ import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 
 /**
  * Factory for creating Users and related objects.
@@ -64,5 +65,15 @@ public class UserFactory {
 
     public static User generateActivatedUser(String login) {
         return generateActivatedUser(login, USER_PASSWORD);
+    }
+
+    /**
+     * generates a student dto with the passed registration number
+     *
+     * @param registrationNumber registration number set to the dto
+     * @return the newly created student dto
+     */
+    public static StudentDTO generateStudentDTOWithRegistrationNumber(String registrationNumber) {
+        return new StudentDTO().registrationNumber(registrationNumber);
     }
 }
