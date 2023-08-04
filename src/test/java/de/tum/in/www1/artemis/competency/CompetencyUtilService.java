@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.repository.CompetencyRepository;
 
@@ -23,4 +24,20 @@ public class CompetencyUtilService {
         competency.setCourse(course);
         return competencyRepo.save(competency);
     }
+
+    /**
+     * create and save competency with the passed arguments.
+     *
+     * @param course   the course we want to use the competency in
+     * @param exercise the exercise of the competency
+     * @return newly created competency
+     */
+    public Competency createCompetencyWithExercise(Course course, Exercise exercise) {
+        Competency competency = new Competency();
+        competency.setTitle("ExampleCompetency");
+        competency.setCourse(course);
+        competency.addExercise(exercise);
+        return competencyRepo.save(competency);
+    }
+
 }
