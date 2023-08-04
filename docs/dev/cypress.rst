@@ -148,7 +148,7 @@ computer and play it with a video player, that allows you to slow the video down
     it before this period to get access to the video. 
 
 
-Best Practice when writing new E2E tests
+Best practice when writing new E2E tests
 ----------------------------------------
 
 **Understanding the System and Requirements**
