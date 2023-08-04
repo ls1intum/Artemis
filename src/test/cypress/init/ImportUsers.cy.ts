@@ -7,7 +7,11 @@ describe('Setup users', () => {
             cy.login(admin);
             for (const userKey in USER_ID) {
                 const user = users.getUserWithId(USER_ID[userKey]);
-                userManagementAPIRequest.createUser(user.username, user.password, USER_ROLE[userKey]);
+                userManagementAPIRequest.getUser(user.username).then((response) => {
+                    if (!response.isOkStatusCode) {
+                        userManagementAPIRequest.createUser(user.username, user.password, USER_ROLE[userKey]);
+                    }
+                });
             }
         });
     }
