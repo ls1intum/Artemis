@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class PlagiarismChecksService {
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
 
@@ -33,7 +34,7 @@ public class PlagiarismChecksService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    public PlagiarismChecksService(TextPlagiarismDetectionService textPlagiarismDetectionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService,
+    public PlagiarismChecksService(TextPlagiarismDetectionService textPlagiarismDetectionService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
             PlagiarismResultRepository plagiarismResultRepository) {
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
@@ -64,7 +65,7 @@ public class PlagiarismChecksService {
 
     private void checkProgrammingLanguageSupport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedForPlagiarismChecksException {
         var language = exercise.getProgrammingLanguage();
-        var programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
+        var programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow().getProgrammingLanguageFeatures(language);
         if (!programmingLanguageFeature.plagiarismCheckSupported()) {
             throw new ProgrammingLanguageNotSupportedForPlagiarismChecksException(language);
         }
