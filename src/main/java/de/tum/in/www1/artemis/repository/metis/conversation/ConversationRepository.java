@@ -43,11 +43,16 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     }
 
     @Query("""
-             SELECT COUNT(c.id) > 0
+             SELECT COUNT(p.id) > 0
              FROM Conversation c
-                 LEFT JOIN c.conversationParticipants cp
-                 LEFT JOIN cp.user user
-             WHERE user.id = :userId AND cp.unreadMessagesCount > 0 AND c.course.id = :courseId
+                 JOIN c.posts p
+                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
+                 LEFT JOIN Channel ch ON c.id = ch.id
+             WHERE c.course.id = :courseId
+             AND (
+                 p.creationDate > cp.lastRead OR
+                 (ch.isCourseWide IS true AND cp.id IS null)
+             )
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

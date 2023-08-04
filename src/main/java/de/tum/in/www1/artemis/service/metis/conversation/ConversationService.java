@@ -124,6 +124,7 @@ public class ConversationService {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+        var unread = channelRepository.findChannelsOfUserWithUnreadMessageCount(courseId, requestingUser.getId());
 
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);

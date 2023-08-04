@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
@@ -38,13 +39,17 @@ public class ConversationDTOService {
 
     private final CourseRepository courseRepository;
 
+    private final ChannelRepository channelRepository;
+
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository) {
+            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository,
+            ChannelRepository channelRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.courseRepository = courseRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -102,6 +107,7 @@ public class ConversationDTOService {
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
+        channelDTO.setUnreadMessagesCount(channelRepository.countUnreadMessagesInChannelForUser(channel.getId(), requestingUser.getId()));
         channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsCourseWide());
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
         channelDTO.setNumberOfMembers(channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
