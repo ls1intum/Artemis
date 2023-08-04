@@ -10,15 +10,18 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
     let comp: LearningPathManagementComponent;
+    let alertService: AlertService;
+    let alertServiceStub: jest.SpyInstance;
     let pagingService: LearningPathPagingService;
     let sortService: SortService;
     let searchForLearningPathsStub: jest.SpyInstance;
@@ -53,6 +56,8 @@ describe('LearningPathManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LearningPathManagementComponent);
                 comp = fixture.componentInstance;
+                alertService = TestBed.inject(AlertService);
+                alertServiceStub = jest.spyOn(alertService, 'error');
                 pagingService = TestBed.inject(LearningPathPagingService);
                 sortService = TestBed.inject(SortService);
                 searchForLearningPathsStub = jest.spyOn(pagingService, 'searchForLearningPaths');
@@ -107,6 +112,15 @@ describe('LearningPathManagementComponent', () => {
         });
     }));
 
+    it('should alert error if loading health status fails', fakeAsync(() => {
+        const error = { status: 404 };
+        getHealthStatusForCourseStub.mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        expect(getHealthStatusForCourseStub).toHaveBeenCalledWith(courseId);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+    }));
+
     it('should enable learning paths and load data', fakeAsync(() => {
         const healthDisabled = new LearningPathHealthDTO(HealthStatus.DISABLED);
         getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthDisabled }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
@@ -120,6 +134,16 @@ describe('LearningPathManagementComponent', () => {
         expect(comp.health).toEqual(health);
     }));
 
+    it('should alert error if enable learning paths fails', fakeAsync(() => {
+        const error = { status: 404 };
+        enableLearningPathsStub.mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        comp.enableLearningPaths();
+        expect(enableLearningPathsStub).toHaveBeenCalledWith(courseId);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+    }));
+
     it('should generate missing learning paths and load data', fakeAsync(() => {
         const healthMissing = new LearningPathHealthDTO(HealthStatus.MISSING);
         getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthMissing }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
@@ -131,6 +155,16 @@ describe('LearningPathManagementComponent', () => {
         expect(generateMissingLearningPathsForCourseStub).toHaveBeenCalledWith(courseId);
         expect(getHealthStatusForCourseStub).toHaveBeenCalledTimes(3);
         expect(comp.health).toEqual(health);
+    }));
+
+    it('should alert error if generate missing learning paths fails', fakeAsync(() => {
+        const error = { status: 404 };
+        generateMissingLearningPathsForCourseStub.mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        fixture.detectChanges();
+        comp.ngOnInit();
+        comp.generateMissing();
+        expect(generateMissingLearningPathsForCourseStub).toHaveBeenCalledWith(courseId);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
     }));
 
     it('should set content to paging result on sort', fakeAsync(() => {
