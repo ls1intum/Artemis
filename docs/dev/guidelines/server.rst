@@ -151,7 +151,7 @@ Definition and Characteristics of DTOs:
 2. No Entity Objects: DTOs must not contain entity objects, but only primitive types (or the corresponding wrapper classes), enums or other DTOs.
 3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
 4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
-5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should serve only as simple data containers without any business logic.
+5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should only serve as simple data containers without any business logic.
 
 Not utilizing DTOs can result in accidentally sending excessive data to clients, leading to unnecessary load on the underlying systems.
 In the worst-case scenario, this might lead to the inadvertent exposure of sensitive data.
