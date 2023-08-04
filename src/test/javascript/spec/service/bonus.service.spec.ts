@@ -64,7 +64,7 @@ describe('Bonus Service', () => {
                 { interval: 15, gradeName: '3.0' },
                 { interval: 15, gradeName: '2.0' },
                 { interval: 10, gradeName: '1.0' },
-                { interval: 100, gradeName: '1.0+' }, // sticky grade step
+                { interval: 100, gradeName: '1.0' }, // sticky grade step
             ],
             true,
         ),
@@ -422,7 +422,7 @@ describe('Bonus Service', () => {
                 studentPointsOfBonusTo: 300,
                 studentPointsOfBonusSource: 200,
                 exceedsMax: false,
-                examGrade: '1.0+',
+                examGrade: '1.0',
                 bonusGrade: 0.2,
                 finalGrade: 0.8,
             },

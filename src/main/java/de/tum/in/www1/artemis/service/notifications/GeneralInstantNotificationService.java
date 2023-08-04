@@ -3,9 +3,10 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
 
-import java.util.List;
+import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -78,7 +79,7 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
      */
     @Async
     @Override
-    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+    public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
         SecurityUtils.setAuthorizationObject();
 
         var emailRecipients = filterRecipients(notification, users, EMAIL);
@@ -102,7 +103,7 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
      * @return filtered user list
      */
     @NotNull
-    private List<User> filterRecipients(Notification notification, List<User> users, NotificationSettingsCommunicationChannel channel) {
+    private Set<User> filterRecipients(Notification notification, Set<User> users, NotificationSettingsCommunicationChannel channel) {
         return notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, users, channel);
     }
 }

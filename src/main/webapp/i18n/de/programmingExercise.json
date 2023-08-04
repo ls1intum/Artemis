@@ -49,22 +49,23 @@
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
-                    "difficultyStepTitle": "Schwierigkeit",
+                    "difficultyStepTitle": "Modus",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "Allgemeine Informationen",
-                    "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
-                    "difficultyStepTitle": "Schwierigkeit",
-                    "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
+                    "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
+                    "difficultyStepTitle": "Modus",
+                    "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Programmiersprache",
-                    "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
-                    "gradingStepTitle": "Benotung",
-                    "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
+                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
                     "problemStepTitle": "Aufgabenstellung",
-                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                    "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
+                    "gradingStepTitle": "Benotung",
+                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",

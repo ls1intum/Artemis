@@ -19,6 +19,7 @@ services:
             CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
             CYPRESS_editorGroupName: "artemis-e2etest-editors"
             CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+            CYPRESS_createUsers: "${bamboo_cypress_create_users}"
             SORRY_CYPRESS_KEY: "${bamboo_sorry_cypress_record_secret}"
             SORRY_CYPRESS_URL: "${bamboo_sorry_cypress_url}"
             SORRY_CYPRESS_BUILD_ID: "${bamboo_buildNumber}"

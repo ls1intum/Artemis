@@ -91,7 +91,7 @@ public class BitbucketService extends AbstractVersionControlService {
             }
 
             if (allowAccess) {
-                final RepositoryPermissions permissions = determineRepositoryPermissions(exercise);
+                final VersionControlRepositoryPermission permissions = determineRepositoryPermissions(exercise);
                 addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
             }
         }
@@ -102,19 +102,11 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         final String urlSlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        final VersionControlRepositoryPermission repositoryPermission = getVersionControlPermissions(permissions);
 
-        giveRepoPermission(projectKey, urlSlug, user.getLogin(), repositoryPermission);
-    }
-
-    private static VersionControlRepositoryPermission getVersionControlPermissions(final RepositoryPermissions permissions) {
-        return switch (permissions) {
-            case READ_ONLY -> VersionControlRepositoryPermission.REPO_READ;
-            case READ_WRITE -> VersionControlRepositoryPermission.REPO_WRITE;
-        };
+        giveRepoPermission(projectKey, urlSlug, user.getLogin(), permissions);
     }
 
     @Override

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -27,7 +28,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
@@ -63,9 +64,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Exercise exercise;
 
@@ -175,7 +173,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = quizExerciseUtilService.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
+        quizExercise = QuizExerciseFactory.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
         exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();
@@ -228,11 +226,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @return the captured notification at the given index
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
+        await().untilAsserted(
+                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                        .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
+
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
     }
@@ -395,7 +395,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     /**
      * Checks if a push to android and iOS was created and send
      */
-    private void verifyPush(Notification notification, List<User> users, Object notificationSubject) {
+    private void verifyPush(Notification notification, Set<User> users, Object notificationSubject) {
         verify(applePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
         verify(firebasePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
     }
@@ -429,7 +429,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ATTACHMENT_CHANGE_TITLE);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), attachment);
+        verifyPush(notification, Set.of(student), attachment);
     }
 
     @Test
@@ -439,7 +439,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXERCISE_PRACTICE_TITLE);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), exercise);
+        verifyPush(notification, Set.of(student), exercise);
     }
 
     @Test
@@ -517,7 +517,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE, 3);
 
         verifyEmail();
-        verifyPush(notification, List.of(student), post);
+        verifyPush(notification, Set.of(student), post);
     }
 
     /**

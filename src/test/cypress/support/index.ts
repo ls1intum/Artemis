@@ -19,13 +19,10 @@ import './commands';
 import '@4tw/cypress-drag-drop';
 // Imports utility functions
 import './utils';
-// Imports file upload capabilities https://github.com/abramenal/cypress-file-uploady
+// Imports file upload capabilities https://github.com/abramenal/cypress-file-upload
 import 'cypress-file-upload';
 // Imports cy.waitUntil https://github.com/NoriSte/cypress-wait-until
 import 'cypress-wait-until';
-
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
 
 /**
  * We register hooks on the console.error and console.warn methods and forward their content to the process console to allow better debugging with cypress:run.
