@@ -1018,6 +1018,10 @@ public class FileService implements DisposableBean {
         return getUniquePath(path).toString();
     }
 
+    public String getTemporaryUniquePathString(String path, long deleteDelayInMinutes) {
+        return getTemporaryUniquePath(path, deleteDelayInMinutes).toString();
+    }
+
     /**
      * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
      * Note: the method also tries to create the mentioned folder

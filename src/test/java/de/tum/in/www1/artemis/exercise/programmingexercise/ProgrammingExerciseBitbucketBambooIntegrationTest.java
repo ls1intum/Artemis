@@ -309,15 +309,16 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportInstructorRepositories() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
-        // we export three repositories (template, solution, tests) and for each repository the temp directory should be deleted
-        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
+        verify(fileService, times(6)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // once for the temp directory and once for the directory with the zip file
+        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -336,7 +337,9 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // we have a working directory and one directory for each repository
+        verify(fileService, times(4)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).scheduleForDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -434,7 +437,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
-        doThrow(GitException.class).when(fileService).getUniquePathString(anyString());
+        doThrow(GitException.class).when(fileService).getTemporaryUniquePathString(anyString(), anyLong());
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false, true, true);
     }
 
@@ -508,16 +511,18 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
-        // the test has two successful cases, the other times the operation is forbidden --> directory deletion should occur twice
-        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
-        // the test has two successful cases, the other times the operation is forbidden --> directory deletion should occur twice
-        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test

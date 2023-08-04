@@ -71,16 +71,13 @@ public abstract class SubmissionExportService {
      * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
+        Path outputDir = Path.of(fileService.getTemporaryUniquePathString(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES));
         try {
             return exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
         }
         catch (IOException e) {
             log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e);
             return Optional.empty();
-        }
-        finally {
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         }
     }
 

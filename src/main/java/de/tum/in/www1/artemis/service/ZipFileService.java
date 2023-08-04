@@ -23,6 +23,12 @@ public class ZipFileService {
 
     private final Logger log = LoggerFactory.getLogger(ZipFileService.class);
 
+    private final FileService fileService;
+
+    public ZipFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
@@ -41,6 +47,11 @@ public class ZipFileService {
                 }
             }
         }
+    }
+
+    public void createTemporaryZipFile(Path zipFilePath, List<Path> paths, long deleteDelayInMinutes) throws IOException {
+        createZipFile(zipFilePath, paths);
+        fileService.scheduleForDeletion(zipFilePath, deleteDelayInMinutes);
     }
 
     /**

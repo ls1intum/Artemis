@@ -117,9 +117,7 @@ public class ProgrammingExerciseExportService {
         if (!Files.exists(repoDownloadClonePathAsPath)) {
             Files.createDirectories(repoDownloadClonePathAsPath);
         }
-        Path exportDir = Files.createTempDirectory(repoDownloadClonePathAsPath, "programming-exercise-material");
-        // Schedule deletion of export directory directly here, so it always gets deleted, even if an exception is thrown
-        fileService.scheduleForDirectoryDeletion(exportDir, 5);
+        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -149,7 +147,7 @@ public class ProgrammingExerciseExportService {
         Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
-        zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
+        zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);
         return pathToZippedExercise;
     }
 
@@ -568,7 +566,7 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getUniquePathString(outputDir.toString());
+        var repositoryDir = fileService.getTemporaryUniquePathString(outputDir.toString(), 5);
         Path localRepoPath;
 
         // Checkout the repository

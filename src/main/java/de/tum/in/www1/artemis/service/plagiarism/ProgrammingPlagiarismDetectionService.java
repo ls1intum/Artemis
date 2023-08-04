@@ -244,7 +244,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        final var targetPath = fileService.getTemporaryUniquePathString(repoDownloadClonePath, 5);
         final var reportFolder = Path.of(targetPath, programmingExercise.getProjectKey() + " JPlag Report").toString();
         final var reportFolderFile = new File(reportFolder);
 
@@ -262,7 +262,6 @@ public class ProgrammingPlagiarismDetectionService {
 
         var zipFile = new File(reportFolder + ".zip");
         fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
-        fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 2);
         return zipFile;
     }
 
