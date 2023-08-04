@@ -139,7 +139,7 @@ export class CommunicationAPIRequests {
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
     joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
-        const body = [`${user.username}`];
+        const body = [user.username];
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channel.id}/register`, body });
     }
 

@@ -127,8 +127,6 @@ export class ExerciseAPIRequests {
         exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
 
-        console.log(exercise);
-
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
