@@ -43,9 +43,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     protected void initTestCase() {
         super.initTestCase();
 
-        userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
         textExercise = textExerciseRepository.findAll().get(0);
+        exerciseUtilService.addAssessmentToExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
         textSubmission = textSubmissionRepository.findAll().get(0);
         textSubmission.setText("This is a test sentence. This is a second test sentence. This is a third test sentence.");
         textSubmissionRepository.save(textSubmission);
