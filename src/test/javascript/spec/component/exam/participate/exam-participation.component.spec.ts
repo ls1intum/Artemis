@@ -221,7 +221,7 @@ describe('ExamParticipationComponent', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
         const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
-        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
         comp.ngOnInit();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
