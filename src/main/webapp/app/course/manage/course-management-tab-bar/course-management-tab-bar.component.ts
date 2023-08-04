@@ -134,7 +134,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     }
 
     shouldHighlightAssessmentLink(): boolean {
-        const assessmentLinkRegex = /scores|grading-system|plagiarism-cases/;
+        const assessmentLinkRegex = /grading-system|plagiarism-cases/;
         return assessmentLinkRegex.test(this.router.url);
     }
 
