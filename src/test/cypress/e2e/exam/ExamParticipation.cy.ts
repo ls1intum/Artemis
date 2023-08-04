@@ -266,7 +266,7 @@ describe('Exam participation', () => {
                 title: examTitle,
                 visibleDate: dayjs().subtract(3, 'minutes'),
                 startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(20, 'seconds'),
+                endDate: dayjs().add(30, 'seconds'),
                 examMaxPoints: 10,
                 numberOfExercisesInExam: 1,
             };
