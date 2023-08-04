@@ -111,10 +111,12 @@ public class ExamSessionService {
         for (var suspiciousExamSession : suspiciousExamSessions) {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
             for (var examSession : suspiciousExamSession.examSessions()) {
+                var userDTO = new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin());
+                var courseDTO = new CourseWithIdDTO(examSession.getStudentExam().getExam().getCourse().getId());
+                var examDTO = new ExamWithIdAndCourseDTO(examSession.getStudentExam().getExam().getId(), courseDTO);
+                var studentExamDTO = new StudentExamWithIdAndExamAndUserDTO(examSession.getStudentExam().getId(), examDTO, userDTO);
                 examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getSessionToken(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(),
-                        examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(),
-                        new StudentExamWithIdAndUserDTO(examSession.getStudentExam().getId(),
-                                new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin()))));
+                        examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(), studentExamDTO));
             }
             suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
         }

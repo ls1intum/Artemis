@@ -3591,9 +3591,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Set<ExamSessionDTO> createExpectedDTOs(ExamSession session1, ExamSession session2) {
         var expectedDTOs = new HashSet<ExamSessionDTO>();
-        var firstStudentExamDTO = new StudentExamWithIdAndUserDTO(session1.getStudentExam().getId(),
+        var firstStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session1.getStudentExam().getId(),
+                new ExamWithIdAndCourseDTO(session1.getStudentExam().getExam().getId(), new CourseWithIdDTO(session1.getStudentExam().getExam().getCourse().getId())),
                 new UserWithIdAndLoginDTO(session1.getStudentExam().getUser().getId(), session1.getStudentExam().getUser().getLogin()));
-        var secondStudentExamDTO = new StudentExamWithIdAndUserDTO(session2.getStudentExam().getId(),
+        var secondStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session2.getStudentExam().getId(),
+                new ExamWithIdAndCourseDTO(session2.getStudentExam().getExam().getId(), new CourseWithIdDTO(session2.getStudentExam().getExam().getCourse().getId())),
                 new UserWithIdAndLoginDTO(session2.getStudentExam().getUser().getId(), session2.getStudentExam().getUser().getLogin()));
         var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getSessionToken(), session1.getBrowserFingerprintHash(), session1.getUserAgent(),
                 session1.getInstanceId(), session1.getIpAddress(), session1.getSuspiciousReasons(), session1.getCreatedDate(), firstStudentExamDTO);
