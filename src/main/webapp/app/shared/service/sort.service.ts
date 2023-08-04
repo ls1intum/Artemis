@@ -87,7 +87,9 @@ export class SortService {
     }
 
     private static compareBasic(valueA: any, valueB: any) {
-        if (valueA === valueB) {
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+            return valueA.localeCompare(valueB);
+        } else if (valueA === valueB) {
             return 0;
         } else {
             return valueA < valueB ? -1 : 1;
