@@ -19,10 +19,10 @@
                 <tr>
                     <th scope="row">{{ session.id }}</th>
                     <td>{{ session.sessionToken }}</td>
-                    <td class="align-top w-25">{{ session.userAgent }}</td>
-                    <td>{{ session.browserFingerprintHash }}</td>
+                    <td class="align-top w-25" [ngClass]="suspiciousUserAgent ? 'suspicious' : ''">{{ session.userAgent }}</td>
+                    <td [ngClass]="suspiciousFingerprint ? 'suspicious' : ''">{{ session.browserFingerprintHash }}</td>
                     <td>{{ session.instanceId }}</td>
-                    <td>{{ session.ipAddress }}</td>
+                    <td [ngClass]="suspiciousIpAddress ? 'suspicious' : ''">{{ session.ipAddress }}</td>
                     <td>{{ session.createdDate | artemisDate }}</td>
                     <td>
                         <a [routerLink]="getStudentExamLink(session.studentExam!)">
