@@ -584,16 +584,6 @@ public class CourseUtilService {
         return course;
     }
 
-    public Course addCourseWithTextExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setTitle("Text");
-        course.addExercises(textExercise);
-        course = courseRepo.save(course);
-        exerciseRepo.save(textExercise);
-        return course;
-    }
-
     public Course addCourseWithModelingAndTextExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
