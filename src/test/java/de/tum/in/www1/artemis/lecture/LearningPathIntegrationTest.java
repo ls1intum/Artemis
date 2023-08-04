@@ -94,8 +94,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private Competency[] competencies;
 
-    private TextExercise textExercise;
-
     private TextUnit textUnit;
 
     private static final int NUMBER_OF_STUDENTS = 5;
@@ -121,7 +119,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
-        textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);

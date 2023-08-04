@@ -44,7 +44,7 @@
         </a>
         <a
             class="tab-link"
-            [jhiFeatureToggleLink]="FeatureToggle.LearningPaths"
+            [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'learning-path-management']"
             routerLinkActive="active"
