@@ -556,12 +556,13 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should submit exam when end confirmed', () => {
-        const studentExam = new StudentExam();
-        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
         comp.exam = new Exam();
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam?.submitted).toBeTrue();
     });
 
     it('should show error', () => {
