@@ -12,9 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -27,10 +31,16 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -44,11 +54,12 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         super.initTestCase();
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
-        textExercise = textExerciseRepository.findAll().get(0);
-        exerciseUtilService.addAssessmentToExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        textSubmission = textSubmissionRepository.findAll().get(0);
-        textSubmission.setText("This is a test sentence. This is a second test sentence. This is a third test sentence.");
+        // var course = courseUtilService.addCourseWithTextExercise();
+        // textExercise = (TextExercise) course.getExercises().iterator().next();
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
+        textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
+                true);
         textSubmissionRepository.save(textSubmission);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect();
