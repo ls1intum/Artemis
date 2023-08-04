@@ -321,6 +321,7 @@ public class StudentExamResource {
     private void checkExamConfigElseThrow(StudentExam studentExam, Long examId, Long courseId) {
         var exam = studentExam.getExam();
         if (!Objects.equals(exam.getId(), examId)) {
+            log.error("examId of studentExam {} does not match the path variable {}", studentExam.getExam().getId(), examId);
             throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
         }
         if (!Objects.equals(exam.getCourse().getId(), courseId)) {
