@@ -142,8 +142,8 @@ public class GitUtilService {
 
     public void deleteRepo(REPOS repo) {
         try {
-            String repoPath = getCompleteRepoPathStringByType(repo);
-            FileUtils.deleteDirectory(new File(repoPath));
+            Path repoPath = getCompleteRepoPathStringByType(repo);
+            FileUtils.deleteDirectory(repoPath.toFile());
             setRepositoryToNull(repo);
         }
         catch (IOException ignored) {
@@ -172,7 +172,7 @@ public class GitUtilService {
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
         try {
-            var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
+            var fileName = getCompleteRepoPathStringByType(repo).resolve(fileToUpdate.toString()).toString();
             PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
             writer.print(content);
             writer.close();
@@ -182,13 +182,13 @@ public class GitUtilService {
     }
 
     public File getFile(REPOS repo, FILES fileToRead) {
-        Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+        Path path = getCompleteRepoPathStringByType(repo).resolve(fileToRead.toString());
         return path.toFile();
     }
 
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            Path path = getCompleteRepoPathStringByType(repo).resolve(fileToRead.toString());
             byte[] encoded = Files.readAllBytes(path);
             return new String(encoded, Charset.defaultCharset());
         }
@@ -257,12 +257,12 @@ public class GitUtilService {
         return repo == REPOS.LOCAL ? localRepo : remoteRepo;
     }
 
-    public String getCompleteRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? localPath.toString() : remotePath.toString();
+    public Path getCompleteRepoPathStringByType(REPOS repo) {
+        return repo == REPOS.LOCAL ? localPath : remotePath;
     }
 
     public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
-        return new VcsRepositoryUrl(new File(getCompleteRepoPathStringByType(repo)));
+        return new VcsRepositoryUrl(getCompleteRepoPathStringByType(repo).toFile());
     }
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {

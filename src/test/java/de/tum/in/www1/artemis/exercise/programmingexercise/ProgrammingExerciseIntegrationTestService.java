@@ -91,7 +91,7 @@ class ProgrammingExerciseIntegrationTestService {
     private String defaultBranch;
 
     @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
+    private Path repoDownloadClonePath;
 
     @Autowired
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
@@ -236,8 +236,8 @@ class ProgrammingExerciseIntegrationTestService {
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
         }
-        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
-            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
+        if (repoDownloadClonePath != null && Files.exists(repoDownloadClonePath)) {
+            FileUtils.deleteDirectory(repoDownloadClonePath.toFile());
         }
         if (localGit != null) {
             localGit.close();
@@ -1724,7 +1724,7 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
+        var jPlagReposDir = repoDownloadClonePath.resolve("jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1760,10 +1760,10 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(Path.of(jPlagReposDir, projectKey));
-        Path file1 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-1.java"));
+        Files.createDirectories(jPlagReposDir.resolve(projectKey));
+        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
         Files.writeString(file1, exampleProgram);
-        Path file2 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-2.java"));
+        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
         Files.writeString(file2, exampleProgram);
 
         doReturn(jPlagReposDir).when(fileService).getUniquePath(any());
@@ -1771,8 +1771,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
     }
 
     void testGetPlagiarismResult() throws Exception {
