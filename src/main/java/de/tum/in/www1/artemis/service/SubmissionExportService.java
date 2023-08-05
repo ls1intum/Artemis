@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public abstract class SubmissionExportService {
 
     @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
+    private Path submissionExportPath;
 
     private static final int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
@@ -71,7 +71,7 @@ public abstract class SubmissionExportService {
      * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = Path.of(fileService.getTemporaryUniquePathString(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES));
+        Path outputDir = fileService.getTemporaryUniquePath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         try {
             return exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
         }
