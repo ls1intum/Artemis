@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, pairwise, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { ActivationStart, NavigationEnd, Router } from '@angular/router';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 /**
  * ProfileToggle, currently only supports LECTURE
@@ -26,11 +28,15 @@ export class ProfileToggleService {
     private subject: BehaviorSubject<ActiveProfileToggles>;
     private subscriptionInitialized = false;
 
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {
+    private profileForCurrentRoute: ProfileToggle | undefined = undefined;
+    private errorShownForCurrentRoute = false;
+
+    constructor(private websocketService: JhiWebsocketService, private alertService: AlertService, private router: Router, private http: HttpClient) {
         this.subject = new BehaviorSubject<ActiveProfileToggles>(defaultActiveProfileState);
         this.websocketService.onWebSocketConnected().subscribe(() => {
             this.reloadActiveProfileTogglesFromServer();
         });
+        this.checkActiveRouteForActivatedProfiles();
     }
 
     /**
@@ -136,5 +142,57 @@ export class ProfileToggleService {
             const data = res.body!;
             this.notifySubscribers(data.combinedProfiles);
         });
+    }
+
+    /**
+     * Register subscriptions that detect the currently active route and check if they require specific profiles which might be unavailable later.
+     * Inform the user if the functionality becomes unavailable and also inform them if it is available again.
+     */
+    checkActiveRouteForActivatedProfiles(): void {
+        // Store the required profile for the current route
+        this.router.events
+            .pipe(
+                // We are only interested in the primary outlet since it contains the 'profile'-data
+                filter((event) => event instanceof ActivationStart && event.snapshot.outlet === 'primary'),
+            )
+            .subscribe((event: ActivationStart) => {
+                this.profileForCurrentRoute = event.snapshot.data.profile;
+            });
+
+        // When the user navigates to a new page -> Reset the error-shown state
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.errorShownForCurrentRoute = false));
+
+        // Calculate whether the currently required profile is (un-)available and inform the user
+        this.getProfileToggles()
+            .pipe(
+                // Pass both the previous and new value
+                pairwise(),
+            )
+            .subscribe(([previousActiveProfiles, newActiveProfiles]) => {
+                if (!this.profileForCurrentRoute) {
+                    return;
+                }
+
+                const previouslyAvailable = previousActiveProfiles.includes(this.profileForCurrentRoute);
+                const nowAvailable = newActiveProfiles.includes(this.profileForCurrentRoute);
+
+                if (previouslyAvailable && !nowAvailable && !this.errorShownForCurrentRoute) {
+                    // No longer available
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        translationKey: 'artemisApp.profileToggle.alerts.pageFunctionalityNotAvailable',
+                        message: 'Certain functionality in this page is currently not available. Contact an administrator if this issue persists.',
+                    });
+                    this.errorShownForCurrentRoute = true;
+                } else if (!previouslyAvailable && nowAvailable && this.errorShownForCurrentRoute) {
+                    // Available again
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        translationKey: 'artemisApp.profileToggle.alerts.pageFunctionalityAvailable',
+                        message: 'Temporary unavailable functionality is available again.',
+                    });
+                    this.errorShownForCurrentRoute = false;
+                }
+            });
     }
 }

@@ -85,7 +85,7 @@
                         </div>
                     </div>
                     <ng-container *ngFor="let command of defaultCommands | typeCheck : MultiOptionCommand">
-                        <div>
+                        <div [jhiProfileToggleHide]="isTypeOfLectureAttachmentReferenceCommand(command) ? ProfileToggle.LECTURE : undefined">
                             <button
                                 mat-button
                                 [matMenuTriggerFor]="isTypeOfExerciseReferenceCommand(command) ? subMenuExercise : subMenuLecture"
@@ -95,7 +95,7 @@
                                 <span class="default-font-size">{{ command.buttonTranslationString | artemisTranslate }}</span>
                                 <fa-icon [icon]="faAngleDown" class="ms-1"></fa-icon>
                             </button>
-                            <mat-menu #subMenuExercise="matMenu" type="button" [jhiProfileToggleHide]="ProfileToggle.LECTURE">
+                            <mat-menu #subMenuExercise="matMenu" type="button">
                                 <button
                                     mat-button
                                     *ngIf="!command.getValues() || command.getValues().length === 0"
@@ -124,7 +124,7 @@
                                     <button mat-menu-item *ngIf="lecture.type === 'LECTURE'" [matMenuTriggerFor]="lectureMenuUnits" type="button">
                                         {{ lecture.value }}
                                     </button>
-                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                    <mat-menu #lectureMenuUnits="matMenu" type="button" [jhiProfileToggleHide]="ProfileToggle.LECTURE">
                                         <button
                                             mat-menu-item
                                             *ngIf="lecture.type === 'LECTURE'"

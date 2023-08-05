@@ -39,6 +39,7 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -223,6 +224,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     isTypeOfExerciseReferenceCommand(commandToCheck: MultiOptionCommand) {
         return commandToCheck instanceof ExerciseReferenceCommand;
+    }
+
+    isTypeOfLectureAttachmentReferenceCommand(commandToCheck: MultiOptionCommand) {
+        return commandToCheck instanceof LectureAttachmentReferenceCommand;
     }
 
     ngAfterViewInit(): void {
