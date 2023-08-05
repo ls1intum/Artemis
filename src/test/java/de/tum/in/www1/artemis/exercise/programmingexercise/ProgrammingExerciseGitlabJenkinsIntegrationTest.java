@@ -391,7 +391,9 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        // we have a working directory and one directory for each repository
+        verify(fileService, times(4)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).scheduleForDeletion(any(Path.class), eq(5L));
     }
 
     @Test
