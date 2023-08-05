@@ -4,7 +4,7 @@
     </div>
 </div>
 
-<div *ngIf="!isLoading">
+<div *ngIf="!isLoading && health">
     <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
     <div *ngIf="health.status === HealthStatus.DISABLED">
         <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
