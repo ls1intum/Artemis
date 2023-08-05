@@ -176,7 +176,7 @@ public class LearningPathService {
      * @param course the course for which the health status should be generated
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
-    public LearningPathHealthDTO getHealthStatusForCourse(Course course) {
+    public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
         if (!course.getLearningPathsEnabled()) {
             return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.DISABLED);
         }

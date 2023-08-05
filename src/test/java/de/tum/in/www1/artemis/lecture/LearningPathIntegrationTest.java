@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +35,8 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
@@ -90,11 +93,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private LearningPathUtilService learningPathUtilService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Course course;
 
     private Competency[] competencies;
-
-    private TextExercise textExercise;
 
     private TextUnit textUnit;
 
@@ -111,6 +115,16 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private User studentNotInCourse;
 
     @BeforeEach
+    void enableLearningPathsFeatureToggle() {
+        featureToggleService.enableFeature(Feature.LearningPaths);
+    }
+
+    @AfterEach
+    void disableLearningPathsFeatureToggle() {
+        featureToggleService.disableFeature(Feature.LearningPaths);
+    }
+
+    @BeforeEach
     void setupTestScenario() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
@@ -121,7 +135,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
-        textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
