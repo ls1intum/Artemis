@@ -34,6 +34,8 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
@@ -90,6 +92,9 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private LearningPathUtilService learningPathUtilService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Course course;
 
     private Competency[] competencies;
@@ -107,6 +112,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
     private User studentNotInCourse;
+
+    @BeforeEach
+    void enableLearningPathsFeatureToggle() {
+        featureToggleService.enableFeature(Feature.LearningPaths);
+    }
 
     @BeforeEach
     void setupTestScenario() throws Exception {
