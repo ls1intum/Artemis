@@ -105,7 +105,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
-        expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBeTrue();
+        expect(comp.repositoryExportOptions.anonymizeRepository).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));
@@ -153,7 +153,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
             const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
             comp.exportRepos();
             tick();
-            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
+            expect(exportReposStub).toHaveBeenCalledExactlyOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
         }));
 
         it('should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
@@ -162,7 +162,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
             const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
             comp.exportRepos();
             tick();
-            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+            expect(exportReposStub).toHaveBeenCalledExactlyOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
         }));
     });
 });

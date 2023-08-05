@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,9 +21,10 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
 import de.tum.in.www1.artemis.service.SlideSplitterService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
 @RequestMapping("api/")
-@Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Profile("!decoupling || lecture")
 public class AttachmentUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
@@ -54,20 +54,20 @@ public class AttachmentUnitResource {
 
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     private final SlideSplitterService slideSplitterService;
 
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            LearningGoalProgressService learningGoalProgressService, SlideSplitterService slideSplitterService) {
+            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
         this.attachmentUnitService = attachmentUnitService;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
         this.slideSplitterService = slideSplitterService;
     }
 
@@ -79,7 +79,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
@@ -102,7 +102,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -117,7 +117,7 @@ public class AttachmentUnitResource {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
         }
 
-        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
+        competencyProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.ok(savedAttachmentUnit);
     }
@@ -134,7 +134,7 @@ public class AttachmentUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestPart AttachmentUnit attachmentUnit, @RequestPart Attachment attachment,
             @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentUnit, attachment);
@@ -157,7 +157,7 @@ public class AttachmentUnitResource {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
-        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
+        competencyProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }
@@ -171,7 +171,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
     @PostMapping("lectures/{lectureId}/attachment-units/split")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart LectureUnitInformationDTO lectureUnitInformationDTO,
             @RequestPart MultipartFile file) {
         log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitInformationDTO, lectureId);
@@ -188,7 +188,7 @@ public class AttachmentUnitResource {
             }
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
-            savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
+            savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }
         catch (IOException e) {
@@ -205,7 +205,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
     @PostMapping("lectures/{lectureId}/process-units")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 

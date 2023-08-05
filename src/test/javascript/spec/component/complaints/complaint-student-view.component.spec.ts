@@ -240,7 +240,7 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.timeOfComplaintValid).toBeFalse();
         }));
 
-        it('should be available if result was before deadline', fakeAsync(() => {
+        it('should be available if result was before due date', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
             component.exercise = exercise;

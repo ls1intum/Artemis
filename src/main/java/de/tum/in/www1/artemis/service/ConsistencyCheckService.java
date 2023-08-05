@@ -40,8 +40,7 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(long exerciseId) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         return checkConsistencyOfProgrammingExercise(programmingExercise);
     }
 
@@ -75,7 +74,7 @@ public class ConsistencyCheckService {
     private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
-        if (!versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
+        if (!versionControlService.orElseThrow().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
@@ -87,6 +86,11 @@ public class ConsistencyCheckService {
             }
             if (!versionControlService.get().repositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
+            }
+            for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
+                if (!versionControlService.get().repositoryUrlIsValid(auxiliaryRepository.getVcsRepositoryUrl())) {
+                    result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
+                }
             }
         }
         return result;
@@ -102,7 +106,7 @@ public class ConsistencyCheckService {
     private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
-        if (!continuousIntegrationService.get().checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
+        if (!continuousIntegrationService.orElseThrow().checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
         }
         if (!continuousIntegrationService.get().checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())) {

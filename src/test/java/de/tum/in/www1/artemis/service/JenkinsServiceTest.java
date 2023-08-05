@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -28,7 +27,9 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
@@ -44,6 +45,12 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseImportService programmingExerciseImportService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -120,9 +127,9 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
@@ -131,11 +138,11 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         MockedStatic<StreamUtils> mockedStreamUtils = mockStatic(StreamUtils.class);
         mockedStreamUtils.when(() -> StreamUtils.copyToString(any(InputStream.class), any())).thenThrow(IOException.class);
 
-        Exception exception = assertThrows(IllegalStateException.class,
-                () -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
+        assertThatIllegalStateException()
+                .isThrownBy(() -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl))
+                .withMessageStartingWith("Error loading template Jenkins build XML: ");
 
         mockedStreamUtils.close();
-        assertThat(exception.getMessage()).startsWith("Error loading template Jenkins build XML: ");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -146,62 +153,62 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
         var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         var finalProgrammingExercise = programmingExercise;
-        Exception exception = assertThrows(UnsupportedOperationException.class,
-                () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
-
-        assertThat(exception.getMessage()).endsWith("templates are not available for Jenkins.");
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(
+                        () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl))
+                .withMessageEndingWith("templates are not available for Jenkins.");
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testImportBuildPlansThrowsExceptionOnGivePermissions() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
-        Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
-        assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
+                .withMessageStartingWith("Cannot give assign permissions to plan");
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testDeleteBuildPlan() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
-        Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
-        assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise))
+                .withMessageStartingWith("Cannot give assign permissions to plan");
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testRecreateBuildPlanDeletedFolder() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         final String templateJobName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         final String solutionJobName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
@@ -216,7 +223,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
 
-        verify(jenkinsServer, times(1)).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
+        verify(jenkinsServer).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
     }
 
     @Test
@@ -233,21 +240,20 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException, URISyntaxException {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         String projectKey = programmingExercise.getProjectKey();
         String planName = programmingExercise.getProjectKey();
 
         jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, expectedStatus);
 
-        Exception exception = assertThrows(JenkinsException.class, () -> {
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main",
                     List.of());
-        });
-        assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");
+        }).withMessageStartingWith("Error trying to configure build plan in Jenkins");
     }
 }

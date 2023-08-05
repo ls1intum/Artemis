@@ -155,6 +155,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         } else {
             this.gradingScale.course = this.course;
             this.gradingScale.course!.maxPoints = this.maxPoints;
+            this.gradingScale.course!.presentationScore = this.presentationsConfig.presentationScore;
         }
         if (this.existingGradingScale) {
             if (this.isExam) {
@@ -290,7 +291,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * -- the presentationScore must be above 0
      * - if the presentationType is GRADED:
      * -- the presentationsNumber must be a whole number above 0
-     * -- the presentationsWeight must be between 0 and 100
+     * -- the presentationsWeight must be between 0 and 99
      * -- the presentationScore must be 0 or undefined
      */
     validPresentationsConfig(): boolean {
@@ -299,8 +300,10 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // The presentationScore must be 0 or undefined // edit in followup, when presentationScore is moved to
-            // grading key page
+            // The presentationScore must be 0 or undefined
+            if (this.presentationsConfig.presentationScore !== undefined) {
+                return false;
+            }
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
             // The presentationsNumber and presentationsWeight must be undefined
@@ -327,7 +330,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (
                 this.presentationsConfig.presentationsWeight === undefined ||
                 this.presentationsConfig.presentationsWeight < 0 ||
-                this.presentationsConfig.presentationsWeight > 100
+                this.presentationsConfig.presentationsWeight > 99
             ) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;

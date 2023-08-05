@@ -58,9 +58,9 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService, GitService gitService,
+            FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
+            TemplateUpgradePolicy templateUpgradePolicy, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -86,7 +86,7 @@ public class ProgrammingExerciseImportService {
         final var sourceProjectKey = templateExercise.getProjectKey();
 
         // First, create a new project for our imported exercise
-        versionControlService.get().createProjectForExercise(newExercise);
+        versionControlService.orElseThrow().createProjectForExercise(newExercise);
         // Copy all repositories
         String templateRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
         String testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
@@ -145,7 +145,7 @@ public class ProgrammingExerciseImportService {
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
-            continuousIntegrationTriggerService.get().triggerBuild(templateParticipation);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(templateParticipation);
             continuousIntegrationTriggerService.get().triggerBuild(solutionParticipation);
         }
         catch (ContinuousIntegrationException e) {
@@ -157,11 +157,11 @@ public class ProgrammingExerciseImportService {
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        String newExerciseBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
+        String newExerciseBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
 
         // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
-        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch, List.of(ASSIGNMENT_REPO_NAME));
+        continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,
+                targetExerciseProjectKey, newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch, List.of(ASSIGNMENT_REPO_NAME));
 
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, List.of());
@@ -184,8 +184,8 @@ public class ProgrammingExerciseImportService {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
-            String auxiliaryBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
+            String auxiliaryBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
+            continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
                     targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch, List.of());
         }
     }
@@ -199,7 +199,7 @@ public class ProgrammingExerciseImportService {
         final var templateKey = templateExercise.getProjectKey();
         final var targetKey = newExercise.getProjectKey();
         final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + newExercise.getTitle();
-        continuousIntegrationService.get().createProjectForExercise(newExercise);
+        continuousIntegrationService.orElseThrow().createProjectForExercise(newExercise);
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName, false);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName, true);
         continuousIntegrationService.get().givePlanPermissions(newExercise, templatePlanName);
@@ -254,7 +254,7 @@ public class ProgrammingExerciseImportService {
      * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
-        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
+        final var repositoryUrl = versionControlService.orElseThrow().getCloneRepositoryUrl(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
@@ -274,6 +274,8 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,
             boolean recreateBuildPlans) {
+        // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
+        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
 

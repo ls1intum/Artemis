@@ -148,7 +148,7 @@ describe('Exam Exercise Import Component', () => {
             exerciseGroups: [exerciseGroup1, exerciseGroup2, exerciseGroup3Rejected, exerciseGroup4, exerciseGroup5],
         } as Exam;
         // Method called by Parent-Component
-        component.updateMapsAfterRejectedImport();
+        component.updateMapsAfterRejectedImportDueToInvalidProjectKey();
 
         // Check if titleAndShortNameOfProgrammingExercises contains the rejected title + shortName
         expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(1);

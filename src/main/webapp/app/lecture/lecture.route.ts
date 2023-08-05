@@ -14,6 +14,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
@@ -35,6 +37,10 @@ export const lectureRoute: Routes = [
     {
         path: ':courseId/lectures',
         component: CourseManagementTabBarComponent,
+        canActivate: [ProfileToggleGuard],
+        data: {
+            profile: ProfileToggle.LECTURE,
+        },
         children: [
             {
                 path: '',

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -23,15 +22,12 @@ public class ProgrammingMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final LtiNewResultService ltiNewResultService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            SimpMessageSendingOperations messagingTemplate, LtiNewResultService ltiNewResultService) {
+            LtiNewResultService ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
-        this.messagingTemplate = messagingTemplate;
         this.ltiNewResultService = ltiNewResultService;
     }
 
@@ -54,14 +50,20 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            // no need to send all exercise details here
-            submission.getParticipation().setExercise(null);
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+            // TODO LOCALVC_CI: Find a way to set the exercise to null (submission.getParticipation().setExercise(null)) as it is not necessary to send all these details here.
+            // Just removing it causes issues with the local CI system that calls this method and in some places expects the exercise to be set on the submission's participation
+            // afterwards (call by reference).
+            // Removing it and immediately setting it back to the original value after sending the message here, is not working either, because some steps in the local CI system
+            // happen in parallel to this and the exercise needs to be set at all times.
+            // Creating a deep copy of the submission and setting the exercise to null there is also not working, because 'java.time.ZoneRegion' is not open to external libraries
+            // (like Jackson) so it cannot be serialized using 'objectMapper.readValue()'.
+            // You could look into some kind of ProgrammingSubmissionDTO here that only gets the values set that the client actually needs.
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
         }
 
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null && !(submission.getParticipation() instanceof StudentParticipation)) {
             var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
-            messagingTemplate.convertAndSend(topicDestination, submission);
+            websocketMessagingService.sendMessage(topicDestination, submission);
         }
     }
 
@@ -77,11 +79,11 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
         if (participation instanceof StudentParticipation studentParticipation) {
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 
         if (participation != null && participation.getExercise() != null) {
-            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
+            websocketMessagingService.sendMessage(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
         }
     }
 

@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -60,7 +61,7 @@ public final class SecurityUtils {
     }
 
     private static String extractPrincipal(Authentication authentication) {
-        if (authentication == null) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             return null;
         }
         else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {

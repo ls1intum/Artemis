@@ -4,6 +4,9 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Provide the available profiles (combined between all instances of the cluster via REST)
+ */
 @Component
 public class ProfileInfoContributor implements InfoContributor {
 

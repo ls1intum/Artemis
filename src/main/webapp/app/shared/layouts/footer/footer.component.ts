@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { VERSION } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { filter, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-footer',
@@ -24,21 +22,15 @@ export class FooterComponent implements OnInit {
     constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    this.contact = info.contact;
-                    this.gitBranch = info.git.branch;
-                    this.gitCommitId = info.git.commit.id.abbrev;
-                    this.gitTimestamp = new Date(info.git.commit.time).toUTCString();
-                    this.gitCommitUser = info.git.commit.user.name;
-                    this.testServer = info.testServer ?? false;
-                    this.inProduction = info.inProduction;
-                }),
-            )
-            .subscribe();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.contact = profileInfo.contact;
+            this.gitBranch = profileInfo.git.branch;
+            this.gitCommitId = profileInfo.git.commit.id.abbrev;
+            this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+            this.gitCommitUser = profileInfo.git.commit.user.name;
+            this.testServer = profileInfo.testServer ?? false;
+            this.inProduction = profileInfo.inProduction;
+        });
     }
 
     set contact(mail: string) {

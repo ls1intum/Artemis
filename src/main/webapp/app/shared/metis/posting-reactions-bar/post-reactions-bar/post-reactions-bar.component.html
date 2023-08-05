@@ -41,7 +41,7 @@
         ></jhi-emoji-picker>
     </ng-template>
     <ng-container *ngIf="!isCourseMessagesPage; else buttonsForMessagesPage">
-        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
+        <div class="col-auto p-0" *ngIf="(displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor) && posting.conversation === undefined">
             <button
                 class="reaction-button pin"
                 [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
@@ -52,7 +52,7 @@
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
             </button>
         </div>
-        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
+        <div class="col-auto p-0" *ngIf="(displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor) && posting.conversation === undefined">
             <button
                 class="reaction-button archive"
                 [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"

@@ -7,6 +7,8 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 const routes: Routes = [
     {
@@ -19,7 +21,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/register',
+        path: 'courses/enroll',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     // /courses/:courseId/register is special,
@@ -54,8 +56,9 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
+                    profile: ProfileToggle.LECTURE,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, ProfileToggleGuard],
             },
             {
                 path: 'statistics',
@@ -63,7 +66,7 @@ const routes: Routes = [
             },
             {
                 path: 'competencies',
-                loadChildren: () => import('../overview/course-learning-goals/course-learning-goals.module').then((m) => m.CourseLearningGoalsModule),
+                loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
             },
             {
                 path: 'discussion',

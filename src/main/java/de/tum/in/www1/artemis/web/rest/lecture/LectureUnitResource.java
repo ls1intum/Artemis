@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -18,8 +17,11 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
-@Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Profile("!decoupling || lecture")
 public class LectureUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
@@ -47,16 +49,16 @@ public class LectureUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, LearningGoalProgressService learningGoalProgressService) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, CompetencyProgressService competencyProgressService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -67,7 +69,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
     @PutMapping("/lectures/{lectureId}/lecture-units-order")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
         final Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
@@ -105,7 +107,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
         log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("lectureUnit"));
@@ -126,7 +128,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
-        learningGoalProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
+        competencyProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
 
         return ResponseEntity.ok().build();
     }
@@ -139,10 +141,10 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
             throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
         }

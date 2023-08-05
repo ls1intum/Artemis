@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -65,16 +66,16 @@ public class QuizScheduleService {
 
     private final QuizStatisticService quizStatisticService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final QuizCache quizCache;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
+    public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
             QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -113,7 +114,7 @@ public class QuizScheduleService {
      */
     public void updateSubmission(Long quizExerciseId, String username, QuizSubmission quizSubmission) {
         if (quizSubmission != null && quizExerciseId != null && username != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getSubmissions().put(username, quizSubmission);
+            getWriteCache(quizExerciseId).getSubmissions().put(username, quizSubmission);
         }
     }
 
@@ -127,7 +128,7 @@ public class QuizScheduleService {
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
         log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
         if (quizExerciseId != null && result != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getResults().put(result.getId(), result);
+            getWriteCache(quizExerciseId).getResults().put(result.getId(), result);
         }
     }
 
@@ -139,7 +140,7 @@ public class QuizScheduleService {
      */
     private void addParticipation(Long quizExerciseId, StudentParticipation participation) {
         if (quizExerciseId != null && participation != null) {
-            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getParticipations().put(participation.getParticipantIdentifier(), participation);
+            getWriteCache(quizExerciseId).getParticipations().put(participation.getParticipantIdentifier(), participation);
         }
     }
 
@@ -155,7 +156,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        QuizSubmission quizSubmission = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().get(username);
+        QuizSubmission quizSubmission = getReadCache(quizExerciseId).getSubmissions().get(username);
         if (quizSubmission != null) {
             return quizSubmission;
         }
@@ -176,7 +177,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getParticipations().get(username);
+        return getReadCache(quizExerciseId).getParticipations().get(username);
     }
 
     /**
@@ -189,9 +190,9 @@ public class QuizScheduleService {
         if (quizExerciseId == null) {
             return null;
         }
-        QuizExercise quizExercise = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getExercise();
+        QuizExercise quizExercise = getReadCache(quizExerciseId).getExercise();
         if (quizExercise == null) {
-            log.warn("QuizExercise with {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
+            log.warn("QuizExercise with id {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
             quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
             if (quizExercise != null) {
                 updateQuizExercise(quizExercise);
@@ -217,7 +218,7 @@ public class QuizScheduleService {
      * @return if processing of the quiz has finished
      */
     public boolean finishedProcessing(Long quizExerciseId) {
-        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().isEmpty();
+        return getReadCache(quizExerciseId).getSubmissions().isEmpty();
     }
 
     /**
@@ -271,9 +272,9 @@ public class QuizScheduleService {
                 log.info("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
-            for (Cache quizCache : quizCache.getAllCaches()) {
-                if (((QuizExerciseCache) quizCache).getQuizStart() != null) {
-                    cancelScheduledQuizStart(((QuizExerciseCache) quizCache).getExerciseId());
+            for (QuizExerciseCache quizCache : quizCache.getAllCaches()) {
+                if (quizCache.getQuizStart() != null) {
+                    cancelScheduledQuizStart(quizCache.getExerciseId());
                 }
             }
             threadPoolTaskScheduler.shutdown();
@@ -305,7 +306,7 @@ public class QuizScheduleService {
                         var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                         // save scheduled future in HashMap
                         quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
-                            ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
+                            quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
                             return quizExerciseCache;
                         });
                     }
@@ -326,7 +327,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
      */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getQuizStart().forEach(taskHandler -> {
+        getReadCache(quizExerciseId).getQuizStart().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
@@ -346,7 +347,7 @@ public class QuizScheduleService {
             }
         });
         quizCache.performCacheWriteIfPresent(quizExerciseId, cachedQuiz -> {
-            ((QuizExerciseCache) cachedQuiz).setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
+            cachedQuiz.setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
             return cachedQuiz;
         });
     }
@@ -356,7 +357,7 @@ public class QuizScheduleService {
      */
     void executeQuizStartNowTask(Long quizExerciseId) {
         quizCache.performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
-            ((QuizExerciseCache) quizExerciseCache).getQuizStart().clear();
+            quizExerciseCache.getQuizStart().clear();
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
@@ -372,6 +373,8 @@ public class QuizScheduleService {
         quizBatch.setQuizExercise(quizExercise);
         quizBatch.setStartTime(ZonedDateTime.now());
         quizExercise.setQuizBatches(Set.of(quizBatch));
+
+        SecurityUtils.setAuthorizationObject();
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
     }
 
@@ -526,11 +529,11 @@ public class QuizScheduleService {
 
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch quizBatch, User user) {
         log.debug("join user {} to batch {} for quiz {}", user, quizBatch, quizExercise.getId());
-        ((QuizExerciseCache)quizCache.getTransientWriteCacheFor(quizExercise.getId())).getBatches().put(user.getLogin(), quizBatch.getId());
+        getWriteCache(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
     }
 
     public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        var quizExerciseCache = (QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId());
+        var quizExerciseCache = getReadCache(quizExercise.getId());
         return Optional.ofNullable(quizExerciseCache.getBatches().get(login));
     }
 
@@ -542,7 +545,7 @@ public class QuizScheduleService {
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
@@ -648,6 +651,7 @@ public class QuizScheduleService {
                 // NOTE: we save (1) participation and (2) submission (in this particular order) here individually so that one exception (e.g. duplicated key) cannot
                 // destroy multiple student answers
                 participation = studentParticipationRepository.save(participation);
+
                 quizSubmission.addResult(result);
                 quizSubmission.setParticipation(participation);
                 // this automatically saves the results due to CascadeType.ALL
@@ -676,8 +680,8 @@ public class QuizScheduleService {
                 // add the result of the participation resultHashMap for the statistic-Update
                 addResultForStatisticUpdate(quizExercise.getId(), result);
             }
-            catch (ConstraintViolationException constraintViolationException) {
-                log.error("ConstraintViolationException in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), constraintViolationException.getMessage(), constraintViolationException);
+            catch (ConstraintViolationException | DataIntegrityViolationException violationException) {
+                log.error("ConstraintViolationException | DataIntegrityViolationException in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), violationException.getMessage(), violationException);
                 // We got a ConstraintViolationException -> The "User-Quiz" pair is already saved in the database, but for some reason was not removed from the maps
                 // We remove it from the maps now to prevent this error from occurring again
                 // We do NOT add it to the participation map, as this should have been done already earlier (when the entry was added to the database)
@@ -687,10 +691,18 @@ public class QuizScheduleService {
                 // clean up the batch association
                 userBatchMap.remove(username);
             }
-            catch (Exception e) {
-                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
+            catch (Exception ex) {
+                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), ex.getMessage(), ex);
             }
         }
         return count;
+    }
+
+    QuizExerciseCache getWriteCache(long exerciseId) {
+        return quizCache.getTransientWriteCacheFor(exerciseId);
+    }
+
+    private QuizExerciseCache getReadCache(long exerciseId) {
+        return quizCache.getReadCacheFor(exerciseId);
     }
 }

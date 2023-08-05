@@ -126,7 +126,7 @@ public class ProgrammingExerciseExportService {
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
-        String cleanProblemStatementFileName = fileService.removeIllegalCharacters(problemStatementFileName);
+        String cleanProblemStatementFileName = FileService.removeIllegalCharacters(problemStatementFileName);
         var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
         pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
         copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
@@ -134,7 +134,7 @@ public class ProgrammingExerciseExportService {
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
-        String cleanExerciseDetailsFileName = fileService.removeIllegalCharacters(exerciseDetailsFileName);
+        String cleanExerciseDetailsFileName = FileService.removeIllegalCharacters(exerciseDetailsFileName);
         var exerciseDetailsExportPath = Path.of(exportDir.toString(), cleanExerciseDetailsFileName);
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
 
@@ -142,7 +142,7 @@ public class ProgrammingExerciseExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
-        String cleanFilename = fileService.removeIllegalCharacters(exportedExerciseZipFileName);
+        String cleanFilename = FileService.removeIllegalCharacters(exportedExerciseZipFileName);
         Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
@@ -225,10 +225,10 @@ public class ProgrammingExerciseExportService {
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
-            exportOptions.setHideStudentNameInZippedFolder(false);
+            exportOptions.setAnonymizeRepository(false);
 
             // Export student repositories and add them to list
-            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, exportErrors).stream()
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
                     .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
@@ -248,13 +248,13 @@ public class ProgrammingExerciseExportService {
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
-        String cleanFilename = fileService.removeIllegalCharacters(filename);
+        String cleanFilename = FileService.removeIllegalCharacters(filename);
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).toList();
 
-        String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
+        String cleanProjectName = FileService.removeIllegalCharacters(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
         reportData.add(new ArchivalReportEntry(exercise, cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
 
@@ -412,7 +412,7 @@ public class ProgrammingExerciseExportService {
 
     private String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        return fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
+        return FileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
     private Optional<File> exportRepository(VcsRepositoryUrl repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path outputDir,
@@ -488,10 +488,10 @@ public class ProgrammingExerciseExportService {
     public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
 
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, new ArrayList<>());
+        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
             // Create a zip folder containing the zipped repositories.
@@ -509,15 +509,16 @@ public class ProgrammingExerciseExportService {
     /**
      * Zip the participations of programming exercises of a requested list of students separately.
      *
-     * @param programmingExercise     The programming exercise
-     * @param participations          Participations that should be exported
-     * @param repositoryExportOptions The options that should be used for the export
-     * @param outputDir               The directory used to store the zip file
+     * @param programmingExercise     the programming exercise
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
+     * @param workingDir              The directory used to clone the repositories
+     * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir, List<String> exportErrors) {
+            RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
             log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
@@ -530,7 +531,7 @@ public class ProgrammingExerciseExportService {
         List<Path> exportedStudentRepositories = new ArrayList<>();
         participations.forEach(participation -> {
             try {
-                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, outputDir);
+                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir);
                 if (zipFile != null) {
                     exportedStudentRepositories.add(zipFile);
                 }
@@ -600,12 +601,13 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir               The directory used for storing the zip file
+     * @param workingDir              The directory used to clone the repository
+     * @param outputDir               The directory where the zip file is stored
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir) throws IOException, UncheckedIOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
@@ -618,7 +620,7 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
@@ -637,10 +639,10 @@ public class ProgrammingExerciseExportService {
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeStudentCommits());
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeRepository());
             }
 
-            if (repositoryExportOptions.isAnonymizeStudentCommits()) {
+            if (repositoryExportOptions.isAnonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
@@ -657,7 +659,7 @@ public class ProgrammingExerciseExportService {
             }
 
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
-            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
+            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository());
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),

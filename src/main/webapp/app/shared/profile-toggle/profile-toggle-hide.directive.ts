@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
     selector: '[jhiProfileToggleHide]',
 })
 export class ProfileToggleHideDirective implements OnInit, OnDestroy {
-    @Input('jhiProfileToggleHide') profile: ProfileToggle;
+    @Input('jhiProfileToggleHide') profile: ProfileToggle | undefined;
 
     private profileActive = true;
 

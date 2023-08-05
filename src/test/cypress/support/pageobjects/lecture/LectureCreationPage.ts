@@ -16,11 +16,15 @@ export class LectureCreationPage {
         cy.get('.ace_content').type(description, { parseSpecialCharSequences: false });
     }
 
+    setVisibleDate(date: Dayjs) {
+        cy.get('#visible-date').find('#date-input-field').type(date.toString());
+    }
+
     setStartDate(date: Dayjs) {
         cy.get('#start-date').find('#date-input-field').type(date.toString());
     }
 
     setEndDate(date: Dayjs) {
-        cy.get('#end-date').find('#date-input-field').type(date.toString());
+        cy.get('#end-date').find('#date-input-field').type(' ').clear().type(date.toString());
     }
 }

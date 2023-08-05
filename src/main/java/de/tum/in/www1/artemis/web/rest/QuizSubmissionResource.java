@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -27,6 +26,8 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
@@ -86,7 +87,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/live")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
@@ -110,7 +111,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
@@ -173,7 +174,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
@@ -212,7 +213,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);

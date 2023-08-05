@@ -151,6 +151,7 @@ Desktop.ini
 .dbus/
 repos/
 repos-download/
+local-vcs-repos
 /templates/
 .bash_history
 .v8flags.*.json
@@ -158,6 +159,7 @@ repos-download/
 /coverage
 /exports
 /legal/server-integration-test
+data-exports/
 
 ######################
 # Gradle Wrapper
@@ -198,8 +200,10 @@ repos-download/
 /src/main/webapp/i18n/*.json
 
 ######################
-# Artemis configs
+# Artemis resources
 ######################
 /src/main/resources/config/application-local*.yml
+!/src/main/resources/config/application-localvc.yml
+!/src/main/resources/config/application-localci.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts

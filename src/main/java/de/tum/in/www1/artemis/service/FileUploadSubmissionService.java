@@ -40,9 +40,9 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;
@@ -115,7 +115,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
-        String newFilePath = storeFile(fileUploadSubmission, file, exercise);
+        String newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -139,39 +139,41 @@ public class FileUploadSubmissionService extends SubmissionService {
         return fileUploadSubmission;
     }
 
-    private String storeFile(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise) throws EmptyFileException, IOException {
+    private String storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
+            throws EmptyFileException, IOException {
         if (file.isEmpty()) {
             throw new EmptyFileException(file.getOriginalFilename());
         }
 
-        final var oldFilePath = fileUploadSubmission.getFilePath();
-
-        final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-        final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
+        final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(savePath)));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
-        if (oldFilePath != null) {
+        Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
+
+        previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
+            final String oldFilePath = previousSubmission.getFilePath();
             // check if we already had a file associated with this submission
             if (!oldFilePath.equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
-                fileUploadSubmission.onDelete();
+                previousSubmission.onDelete();
             }
             else { // same name
                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                fileService.resetOnPath(newLocalFilePath);
+                fileService.evictCacheForPath(savePath);
             }
-        }
+        });
         return newFilePath;
     }
 

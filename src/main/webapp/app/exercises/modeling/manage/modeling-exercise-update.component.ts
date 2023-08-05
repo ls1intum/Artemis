@@ -47,7 +47,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
-
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     examCourseId?: number;
@@ -114,6 +113,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
+                        if (this.modelingExercise.id == undefined && this.modelingExercise.channelName == undefined) {
+                            this.modelingExercise.channelName = '';
+                        }
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
@@ -223,8 +225,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse): void {
-        onError(this.alertService, error);
+    private onSaveError(errorRes: HttpErrorResponse): void {
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
         this.isSaving = false;
     }
 

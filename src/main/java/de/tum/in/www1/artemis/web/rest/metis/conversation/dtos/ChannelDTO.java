@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.ChannelSubType;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ChannelDTO extends ConversationDTO {
 
     private String name;
@@ -40,8 +44,21 @@ public class ChannelDTO extends ConversationDTO {
      */
     private String tutorialGroupTitle;
 
+    // property not taken from entity
+    /**
+     * Determines the subtype of the channel depending on whether the channel is associated with an exercise/lecture/exam or not
+     */
+    private ChannelSubType subType;
+
+    // property not taken from entity
+    /**
+     * Contains the lecture/exercise/exam id if the channel is associated with a lecture/exercise/exam, else null
+     */
+    private Long subTypeReferenceId;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
+        this.setSubTypeWithReferenceFromChannel(channel);
         this.name = channel.getName();
         this.description = channel.getDescription();
         this.isPublic = channel.getIsPublic();
@@ -134,10 +151,37 @@ public class ChannelDTO extends ConversationDTO {
         this.tutorialGroupTitle = tutorialGroupTitle;
     }
 
+    public ChannelSubType getSubType() {
+        return subType;
+    }
+
+    public Long getSubTypeReferenceId() {
+        return subTypeReferenceId;
+    }
+
     @Override
     public String toString() {
-        return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
-                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights
-                + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}" + super.toString();
+        return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
+                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator
+                + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}"
+                + super.toString();
+    }
+
+    private void setSubTypeWithReferenceFromChannel(Channel channel) {
+        if (channel.getExercise() != null) {
+            this.subType = ChannelSubType.EXERCISE;
+            this.subTypeReferenceId = channel.getExercise().getId();
+        }
+        else if (channel.getLecture() != null) {
+            this.subType = ChannelSubType.LECTURE;
+            this.subTypeReferenceId = channel.getLecture().getId();
+        }
+        else if (channel.getExam() != null) {
+            this.subType = ChannelSubType.EXAM;
+            this.subTypeReferenceId = channel.getExam().getId();
+        }
+        else {
+            this.subType = ChannelSubType.GENERAL;
+        }
     }
 }

@@ -149,6 +149,11 @@
         ></label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
     </div>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="showTestNamesToStudents" id="field_showTestNamesToStudents" [(ngModel)]="exercise.showTestNamesToStudents" checked />
+        <label class="form-check-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"> </label>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
+    </div>
 
     <h6 class="mt-3" jhiTranslate="artemisApp.exercise.exampleSolution"></h6>
     <div class="form-check">

@@ -66,7 +66,12 @@ public class RequestUtilService {
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)).andExpect(status().is(expectedStatus.value())).andReturn();
+        var builder = MockMvcRequestBuilders.multipart(new URI(path));
+        if (file != null) {
+            builder = builder.file(file);
+        }
+        builder.file(json);
+        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -169,11 +174,7 @@ public class RequestUtilService {
             request.headers(httpHeaders);
         }
         MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         restoreSecurityContext();
         return res.getResponse();
     }
@@ -195,17 +196,25 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
-        String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+        return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+    }
+
+    public <T, R> R postWithResponseBody(String path, T body, boolean plainString, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        if (!plainString) {
+            String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+            if (res == null || res.isEmpty() || res.trim().isEmpty()) {
+                return null;
+            }
+            return mapper.readValue(res, responseType);
+        }
+        String res = postWithResponseBodyString(path, body, true, expectedStatus, httpHeaders, expectedResponseHeaders, params);
         if (res == null || res.isEmpty() || res.trim().isEmpty()) {
             return null;
         }
@@ -227,7 +236,32 @@ public class RequestUtilService {
      */
     public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
+        return postWithResponseBodyString(path, body, false, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+    }
+
+    /**
+     * Mocks sending a request and returns response content as string
+     *
+     * @param path                    the url to send request to
+     * @param body                    the body of the request
+     * @param plainStringBody         if true, the body is not converted to json
+     * @param expectedStatus          the status that the request will return
+     * @param httpHeaders             headers of request
+     * @param expectedResponseHeaders headers of response
+     * @param params                  parameters for multi value
+     * @param <T>                     Request type
+     * @return Request content as string
+     * @throws Exception
+     */
+    public <T> String postWithResponseBodyString(String path, T body, boolean plainStringBody, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        String jsonBody;
+        if (!plainStringBody) {
+            jsonBody = mapper.writeValueAsString(body);
+        }
+        else {
+            jsonBody = (String) body;
+        }
         var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
@@ -241,21 +275,29 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
         return res.getResponse().getContentAsString();
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
-        return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+        return postWithResponseBody(path, body, false, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+    }
+
+    public <T, R> R postWithResponseBody(String path, T body, boolean plainString, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        if (!plainString) {
+            return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
+        }
+        return postWithResponseBody(path, body, true, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> R postWithPlainStringResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postWithResponseBody(path, body, true, responseType, expectedStatus, null, null);
     }
 
     public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
@@ -296,7 +338,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -305,7 +348,10 @@ public class RequestUtilService {
             return request;
         });
         if (file != null) {
-            builder = builder.file(file);
+            builder.file(file);
+        }
+        if (params != null) {
+            builder.params(params);
         }
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
@@ -331,11 +377,7 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
         if (res.getResponse().getStatus() >= 299) {
             return null;
@@ -487,7 +529,7 @@ public class RequestUtilService {
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
         }
-        if (res.getResponse().getContentType() == null) {
+        if (contentAsString.isEmpty() || res.getResponse().getContentType() == null) {
             return null;
         }
         return mapper.readValue(contentAsString, responseType);
@@ -549,20 +591,6 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
     }
 
-    public <T> T getWithHeaders(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders,
-            String[] expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-
-        if (expectedResponseHeaders != null) {
-            for (String header : expectedResponseHeaders) {
-                assertThat(res.getResponse().containsHeader(header)).isTrue();
-            }
-        }
-
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
-    }
-
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
@@ -580,6 +608,13 @@ public class RequestUtilService {
 
     public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+    }
+
+    public <T> void delete(String path, HttpStatus expectedStatus, T body) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
     }
 
@@ -606,5 +641,19 @@ public class RequestUtilService {
             multiMap.add(key, value.toString());
         });
         return multiMap;
+    }
+
+    /**
+     * Verifies the expected response headers against the actual response headers.
+     *
+     * @param expectedResponseHeaders a map containing the expected response headers
+     * @param res                     the {@link MvcResult} containing the actual response headers
+     */
+    private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
+        if (expectedResponseHeaders != null) {
+            for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
+                assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).get(0)).isEqualTo(responseHeader.getValue());
+            }
+        }
     }
 }

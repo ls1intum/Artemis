@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -8,7 +7,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
@@ -66,7 +65,7 @@ public class ExerciseScoresChartResource {
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
     @GetMapping("courses/{courseId}/charts/exercise-scores")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
@@ -89,7 +88,7 @@ public class ExerciseScoresChartResource {
 
         // If an assessment due date is set, only count the exercise as finished if we passed that date
         if (exercise.getAssessmentDueDate() != null) {
-            return ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+            return ExerciseDateService.isAfterAssessmentDueDate(exercise);
         }
 
         // If no assessment due date is set, make sure to only count exercises which have a passed due date
