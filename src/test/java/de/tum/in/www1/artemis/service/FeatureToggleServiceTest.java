@@ -23,6 +23,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isFalse();
     }
 
     @Test

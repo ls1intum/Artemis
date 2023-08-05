@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -116,6 +117,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @BeforeEach
     void enableLearningPathsFeatureToggle() {
         featureToggleService.enableFeature(Feature.LearningPaths);
+    }
+
+    @AfterEach
+    void disableLearningPathsFeatureToggle() {
+        featureToggleService.disableFeature(Feature.LearningPaths);
     }
 
     @BeforeEach
