@@ -145,7 +145,7 @@ public class WebsocketMessagingService {
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
         List<Result> originalResults = null;
-        if (Hibernate.isInitialized(result.getSubmission())) {
+        if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
             var submission = result.getSubmission();
             submission.setParticipation(null);
             if (Hibernate.isInitialized(submission.getResults())) {
@@ -160,7 +160,7 @@ public class WebsocketMessagingService {
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
 
-        CompletableFuture<Void>[] allFutures = new CompletableFuture[0];
+        CompletableFuture<?>[] allFutures = new CompletableFuture[0];
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
@@ -178,7 +178,7 @@ public class WebsocketMessagingService {
             return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
                 // recover the participation and submission because we might want to use this result object again
                 result.setParticipation(originalParticipation);
-                if (Hibernate.isInitialized(result.getSubmission())) {
+                if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
                     result.getSubmission().setParticipation(originalParticipation);
                     result.getSubmission().setResults(finalOriginalResults);
                 }
