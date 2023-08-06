@@ -126,8 +126,11 @@ public class WebsocketMessagingService {
             // Wait until all notifications got send and the objects were reconnected.
             broadcastNewResult(participation, result).get();
         }
-        catch (InterruptedException | ExecutionException e) {
+        catch (InterruptedException e) {
             log.warn("timed out while sending a result notification", e);
+        }
+        catch (ExecutionException e) {
+            log.warn("failed to send result notification", e);
         }
     }
 
