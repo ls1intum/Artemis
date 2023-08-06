@@ -115,6 +115,9 @@ public class WebsocketMessagingService {
      * Broadcast a new result to the client.
      * Waits until all notifications are sent and the result properties are restored.
      * This allows the caller to reuse the passed result object again after calling.
+     *
+     * @param participation used to find the receivers of the notification
+     * @param result        the result object to publish
      */
     public void awaitBroadcastNewResult(Participation participation, Result result) {
         try {
