@@ -1766,7 +1766,7 @@ class ProgrammingExerciseIntegrationTestService {
         Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
         Files.writeString(file2, exampleProgram);
 
-        doReturn(jPlagReposDir).when(fileService).getUniquePath(any());
+        doReturn(jPlagReposDir).when(fileService).getTemporaryUniquePath(any(Path.class), eq(60L));
         doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);

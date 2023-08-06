@@ -135,7 +135,7 @@ public class ProgrammingExerciseExportService {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileService.removeIllegalCharacters(exerciseDetailsFileName);
-        var exerciseDetailsExportPath = Path.of(exportDir.toString(), cleanExerciseDetailsFileName);
+        var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
 
         // Setup path to store the zip file for the exported programming exercise
@@ -143,7 +143,7 @@ public class ProgrammingExerciseExportService {
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
         String cleanFilename = FileService.removeIllegalCharacters(exportedExerciseZipFileName);
-        Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
+        Path pathToZippedExercise = exportDir.resolve(cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
         zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);

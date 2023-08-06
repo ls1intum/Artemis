@@ -1014,7 +1014,7 @@ public class FileService implements DisposableBean {
      * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
-    public Path getUniquePath(Path path) {
+    private Path getUniquePath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {

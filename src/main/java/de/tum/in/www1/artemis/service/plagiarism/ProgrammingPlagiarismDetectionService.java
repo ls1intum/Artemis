@@ -169,7 +169,7 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getUniquePath(repoDownloadClonePath);
+        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
