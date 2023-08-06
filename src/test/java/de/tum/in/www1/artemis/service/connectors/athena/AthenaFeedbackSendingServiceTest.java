@@ -48,7 +48,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = textExerciseUtilService.createSampleTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise(null);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 

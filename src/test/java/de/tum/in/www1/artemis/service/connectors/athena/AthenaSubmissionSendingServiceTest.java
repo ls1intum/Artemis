@@ -49,7 +49,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
         ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
 
-        textExercise = textExerciseUtilService.createSampleTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise(null);
     }
 
     private void mockTextSubmissionRepository(long exerciseId, int totalSubmissions) {

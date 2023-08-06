@@ -35,7 +35,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = textExerciseUtilService.createSampleTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
     }

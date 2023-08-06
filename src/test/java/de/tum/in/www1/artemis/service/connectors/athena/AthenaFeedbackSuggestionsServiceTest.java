@@ -32,7 +32,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = textExerciseUtilService.createSampleTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
     }
 

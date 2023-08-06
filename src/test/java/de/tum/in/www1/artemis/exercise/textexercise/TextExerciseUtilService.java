@@ -102,8 +102,9 @@ public class TextExerciseUtilService {
      *
      * @return the created text exercise
      */
-    public TextExercise createSampleTextExercise() {
+    public TextExercise createSampleTextExercise(Course course) {
         TextExercise textExercise = new TextExercise();
+        textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -115,8 +116,7 @@ public class TextExerciseUtilService {
         if (textBlocks.size() != submissionCount * submissionSize) {
             throw new IllegalArgumentException("number of textBlocks must be equal to submissionCount * submissionSize");
         }
-        TextExercise textExercise = createSampleTextExercise();
-        textExercise.setCourse(course);
+        TextExercise textExercise = createSampleTextExercise(course);
 
         // submissions.length must be equal to studentParticipations.length;
         for (int i = 0; i < submissionCount; i++) {
