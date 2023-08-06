@@ -258,14 +258,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         for (const existingBlockRef of this.textBlockRefs) {
             const [exStart, exEnd] = [existingBlockRef.block!.startIndex!, existingBlockRef.block!.endIndex!];
             if (exEnd <= start || exStart >= end) {
-                // No overlap with text block to add
+                // existing: |---|  or   |---|
+                // to add:         |---|
+                // -> no overlap, just add
                 newTextBlockRefs.push(existingBlockRef);
             } else {
                 if (exStart < start) {
                     // Existing text block starts before text block to add
                     if (exEnd > end) {
-                        // Existing text block ends after text block to add => covers the whole text block to add
-                        // Split the existing text block into two text blocks
+                        // existing: |---------|
+                        // to add:      |---|
+                        // ->        |--|---|--|
+                        // (split into three text blocks)
                         const newBlockRef = new TextBlockRef(new TextBlock(), undefined);
                         newBlockRef.block!.startIndex = end;
                         newBlockRef.block!.endIndex = exEnd;
@@ -276,11 +280,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         newTextBlockRefs.push(existingBlockRef);
                         newTextBlockRefs.push(newBlockRef);
                     } else {
+                        // existing: |-----|
+                        // to add:      |-----|
+                        // ->        |--|-----|
+                        // ("squish" the existing text block)
                         existingBlockRef.block!.endIndex = start;
                         newTextBlockRefs.push(existingBlockRef);
                     }
                 } else if (exEnd > end) {
-                    // Existing text block ends after text block to add
+                    // existing:       |-----|
+                    // to add:    |------|
+                    // ->         |------|---|
+                    // ("squish" the existing text block)
                     existingBlockRef.block!.startIndex = end;
                     newTextBlockRefs.push(existingBlockRef);
                 }
