@@ -121,8 +121,8 @@ public class WebsocketMessagingService {
      */
     public void awaitBroadcastNewResult(Participation participation, Result result) {
         try {
-            broadcastNewResult(participation, result).get();
             // Wait until all notifications got send and the objects were reconnected.
+            broadcastNewResult(participation, result).get();
         }
         catch (InterruptedException | ExecutionException e) {
             log.warn("timed out while sending a result notification", e);
@@ -174,9 +174,9 @@ public class WebsocketMessagingService {
 
             // Send to tutors, instructors and admins
             return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
-                // recover the participation because we might want to use it again after this method
+                // recover the participation and submission because we might want to use this result object again
                 result.setParticipation(originalParticipation);
-                if (result.getSubmission() != null) {
+                if (Hibernate.isInitialized(result.getSubmission())) {
                     result.getSubmission().setParticipation(originalParticipation);
                     result.getSubmission().setResults(finalOriginalResults);
                 }
