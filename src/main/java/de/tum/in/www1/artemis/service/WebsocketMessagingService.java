@@ -12,6 +12,7 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +21,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -143,8 +145,18 @@ public class WebsocketMessagingService {
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
         result.getSubmission().setParticipation(null);
-        var originalResults = result.getSubmission().getResults();
-        result.getSubmission().setResults(null);
+        List<Result> originalResults = null;
+        if (result.getSubmission() != null) {
+            var submission = result.getSubmission();
+            submission.setParticipation(participation);
+            if (Hibernate.isInitialized(submission.getResults())) {
+                originalResults = submission.getResults();
+                submission.setResults(null);
+            }
+            if (submission instanceof ProgrammingSubmission programmingSubmission && programmingSubmission.isBuildFailed()) {
+                programmingSubmission.setBuildLogEntries(null);
+            }
+        }
 
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
@@ -182,6 +194,7 @@ public class WebsocketMessagingService {
             }
         }
 
+        final List<Result> finalOriginalResults = originalResults;
         return CompletableFuture.allOf(allFutures.toArray(CompletableFuture[]::new)).thenCompose(v -> {
             // Restore information that should not go to students but tutors, instructors, and admins should still see
             // only add these values after the async broadcast is done to not publish it mistakenly
@@ -192,8 +205,10 @@ public class WebsocketMessagingService {
             return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
                 // recover the participation because we might want to use it again after this method
                 result.setParticipation(originalParticipation);
-                result.getSubmission().setParticipation(originalParticipation);
-                result.getSubmission().setResults(originalResults);
+                if (result.getSubmission() != null) {
+                    result.getSubmission().setParticipation(originalParticipation);
+                    result.getSubmission().setResults(finalOriginalResults);
+                }
             });
         });
     }
