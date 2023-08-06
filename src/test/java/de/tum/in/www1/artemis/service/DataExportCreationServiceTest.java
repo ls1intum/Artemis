@@ -223,7 +223,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
         return course1;
     }
 
@@ -261,7 +261,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), any(Path.class), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
         return exam;
     }
 
