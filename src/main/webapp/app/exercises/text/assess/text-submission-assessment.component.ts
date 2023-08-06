@@ -37,6 +37,7 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text-block.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -85,7 +86,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseDashboardLink: string[];
     isExamMode = false;
 
-    private feedbackSuggestionsObservableUnsubscribe: (() => void) | null = null;
+    private feedbackSuggestionsObservable: Subscription;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -170,9 +171,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     ngOnDestroy(): void {
-        if (this.feedbackSuggestionsObservableUnsubscribe) {
-            this.feedbackSuggestionsObservableUnsubscribe();
-        }
+        this.feedbackSuggestionsObservable?.unsubscribe();
     }
 
     private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
@@ -257,6 +256,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const [start, end] = [refToAdd.block!.startIndex!, refToAdd.block!.endIndex!];
         for (const existingBlockRef of this.textBlockRefs) {
             const [exStart, exEnd] = [existingBlockRef.block!.startIndex!, existingBlockRef.block!.endIndex!];
+            if (exStart === start && exEnd === end) {
+                // existing: |---|
+                // to add:   |---|
+                // -> already exists
+                return;
+            }
             if (exEnd <= start || exStart >= end) {
                 // existing: |---|  or   |---|
                 // to add:         |---|
@@ -322,7 +327,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservableUnsubscribe = this.athenaService
+        this.feedbackSuggestionsObservable = this.athenaService
             .getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!)
             .subscribe((feedbackSuggestions: TextBlockRef[]) => {
                 for (const suggestion of feedbackSuggestions) {

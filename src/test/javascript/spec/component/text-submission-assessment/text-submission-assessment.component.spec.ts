@@ -494,48 +494,116 @@ describe('TextSubmissionAssessmentComponent', () => {
     }));
 
     it.each([
-        [], // No existing blocks
-        [[0, 10]], // Only one block, no possibility for overlap
-        [
-            [0, 10],
-            [10, 20],
-        ], // Two blocks, no overlap
-        [
-            [0, 10],
-            [11, 20],
-        ], // Two blocks, no overlap
-        [
-            [0, 10],
-            [5, 15],
-        ], // Two blocks, overlap
-        [
-            [0, 10],
-            [5, 7],
-        ], // Two blocks, full overlap
-        [
-            [10, 20],
-            [0, 5],
-        ], // Two blocks, wrong order
-        [
-            [5, 15],
-            [5, 10],
-        ], // Two blocks, same start index
-        [
-            [6, 11],
-            [5, 10],
-        ], // Two blocks, shifted
-        [
-            [0, 10],
-            [5, 15],
-            [15, 20],
-        ], // Three blocks, overlap
-    ])('should never create overlapping blocks even with overlapping feedback suggestions', (...indices: number[][]) => {
+        // No existing blocks
+        { input: [], output: [] },
+        // Only one block, no possibility for overlap
+        { input: [[0, 10]], output: [[0, 10]] },
+        // Two blocks, no overlap
+        {
+            input: [
+                [0, 10],
+                [10, 20],
+            ],
+            output: [
+                [0, 10],
+                [10, 20],
+            ],
+        },
+        // Two blocks, no overlap
+        {
+            input: [
+                [0, 10],
+                [11, 20],
+            ],
+            output: [
+                [0, 10],
+                [11, 20],
+            ],
+        },
+        // Two blocks, overlap
+        {
+            input: [
+                [0, 10],
+                [5, 15],
+            ],
+            output: [
+                [0, 5],
+                [5, 15],
+            ],
+        },
+        // Two blocks, full overlap
+        {
+            input: [
+                [0, 10],
+                [5, 7],
+            ],
+            output: [
+                [0, 5],
+                [5, 7],
+                [7, 10],
+            ],
+        },
+        // Two blocks, wrong order
+        {
+            input: [
+                [10, 20],
+                [0, 5],
+            ],
+            output: [
+                [0, 5],
+                [10, 20],
+            ],
+        },
+        // Two blocks, same start index
+        {
+            input: [
+                [5, 15],
+                [5, 10],
+            ],
+            output: [
+                [5, 10],
+                [10, 15],
+            ],
+        },
+        // Two blocks, shifted
+        {
+            input: [
+                [6, 11],
+                [5, 10],
+            ],
+            output: [
+                [5, 10],
+                [10, 11],
+            ],
+        },
+        // Three blocks, overlap
+        {
+            input: [
+                [0, 10],
+                [5, 15],
+                [15, 20],
+            ],
+            output: [
+                [0, 5],
+                [5, 15],
+                [15, 20],
+            ],
+        },
+        // Two blocks with exact overlap
+        {
+            input: [
+                [3, 10],
+                [3, 10],
+            ],
+            output: [[3, 10]],
+        },
+    ])('should never create overlapping blocks even with overlapping feedback suggestions', ({ input, output }: { input: number[][]; output: number[][] }) => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
         component.unreferencedFeedback = [];
 
         // Set up initial state with an existing text block that doesn't overlap
-        const feedbackSuggestions = indices.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
+        const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
 
         jest.spyOn(athenaService, 'getFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
 
@@ -543,11 +611,17 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         // No block should overlap with any other block
         const blocks = component.textBlockRefs.map((ref) => ref.block);
-        expect(blocks.length).toBeGreaterThanOrEqual(indices.length);
         let lastEndIndex = 0;
         for (const block of blocks) {
             expect(block!.startIndex).toBeGreaterThanOrEqual(lastEndIndex);
             lastEndIndex = block!.endIndex!;
+        }
+
+        // All blocks should be in the output
+        expect(blocks).toHaveLength(output.length);
+        for (const [index, block] of blocks.entries()) {
+            expect(block!.startIndex).toEqual(output[index][0]);
+            expect(block!.endIndex).toEqual(output[index][1]);
         }
     });
 
