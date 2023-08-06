@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -144,11 +142,10 @@ public class WebsocketMessagingService {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
-        result.getSubmission().setParticipation(null);
         List<Result> originalResults = null;
-        if (result.getSubmission() != null) {
+        if (Hibernate.isInitialized(result.getSubmission())) {
             var submission = result.getSubmission();
-            submission.setParticipation(participation);
+            submission.setParticipation(null);
             if (Hibernate.isInitialized(submission.getResults())) {
                 originalResults = submission.getResults();
                 submission.setResults(null);
@@ -161,41 +158,15 @@ public class WebsocketMessagingService {
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
 
-        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
+        CompletableFuture<Void>[] allFutures = new CompletableFuture[0];
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
-            final Exercise exercise = studentParticipation.getExercise();
-            boolean isWorkingPeriodOver;
-            if (exercise.isExamExercise()) {
-                isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
-            }
-            else {
-                isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
-            }
-            // Don't send students results after the exam ended
-            boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
-            // If the assessment due date is not over yet, do not send manual feedback to students!
-            boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
-                    || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
-
-            if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
-                var students = studentParticipation.getStudents();
-
-                result.filterSensitiveInformation();
-
-                students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
-
-                result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
-
-                students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
-            }
+            allFutures = broadcastNewResultToParticipants(studentParticipation, result);
         }
 
         final List<Result> finalOriginalResults = originalResults;
-        return CompletableFuture.allOf(allFutures.toArray(CompletableFuture[]::new)).thenCompose(v -> {
+        return CompletableFuture.allOf(allFutures).thenCompose(v -> {
             // Restore information that should not go to students but tutors, instructors, and admins should still see
             // only add these values after the async broadcast is done to not publish it mistakenly
             result.setAssessor(originalAssessor);
@@ -211,6 +182,38 @@ public class WebsocketMessagingService {
                 }
             });
         });
+    }
+
+    private CompletableFuture<Void>[] broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
+        final Exercise exercise = studentParticipation.getExercise();
+        boolean isWorkingPeriodOver;
+        if (exercise.isExamExercise()) {
+            isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation);
+        }
+        else {
+            isWorkingPeriodOver = exerciseDateService.isAfterLatestDueDate(exercise);
+        }
+        // Don't send students results after the exam ended
+        boolean isAfterExamEnd = isWorkingPeriodOver && exercise.isExamExercise() && !exercise.getExamViaExerciseGroupOrCourseMember().isTestExam();
+        // If the assessment due date is not over yet, do not send manual feedback to students!
+        boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
+                || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+
+        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
+        if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
+            var students = studentParticipation.getStudents();
+
+            result.filterSensitiveInformation();
+
+            students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
+
+            result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+
+            students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
+        }
+        return allFutures.toArray(CompletableFuture[]::new);
     }
 
     /**
