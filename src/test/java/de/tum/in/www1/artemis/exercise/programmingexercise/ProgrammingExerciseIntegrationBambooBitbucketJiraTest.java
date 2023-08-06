@@ -810,7 +810,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
         verify(fileService).scheduleForDeletion(any(Path.class), eq(1L));
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(2L));
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test

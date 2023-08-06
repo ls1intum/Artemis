@@ -295,7 +295,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testGetUniqueTemporaryPath_shouldNotThrowException() {
         assertThatNoException().isThrownBy(() -> {
-            var uniquePath = fileService.getTemporaryUniquePath("some-random-path-which-does-not-exist", 1);
+            var uniquePath = fileService.getTemporaryUniquePath(Path.of("some-random-path-which-does-not-exist"), 1);
             assertThat(uniquePath.toString()).isNotEmpty();
             verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(1L));
         });
