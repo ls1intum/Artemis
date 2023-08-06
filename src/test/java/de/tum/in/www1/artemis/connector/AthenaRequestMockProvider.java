@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Profile("athena")
 public class AthenaRequestMockProvider {
 
-    private static final String moduleExample = "module_example";
+    private static final String MODULE_EXAMPLE = "module_example";
 
     private final RestTemplate restTemplate;
 
@@ -84,7 +84,7 @@ public class AthenaRequestMockProvider {
         }
 
         // Response: {"status":200,"data":null,"module_name":"module_example"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", moduleExample).putNull("data");
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", MODULE_EXAMPLE).putNull("data");
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
@@ -103,7 +103,7 @@ public class AthenaRequestMockProvider {
         }
 
         // Response: {"status":200,"data":<submissionIdResponse>,"module_name":"module_example"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", moduleExample).put("data", submissionIdResponse);
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", MODULE_EXAMPLE).put("data", submissionIdResponse);
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -173,7 +173,7 @@ public class AthenaRequestMockProvider {
         moduleExampleNode.set("url", mapper.valueToTree("http://localhost:5001"));
         moduleExampleNode.set("type", mapper.valueToTree("programming"));
         moduleExampleNode.set("healthy", mapper.valueToTree(exampleModuleHealthy));
-        modules.set(moduleExample, moduleExampleNode);
+        modules.set(MODULE_EXAMPLE, moduleExampleNode);
         node.set("modules", modules);
 
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));

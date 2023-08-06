@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 
 class AthenaHealthIndicatorTest extends AbstractAthenaTest {
 
-    private static final String moduleExample = "module_example";
+    private static final String MODULE_EXAMPLE = "module_example";
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢
 
@@ -25,7 +25,7 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockHealthStatusSuccess(true);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails().get(moduleExample).toString()).contains(GREEN_CIRCLE);
+        assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(GREEN_CIRCLE);
     }
 
     @Test
@@ -33,7 +33,7 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockHealthStatusSuccess(false);
         final Health health = athenaHealthIndicator.health();
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails().get(moduleExample).toString()).contains(RED_CIRCLE);
+        assertThat(health.getDetails().get(MODULE_EXAMPLE).toString()).contains(RED_CIRCLE);
     }
 
     @Test
