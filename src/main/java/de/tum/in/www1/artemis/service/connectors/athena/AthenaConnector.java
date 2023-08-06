@@ -11,6 +11,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingException;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * Connector to Athena, a remote Artemis service that can create semi-automatic feedback suggestions for tutors.
@@ -49,7 +50,7 @@ class AthenaConnector<RequestType, ResponseType> {
      * @throws NetworkingException exception in case of unsuccessful responses or responses without a body.
      */
     private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         log.debug("Calling Athena.");
 
         var headers = new HttpHeaders();
@@ -62,8 +63,8 @@ class AthenaConnector<RequestType, ResponseType> {
             response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
         }
         catch (ResourceAccessException e) {
-            log.error("Athena did not respond successfully in time: {}, stack trace: {}", e.getMessage(), e.getStackTrace());
-            throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.");
+            log.error("Athena did not respond successfully in time", e);
+            throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.", e);
         }
 
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
@@ -75,7 +76,7 @@ class AthenaConnector<RequestType, ResponseType> {
         if (responseBody == null) {
             throw new NetworkingException("An Error occurred while calling Athena (response is null).");
         }
-        log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
+        log.debug("Finished remote call in {}", TimeLogUtil.formatDurationFrom(start));
 
         return responseBody;
     }

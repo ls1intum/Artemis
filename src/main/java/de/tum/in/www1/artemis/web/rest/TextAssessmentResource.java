@@ -494,9 +494,7 @@ public class TextAssessmentResource extends AssessmentResource {
             if (feedbacks.stream().anyMatch(feedback -> feedback.getId() == null)) {
                 throw new IllegalArgumentException("All feedbacks need to have an ID");
             }
-            // Send feedback in thread because it's not important for the user => quicker response
-            Thread thread = new Thread(() -> athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks));
-            thread.start();
+            athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }
 }

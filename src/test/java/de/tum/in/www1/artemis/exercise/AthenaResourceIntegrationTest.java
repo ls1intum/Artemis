@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
-    private static final String TEST_PREFIX = "feedbackintegration";
+    private static final String TEST_PREFIX = "athenaintegration";
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

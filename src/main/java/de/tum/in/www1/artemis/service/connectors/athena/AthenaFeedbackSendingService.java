@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -81,23 +82,27 @@ public class AthenaFeedbackSendingService {
 
     /**
      * Calls the remote Athena service to submit feedback given by a tutor
+     * We send the feedback asynchronously because it's not important for the user => quicker response
      *
      * @param exercise   the exercise the feedback is given for
      * @param submission the submission the feedback is given for
      * @param feedbacks  the feedback given by the tutor
      */
+    @Async
     public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks) {
         sendFeedback(exercise, submission, feedbacks, 1);
     }
 
     /**
      * Calls the remote Athena service to submit feedback given by a tutor
+     * We send the feedback asynchronously because it's not important for the user => quicker response
      *
      * @param exercise   the exercise the feedback is given for
      * @param submission the submission the feedback is given for
      * @param feedbacks  the feedback given by the tutor
      * @param maxRetries number of retries before the request will be canceled
      */
+    @Async
     public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks, int maxRetries) {
         if (!exercise.isFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
@@ -119,7 +124,7 @@ public class AthenaFeedbackSendingService {
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {
-            log.error("Error while calling Athena: {}", networkingException.getMessage());
+            log.error("Error while calling Athena", networkingException);
         }
     }
 

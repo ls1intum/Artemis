@@ -95,7 +95,7 @@ public class AthenaFeedbackSuggestionsService {
             }).toList();
         }
         catch (NetworkingException error) {
-            log.error("Error while calling Athena: {}", error.getMessage());
+            log.error("Error while calling Athena", error);
             throw error;
         }
     }

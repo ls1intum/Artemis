@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 @Profile("athena")
 public class AthenaHealthIndicator implements HealthIndicator {
 
-    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢
 
-    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle 🔴
 
     private static final String ATHENA_URL_KEY = "url";
 

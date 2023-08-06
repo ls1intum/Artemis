@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
 
@@ -79,7 +80,8 @@ public class AthenaSubmissionSendingService {
 
     /**
      * Calls the remote Athena service to submit a Job for calculating automatic feedback
-     * Note: See `TextSubmissionService:getTextSubmissionsByExerciseId` for selection of Submissions.
+     *
+     * @see TextSubmissionService :getTextSubmissionsByExerciseId` for selection of Submissions.
      *
      * @param exercise   the exercise the automatic assessments should be calculated for
      * @param maxRetries number of retries before the request will be canceled
@@ -92,15 +94,14 @@ public class AthenaSubmissionSendingService {
         log.debug("Start Athena Submission Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all text submissions for exercise (later we will support others)
-        int page = 0;
+        Pageable pageRequest = PageRequest.of(0, SUBMISSIONS_PER_REQUEST);
         while (true) {
-            Pageable pageRequest = PageRequest.of(page, SUBMISSIONS_PER_REQUEST);
             Page<TextSubmission> textSubmissions = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId(), pageRequest);
             sendSubmissions(exercise, textSubmissions.toSet(), maxRetries);
             if (textSubmissions.isLast()) {
                 break;
             }
-            page++;
+            pageRequest = pageRequest.next();
         }
     }
 
@@ -126,7 +127,7 @@ public class AthenaSubmissionSendingService {
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {
-            log.error("Error while calling Athena: {}", error.getMessage());
+            log.error("Error while calling Athena", error);
         }
     }
 

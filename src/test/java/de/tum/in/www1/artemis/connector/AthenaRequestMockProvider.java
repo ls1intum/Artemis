@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Profile("athena")
 public class AthenaRequestMockProvider {
 
-    private final String moduleExample = "module_example";
+    private static final String moduleExample = "module_example";
 
     private final RestTemplate restTemplate;
 

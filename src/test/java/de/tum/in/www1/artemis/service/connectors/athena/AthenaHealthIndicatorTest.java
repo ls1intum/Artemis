@@ -11,11 +11,11 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 
 class AthenaHealthIndicatorTest extends AbstractAthenaTest {
 
-    private final String moduleExample = "module_example";
+    private static final String moduleExample = "module_example";
 
-    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢
 
-    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // unicode red circle 🔴
 
     @Autowired
     private AthenaHealthIndicator athenaHealthIndicator;
