@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -116,8 +117,9 @@ public class WebsocketMessagingService {
      * @param result        the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
      *                          As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
      *                          problem statement and the course with all potential attributes
+     * @return a CompletableFuture allowing to wait until all messages got send.
      */
-    public void broadcastNewResult(Participation participation, Result result) {
+    public CompletableFuture<Void> broadcastNewResult(Participation participation, Result result) {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
@@ -126,6 +128,8 @@ public class WebsocketMessagingService {
 
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
+
+        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
@@ -149,25 +153,28 @@ public class WebsocketMessagingService {
                 result.filterSensitiveInformation();
 
                 students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+                        .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
 
                 result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
                 students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                        .forEach(user -> this.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+                        .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
             }
         }
 
-        // Restore information that should not go to students but tutors, instructors, and admins should still see
-        result.setAssessor(originalAssessor);
-        result.setFeedbacks(originalFeedback);
+        return CompletableFuture.allOf(allFutures.toArray(CompletableFuture[]::new)).thenCompose(v -> {
+            // Restore information that should not go to students but tutors, instructors, and admins should still see
+            // only add these values after the async broadcast is done to not publish it mistakenly
+            result.setAssessor(originalAssessor);
+            result.setFeedbacks(originalFeedback);
 
-        // Send to tutors, instructors and admins
-        sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result);
-
-        // recover the participation because we might want to use it again after this method
-        result.setParticipation(originalParticipation);
-        result.setSubmission(originalSubmission);
+            // Send to tutors, instructors and admins
+            return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
+                // recover the participation because we might want to use it again after this method
+                result.setParticipation(originalParticipation);
+                result.setSubmission(originalSubmission);
+            });
+        });
     }
 
     /**
