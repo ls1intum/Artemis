@@ -100,6 +100,7 @@ public class TextExerciseUtilService {
     /**
      * Create an example text exercise with feedback suggestions enabled
      *
+     * @param course The course to which the exercise belongs
      * @return the created text exercise
      */
     public TextExercise createSampleTextExercise(Course course) {
