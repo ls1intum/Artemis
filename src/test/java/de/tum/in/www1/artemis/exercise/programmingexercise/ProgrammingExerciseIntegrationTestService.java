@@ -298,8 +298,8 @@ class ProgrammingExerciseIntegrationTestService {
     List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Set one of the participations to practice mode
         participation1.setTestRun(false);
@@ -340,8 +340,8 @@ class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
 
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doThrow(EmptyCommitException.class).when(gitService).stageAllChanges(any());
 
         // Create the eclipse .project file which will be modified.
@@ -383,8 +383,8 @@ class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
 
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
@@ -426,8 +426,8 @@ class ProgrammingExerciseIntegrationTestService {
     void testExportSubmissionsByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
@@ -448,7 +448,7 @@ class ProgrammingExerciseIntegrationTestService {
     void testExportSubmissionAnonymizationCombining() throws Exception {
         // provide repositories
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Mock and pretend first commit is template commit
         ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
@@ -521,8 +521,8 @@ class ProgrammingExerciseIntegrationTestService {
     private File exportSubmissionsByStudentLogins(HttpStatus expectedStatus) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}",
                 userPrefix + "student1," + userPrefix + "student2");
         return request.postWithResponseBodyFile(path, getOptions(), expectedStatus);
@@ -746,7 +746,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());
         final var path = ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");

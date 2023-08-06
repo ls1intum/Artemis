@@ -102,6 +102,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
             else {
                 assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED_DELETED);
             }
+            verify(fileService).scheduleForDeletion(any(Path.class), eq(2L));
         }
         else {
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(state);
