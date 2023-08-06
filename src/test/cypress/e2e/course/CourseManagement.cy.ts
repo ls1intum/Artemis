@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 
@@ -12,8 +12,8 @@ const courseData = {
     title: '',
     shortName: '',
     description: 'Lore Impsum',
-    startDate: day(),
-    endDate: day().add(1, 'day'),
+    startDate: dayjs(),
+    endDate: dayjs().add(1, 'day'),
     testCourse: true,
     semester: 'SS23',
     maxPoints: 40,

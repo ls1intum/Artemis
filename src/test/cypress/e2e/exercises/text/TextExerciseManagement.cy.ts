@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -36,9 +36,9 @@ describe('Text exercise management', () => {
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
         textExerciseCreation.typeTitle(exerciseTitle);
-        textExerciseCreation.setReleaseDate(day());
-        textExerciseCreation.setDueDate(day().add(1, 'days'));
-        textExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
+        textExerciseCreation.setReleaseDate(dayjs());
+        textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+        textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
         textExerciseCreation.typeMaxPoints(10);
         textExerciseCreation.checkAutomaticAssessmentSuggestions();
         const problemStatement = 'This is a problem statement';

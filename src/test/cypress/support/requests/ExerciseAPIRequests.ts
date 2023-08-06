@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -68,13 +68,13 @@ export class ExerciseAPIRequests {
         exerciseGroup?: ExerciseGroup;
         scaMaxPenalty?: number | null;
         recordTestwiseCoverage?: boolean;
-        releaseDate?: day.Dayjs;
-        dueDate?: day.Dayjs;
+        releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
         title?: string;
         programmingShortName?: string;
         programmingLanguage?: ProgrammingLanguage;
         packageName?: string;
-        assessmentDate?: day.Dayjs;
+        assessmentDate?: dayjs.Dayjs;
         assessmentType?: ProgrammingExerciseAssessmentType;
     }): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const {
@@ -82,13 +82,13 @@ export class ExerciseAPIRequests {
             exerciseGroup,
             scaMaxPenalty = null,
             recordTestwiseCoverage = false,
-            releaseDate = day(),
-            dueDate = day().add(1, 'day'),
+            releaseDate = dayjs(),
+            dueDate = dayjs().add(1, 'day'),
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
             packageName = 'de.test',
-            assessmentDate = day().add(2, 'days'),
+            assessmentDate = dayjs().add(2, 'days'),
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
         } = options;
 
@@ -255,9 +255,9 @@ export class ExerciseAPIRequests {
     createModelingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         title = 'Modeling ' + generateUUID(),
-        releaseDate = day(),
-        dueDate = day().add(1, 'days'),
-        assessmentDueDate = day().add(2, 'days'),
+        releaseDate = dayjs(),
+        dueDate = dayjs().add(1, 'days'),
+        assessmentDueDate = dayjs().add(2, 'days'),
     ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
         const templateCopy = {
             ...modelingExerciseTemplate,
@@ -290,7 +290,7 @@ export class ExerciseAPIRequests {
      * @param due - The new assessment due date (optional, default: current date).
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
+    updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
         exercise.assessmentDueDate = due;
         return this.updateExercise(exercise, ExerciseType.MODELING);
     }
@@ -334,7 +334,7 @@ export class ExerciseAPIRequests {
      * @param due - The new due date (optional, default: current date).
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
+    updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
         exercise.dueDate = due;
         return this.updateExercise(exercise, ExerciseType.MODELING);
     }
@@ -353,7 +353,7 @@ export class ExerciseAPIRequests {
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
         title = 'Quiz ' + generateUUID(),
-        releaseDate = day().add(1, 'year'),
+        releaseDate = dayjs().add(1, 'year'),
         duration = 600,
     ): Cypress.Chainable<Cypress.Response<QuizExercise>> {
         const quizExercise: any = {

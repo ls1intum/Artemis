@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
@@ -30,8 +30,8 @@ export class CourseManagementAPIRequests {
             customizeGroups?: boolean;
             courseName?: string;
             courseShortName?: string;
-            start?: day.Dayjs;
-            end?: day.Dayjs;
+            start?: dayjs.Dayjs;
+            end?: dayjs.Dayjs;
             iconFileName?: string;
             iconFile?: Blob;
             allowCommunication?: boolean;
@@ -42,8 +42,8 @@ export class CourseManagementAPIRequests {
             customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
             courseShortName = 'cypress' + generateUUID(),
-            start = day().subtract(2, 'hours'),
-            end = day().add(2, 'hours'),
+            start = dayjs().subtract(2, 'hours'),
+            end = dayjs().add(2, 'hours'),
             iconFileName,
             iconFile,
             allowCommunication = true,
@@ -164,7 +164,7 @@ export class CourseManagementAPIRequests {
      * @param endDate - The end date and time of the lecture (optional, default: current date and time + 10 minutes).
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+    createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = dayjs(), endDate = dayjs().add(10, 'minutes')) {
         const body = {
             ...lectureTemplate,
             course,

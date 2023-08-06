@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -29,8 +29,8 @@ const complaint = "That feedback wasn't very useful!";
 describe('Programming exercise assessment', () => {
     let course: Course;
     let exercise: ProgrammingExercise;
-    let dueDate: day.Dayjs;
-    let assessmentDueDate: day.Dayjs;
+    let dueDate: dayjs.Dayjs;
+    let assessmentDueDate: dayjs.Dayjs;
 
     before('Creates a programming exercise and makes a student submission', () => {
         cy.login(admin);
@@ -39,13 +39,13 @@ describe('Programming exercise assessment', () => {
             courseManagementAPIRequest.addStudentToCourse(course, studentOne);
             courseManagementAPIRequest.addTutorToCourse(course, tutor);
             courseManagementAPIRequest.addInstructorToCourse(course, instructor);
-            dueDate = day().add(25, 'seconds');
+            dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
             exerciseAPIRequest
                 .createProgrammingExercise({
                     course,
                     recordTestwiseCoverage: false,
-                    releaseDate: day(),
+                    releaseDate: dayjs(),
                     dueDate: dueDate,
                     assessmentDate: assessmentDueDate,
                     assessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
@@ -59,7 +59,7 @@ describe('Programming exercise assessment', () => {
                         .then((participationId) => {
                             exerciseAPIRequest.makeProgrammingExerciseSubmission(participationId);
                             // Wait until the due date is in the past
-                            const now = day();
+                            const now = dayjs();
                             if (now.isBefore(dueDate)) {
                                 cy.wait(dueDate.diff(now, 'ms'));
                             }
@@ -81,7 +81,7 @@ describe('Programming exercise assessment', () => {
         programmingExerciseAssessment.submit().then((request: Interception) => {
             expect(request.response!.statusCode).to.eq(200);
             // Wait until the assessment due date is over
-            const now = day();
+            const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
                 cy.wait(assessmentDueDate.diff(now, 'ms'));
             }

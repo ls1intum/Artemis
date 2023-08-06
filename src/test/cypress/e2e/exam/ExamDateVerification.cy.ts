@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -40,9 +40,9 @@ describe('Exam date verification', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().add(1, 'day'),
-                startDate: day().add(2, 'days'),
-                endDate: day().add(3, 'days'),
+                visibleDate: dayjs().add(1, 'day'),
+                startDate: dayjs().add(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
             };
             examAPIRequests.createExam(examConfig).then((response) => {
                 exam = response.body;
@@ -58,9 +58,9 @@ describe('Exam date verification', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(5, 'days'),
-                startDate: day().add(2, 'days'),
-                endDate: day().add(3, 'days'),
+                visibleDate: dayjs().subtract(5, 'days'),
+                startDate: dayjs().add(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
             };
             examAPIRequests.createExam(examConfig).then((response) => {
                 exam = response.body;
@@ -78,9 +78,9 @@ describe('Exam date verification', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'days'),
-                startDate: day().subtract(2, 'days'),
-                endDate: day().add(3, 'days'),
+                visibleDate: dayjs().subtract(3, 'days'),
+                startDate: dayjs().subtract(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
             };
             examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
@@ -108,12 +108,12 @@ describe('Exam date verification', () => {
 
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
-            const examEnd = day().add(30, 'seconds');
+            const examEnd = dayjs().add(30, 'seconds');
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'days'),
-                startDate: day().subtract(2, 'days'),
+                visibleDate: dayjs().subtract(3, 'days'),
+                startDate: dayjs().subtract(2, 'days'),
                 endDate: examEnd,
             };
             examAPIRequests.createExam(examConfig).then((examResponse) => {
@@ -134,8 +134,8 @@ describe('Exam date verification', () => {
                             textExerciseEditor.typeSubmission(exercise.id!, submissionText);
                         });
                         examNavigation.clickSave();
-                        if (examEnd.isAfter(day())) {
-                            cy.wait(examEnd.diff(day()));
+                        if (examEnd.isAfter(dayjs())) {
+                            cy.wait(examEnd.diff(dayjs()));
                         }
                         examParticipation.checkExamFinishedTitle(exam.title!);
                         examStartEnd.finishExam();

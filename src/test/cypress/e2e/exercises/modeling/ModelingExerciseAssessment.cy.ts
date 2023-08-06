@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -34,7 +34,7 @@ describe('Modeling Exercise Assessment', () => {
                 exerciseAPIRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
                     exerciseAPIRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
                     cy.login(instructor);
-                    exerciseAPIRequest.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
+                    exerciseAPIRequest.updateModelingExerciseDueDate(modelingExercise, dayjs().add(5, 'seconds'));
                 });
             });
         });
@@ -62,7 +62,7 @@ describe('Modeling Exercise Assessment', () => {
         before(() => {
             cy.login(admin);
             exerciseAPIRequest
-                .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
+                .updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs())
                 .its('body')
                 .then((exercise) => {
                     modelingExercise = exercise;

@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -27,9 +27,9 @@ describe('Exam test run', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'days'),
-                startDate: day().add(1, 'days'),
-                endDate: day().add(3, 'days'),
+                visibleDate: dayjs().subtract(3, 'days'),
+                startDate: dayjs().add(1, 'days'),
+                endDate: dayjs().add(3, 'days'),
                 examMaxPoints: 40,
                 numberOfExercisesInExam: 4,
             };

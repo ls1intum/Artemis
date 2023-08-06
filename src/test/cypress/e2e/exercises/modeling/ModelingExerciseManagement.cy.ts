@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 import { MODELING_EDITOR_CANVAS } from 'src/test/cypress/support/constants';
 
 import { Course } from 'app/entities/course.model';
@@ -92,9 +92,9 @@ describe('Modeling Exercise Management', () => {
             const points = 100;
             modelingExerciseCreation.setTitle(newTitle);
             modelingExerciseCreation.pickDifficulty({ hard: true });
-            modelingExerciseCreation.setReleaseDate(day().add(1, 'day'));
-            modelingExerciseCreation.setDueDate(day().add(2, 'day'));
-            modelingExerciseCreation.setAssessmentDueDate(day().add(3, 'day'));
+            modelingExerciseCreation.setReleaseDate(dayjs().add(1, 'day'));
+            modelingExerciseCreation.setDueDate(dayjs().add(2, 'day'));
+            modelingExerciseCreation.setAssessmentDueDate(dayjs().add(3, 'day'));
             modelingExerciseCreation.includeInOverallScore();
             modelingExerciseCreation.setPoints(points);
             modelingExerciseCreation.save();
@@ -130,7 +130,7 @@ describe('Modeling Exercise Management', () => {
     describe('Modeling Exercise Release', () => {
         it('Student can not see unreleased Modeling Exercise', () => {
             cy.login(instructor);
-            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), day().add(1, 'hour')).then((resp) => {
+            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
             cy.login(studentOne, '/courses');
@@ -140,7 +140,7 @@ describe('Modeling Exercise Management', () => {
 
         it('Student can see released Modeling Exercise', () => {
             cy.login(instructor);
-            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), day().subtract(1, 'hour')).then((resp) => {
+            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
             cy.login(studentOne, '/courses');

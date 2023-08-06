@@ -5,7 +5,7 @@ import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 /**
  * A class which encapsulates all API requests related to exams.
@@ -35,16 +35,16 @@ export class ExamAPIRequests {
         course?: Course;
         title?: string;
         testExam?: boolean;
-        visibleDate?: day.Dayjs;
-        startDate?: day.Dayjs;
-        endDate?: day.Dayjs;
+        visibleDate?: dayjs.Dayjs;
+        startDate?: dayjs.Dayjs;
+        endDate?: dayjs.Dayjs;
         examMaxPoints?: number;
         numberOfExercisesInExam?: number;
         numberOfCorrectionRoundsInExam?: number;
         workingTime?: number;
-        examStudentReviewStart?: day.Dayjs;
-        examStudentReviewEnd?: day.Dayjs;
-        publishResultsDate?: day.Dayjs;
+        examStudentReviewStart?: dayjs.Dayjs;
+        examStudentReviewEnd?: dayjs.Dayjs;
+        publishResultsDate?: dayjs.Dayjs;
         gracePeriod?: number;
         channelName?: string;
     }): Cypress.Chainable<Cypress.Response<Exam>> {
@@ -54,9 +54,9 @@ export class ExamAPIRequests {
             course,
             title = tempTitle,
             testExam = false,
-            visibleDate = dayjsToString(day().subtract(1, 'day')),
-            startDate = dayjsToString(day().add(1, 'day')),
-            endDate = dayjsToString(day().add(2, 'day')),
+            visibleDate = dayjsToString(dayjs().subtract(1, 'day')),
+            startDate = dayjsToString(dayjs().add(1, 'day')),
+            endDate = dayjsToString(dayjs().add(2, 'day')),
             examMaxPoints = 10,
             numberOfExercisesInExam = 1,
             numberOfCorrectionRoundsInExam = 1,

@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -11,9 +11,9 @@ import { convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } fro
 // Common primitives
 const examData = {
     title: 'exam' + generateUUID(),
-    visibleDate: day(),
-    startDate: day().add(1, 'day'),
-    endDate: day().add(2, 'day'),
+    visibleDate: dayjs(),
+    startDate: dayjs().add(1, 'day'),
+    endDate: dayjs().add(2, 'day'),
     numberOfExercisesInExam: 4,
     examMaxPoints: 40,
     startText: 'Exam start text',
@@ -24,9 +24,9 @@ const examData = {
 
 const editedExamData = {
     title: 'exam' + generateUUID(),
-    visibleDate: day(),
-    startDate: day().add(2, 'day'),
-    endDate: day().add(4, 'day'),
+    visibleDate: dayjs(),
+    startDate: dayjs().add(2, 'day'),
+    endDate: dayjs().add(4, 'day'),
     numberOfExercisesInExam: 3,
     examMaxPoints: 30,
     startText: 'Edited exam start text',

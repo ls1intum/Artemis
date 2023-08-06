@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -27,9 +27,9 @@ describe('Lecture management', () => {
         cy.fixture('loremIpsum-short.txt').then((text) => {
             lectureCreation.typeDescription(text);
         });
-        lectureCreation.setVisibleDate(day());
-        lectureCreation.setStartDate(day());
-        lectureCreation.setEndDate(day().add(1, 'hour'));
+        lectureCreation.setVisibleDate(dayjs());
+        lectureCreation.setStartDate(dayjs());
+        lectureCreation.setEndDate(dayjs().add(1, 'hour'));
         lectureCreation.save().then((lectureResponse) => {
             expect(lectureResponse.response!.statusCode).to.eq(201);
         });

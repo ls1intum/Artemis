@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -60,9 +60,9 @@ describe('Exam participation', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'minutes'),
-                startDate: day().subtract(2, 'minutes'),
-                endDate: day().add(1, 'hour'),
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: dayjs().add(1, 'hour'),
                 examMaxPoints: 40,
                 numberOfExercisesInExam: 4,
             };
@@ -159,9 +159,9 @@ describe('Exam participation', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'minutes'),
-                startDate: day().subtract(2, 'minutes'),
-                endDate: day().add(1, 'hour'),
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: dayjs().add(1, 'hour'),
                 examMaxPoints: 10,
                 numberOfExercisesInExam: 1,
             };
@@ -262,9 +262,9 @@ describe('Exam participation', () => {
             const examConfig: Exam = {
                 course,
                 title: examTitle,
-                visibleDate: day().subtract(3, 'minutes'),
-                startDate: day().subtract(2, 'minutes'),
-                endDate: day().add(20, 'seconds'),
+                visibleDate: dayjs().subtract(3, 'minutes'),
+                startDate: dayjs().subtract(2, 'minutes'),
+                endDate: dayjs().add(20, 'seconds'),
                 examMaxPoints: 10,
                 numberOfExercisesInExam: 1,
             };

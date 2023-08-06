@@ -7,7 +7,7 @@ import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
@@ -36,8 +36,8 @@ describe('Test exam participation', () => {
                 course,
                 title: examTitle,
                 testExam: true,
-                startDate: day().subtract(1, 'day'),
-                visibleDate: day().subtract(2, 'days'),
+                startDate: dayjs().subtract(1, 'day'),
+                visibleDate: dayjs().subtract(2, 'days'),
                 examMaxPoints: 100,
                 numberOfExercisesInExam: 10,
                 numberOfCorrectionRoundsInExam: 0,
@@ -136,8 +136,8 @@ describe('Test exam participation', () => {
                 course,
                 title: examTitle,
                 testExam: true,
-                startDate: day().subtract(1, 'day'),
-                visibleDate: day().subtract(2, 'days'),
+                startDate: dayjs().subtract(1, 'day'),
+                visibleDate: dayjs().subtract(2, 'days'),
                 workingTime: 15,
                 examMaxPoints: 10,
                 numberOfCorrectionRoundsInExam: 1,

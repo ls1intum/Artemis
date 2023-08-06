@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -27,9 +27,9 @@ describe('File upload exercise management', () => {
         // Fill out file upload exercise form
         const exerciseTitle = 'file upload exercise' + generateUUID();
         fileUploadExerciseCreation.typeTitle(exerciseTitle);
-        fileUploadExerciseCreation.setReleaseDate(day());
-        fileUploadExerciseCreation.setDueDate(day().add(1, 'days'));
-        fileUploadExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
+        fileUploadExerciseCreation.setReleaseDate(dayjs());
+        fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+        fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
         fileUploadExerciseCreation.typeMaxPoints(10);
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';

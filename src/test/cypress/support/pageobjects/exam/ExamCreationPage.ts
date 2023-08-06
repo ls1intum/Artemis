@@ -1,4 +1,4 @@
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { BASE_API, POST, PUT } from '../../constants';
 import { enterDate } from '../../utils';
@@ -25,21 +25,21 @@ export class ExamCreationPage {
     /**
      * @param date the date from when the exam should be visible
      */
-    setVisibleDate(date: day.Dayjs) {
+    setVisibleDate(date: dayjs.Dayjs) {
         enterDate('#visibleDate', date);
     }
 
     /**
      * @param date the date when the exam starts
      */
-    setStartDate(date: day.Dayjs) {
+    setStartDate(date: dayjs.Dayjs) {
         enterDate('#startDate', date);
     }
 
     /**
      * @param date the date when the exam will end
      */
-    setEndDate(date: day.Dayjs) {
+    setEndDate(date: dayjs.Dayjs) {
         enterDate('#endDate', date);
     }
 

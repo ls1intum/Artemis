@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day, { Dayjs } from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -54,7 +54,7 @@ describe('Exam assessment', () => {
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = day().add(2, 'minutes');
+            examEnd = dayjs().add(2, 'minutes');
             prepareExam(course, examEnd, ExerciseType.PROGRAMMING);
         });
 
@@ -79,7 +79,7 @@ describe('Exam assessment', () => {
 
     describe('Modeling exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = day().add(30, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             prepareExam(course, examEnd, ExerciseType.MODELING);
         });
 
@@ -111,7 +111,7 @@ describe('Exam assessment', () => {
 
     describe('Text exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = day().add(40, 'seconds');
+            examEnd = dayjs().add(40, 'seconds');
             prepareExam(course, examEnd, ExerciseType.TEXT);
         });
 
@@ -140,7 +140,7 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         before('Prepare exam', () => {
-            examEnd = day().add(30, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             prepareExam(course, examEnd, ExerciseType.QUIZ);
         });
@@ -148,14 +148,14 @@ describe('Exam assessment', () => {
         it('Assesses quiz automatically', () => {
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            if (day().isBefore(examEnd)) {
-                cy.wait(examEnd.diff(day(), 'ms') + 1000);
+            if (dayjs().isBefore(examEnd)) {
+                cy.wait(examEnd.diff(dayjs(), 'ms') + 1000);
             }
             examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             cy.visit(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             courseAssessment.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
-            if (day().isBefore(resultDate)) {
-                cy.wait(resultDate.diff(day(), 'ms') + 1000);
+            if (dayjs().isBefore(resultDate)) {
+                cy.wait(resultDate.diff(dayjs(), 'ms') + 1000);
             }
             examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
@@ -168,12 +168,12 @@ describe('Exam assessment', () => {
     });
 });
 
-function prepareExam(course: Course, end: day.Dayjs, exerciseType: ExerciseType) {
+function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType) {
     cy.login(admin);
     const resultDate = end.add(1, 'second');
     const examConfig: Exam = {
         course,
-        startDate: day(),
+        startDate: dayjs(),
         endDate: end,
         numberOfCorrectionRoundsInExam: 1,
         examStudentReviewStart: resultDate.add(10, 'seconds'),

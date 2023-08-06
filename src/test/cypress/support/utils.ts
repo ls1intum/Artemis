@@ -1,11 +1,11 @@
 import { TIME_FORMAT } from './constants';
 import { Course } from 'app/entities/course.model';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 import utc from 'dayjs/esm/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
 
 // Add utc plugin to use the utc timezone
-day.extend(utc);
+dayjs.extend(utc);
 
 /**
  * This file contains all of the global utility functions not directly related to cypress.
@@ -22,7 +22,7 @@ export function generateUUID() {
 /**
  * Allows to enter date into the UI
  * */
-export function enterDate(selector: string, date: day.Dayjs) {
+export function enterDate(selector: string, date: dayjs.Dayjs) {
     const dateInputField = cy.get(selector).find('#date-input-field');
     dateInputField.should('not.be.disabled');
     dateInputField.clear().type(dayjsToString(date), { force: true });
@@ -40,7 +40,7 @@ export function checkField(field: string, value: any) {
  * @param day the day object
  * @returns a formatted string representing the date with utc timezone
  */
-export function dayjsToString(day: day.Dayjs) {
+export function dayjsToString(day: dayjs.Dayjs) {
     // We need to add the Z at the end. Otherwise, the server can't parse it.
     return day.utc().format(TIME_FORMAT) + 'Z';
 }

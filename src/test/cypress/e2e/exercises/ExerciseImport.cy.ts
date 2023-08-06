@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import day from 'dayjs/esm';
+import dayjs from 'dayjs/esm';
 
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -67,9 +67,9 @@ describe('Import exercises', () => {
         checkField('#field_title', textExercise.title!);
         checkField('#field_points', textExercise.maxPoints!);
 
-        textExerciseCreation.setReleaseDate(day());
-        textExerciseCreation.setDueDate(day().add(1, 'days'));
-        textExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
+        textExerciseCreation.setReleaseDate(dayjs());
+        textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+        textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
         textExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -101,7 +101,7 @@ describe('Import exercises', () => {
 
         cy.wait(500);
 
-        quizExerciseCreation.setVisibleFrom(day());
+        quizExerciseCreation.setVisibleFrom(dayjs());
 
         quizExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
@@ -125,9 +125,9 @@ describe('Import exercises', () => {
         checkField('#field_title', modelingExercise.title!);
         checkField('#field_points', modelingExercise.maxPoints!);
 
-        modelingExerciseCreation.setReleaseDate(day());
-        modelingExerciseCreation.setDueDate(day().add(1, 'days'));
-        modelingExerciseCreation.setAssessmentDueDate(day().add(2, 'days'));
+        modelingExerciseCreation.setReleaseDate(dayjs());
+        modelingExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+        modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
         modelingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
