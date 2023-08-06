@@ -142,8 +142,9 @@ public class WebsocketMessagingService {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
-        var originalSubmission = result.getSubmission();
-        result.setSubmission(null);
+        result.getSubmission().setParticipation(null);
+        var originalResults = result.getSubmission().getResults();
+        result.getSubmission().setResults(null);
 
         final var originalAssessor = result.getAssessor();
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
@@ -191,7 +192,8 @@ public class WebsocketMessagingService {
             return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
                 // recover the participation because we might want to use it again after this method
                 result.setParticipation(originalParticipation);
-                result.setSubmission(originalSubmission);
+                result.getSubmission().setParticipation(originalParticipation);
+                result.getSubmission().setResults(originalResults);
             });
         });
     }
