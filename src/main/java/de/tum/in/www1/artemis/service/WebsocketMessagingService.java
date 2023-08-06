@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -122,16 +121,8 @@ public class WebsocketMessagingService {
      * @param result        the result object to publish
      */
     public void awaitBroadcastNewResult(Participation participation, Result result) {
-        try {
-            // Wait until all notifications got send and the objects were reconnected.
-            broadcastNewResult(participation, result).get();
-        }
-        catch (InterruptedException e) {
-            log.warn("timed out while sending a result notification", e);
-        }
-        catch (ExecutionException e) {
-            log.warn("failed to send result notification", e);
-        }
+        // Wait until all notifications got send and the objects were reconnected.
+        broadcastNewResult(participation, result).join();
     }
 
     /**
