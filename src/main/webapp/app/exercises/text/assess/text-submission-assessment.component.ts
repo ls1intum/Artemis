@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
@@ -44,7 +43,7 @@ import { TextBlock } from 'app/entities/text-block.model';
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
 })
-export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit {
+export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
@@ -86,9 +85,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseDashboardLink: string[];
     isExamMode = false;
 
-    // An observable that can be used to cancel the request for feedback suggestions
-    // if it is not done when the first manual feedback is entered
-    private feedbackSuggestionsObservable: Observable<void>;
+    private feedbackSuggestionsObservableUnsubscribe: (() => void) | null = null;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -172,6 +169,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
+    ngOnDestroy(): void {
+        if (this.feedbackSuggestionsObservableUnsubscribe) {
+            this.feedbackSuggestionsObservableUnsubscribe();
+        }
+    }
+
     private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
@@ -248,7 +251,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * If the split conflicts with a manual feedback, we don't add the TextBlockRef at all.
      *
      * @param refToAdd The TextBlockRef to add (text block + feedback on it)
-     * @private
      */
     private addAutomaticTextBlockRef(refToAdd: TextBlockRef) {
         const newTextBlockRefs: TextBlockRef[] = [];
@@ -309,15 +311,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService.getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!).pipe(
-            map((feedbackSuggestions: TextBlockRef[]) => {
+        this.feedbackSuggestionsObservableUnsubscribe = this.athenaService
+            .getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!)
+            .subscribe((feedbackSuggestions: TextBlockRef[]) => {
                 for (const suggestion of feedbackSuggestions) {
                     this.addAutomaticTextBlockRef(suggestion);
                 }
-            }),
-        );
-        // actually consume data
-        this.feedbackSuggestionsObservable.subscribe();
+            });
     }
 
     /**

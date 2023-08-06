@@ -14,11 +14,15 @@ import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 
 class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Autowired
     private AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private TextExercise textExercise;
 
@@ -28,7 +32,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = createTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise();
         textSubmission = new TextSubmission(2L).text("This is a text submission");
     }
 

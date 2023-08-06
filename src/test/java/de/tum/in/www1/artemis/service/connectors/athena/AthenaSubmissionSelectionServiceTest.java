@@ -15,11 +15,15 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 
 class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Autowired
     private AthenaSubmissionSelectionService athenaSubmissionSelectionService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private TextExercise textExercise;
 
@@ -31,7 +35,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = createTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise();
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
     }

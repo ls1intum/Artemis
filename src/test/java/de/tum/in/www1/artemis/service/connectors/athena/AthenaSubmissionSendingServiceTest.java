@@ -12,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
 class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
@@ -32,6 +34,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
@@ -44,7 +49,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
         ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
 
-        textExercise = createTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise();
     }
 
     private void mockTextSubmissionRepository(long exerciseId, int totalSubmissions) {

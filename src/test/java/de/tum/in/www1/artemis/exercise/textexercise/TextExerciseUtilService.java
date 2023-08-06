@@ -97,16 +97,26 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
-    public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
-        if (textBlocks.size() != submissionCount * submissionSize) {
-            throw new IllegalArgumentException("number of textBlocks must be eqaul to submissionCount * submissionSize");
-        }
+    /**
+     * Create an example text exercise with feedback suggestions enabled
+     *
+     * @return the created text exercise
+     */
+    public TextExercise createSampleTextExercise() {
         TextExercise textExercise = new TextExercise();
-        textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         textExercise = textExerciseRepository.save(textExercise);
+        return textExercise;
+    }
+
+    public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
+        if (textBlocks.size() != submissionCount * submissionSize) {
+            throw new IllegalArgumentException("number of textBlocks must be equal to submissionCount * submissionSize");
+        }
+        TextExercise textExercise = createSampleTextExercise();
+        textExercise.setCourse(course);
 
         // submissions.length must be equal to studentParticipations.length;
         for (int i = 0; i < submissionCount; i++) {

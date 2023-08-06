@@ -490,10 +490,6 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
         if (athenaFeedbackSendingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
-            // Athena needs IDs on all feedbacks
-            if (feedbacks.stream().anyMatch(feedback -> feedback.getId() == null)) {
-                throw new IllegalArgumentException("All feedbacks need to have an ID");
-            }
             athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }

@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
@@ -19,12 +20,16 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private TextBlockRepository textBlockRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private AthenaFeedbackSendingService athenaFeedbackSendingService;
 
@@ -43,7 +48,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = createTextExercise();
+        textExercise = textExerciseUtilService.createSampleTextExercise();
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
