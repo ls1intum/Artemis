@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -107,6 +108,21 @@ public class WebsocketMessagingService {
         catch (Exception ex) {
             log.error("Error when sending message {} on topic {} to user {}", payload, topic, user, ex);
             return CompletableFuture.failedFuture(ex);
+        }
+    }
+
+    /**
+     * Broadcast a new result to the client.
+     * Waits until all notifications are sent and the result properties are restored.
+     * This allows the caller to reuse the passed result object again after calling.
+     */
+    public void awaitBroadcastNewResult(Participation participation, Result result) {
+        try {
+            broadcastNewResult(participation, result).get();
+            // Wait until all notifications got send and the objects were reconnected.
+        }
+        catch (InterruptedException | ExecutionException e) {
+            log.warn("timed out while sending a result notification", e);
         }
     }
 
