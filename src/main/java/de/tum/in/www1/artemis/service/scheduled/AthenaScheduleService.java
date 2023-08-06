@@ -44,6 +44,9 @@ public class AthenaScheduleService {
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
     }
 
+    /**
+     * Schedule Athena tasks for all text exercises with future due dates on startup.
+     */
     @PostConstruct
     public void scheduleRunningExercisesOnStartup() {
         if (profileService.isDev()) {
