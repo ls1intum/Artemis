@@ -68,7 +68,7 @@ public class ProgrammingExerciseExportService {
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
-    private Path repoDownloadClonePath;
+    private String repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -113,8 +113,9 @@ public class ProgrammingExerciseExportService {
      */
     public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
-        if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectories(repoDownloadClonePath);
+        Path repoDownloadClonePathAsPath = Path.of(repoDownloadClonePath);
+        if (!Files.exists(repoDownloadClonePathAsPath)) {
+            Files.createDirectories(repoDownloadClonePathAsPath);
         }
         Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
 
@@ -565,7 +566,7 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getTemporaryUniquePath(outputDir, 5);
+        var repositoryDir = fileService.getTemporaryUniquePathString(outputDir.toString(), 5);
         Path localRepoPath;
 
         // Checkout the repository
@@ -627,7 +628,7 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir);
+            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
@@ -681,9 +682,9 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise the programming exercise for which repos have been downloaded
      * @param targetPath          the path in which the repositories have been downloaded
      */
-    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, Path targetPath) {
+    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
-        Path projectPath = targetPath.resolve(projectDirName);
+        Path projectPath = Path.of(targetPath, projectDirName);
         try {
             log.info("Delete project root directory {}", projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());

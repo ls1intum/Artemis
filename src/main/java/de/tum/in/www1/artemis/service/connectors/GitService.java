@@ -92,7 +92,7 @@ public class GitService {
     private String defaultBranch;
 
     @Value("${artemis.repo-clone-path}")
-    private Path repoClonePath;
+    private String repoClonePath;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -312,7 +312,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, GitException {
         var repoUrl = participation.getVcsRepositoryUrl();
         Repository repository = getOrCheckoutRepository(repoUrl, targetPath, true);
         repository.setParticipation(participation);
@@ -332,14 +332,14 @@ public class GitService {
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
+    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, InvalidPathException {
         var repoUrl = participation.getVcsRepositoryUrl();
         String repoFolderName = repoUrl.folderNameForRepositoryUrl();
 
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
-        Path localPath = targetPath.resolve(updatedRepoFolderName);
+        Path localPath = Path.of(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
         repository.setParticipation(participation);
@@ -386,7 +386,7 @@ public class GitService {
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
-        Path localPath = getLocalPathOfRepo(repoClonePath.toString(), repoUrl);
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUrl);
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet, defaultBranch);
     }
 
@@ -523,7 +523,7 @@ public class GitService {
      * @return returns true if the repository is already cached
      */
     public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
-        Path localPath = getLocalPathOfRepo(repoClonePath.toString(), repositoryUrl);
+        Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
         if (localPath == null) {
             return false;
         }
@@ -543,7 +543,7 @@ public class GitService {
     }
 
     public Path getDefaultLocalPathOfRepo(VcsRepositoryUrl targetUrl) {
-        return getLocalPathOfRepo(repoClonePath.toString(), targetUrl);
+        return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
 
     /**
@@ -1236,7 +1236,7 @@ public class GitService {
      * @param programmingExercise contains the project key which is used as the folder name
      */
     public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
-        var folderPath = repoClonePath.resolve(programmingExercise.getProjectKey());
+        var folderPath = Path.of(repoClonePath, programmingExercise.getProjectKey());
         try {
             FileUtils.deleteDirectory(folderPath.toFile());
         }
