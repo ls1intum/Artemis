@@ -207,13 +207,13 @@ public class WebsocketMessagingService {
 
             result.filterSensitiveInformation();
 
-            students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
+            allFutures.addAll(students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
 
             result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
 
-            students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> allFutures.add(sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)));
+            allFutures.addAll(students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
         }
         return allFutures.toArray(CompletableFuture[]::new);
     }
