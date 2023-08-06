@@ -21,8 +21,8 @@ the prelive system, which is already properly setup in the university data cente
 
 Local Cypress Setup
 -------------------
-Sometimes developers need to setup Cypress locally, in order to debug failing E2E tests or write new tests.
-In order to setup cypress locally, we need to follow these steps:
+Sometimes developers need to set up Cypress locally, in order to debug failing E2E tests or write new tests.
+Follow these steps to create your local cypress instance:
 
 1. Install dependencies
 
@@ -54,7 +54,7 @@ In order to setup cypress locally, we need to follow these steps:
       "instructorGroupName": "instructors"
     }
 
-  The ``USERID`` part will be replaced by different user ids. These are set within the ``support/users.ts`` file. 
+  The ``USERID`` part will be automatically replaced by different user ids. These are set within the ``support/users.ts`` file. 
   For a typical local installation the IDs are:
     - studentOne: 1
     - studentTwo: 2
@@ -108,7 +108,7 @@ To access it, you need these basic auth credentials (sorry cypress itself does n
 system, so we are forced to use nginx basic auth here). You can find these credentials on our confluence page:
 https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
 
-After that you will see the initial dashboard without any useful information. 
+After that you will see the initial dashboard. 
 
 You first have to select a project in the left sidebar (mysql or postgresql):
 
@@ -122,8 +122,8 @@ Now you get a list of the last runs. In the top right you can enter your branch 
     :align: center
     :alt: Sorry Cypress last runs
 
-The name of the run consists of the branch name followed by the run # . The last part is MySQL or 
-PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL  runs. 
+The name of the run consists of the branch name followed by the run number. The last part is MySQL or 
+PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL runs. 
 
 If you now click on the run, you can see detailed information about the test suites (corresponding 
 to components within Artemis). For each suite there is information about the run time, the successful/failed/flaky/skipped/ignored tests:
