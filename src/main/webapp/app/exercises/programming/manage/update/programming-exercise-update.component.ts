@@ -317,20 +317,24 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
-            if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+            if (type == ProjectType.MAVEN_BLACKBOX) {
+                this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
+                this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
+                this.sequentialTestRunsAllowed = false;
+                this.testwiseCoverageAnalysisSupported = false;
+            } else if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
                 } else {
                     this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
                 }
-            } else if (type === ProjectType.MAVEN_BLACKBOX) {
-                this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
-                this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
-                this.sequentialTestRunsAllowed = false;
-                this.testwiseCoverageAnalysisSupported = false;
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
                 } else {

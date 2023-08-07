@@ -17,7 +17,6 @@ isStaticCodeAnalysisEnabled = #isStaticCodeAnalysisEnabled
  */
 void testRunner() {
     setup()
-    //removeSecretFiles()
     build()
 
     // catchError-block: execute following steps even if the one inside the
