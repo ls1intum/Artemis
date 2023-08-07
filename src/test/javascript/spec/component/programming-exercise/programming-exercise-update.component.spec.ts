@@ -815,11 +815,22 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
         }));
 
-        it('should disable options for java dejagnu project type', fakeAsync(() => {
+        it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
-
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
             expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
+
+            comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
+            expect(comp.sequentialTestRunsAllowed).toBeTrue();
+            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
+
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
+            expect(comp.sequentialTestRunsAllowed).toBeFalse();
+            expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
+
+            comp.selectedProjectType = ProjectType.GRADLE_GRADLE;
+            expect(comp.sequentialTestRunsAllowed).toBeTrue();
+            expect(comp.testwiseCoverageAnalysisSupported).toBeTrue();
         }));
     });
 
