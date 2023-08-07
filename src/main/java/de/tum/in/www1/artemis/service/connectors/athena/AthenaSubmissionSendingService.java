@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -114,21 +115,23 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries      number of retries before the request will be canceled
      */
     public void sendSubmissions(TextExercise exercise, Set<TextSubmission> textSubmissions, int maxRetries) {
+        Set<TextSubmission> filteredTextSubmissions = new HashSet<>(textSubmissions);
+
         // filter submissions with an open participation (because of individual due dates)
-        textSubmissions.removeIf(submission -> {
+        filteredTextSubmissions.removeIf(submission -> {
             var individualDueDate = submission.getParticipation().getIndividualDueDate();
             return individualDueDate != null && individualDueDate.isAfter(ZonedDateTime.now());
         });
 
-        if (textSubmissions.isEmpty()) {
-            log.info("No text submissions found to send.");
+        if (filteredTextSubmissions.isEmpty()) {
+            log.info("No text submissions found to send (total: {}, filtered: 0)", textSubmissions.size());
             return;
         }
 
         log.info("Calling Athena to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(exercise, textSubmissions);
+            final RequestDTO request = new RequestDTO(exercise, filteredTextSubmissions);
             // TODO: make module selection dynamic (based on exercise)
             ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
