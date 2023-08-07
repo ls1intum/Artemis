@@ -128,10 +128,9 @@ public class TextSubmissionService extends SubmissionService {
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
-        var assessableSubmissions = getAssessableSubmissions(textExercise, examMode, correctionRound);
-
         // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
         if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+            var assessableSubmissions = getAssessableSubmissions(textExercise, examMode, correctionRound);
             var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {
                 var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
@@ -145,7 +144,7 @@ public class TextSubmissionService extends SubmissionService {
             }
         }
 
-        var submissionWithoutResult = super.getRandomAssessableSubmission(assessableSubmissions);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(textExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) submissionWithoutResult.get();
             return Optional.of(textSubmission);
