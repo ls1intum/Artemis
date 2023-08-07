@@ -8,5 +8,9 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
+        <createIndex indexName="conversation_id_creation_date" tableName="post">
+            <column name="conversation_id"/>
+            <column name="creation_date"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
