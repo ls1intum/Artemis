@@ -34,7 +34,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { By } from '@angular/platform-browser';
@@ -222,6 +222,7 @@ describe('ExamParticipationComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);

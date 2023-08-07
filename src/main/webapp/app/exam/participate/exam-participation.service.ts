@@ -81,6 +81,9 @@ export class ExamParticipationService {
                 }
                 return ExamParticipationService.convertStudentExamFromServer(studentExam);
             }),
+            tap((studentExam: StudentExam) => {
+                this.currentlyLoadedStudentExam.next(studentExam);
+            }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
                 return of(localStoredExam);

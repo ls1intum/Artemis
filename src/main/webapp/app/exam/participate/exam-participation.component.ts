@@ -365,9 +365,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                     this.submitInProgress = false;
 
-                    // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually for now
+                    // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
                     this.studentExam.submitted = true;
                     this.studentExam.submissionDate = dayjs();
+
+                    // Publish it so other components are aware of the change
+                    this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
 
                     if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
