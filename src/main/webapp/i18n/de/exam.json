@@ -266,7 +266,14 @@
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}."
+            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
+            "submissionSuccessful": {
+                "title": "Deine Klausur wurde erfolgreich abgegeben!",
+                "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
+                "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
+                "reviewHint": "Klicke auf diesen Button, um deine Abgabe einzusehen.",
+                "button": "Zusammenfassung anzeigen"
+            }
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -635,7 +642,6 @@
             "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
-            "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
