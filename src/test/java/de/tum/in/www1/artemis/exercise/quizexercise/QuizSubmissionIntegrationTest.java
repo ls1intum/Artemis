@@ -352,6 +352,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+
+        // Delete the quiz exercise to not interfere with other tests
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            quizExerciseRepository.delete(quizExercise);
+        }
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
