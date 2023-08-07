@@ -124,7 +124,6 @@ public class ConversationService {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
-        var unread = channelRepository.findChannelsOfUserWithUnreadMessageCount(courseId, requestingUser.getId());
 
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
@@ -132,7 +131,8 @@ public class ConversationService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
-        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
+        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream().map(UserConversationSummary::getConversation)).toList()
+                : channelsOfUser.stream().map(UserConversationSummary::getConversation).toList();
         conversations.addAll(filteredChannels);
 
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
