@@ -74,7 +74,6 @@ public class NotificationResource {
     @GetMapping("notifications")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
-        log.info("Load notifications");
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
