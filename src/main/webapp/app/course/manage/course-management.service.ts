@@ -503,7 +503,7 @@ export class CourseManagementService {
      * This method bundles recurring conversion steps for Course EntityResponses.
      * @param courseRes
      */
-    private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+    processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
