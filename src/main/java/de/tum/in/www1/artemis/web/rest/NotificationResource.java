@@ -72,6 +72,7 @@ public class NotificationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         log.info("Load notifications");
+        long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(), currentUser);
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());

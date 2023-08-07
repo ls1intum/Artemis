@@ -59,6 +59,7 @@ public class NotificationSettingsResource {
     @GetMapping("notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<NotificationSetting>> getNotificationSettingsForCurrentUser() {
+        long start = System.nanoTime();
         User currentUser = userRepository.getUser();
         log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
         Set<NotificationSetting> notificationSettingSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
