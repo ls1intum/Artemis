@@ -28,7 +28,6 @@ export abstract class ActiveStudentsChart {
      * @param courseStartDate the start date of a course
      * @param currentDate the current date
      * @param normalTimeSpan the normal time span an active students line chart displays
-     * @private
      */
     private handleCourseStartDate(courseStartDate: dayjs.Dayjs, currentDate: dayjs.Dayjs, normalTimeSpan: number): void {
         if (currentDate.isBefore(courseStartDate)) {
@@ -42,7 +41,6 @@ export abstract class ActiveStudentsChart {
      * Helper method that handles the existence of a course end date and its side effects if a start date exists as well
      * @param course the corresponding course
      * @param currentDate the current date
-     * @private
      */
     private handleCourseEndDate(course: Course, currentDate: dayjs.Dayjs): void {
         this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), currentDate);
