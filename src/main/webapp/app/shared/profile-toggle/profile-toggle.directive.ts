@@ -7,7 +7,7 @@ import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/p
     selector: '[jhiProfileToggle]',
 })
 export class ProfileToggleDirective implements OnInit, OnDestroy {
-    @Input('jhiProfileToggle') profiles: ProfileToggle | ProfileToggle[];
+    @Input('jhiProfileToggle') profiles: ProfileToggle | ProfileToggle[] | undefined;
     /**
      * This input must be used to overwrite the disabled state given that the profile toggle is inactive.
      * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the profile is active.
