@@ -67,7 +67,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     private void createTextSubmissionsForSubmissionSending(int totalSubmissions) {
         for (long i = 0; i < totalSubmissions; i++) {
-            var submission = new TextSubmission(i);
+            var submission = new TextSubmission();
             submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
             submission.setText(DEFAULT_SUBMISSION_TEXT);
             submission.setSubmitted(true);
