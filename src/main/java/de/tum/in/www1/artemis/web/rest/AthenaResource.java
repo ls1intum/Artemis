@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for Athena feedback suggestions.
@@ -67,7 +68,7 @@ public class AthenaResource {
         final var submission = textSubmissionRepository.findByIdElseThrow(submissionId);
         if (submission.getParticipation().getExercise().getId() != exerciseId) {
             log.error("Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
-            return ResponseEntity.badRequest().build();
+            throw new ConflictException("Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
         }
         try {
             List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
