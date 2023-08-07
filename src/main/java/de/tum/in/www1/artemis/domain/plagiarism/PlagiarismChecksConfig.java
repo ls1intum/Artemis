@@ -30,6 +30,9 @@ public class PlagiarismChecksConfig extends DomainObject {
     @Column(name = "continuous_plagiarism_control_post_due_date_checks_enabled")
     private boolean continuousPlagiarismControlPostDueDateChecksEnabled = false;
 
+    @Column(name = "continuous_plagiarism_control_detections_limit")
+    private int continuousPlagiarismControlDetectionsLimit = 3;
+
     @Column(name = "similarity_threshold")
     private float similarityThreshold;
 
@@ -61,6 +64,14 @@ public class PlagiarismChecksConfig extends DomainObject {
 
     public void setContinuousPlagiarismControlPostDueDateChecksEnabled(boolean continuousPlagiarismControlPostDueDateChecksEnabled) {
         this.continuousPlagiarismControlPostDueDateChecksEnabled = continuousPlagiarismControlPostDueDateChecksEnabled;
+    }
+
+    public int getContinuousPlagiarismControlDetectionsLimit() {
+        return continuousPlagiarismControlDetectionsLimit;
+    }
+
+    public void setContinuousPlagiarismControlDetectionsLimit(int continuousPlagiarismControlDetectionsLimit) {
+        this.continuousPlagiarismControlDetectionsLimit = continuousPlagiarismControlDetectionsLimit;
     }
 
     public float getSimilarityThreshold() {
@@ -96,6 +107,7 @@ public class PlagiarismChecksConfig extends DomainObject {
         var config = new PlagiarismChecksConfig();
         config.setContinuousPlagiarismControlEnabled(false);
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
+        config.setContinuousPlagiarismControlDetectionsLimit(3);
         config.setSimilarityThreshold(0.5f);
         config.setMinimumScore(0);
         config.setMinimumSize(0);

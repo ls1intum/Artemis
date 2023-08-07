@@ -30,6 +30,9 @@ public class StudentParticipation extends Participation {
     @JsonView(QuizView.Before.class)
     private Team team;
 
+    @Column(name = "number_of_cpc_plagiarism_detections")
+    private Integer numberOfCpcPlagiarismDetections;
+
     public Double getPresentationScore() {
         return presentationScore;
     }
@@ -44,6 +47,14 @@ public class StudentParticipation extends Participation {
 
     public Optional<Team> getTeam() {
         return Optional.ofNullable(team);
+    }
+
+    public Integer getNumberOfCpcPlagiarismDetections() {
+        return numberOfCpcPlagiarismDetections;
+    }
+
+    public void setNumberOfCpcPlagiarismDetections(Integer numberOfCpcPlagiarismDetections) {
+        this.numberOfCpcPlagiarismDetections = numberOfCpcPlagiarismDetections;
     }
 
     @JsonIgnore

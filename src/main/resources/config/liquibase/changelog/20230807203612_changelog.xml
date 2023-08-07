@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="jakubriegel" id="1691433378308-206">
+        <addColumn tableName="plagiarism_checks_config">
+            <column name="continuous_plagiarism_control_detections_limit" type="integer" defaultValue="3"/>
+        </addColumn>
+
+        <addColumn tableName="participation">
+            <column name="number_of_cpc_plagiarism_detections" type="integer" defaultValue="0"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
