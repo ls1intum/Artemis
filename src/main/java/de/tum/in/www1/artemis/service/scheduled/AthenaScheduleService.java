@@ -55,7 +55,7 @@ public class AthenaScheduleService {
             return;
         }
         final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
-        runningTextExercises.forEach(this::scheduleExerciseForAthena);
+        runningTextExercises.forEach(this::scheduleExerciseForAthenaIfRequired);
         log.info("Scheduled Athena for {} text exercises with future due dates.", runningTextExercises.size());
     }
 

@@ -65,6 +65,10 @@ public class AthenaResource {
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         final var submission = textSubmissionRepository.findByIdElseThrow(submissionId);
+        if (submission.getParticipation().getExercise().getId() != exerciseId) {
+            log.error("Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
+            return ResponseEntity.badRequest().build();
+        }
         try {
             List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
             return ResponseEntity.ok(feedbackSuggestions);

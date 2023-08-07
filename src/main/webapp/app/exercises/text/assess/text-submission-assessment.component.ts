@@ -86,7 +86,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseDashboardLink: string[];
     isExamMode = false;
 
-    private feedbackSuggestionsObservable: Subscription;
+    private feedbackSuggestionsObservable?: Subscription;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
