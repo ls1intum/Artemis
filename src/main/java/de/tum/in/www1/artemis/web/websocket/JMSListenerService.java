@@ -41,6 +41,7 @@ public class JMSListenerService {
 
             @Override
             public void onMessage(javax.jms.Message message, Session session) throws JMSException {
+                logger.info("RECEIVED JMS Message");
                 System.err.println(message);
 
                 ActiveMQMessage activeMQMessage = (ActiveMQMessage) message;
