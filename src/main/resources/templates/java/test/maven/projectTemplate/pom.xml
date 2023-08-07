@@ -65,6 +65,7 @@
                         <requireFilesDontExist>
                             <files>
                                 <file>${project.build.outputDirectory}/ch/qos/logback/</file>
+                                <file>${project.build.outputDirectory}/com/github/javaparser/</file>
                                 <file>${project.build.outputDirectory}/com/intellij/</file>
                                 <file>${project.build.outputDirectory}/com/sun/</file>
                                 <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>

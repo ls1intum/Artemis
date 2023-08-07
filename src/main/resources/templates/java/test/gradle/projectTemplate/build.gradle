@@ -79,6 +79,7 @@ sourceSets {
 
 def forbiddenPackageFolders = [ //(2)
                                 "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/github/javaparser/",
                                 "$studentOutputDir/com/intellij/",
                                 "$studentOutputDir/com/sun/",
                                 "$studentOutputDir/de/tum/in/test/api/",
