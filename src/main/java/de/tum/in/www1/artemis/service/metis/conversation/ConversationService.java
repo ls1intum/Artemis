@@ -484,7 +484,7 @@ public class ConversationService {
      */
     public Stream<UserChannelSummary> filterVisibleChannelsForStudents(Stream<UserChannelSummary> summaries) {
         return summaries.filter(summary -> {
-            Channel channel = summary.getChannel();
+            Channel channel = summary.channel();
             if (channel.getLecture() != null) {
                 return channel.getLecture().isVisibleToStudents();
             }
