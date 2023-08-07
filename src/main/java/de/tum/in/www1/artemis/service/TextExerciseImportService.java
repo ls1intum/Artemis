@@ -44,7 +44,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
+     * This method calls {@link #copyTextExerciseBasis(TextExercise, Map)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
@@ -56,6 +56,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
+        disableFeedbackSuggestionsForExamExercises(newExercise);
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
@@ -81,6 +82,17 @@ public class TextExerciseImportService extends ExerciseImportService {
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
+    }
+
+    /**
+     * Disable feedback suggestions on exam exercises (currently not supported)
+     *
+     * @param exercise the exercise to disable feedback suggestions for
+     */
+    private void disableFeedbackSuggestionsForExamExercises(TextExercise exercise) {
+        if (exercise.isExamExercise()) {
+            exercise.disableFeedbackSuggestions();
+        }
     }
 
     /**

@@ -41,6 +41,16 @@ public class TextExercise extends Exercise {
     }
 
     /**
+     * Disable feedback suggestions for this exercise by setting the assessment type to MANUAL.
+     * Only changes the assessment type if feedback suggestions are currently enabled.
+     */
+    public void disableFeedbackSuggestions() {
+        if (isFeedbackSuggestionsEnabled()) {
+            setAssessmentType(AssessmentType.MANUAL);
+        }
+    }
+
+    /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
     @Override
