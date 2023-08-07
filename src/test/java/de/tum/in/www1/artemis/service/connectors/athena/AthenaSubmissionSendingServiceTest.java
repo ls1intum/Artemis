@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -22,11 +23,19 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
+
+    private static final String TEST_PREFIX = "athenasubmissionsendingservice";
+
+    private static final int MAX_NUMBER_OF_TOTAL_PARTICIPATIONS = 190;
 
     private static final Language DEFAULT_SUBMISSION_LANGUAGE = Language.ENGLISH;
 
@@ -38,6 +47,12 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
     private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     private TextExercise textExercise;
@@ -45,11 +60,19 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
+        // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
+        userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
         athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
         ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+    }
+
+    @AfterEach
+    void tearDown() {
+        textSubmissionRepository.deleteAll();
+        studentParticipationRepository.deleteAll();
     }
 
     private void mockTextSubmissionRepository(long exerciseId, int totalSubmissions) {
@@ -64,6 +87,10 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 var submission = new TextSubmission(i);
                 submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
                 submission.setText(DEFAULT_SUBMISSION_TEXT);
+                var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                        userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
+                studentParticipationRepository.save(studentParticipation);
+                submission.setParticipation(studentParticipation);
                 batch.add(submission);
             }
             return new PageImpl<>(batch, PageRequest.of(page, size), totalSubmissions);
@@ -92,7 +119,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendMultipleSubmissionBatches() {
-        mockTextSubmissionRepository(textExercise.getId(), 190); // almost twice the batch size (100)
+        mockTextSubmissionRepository(textExercise.getId(), MAX_NUMBER_OF_TOTAL_PARTICIPATIONS); // 190 = almost twice the batch size (100)
         // expect two batches of submissions
         athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
                 // We cannot check IDs or similar here because the submissions are not ordered
