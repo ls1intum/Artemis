@@ -50,9 +50,10 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
                  COUNT(p.id)
              )
              FROM Channel channel
-                 LEFT JOIN ConversationParticipant cp ON (channel.id = cp.conversation.id AND cp.user.id = :userId) OR (cp.id IS null AND channel.isCourseWide IS true)
+                 LEFT JOIN ConversationParticipant cp ON channel.id = cp.conversation.id AND cp.user.id = :userId
                  LEFT JOIN Post p ON channel.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
              WHERE channel.course.id = :courseId
+                 AND (channel.isCourseWide IS true OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
              GROUP BY channel
              ORDER BY channel.name
             """)
