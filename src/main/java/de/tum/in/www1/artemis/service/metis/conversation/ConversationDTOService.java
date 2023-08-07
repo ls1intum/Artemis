@@ -74,6 +74,26 @@ public class ConversationDTOService {
 
     /**
      * Creates a ConversationDTO from a Conversation
+     *
+     * @param summary        the conversation summary to create the DTO from
+     * @param requestingUser the user requesting the DTO
+     * @return the created ConversationDTO
+     */
+    public ConversationDTO convertToDTO(UserConversationSummary summary, User requestingUser) {
+        if (summary.getConversation() instanceof Channel) {
+            return convertChannelToDto(requestingUser, summary);
+        }
+        if (summary.getConversation() instanceof OneToOneChat oneToOneChat) {
+            return convertOneToOneChatToDto(requestingUser, oneToOneChat);
+        }
+        if (summary.getConversation() instanceof GroupChat groupChat) {
+            return convertGroupChatToDto(requestingUser, groupChat);
+        }
+        throw new IllegalArgumentException("Conversation type not supported");
+    }
+
+    /**
+     * Creates a ConversationDTO from a Conversation
      * <p>
      * Does not set transient properties that require extra database queries
      *
@@ -107,7 +127,6 @@ public class ConversationDTOService {
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
-        channelDTO.setUnreadMessagesCount(channelRepository.countUnreadMessagesInChannelForUser(channel.getId(), requestingUser.getId()));
         channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsCourseWide());
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
         channelDTO.setNumberOfMembers(channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
@@ -117,6 +136,20 @@ public class ConversationDTOService {
             channelDTO.setTutorialGroupId(tg.getId());
             channelDTO.setTutorialGroupTitle(tg.getTitle());
         });
+        return channelDTO;
+    }
+
+    /**
+     * Creates a ChannelDTO from a Channel
+     *
+     * @param requestingUser the user requesting the DTO
+     * @param channelSummary the channel to create the DTO from
+     * @return the created ChannelDTO
+     */
+    @NotNull
+    public ChannelDTO convertChannelToDto(User requestingUser, UserConversationSummary<Channel> channelSummary) {
+        ChannelDTO channelDTO = this.convertChannelToDto(requestingUser, channelSummary.getConversation());
+        channelDTO.setUnreadMessagesCount(channelSummary.getUnreadMessagesCount());
         return channelDTO;
     }
 

@@ -59,16 +59,6 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     List<UserConversationSummary<Channel>> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
-             SELECT COUNT(p.id)
-             FROM Channel c
-                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
-                 JOIN Post p ON c.id = p.conversation.id
-             WHERE c.id = :channelId
-                 AND (p.creationDate > cp.lastRead OR (c.isCourseWide IS true AND cp.lastRead IS null))
-            """)
-    Long countUnreadMessagesInChannelForUser(@Param("channelId") Long channelId, @Param("userId") Long userId);
-
-    @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
              WHERE channel.course.id = :#{#courseId}

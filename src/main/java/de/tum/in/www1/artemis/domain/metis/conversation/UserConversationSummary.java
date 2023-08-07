@@ -6,9 +6,14 @@ public class UserConversationSummary<T extends Conversation> {
 
     private final Long unreadMessagesCount;
 
-    public UserConversationSummary(T channel, Long unreadMessagesCount) {
-        this.conversation = channel;
+    public UserConversationSummary(T conversation, Long unreadMessagesCount) {
+        this.conversation = conversation;
         this.unreadMessagesCount = unreadMessagesCount;
+    }
+
+    public UserConversationSummary(T conversation) {
+        this.conversation = conversation;
+        this.unreadMessagesCount = null;
     }
 
     public T getConversation() {

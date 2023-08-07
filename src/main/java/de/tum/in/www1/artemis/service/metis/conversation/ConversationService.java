@@ -116,21 +116,22 @@ public class ConversationService {
      * @return the conversation in the course for which the user is a member
      */
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
-        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream()
+                .map(UserConversationSummary::new).toList();
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream().map(UserConversationSummary::new)
+                .toList();
 
-        var conversations = new ArrayList<Conversation>();
-        conversations.addAll(oneToOneChatsOfUser);
-        conversations.addAll(groupChatsOfUser);
+        var conversationSummaries = new ArrayList<UserConversationSummary>();
+        conversationSummaries.addAll(oneToOneChatsOfUser);
+        conversationSummaries.addAll(groupChatsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
-        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream().map(UserConversationSummary::getConversation)).toList()
-                : channelsOfUser.stream().map(UserConversationSummary::getConversation).toList();
-        conversations.addAll(filteredChannels);
+        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
+        conversationSummaries.addAll(filteredChannels);
 
-        return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
+        return conversationSummaries.stream().map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
     }
 
     /**
@@ -480,11 +481,12 @@ public class ConversationService {
     /**
      * Filter all channels where the attached lecture/exercise has been released
      *
-     * @param channels A stream of channels
+     * @param summaries A stream of UserConversationSummary<Channel>s
      * @return A stream of channels for lectures/exercises that have been released
      */
-    public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
-        return channels.filter(channel -> {
+    public Stream<UserConversationSummary<Channel>> filterVisibleChannelsForStudents(Stream<UserConversationSummary<Channel>> summaries) {
+        return summaries.filter(summary -> {
+            Channel channel = summary.getConversation();
             if (channel.getLecture() != null) {
                 return channel.getLecture().isVisibleToStudents();
             }
