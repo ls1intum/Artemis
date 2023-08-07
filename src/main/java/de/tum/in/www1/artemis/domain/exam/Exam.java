@@ -474,6 +474,7 @@ public class Exam extends DomainObject {
         this.channelNameTransient = channelNameTransient;
     }
 
+    @JsonIgnore
     public String getSanitizedExamTitle() {
         // exam titles are non-nullable
         return StringUtil.sanitizeStringForFileName(this.title);
