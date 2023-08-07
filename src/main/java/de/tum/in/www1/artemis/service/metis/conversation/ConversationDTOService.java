@@ -80,14 +80,14 @@ public class ConversationDTOService {
      * @return the created ConversationDTO
      */
     public ConversationDTO convertToDTO(UserConversationSummary summary, User requestingUser) {
-        if (summary.getConversation() instanceof Channel) {
-            return convertChannelToDto(requestingUser, summary);
+        if (summary instanceof UserChannelSummary channelSummary) {
+            return convertChannelToDto(requestingUser, channelSummary.getChannel());
         }
-        if (summary.getConversation() instanceof OneToOneChat oneToOneChat) {
-            return convertOneToOneChatToDto(requestingUser, oneToOneChat);
+        if (summary instanceof UserOneToOneChatSummary oneToOneChatSummary) {
+            return convertOneToOneChatToDto(requestingUser, oneToOneChatSummary.getOneToOneChat());
         }
-        if (summary.getConversation() instanceof GroupChat groupChat) {
-            return convertGroupChatToDto(requestingUser, groupChat);
+        if (summary instanceof UserGroupChatSummary groupChatSummary) {
+            return convertGroupChatToDto(requestingUser, groupChatSummary.getGroupChat());
         }
         throw new IllegalArgumentException("Conversation type not supported");
     }
@@ -147,8 +147,8 @@ public class ConversationDTOService {
      * @return the created ChannelDTO
      */
     @NotNull
-    public ChannelDTO convertChannelToDto(User requestingUser, UserConversationSummary<Channel> channelSummary) {
-        ChannelDTO channelDTO = this.convertChannelToDto(requestingUser, channelSummary.getConversation());
+    public ChannelDTO convertChannelToDto(User requestingUser, UserChannelSummary channelSummary) {
+        ChannelDTO channelDTO = this.convertChannelToDto(requestingUser, channelSummary.getChannel());
         channelDTO.setUnreadMessagesCount(channelSummary.getUnreadMessagesCount());
         return channelDTO;
     }

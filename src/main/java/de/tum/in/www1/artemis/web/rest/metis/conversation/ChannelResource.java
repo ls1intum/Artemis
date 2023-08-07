@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationSummary;
+import de.tum.in.www1.artemis.domain.metis.conversation.UserChannelSummary;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -97,7 +97,7 @@ public class ChannelResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
-        var channelSummaries = channelRepository.findChannelsByCourseId(courseId).stream().map(UserConversationSummary::new);
+        var channelSummaries = channelRepository.findChannelsByCourseId(courseId).stream().map(UserChannelSummary::new);
 
         var filteredChannelSummaries = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channelSummaries) : channelSummaries;
         var channelDTOs = filteredChannelSummaries.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));

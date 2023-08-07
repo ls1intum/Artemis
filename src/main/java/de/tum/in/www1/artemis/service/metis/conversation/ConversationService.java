@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationSummary;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -117,9 +115,9 @@ public class ConversationService {
      */
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream()
-                .map(UserConversationSummary::new).toList();
+                .map(UserOneToOneChatSummary::new).toList();
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream().map(UserConversationSummary::new)
+        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream().map(UserGroupChatSummary::new)
                 .toList();
 
         var conversationSummaries = new ArrayList<UserConversationSummary>();
@@ -481,12 +479,12 @@ public class ConversationService {
     /**
      * Filter all channels where the attached lecture/exercise has been released
      *
-     * @param summaries A stream of UserConversationSummary<Channel>s
+     * @param summaries A stream of UserChannelSummaries
      * @return A stream of channels for lectures/exercises that have been released
      */
-    public Stream<UserConversationSummary<Channel>> filterVisibleChannelsForStudents(Stream<UserConversationSummary<Channel>> summaries) {
+    public Stream<UserChannelSummary> filterVisibleChannelsForStudents(Stream<UserChannelSummary> summaries) {
         return summaries.filter(summary -> {
-            Channel channel = summary.getConversation();
+            Channel channel = summary.getChannel();
             if (channel.getLecture() != null) {
                 return channel.getLecture().isVisibleToStudents();
             }
