@@ -6,9 +6,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,5 +74,11 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
     @Transactional // ok because of modifying query
     void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
 
+    /**
+     * Counts the number of plagiarism results associated to the given exercise id
+     *
+     * @param exerciseId ID of exercise with plagiarism results that will be counted.
+     * @return number of plagiarism results associated to the given exercise id
+     */
     long countByExerciseId(long exerciseId);
 }

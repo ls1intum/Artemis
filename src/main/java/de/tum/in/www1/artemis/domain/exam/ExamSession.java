@@ -136,7 +136,6 @@ public class ExamSession extends AbstractAuditingEntity {
         if (other == null) {
             return false;
         }
-
         return getIpAddressAsIpAddress() != null && getIpAddressAsIpAddress().equals(other.getIpAddressAsIpAddress());
     }
 

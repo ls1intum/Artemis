@@ -13,9 +13,9 @@ export class SuspiciousSessionsComponent implements OnInit {
     suspiciousIpAddress = false;
     suspiciousUserAgent = false;
     ngOnInit(): void {
-        this.suspiciousFingerprint = this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT));
-        this.suspiciousIpAddress = this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(SuspiciousSessionReason.SAME_IP_ADDRESS));
-        this.suspiciousUserAgent = this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(SuspiciousSessionReason.SAME_USER_AGENT));
+        this.suspiciousFingerprint = this.isSuspiciousFor(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
+        this.suspiciousIpAddress = this.isSuspiciousFor(SuspiciousSessionReason.SAME_IP_ADDRESS);
+        this.suspiciousUserAgent = this.isSuspiciousFor(SuspiciousSessionReason.SAME_USER_AGENT);
     }
 
     getStudentExamLink(studentExam: StudentExam) {
@@ -24,4 +24,7 @@ export class SuspiciousSessionsComponent implements OnInit {
         const examId = studentExam.exam?.id;
         return `/course-management/${courseId}/exams/${examId}/student-exams/${studentExamId}`;
     }
+    private isSuspiciousFor = (reason: SuspiciousSessionReason) => {
+        return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
+    };
 }

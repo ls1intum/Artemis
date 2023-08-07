@@ -135,5 +135,17 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
         return findById(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
 
+    /**
+     * Count the number of plagiarism cases for a given exercise id excluding deleted users.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of plagiarism cases
+     */
+    @Query("""
+            SELECT COUNT(plagiarismCase)
+            FROM PlagiarismCase plagiarismCase
+                WHERE plagiarismCase.student.isDeleted = false
+                      AND plagiarismCase.exercise.id = :exerciseId
+            """)
     long countByExerciseId(long exerciseId);
 }

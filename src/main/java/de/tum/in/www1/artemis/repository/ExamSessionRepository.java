@@ -25,9 +25,7 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
     @Query("""
                 SELECT es
                 FROM ExamSession es
-                    LEFT JOIN FETCH es.studentExam se
-                    LEFT JOIN FETCH se.exam e
-                WHERE e.id = :examId
+                WHERE es.studentExam.exam.id = :examId
             """)
     Set<ExamSession> findAllExamSessionsByExamId(long examId);
 
