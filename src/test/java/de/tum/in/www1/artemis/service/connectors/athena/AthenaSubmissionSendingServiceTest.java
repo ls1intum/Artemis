@@ -61,8 +61,8 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @AfterEach
     void tearDown() {
-        textSubmissionRepository.deleteAll();
-        studentParticipationRepository.deleteAll();
+        textSubmissionRepository.deleteAll(textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
+        studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(textExercise.getId()));
     }
 
     private void createTextSubmissionsForSubmissionSending(int totalSubmissions) {
@@ -70,6 +70,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
             var submission = new TextSubmission(i);
             submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
             submission.setText(DEFAULT_SUBMISSION_TEXT);
+            submission.setSubmitted(true);
             var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
                     userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
             studentParticipation.setExercise(textExercise);
@@ -85,9 +86,8 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.title").value(textExercise.getTitle()),
                 jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()), jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
-                jsonPath("$.exercise.problemStatement").value(textExercise.getProblemStatement()), jsonPath("$.submissions[0].id").value(0),
-                jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()), jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT),
-                jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
+                jsonPath("$.exercise.problemStatement").value(textExercise.getProblemStatement()), jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()),
+                jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT), jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
     }
