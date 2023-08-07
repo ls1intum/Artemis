@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -363,7 +364,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
-        assertThat(complaintRepo.findByResultId(textSubmission.getId())).isPresent();
+        TextSubmission finalTextSubmission = textSubmission;
+        await().untilAsserted(() -> assertThat(complaintRepo.findByResultId(finalTextSubmission.getId())).isPresent());
     }
 
     @Test
