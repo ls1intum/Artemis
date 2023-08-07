@@ -1,20 +1,13 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
-public class UserChannelSummary extends UserConversationSummary {
-
-    private final Channel channel;
+public record UserChannelSummary(Channel channel, Long unreadMessagesCount) implements UserConversationSummary {
 
     public UserChannelSummary(Channel channel, Long unreadMessagesCount) {
-        super(unreadMessagesCount);
         this.channel = channel;
+        this.unreadMessagesCount = unreadMessagesCount;
     }
 
     public UserChannelSummary(Channel channel) {
-        super(null);
-        this.channel = channel;
-    }
-
-    public Channel getChannel() {
-        return channel;
+        this(channel, null);
     }
 }
