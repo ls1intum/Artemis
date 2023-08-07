@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -113,6 +114,12 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries      number of retries before the request will be canceled
      */
     public void sendSubmissions(TextExercise exercise, Set<TextSubmission> textSubmissions, int maxRetries) {
+        // filter submissions with an open participation (because of individual due dates)
+        textSubmissions.removeIf(submission -> {
+            var individualDueDate = submission.getParticipation().getIndividualDueDate();
+            return individualDueDate != null && individualDueDate.isAfter(ZonedDateTime.now());
+        });
+
         if (textSubmissions.isEmpty()) {
             log.info("No text submissions found to send.");
             return;
