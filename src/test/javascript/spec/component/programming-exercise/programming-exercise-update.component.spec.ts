@@ -816,7 +816,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
 
         it('should disable options for java dejagnu project type', fakeAsync(() => {
-            comp.selectedProjectType = ProjectType.MAVEN_MAVEN;
+            comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
 
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
             expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
