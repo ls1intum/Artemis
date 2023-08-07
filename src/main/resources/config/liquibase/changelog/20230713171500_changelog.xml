@@ -7,6 +7,7 @@
         <dropForeignKeyConstraint baseTableName="text_block" constraintName="fk_text_block_cluster_id" />
         <dropColumn tableName="text_block" columnName="cluster_id" />
         <dropColumn tableName="text_block" columnName="position_in_cluster" />
+        <dropColumn tableName="text_block" columnName="added_distance" />
         <dropTable tableName="text_cluster"/>
     </changeSet>
 </databaseChangeLog>
