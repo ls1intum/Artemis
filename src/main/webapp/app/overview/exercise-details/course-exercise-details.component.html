@@ -43,7 +43,7 @@
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                     </a>
-                    <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
+                    <a [jhiProfileToggleLink]="exercise?.type === QUIZ ? ProfileToggle.QUIZ : undefined" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                         <fa-icon [icon]="faTable"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                     </a>
@@ -53,6 +53,7 @@
                     </a>
                     <a
                         *ngIf="exercise.type === QUIZ"
+                        [jhiProfileToggleLink]="ProfileToggle.QUIZ"
                         [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'preview']"
                         class="btn btn-success btn-sm"
                     >
@@ -61,6 +62,7 @@
                     </a>
                     <a
                         *ngIf="exercise.type === QUIZ"
+                        [jhiProfileToggleLink]="ProfileToggle.QUIZ"
                         [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'solution']"
                         class="btn btn-success btn-sm"
                     >
@@ -68,7 +70,12 @@
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                     </a>
                     <ng-container *ngIf="exercise.isAtLeastEditor">
-                        <a *ngIf="exercise.type === QUIZ" [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm">
+                        <a
+                            *ngIf="exercise.type === QUIZ"
+                            [jhiProfileToggleLink]="ProfileToggle.QUIZ"
+                            [routerLink]="baseResource + 'quiz-point-statistic'"
+                            class="btn btn-info btn-sm"
+                        >
                             <fa-icon [icon]="faSignal"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                         </a>
@@ -82,6 +89,7 @@
                         </a>
                         <a
                             *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
+                            [jhiProfileToggleLink]="ProfileToggle.QUIZ"
                             [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
                             [routerLink]="baseResource + 'edit'"
                             class="btn btn-warning btn-sm"
@@ -91,6 +99,7 @@
                         </a>
                         <a
                             *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor"
+                            [jhiProfileToggleLink]="ProfileToggle.QUIZ"
                             [routerLink]="baseResource + 're-evaluate'"
                             class="btn btn-warning btn-sm"
                         >

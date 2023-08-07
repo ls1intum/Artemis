@@ -7,9 +7,10 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-de
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisSharedPipesModule, ArtemisCoursesRoutingModule, OrionModule, FeatureToggleModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisSharedPipesModule, ArtemisCoursesRoutingModule, OrionModule, FeatureToggleModule, ProfileToggleModule],
     declarations: [ExerciseDetailsStudentActionsComponent, OrionExerciseDetailsStudentActionsComponent],
     exports: [ExerciseDetailsStudentActionsComponent, OrionExerciseDetailsStudentActionsComponent],
 })

@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -30,6 +31,7 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
+    readonly ProfileToggle = ProfileToggle;
     readonly InitializationState = InitializationState;
 
     @Input() @HostBinding('class.col') equalColumns = true;

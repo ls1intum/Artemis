@@ -56,8 +56,8 @@ public class QuizSubmissionWebsocketService {
         }
         catch (QuizSubmissionException ex) {
             // send error message over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
-            new Thread(() -> messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
-                    .start();
+            new Thread(() -> websocketMessagingService.sendMessageToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission",
+                    new WebsocketError(ex.getMessage()))).start();
         }
     }
 
