@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,14 +30,13 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
  */
 class AthenaConnector<RequestType, ResponseType> {
 
-    private final Logger log;
+    private final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
 
     private final RestTemplate restTemplate;
 
     private final Class<ResponseType> genericResponseType;
 
-    AthenaConnector(Logger log, RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
-        this.log = log;
+    AthenaConnector(RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
         this.restTemplate = restTemplate;
         this.genericResponseType = genericResponseType;
     }

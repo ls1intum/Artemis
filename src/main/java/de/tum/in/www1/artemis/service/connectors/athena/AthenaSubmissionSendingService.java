@@ -53,7 +53,7 @@ public class AthenaSubmissionSendingService {
      */
     public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextSubmissionRepository textSubmissionRepository) {
         this.textSubmissionRepository = textSubmissionRepository;
-        connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
+        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
     }
 
     private static class RequestDTO {

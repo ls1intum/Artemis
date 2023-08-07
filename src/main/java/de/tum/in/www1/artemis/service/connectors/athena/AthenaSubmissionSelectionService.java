@@ -67,7 +67,7 @@ public class AthenaSubmissionSelectionService {
         requestFactory.setReadTimeout(REQUEST_TIMEOUT_MS);
         athenaRestTemplate.setRequestFactory(requestFactory);
         // Create connector
-        connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
+        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
     }
 
     /**

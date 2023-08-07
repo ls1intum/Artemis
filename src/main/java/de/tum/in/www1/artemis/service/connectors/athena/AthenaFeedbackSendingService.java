@@ -47,7 +47,7 @@ public class AthenaFeedbackSendingService {
      * @param athenaRestTemplate  The rest template to use for sending requests to Athena
      */
     public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
-        connector = new AthenaConnector<>(log, athenaRestTemplate, ResponseDTO.class);
+        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
         this.textBlockRepository = textBlockRepository;
     }
 
