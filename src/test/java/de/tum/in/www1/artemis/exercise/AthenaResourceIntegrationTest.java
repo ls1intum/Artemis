@@ -15,9 +15,11 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -35,6 +37,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
     private UserUtilService userUtilService;
 
     private TextExercise textExercise;
@@ -50,6 +55,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
                 true);
+        var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(studentParticipation);
+        textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect();
