@@ -77,6 +77,8 @@ File browser tree
             }
             button {
                 padding: 0;
+                border: none;
+                pointer-events: auto;
                 fa-icon {
                     cursor: pointer;
                 }
