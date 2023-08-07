@@ -4,23 +4,55 @@ import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('SuspiciousSessionsComponent', () => {
     let component: SuspiciousSessionsComponent;
     let fixture: ComponentFixture<SuspiciousSessionsComponent>;
     const studentExam = { id: 1, exam: { id: 1, course: { id: 1 } } } as StudentExam;
+    const suspiciousSessions1 = {
+        examSessions: [
+            {
+                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+            },
+        ],
+    } as SuspiciousExamSessions;
+
+    const suspiciousSessions2 = {
+        examSessions: [
+            {
+                suspiciousReasons: [],
+            },
+        ],
+    } as SuspiciousExamSessions;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule],
+            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
         });
         fixture = TestBed.createComponent(SuspiciousSessionsComponent);
         component = fixture.componentInstance;
-        component.suspiciousSessions = { examSessions: [] };
-        fixture.detectChanges();
+        component.suspiciousSessions = suspiciousSessions1;
     });
 
     it('should contain correct link to student exam in table cell', () => {
         expect(component.getStudentExamLink(studentExam)).toBe('/course-management/1/exams/1/student-exams/1');
+    });
+
+    it('should correctly determine suspicious reasons', () => {
+        component.suspiciousSessions = suspiciousSessions1;
+        component.ngOnInit();
+        expect(component.suspiciousFingerprint).toBeTrue();
+        expect(component.suspiciousIpAddress).toBeTrue();
+        expect(component.suspiciousUserAgent).toBeTrue();
+
+        component.suspiciousSessions = suspiciousSessions2;
+        component.ngOnInit();
+        expect(component.suspiciousFingerprint).toBeFalse();
+        expect(component.suspiciousIpAddress).toBeFalse();
+        expect(component.suspiciousUserAgent).toBeFalse();
     });
 });
