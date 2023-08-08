@@ -48,29 +48,30 @@ public class BonusService {
      * @param calculationSign         weight of the bonus, currently can be either -1.0 or 1.0
      * @return a record containing the final grade and points along
      */
-    public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, GradingScale sourceGradingScale,
-            Double achievedPointsOfSource, double calculationSign) {
-        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
+    public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, Double reachablePointsOfBonusTo,
+            GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double calculationSign) {
+        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfBonusTo / reachablePointsOfBonusTo, bonusToGradingScale.getId());
 
         if (!bonusToRawGradeStep.getIsPassingGrade() || sourceGradingScale == null) {
             return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), 0.0, achievedPointsOfBonusTo,
                     bonusToRawGradeStep.getGradeName(), false);
         }
-        return bonusStrategy.calculateBonusForStrategy(gradingScaleRepository, bonusToGradingScale, achievedPointsOfBonusTo, sourceGradingScale, achievedPointsOfSource,
-                calculationSign);
+        return bonusStrategy.calculateBonusForStrategy(gradingScaleRepository, bonusToGradingScale, achievedPointsOfBonusTo, reachablePointsOfBonusTo, sourceGradingScale,
+                achievedPointsOfSource, reachablePointsOfSource, calculationSign);
     }
 
     /**
      * Improves the points and/or grade of the bonusTo exam by applying bonus according to the parameters defined in {@code bonus}.
-     * This method is a wrapper for {@link #calculateGradeWithBonus(IBonusStrategy, GradingScale, Double, GradingScale, Double, double)}.
+     * This method is a wrapper for {@link #calculateGradeWithBonus(IBonusStrategy, GradingScale, Double, Double, GradingScale, Double, Double, double)}.
      *
      * @param bonus                   the bonus instance determining the bonus calculation strategy and weight
      * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations
      * @param achievedPointsOfSource  points received by the student from source exam/course
      * @return bonus strategy, weight, points and grades achieved from the bonusTo exam, source course/exam and the final points and grade
      */
-    public BonusExampleDTO calculateGradeWithBonus(Bonus bonus, Double achievedPointsOfBonusTo, Double achievedPointsOfSource) {
-        return calculateGradeWithBonus(bonus.getBonusToGradingScale().getBonusStrategy(), bonus.getBonusToGradingScale(), achievedPointsOfBonusTo, bonus.getSourceGradingScale(),
-                achievedPointsOfSource, bonus.getWeight());
+    public BonusExampleDTO calculateGradeWithBonus(Bonus bonus, Double achievedPointsOfBonusTo, Double reachablePointsOfBonusTo, Double achievedPointsOfSource,
+            Double reachablePointsOfSource) {
+        return calculateGradeWithBonus(bonus.getBonusToGradingScale().getBonusStrategy(), bonus.getBonusToGradingScale(), achievedPointsOfBonusTo, reachablePointsOfBonusTo,
+                bonus.getSourceGradingScale(), achievedPointsOfSource, reachablePointsOfSource, bonus.getWeight());
     }
 }

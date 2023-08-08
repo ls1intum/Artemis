@@ -484,4 +484,8 @@ public class CourseScoreCalculationService {
         var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
         return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
     }
+
+    public double calculateReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+        return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints;
+    }
 }

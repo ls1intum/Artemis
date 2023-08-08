@@ -109,6 +109,8 @@ public class ExamService {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
+    private final CourseRepository courseRepository;
+
     private final ObjectMapper defaultObjectMapper;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
@@ -117,7 +119,8 @@ public class ExamService {
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
-            BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository, CourseScoreCalculationService courseScoreCalculationService) {
+            BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository, CourseScoreCalculationService courseScoreCalculationService,
+            CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -140,6 +143,7 @@ public class ExamService {
         this.bonusService = bonusService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
+        this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -284,10 +288,24 @@ public class ExamService {
         if (gradingScale.isEmpty() || gradingScale.get().getBonusFrom().isEmpty()) {
             return null;
         }
-        var bonus = gradingScale.get().getBonusFrom().stream().findAny().orElseThrow();
-        Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(bonus.getSourceGradingScale(), studentIds);
+
+        GradingScale targetGradingScale = gradingScale.get();
+        var bonus = targetGradingScale.getBonusFrom().stream().findAny().orElseThrow();
+        GradingScale sourceGradingScale = bonus.getSourceGradingScale();
+
+        Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
+
+        final double reachableTargetPoints = targetGradingScale.getMaxPoints();
+        double tempReachableSourcePoints = sourceGradingScale.getMaxPoints();
+        if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
+            // fetch course with exercises to calculate reachable points
+            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
+            tempReachableSourcePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+        }
+        final double reachableSourcePoints = tempReachableSourcePoints;
+
         return (studentId, achievedPointsOfBonusTo) -> {
             BonusSourceResultDTO result = scoresMap != null ? scoresMap.get(studentId) : null;
             Double achievedPointsOfSource = 0.0;
@@ -300,7 +318,8 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
+            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, reachableTargetPoints, achievedPointsOfSource,
+                    reachableSourcePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();

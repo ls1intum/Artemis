@@ -15,11 +15,13 @@ import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.BonusRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
+import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -51,13 +53,19 @@ public class BonusResource {
 
     private final ExamAccessService examAccessService;
 
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
+    private final CourseRepository courseRepository;
+
     public BonusResource(BonusService bonusService, BonusRepository bonusRepository, GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService,
-            ExamAccessService examAccessService) {
+            ExamAccessService examAccessService, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.bonusService = bonusService;
         this.bonusRepository = bonusRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.authCheckService = authCheckService;
         this.examAccessService = examAccessService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -81,11 +89,12 @@ public class BonusResource {
         return ResponseEntity.ok(bonus);
     }
 
-    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, GradingScale targetGradingScale,
-            GradingScale sourceGradingScale) {
+    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double reachableTargetPoints, Double sourcePoints,
+            Double reachableSourcePoints, GradingScale targetGradingScale, GradingScale sourceGradingScale) {
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
-        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, calculationSign);
+        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, reachableTargetPoints, sourceGradingScale, sourcePoints, reachableSourcePoints,
+                calculationSign);
     }
 
     /**
@@ -114,7 +123,16 @@ public class BonusResource {
         var bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
-        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, sourcePoints, bonusToGradingScale, sourceGradingScale);
+        double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
+        double sourceReachablePoints = sourceGradingScale.getMaxPoints();
+        if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
+            // fetch course with exercises to calculate reachable points
+            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
+            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+        }
+
+        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, bonusToReachablePoints, sourcePoints, sourceReachablePoints,
+                bonusToGradingScale, sourceGradingScale);
         return ResponseEntity.ok(gradeWithBonus);
     }
 
