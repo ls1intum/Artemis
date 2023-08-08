@@ -41,7 +41,7 @@ export class LearningPathGraphComponent implements OnInit {
 
     loadData() {
         this.isLoading = true;
-        this.learningPathService.getNgxLearningPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
+        this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxLearningPath = ngxLearningPathResponse.body!;
             this.isLoading = false;
         });

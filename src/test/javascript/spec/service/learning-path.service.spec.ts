@@ -47,8 +47,8 @@ describe('LearningPathService', () => {
     });
 
     it('should send a request to the server to get ngx representation of learning path', () => {
-        learningPathService.getNgxLearningPath(1).subscribe();
+        learningPathService.getLearningPathNgxGraph(1).subscribe();
         expect(getStub).toHaveBeenCalledOnce();
-        expect(getStub).toHaveBeenCalledWith('api/learning-path/1', { observe: 'response' });
+        expect(getStub).toHaveBeenCalledWith('api/learning-path/1/graph', { observe: 'response' });
     });
 });

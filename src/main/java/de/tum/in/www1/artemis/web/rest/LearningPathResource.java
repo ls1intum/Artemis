@@ -137,15 +137,15 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /learning-path/:learningPathId : Gets the ngx representation of the learning path.
+     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
-    @GetMapping("/learning-path/{learningPathId}")
+    @GetMapping("/learning-path/{learningPathId}/graph")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
-    public ResponseEntity<NgxLearningPathDTO> getNgxLearningPath(@PathVariable Long learningPathId) {
+    public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable Long learningPathId) {
         log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
@@ -161,7 +161,7 @@ public class LearningPathResource {
         else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
-        NgxLearningPathDTO graph = learningPathService.generateNgxRepresentation(learningPath);
+        NgxLearningPathDTO graph = learningPathService.generateNgxGraphRepresentation(learningPath);
         return ResponseEntity.ok(graph);
     }
 }

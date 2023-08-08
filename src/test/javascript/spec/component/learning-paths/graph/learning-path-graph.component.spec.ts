@@ -7,7 +7,7 @@ describe('LearningPathGraphComponent', () => {
     let fixture: ComponentFixture<LearningPathGraphComponent>;
     let comp: LearningPathGraphComponent;
     let learningPathService: LearningPathService;
-    let getNgxLearningPathStub: jest.SpyInstance;
+    let getLearningPathNgxGraphStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -20,7 +20,7 @@ describe('LearningPathGraphComponent', () => {
                 fixture = TestBed.createComponent(LearningPathGraphComponent);
                 comp = fixture.componentInstance;
                 learningPathService = TestBed.inject(LearningPathService);
-                getNgxLearningPathStub = jest.spyOn(learningPathService, 'getNgxLearningPath');
+                getLearningPathNgxGraphStub = jest.spyOn(learningPathService, 'getLearningPathNgxGraph');
             });
     });
 
@@ -31,8 +31,8 @@ describe('LearningPathGraphComponent', () => {
     it('should load learning path from service', () => {
         comp.learningPathId = 1;
         fixture.detectChanges();
-        expect(getNgxLearningPathStub).toHaveBeenCalledOnce();
-        expect(getNgxLearningPathStub).toHaveBeenCalledWith(1);
+        expect(getLearningPathNgxGraphStub).toHaveBeenCalledOnce();
+        expect(getLearningPathNgxGraphStub).toHaveBeenCalledWith(1);
     });
 
     it('should update, center, and zoom to fit on resize', () => {
