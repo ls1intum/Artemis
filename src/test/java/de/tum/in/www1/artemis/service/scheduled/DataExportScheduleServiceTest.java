@@ -91,7 +91,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     @MethodSource("provideCreationDatesAndExpectedToDelete")
     void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
         var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
-        doNothing().when(fileService).scheduleForDirectoryDeletion(any(), anyLong());
+        doNothing().when(fileService).scheduleForDeletion(any(), anyLong());
         var dataExportId = dataExport.getId();
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExportId);
