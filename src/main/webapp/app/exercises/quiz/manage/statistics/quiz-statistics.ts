@@ -32,7 +32,6 @@ export abstract class QuizStatistics {
      * Depending on if the rated or unrated results should be displayed,
      * The amount of participants as well as the corresponding scores are set
      * @param statistic the statistic containing amount of participation
-     * @protected
      */
     protected setData(statistic: QuizStatistic): void {
         if (this.rated) {
@@ -52,7 +51,6 @@ export abstract class QuizStatistics {
      * Creates dedicated objects of type NgxChartsSingleSeriesDataEntry that can be processed by ngx-charts
      * in order to visualize the scores and calculates the maximum value on the y-axis
      * in order to ensure a shapely display.
-     * @protected
      */
     protected pushDataToNgxEntry(changeDetector: ChangeDetectorRef): void {
         this.ngxData = [];
@@ -79,7 +77,6 @@ export abstract class QuizStatistics {
      * absolute value (absolute value/amount of participants)
      * @param absoluteValue the absolute value represented by the corresponding bar
      * @returns string of the following pattern: absolute value (relative value)
-     * @protected
      */
     protected formatDataLabel(absoluteValue: number): string {
         const relativeValue = (absoluteValue / this.totalParticipants) * 100;
