@@ -259,10 +259,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             if (exStart === start && exEnd === end) {
                 // existing: |---|
                 // to add:   |---|
-                // -> already exists
-                return;
-            }
-            if (exEnd <= start || exStart >= end) {
+                // -> replace existing block (don't add existing one)
+            } else if (exEnd <= start || exStart >= end) {
                 // existing: |---|  or   |---|
                 // to add:         |---|
                 // -> no overlap, just add
@@ -271,9 +269,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 if (exStart < start) {
                     // Existing text block starts before text block to add
                     if (exEnd > end) {
-                        // existing: |---------|
+                        // existing: |----------|
                         // to add:      |---|
-                        // ->        |--|---|--|
+                        // ->        |--|---|---|
+                        //          (|ex|add|new|)
                         // (split into three text blocks)
                         const newBlockRef = new TextBlockRef(new TextBlock(), undefined);
                         newBlockRef.block!.startIndex = end;
