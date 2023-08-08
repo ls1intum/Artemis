@@ -16,9 +16,11 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.json.JSONException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -1375,21 +1378,32 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         else {
             assertThat(submission).isInstanceOf(QuizSubmission.class);
 
-            String submittedAnswersAsString;
+            /*
+             * When comparing the JSON of the submitted answers to the versioned submission,
+             * a direct string comparison may not always be accurate due to the following reasons:
+             * 1. The order of the submitted answers can change since they are stored as sets.
+             * 2. Data fetched from the server might occasionally contain IDs, while the data returned directly might not.
+             * To account for these discrepancies, we perform a non-strict (= order-agnostic) deep JSON comparison after removing any IDs.
+             * This ensures that the content is accurately matched, irrespective of the order or the presence of IDs.
+             */
             try {
-                submittedAnswersAsString = objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());
+                var submittedAnswersAsJson = removeIdFieldsFromJSONString(objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers()));
+                var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
+                JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
             }
-            catch (Exception e) {
-                submittedAnswersAsString = submission.toString();
+            catch (JsonProcessingException | JSONException e) {
+                fail("Exception thrown while serializing submitted answers", e);
             }
-            assertThat(removeIdFieldsFromJSONString(submittedAnswersAsString)).isEqualTo(removeIdFieldsFromJSONString(versionedSubmission.get().getContent()));
             assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
         }
     }
 
-    // TODO: @Stephan, idk if this is the right approach, but it works for now
-    // TODO: The probem is that sometimes the entities fetched from the server contain IDs and the ones to compare to don't
-    // TODO: This happens as I have to fetch the exam summary now as the submit call does not return the studtent exam anymore
+    /**
+     * Removes the id fields from the JSON string, so that the comparison between the submission and the versioned submission is easier.
+     *
+     * @param jsonString the JSON string to remove the id fields from
+     * @return the JSON string without the id fields
+     */
     private String removeIdFieldsFromJSONString(String jsonString) {
         return jsonString.replaceAll(" +\"id\"\\s*:\\s*[0-9]+,\n", "");
     }
