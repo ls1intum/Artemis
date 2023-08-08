@@ -1,26 +1,26 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 @Component({
     selector: 'jhi-privacy',
     template: `
         <div [innerHTML]="privacyStatement | htmlForMarkdown"></div>
-        <a *ngIf="isAdmin" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-export']"> </a>
+        <a *ngIf="isAuthenticated" jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
     `,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     privacyStatement: string;
     private languageChangeSubscription?: Subscription;
-    isAdmin: boolean;
+    isAuthenticated: boolean;
 
     constructor(
         private route: ActivatedRoute,
-        private privacyStatementService: LegalDocumentService,
+        private legalDocumentService: LegalDocumentService,
         private languageHelper: JhiLanguageHelper,
         private accountService: AccountService,
     ) {}
@@ -29,17 +29,17 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
      */
     ngOnInit(): void {
-        this.isAdmin = this.accountService.isAdmin();
+        this.isAuthenticated = this.accountService.isAuthenticated();
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.privacyStatementService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => {
-                this.privacyStatement = statement.text;
-            });
+            this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
         });
     }
 
     ngOnDestroy() {
-        this.languageChangeSubscription?.unsubscribe();
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
+        }
     }
 
     /**

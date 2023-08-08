@@ -11,7 +11,7 @@ describe('Logout tests', () => {
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);

@@ -451,6 +451,19 @@ public class UserService {
     }
 
     /**
+     * Trys to find a user by the internal admin username
+     *
+     * @return an Optional.emtpy() if no internal admin user is found, otherwise an optional with the internal admin user
+     */
+    public Optional<User> findInternalAdminUser() {
+        if (artemisInternalAdminUsername.isEmpty()) {
+            log.warn("The internal admin username is not configured and no internal admin user can be retrieved.");
+            return Optional.empty();
+        }
+        return userRepository.findOneByLogin(artemisInternalAdminUsername.get());
+    }
+
+    /**
      * Change password of current user
      *
      * @param currentClearTextPassword cleartext password
@@ -647,9 +660,9 @@ public class UserService {
     /**
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
-     *
+     * <p>
      * Steps:
-     *
+     * <p>
      * 1) we use the registration number and try to find the student in the Artemis user database
      * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
      * management system
