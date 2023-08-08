@@ -16,10 +16,12 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -46,13 +48,17 @@ public class PublicProgrammingSubmissionResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final LtiNewResultService ltiNewResultService;
+
     public PublicProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository) {
+            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository,
+            LtiNewResultService ltiNewResultService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationRepository = participationRepository;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -82,6 +88,9 @@ public class PublicProgrammingSubmissionResource {
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
             programmingMessagingService.notifyUserAboutSubmission(submission);
+
+            // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
+            ltiNewResultService.onNewResult((StudentParticipation) participation);
         }
         catch (IllegalArgumentException ex) {
             log.error(
