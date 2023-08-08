@@ -134,12 +134,15 @@
             <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
             <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
             <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
-            <ng-container *ngIf="showExamSummaryButton">
-                <p class="mt-1" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.reviewHint"></p>
-                <button type="button" class="btn btn-primary" (click)="loadAndDisplaySummary()" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button">
-                    Show Summary
-                </button>
-            </ng-container>
+            <button
+                *ngIf="showExamSummaryButton"
+                type="button"
+                class="btn btn-primary"
+                (click)="loadAndDisplaySummary()"
+                jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
+            >
+                Show Summary
+            </button>
         </div>
         <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
