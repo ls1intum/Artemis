@@ -127,16 +127,11 @@ public class GitUtilService {
     }
 
     private void tryToDeleteDirectory(Path path) throws Exception {
-        if (!Files.exists(path)) {
-            return;
-        }
-
         for (int i = 0; i < 10 && FileUtils.isDirectory(path.toFile()); i++) {
             try {
                 FileUtils.deleteDirectory(path.toFile());
             }
             catch (IOException e) {
-                e.printStackTrace();
                 Thread.sleep(10);
             }
         }
