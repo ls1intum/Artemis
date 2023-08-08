@@ -294,7 +294,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         else {
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
         }
-        verify(fileService).scheduleForDirectoryDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+        verify(fileService).scheduleForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
     }
 
     private DataExport initDataExport(DataExportState state) {

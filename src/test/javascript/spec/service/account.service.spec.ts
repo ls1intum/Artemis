@@ -108,7 +108,7 @@ describe('AccountService', () => {
     it('should sync user groups', () => {
         accountService.userIdentity = user;
 
-        accountService.syncGroups(user3);
+        accountService.syncGroups(user3.groups!);
 
         expect(accountService.userIdentity.groups).toEqual(['USER', 'TA']);
     });
