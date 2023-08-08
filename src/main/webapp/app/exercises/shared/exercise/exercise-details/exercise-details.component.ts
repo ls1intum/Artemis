@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegment } from 'app/entities/exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -38,5 +38,6 @@ export class ExerciseDetailsComponent implements OnInit {
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.exercise);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
+        console.log(getExerciseUrlSegment(this.exercise.type));
     }
 }

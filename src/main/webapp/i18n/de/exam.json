@@ -621,7 +621,7 @@
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",
-                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Sitzungen.",
+                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
                     "reasons": "Gründe",
                     "case": "Fall"
                 }

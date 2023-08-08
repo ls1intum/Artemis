@@ -52,8 +52,11 @@ public class PlagiarismResource {
 
     private static final String OTHER_SUBMISSION = "Other submission";
 
+    private final SubmissionRepository submissionRepository;
+
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
+            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository,
+            SubmissionRepository submissionRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -61,6 +64,7 @@ public class PlagiarismResource {
         this.plagiarismService = plagiarismService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.exerciseRepository = exerciseRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -190,12 +194,11 @@ public class PlagiarismResource {
      * @param exerciseId the id of the exercise
      * @return the number of plagiarism results
      */
-    @GetMapping("exercises/{exerciseId}/plagiarism-results-count")
+    @GetMapping("exercises/{exerciseId}/potential-plagiarism-count")
     @EnforceAtLeastInstructor
-    public long getNumberOfPlagiarismResultsForExercise(@PathVariable("exerciseId") long exerciseId) {
+    public long getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        // every result can lead to two plagiarism cases, that's why we multiply by two
-        return plagiarismResultRepository.countByExerciseId(exerciseId) * 2;
+        return plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId);
     }
 }

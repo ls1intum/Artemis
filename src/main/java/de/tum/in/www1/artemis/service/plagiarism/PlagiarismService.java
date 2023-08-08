@@ -1,9 +1,15 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import java.util.HashSet;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -14,9 +20,16 @@ public class PlagiarismService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService) {
+    private final SubmissionRepository submissionRepository;
+
+    private final UserRepository userRepository;
+
+    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, SubmissionRepository submissionRepository,
+            UserRepository userRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
+        this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -73,6 +86,33 @@ public class PlagiarismService {
         }
         else if (plagiarismStatus.equals(PlagiarismStatus.DENIED)) {
             plagiarismCaseService.removeSubmissionsInPlagiarismCasesForComparison(plagiarismComparisonId);
+        }
+    }
+
+    public long getNumberOfPotentialPlagiarismCasesForExercise(long exerciseId) {
+        var comparisons = plagiarismComparisonRepository.findAllByExerciseId(exerciseId);
+        var comparisonsWithoutDeletedUsers = new HashSet<>();
+        for (var comparison : comparisons) {
+            addSubmissionIfUserHasNotBeenDeletedForComparison(comparisonsWithoutDeletedUsers, comparison);
+
+        }
+        // every comparison can lead to two plagiarism cases, that's why we multiply by two
+        return comparisonsWithoutDeletedUsers.size() * 2L;
+    }
+
+    private void addSubmissionIfUserHasNotBeenDeletedForComparison(HashSet<Object> comparisonsWithoutDeletedUsers, PlagiarismComparison<?> comparison) {
+        var submissionA = submissionRepository.findById(comparison.getSubmissionA().getSubmissionId()).orElseThrow();
+        var submissionB = submissionRepository.findById(comparison.getSubmissionB().getSubmissionId()).orElseThrow();
+        checkIfUserForSubmissionStillExistsAndAddIfExistent(comparisonsWithoutDeletedUsers, comparison, submissionA);
+        checkIfUserForSubmissionStillExistsAndAddIfExistent(comparisonsWithoutDeletedUsers, comparison, submissionB);
+    }
+
+    private void checkIfUserForSubmissionStillExistsAndAddIfExistent(HashSet<Object> comparisonsWithoutDeletedUsers, PlagiarismComparison<?> comparison, Submission submission) {
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            var user = userRepository.findOneByLogin(studentParticipation.getParticipant().getParticipantIdentifier()).orElseThrow();
+            if (!user.isDeleted()) {
+                comparisonsWithoutDeletedUsers.add(comparison);
+            }
         }
     }
 }

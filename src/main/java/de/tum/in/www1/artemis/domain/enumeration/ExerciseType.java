@@ -12,8 +12,4 @@ public enum ExerciseType {
     public String getExerciseTypeAsReadableString() {
         return this.toString().toLowerCase().replace('_', ' ');
     }
-
-    public String getTypeAsStringForClient() {
-        return this.toString().toLowerCase().replace('_', '-');
-    }
 }

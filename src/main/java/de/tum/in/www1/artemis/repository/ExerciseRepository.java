@@ -363,6 +363,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                     WHERE eg IS NOT NULL
                         AND eg.exam.id = :examId
                         AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
+                    ORDER BY e.id ASC
 
             """)
     List<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(long examId);

@@ -9,6 +9,6 @@ export class PlagiarismResultsService {
     constructor(private http: HttpClient) {}
 
     getNumberOfPlagiarismResultsForExercise(exerciseId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrlExercises}/${exerciseId}/plagiarism-results-count`);
+        return this.http.get<number>(`${this.resourceUrlExercises}/${exerciseId}/potential-plagiarism-count`);
     }
 }

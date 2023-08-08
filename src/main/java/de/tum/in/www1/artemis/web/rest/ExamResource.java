@@ -1183,7 +1183,7 @@ public class ExamResource {
             var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
             var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
             ExerciseForPlagiarismCasesOverviewDTO exerciseForPlagiarismCasesOverviewDTO = new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(),
-                    exercise.getExerciseType().getTypeAsStringForClient(), exerciseGroupDTO);
+                    exercise.getType(), exerciseGroupDTO);
             exerciseForPlagiarismCasesOverviewDTOS.add(exerciseForPlagiarismCasesOverviewDTO);
         }
         return exerciseForPlagiarismCasesOverviewDTOS;
