@@ -12,6 +12,7 @@
             "typeLoginToConfirm": "Bitte gib deine Login-Kennung ein, um den Datenexport zu bestätigen",
             "confirmationQuestion": "Willst du wirklich den Datenexport anfordern?",
             "confirmationHeader": "Datenexport anfordern",
+            "requestForAnotherUser": "Datenexport für einen anderen Nutzer anfordern",
             "requestError": "Datenexport konnte nicht angefordert werden. Bitte versuche es später erneut.",
             "downloadError": "Datenexport konnte nicht heruntergeladen werden. Bitte versuche es später erneut.",
             "recentlyRequested": "Du kannst aktuell keinen weiteren Datenexport anfordern, da du erst kürzlich einen Datenexport angefordert hast",

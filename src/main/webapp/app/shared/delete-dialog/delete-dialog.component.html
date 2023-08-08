@@ -21,12 +21,16 @@
                         <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
                         <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
                     </div>
+                    <div *ngIf="additionalChecksValues[checkKey] && actionType === actionTypes.RequestDataExport">
+                        <label for="additional-check-{{ i }}-text" class="form-check-label">Login</label>
+                        <input id="additional-check-{{ i }}-text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+                    </div>
                 </div>
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
             <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="alternativeDeleteConfirmationText" />
         </div>
     </div>
     <div class="modal-footer">

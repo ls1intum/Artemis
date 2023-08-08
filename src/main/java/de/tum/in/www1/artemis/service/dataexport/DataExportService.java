@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.dataexport;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -55,13 +54,22 @@ public class DataExportService {
      *
      * @return the created DataExport object
      */
-    public RequestDataExportDTO requestDataExport() throws IOException {
+    public RequestDataExportDTO requestDataExport() {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();
         dataExport.setUser(user);
         dataExport = dataExportRepository.save(dataExport);
-        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), false);
+    }
+
+    public RequestDataExportDTO requestDataExportForUserAsAdmin(long userId) {
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        User user = userRepository.findByIdElseThrow(userId);
+        dataExport.setUser(user);
+        dataExport = dataExportRepository.save(dataExport);
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), true);
     }
 
     /**

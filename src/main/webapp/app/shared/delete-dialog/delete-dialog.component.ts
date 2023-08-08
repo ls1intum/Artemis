@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -6,21 +6,25 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faBan, faCheck, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
+import { NgForm } from '@angular/forms';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
-export class DeleteDialogComponent implements OnInit, OnDestroy {
+export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
     readonly actionTypes = ActionType;
     private dialogErrorSubscription: Subscription;
+    private loginSubscription: Subscription;
     dialogError: Observable<string>;
     @Output() delete: EventEmitter<{ [key: string]: boolean }>;
+    @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
+
     submitDisabled: boolean;
     confirmEntityName: string;
     entityTitle: string;
     buttonType: ButtonType;
-
+    alternativeDeleteConfirmationText: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;
@@ -72,6 +76,12 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
         if (this.dialogErrorSubscription) {
             this.dialogErrorSubscription.unsubscribe();
         }
+    }
+    ngOnChanges(): void {
+        this.loginSubscription = this.deleteForm.value('login').valueChanges.subscribe((val: any) => {
+            const formattedMessage = `Email is ${val}.`;
+            console.log(formattedMessage);
+        });
     }
 
     /**

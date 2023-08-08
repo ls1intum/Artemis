@@ -14,6 +14,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() buttonType: ButtonType = ButtonType.ERROR;
+    @Input() alternativeDeleteConfirmationText: string;
     @Input() renderButtonStyle = true;
     @Input() renderButtonText = true;
     @Input() requireConfirmationOnlyForAdditionalChecks = false;
@@ -66,6 +67,7 @@ export class DeleteButtonDirective implements OnInit {
             deleteQuestion: this.deleteQuestion,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
+            alternativeDeleteConfirmationText: this.alternativeDeleteConfirmationText,
             actionType: this.actionType,
             buttonType: this.buttonType,
             delete: this.delete,

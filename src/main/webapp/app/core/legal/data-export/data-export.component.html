@@ -18,6 +18,9 @@
             [entityTitle]="currentLogin!"
             [disabled]="!canRequestDataExport"
             deleteQuestion="artemisApp.dataExport.confirmationQuestion"
+            [additionalChecks]="{
+                                    dataExportForAnotherUser: 'artemisApp.dataExport.requestForAnotherUser',
+                                }"
             (delete)="requestExport()"
             [dialogError]="dialogError$"
             [animation]="false"

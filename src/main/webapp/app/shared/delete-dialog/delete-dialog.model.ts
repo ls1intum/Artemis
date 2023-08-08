@@ -47,4 +47,7 @@ export class DeleteDialogData {
 
     // require the confirmation security check only when at least one additional check is selected
     requireConfirmationOnlyForAdditionalChecks: boolean;
+
+    // alternative delete confirmation text used if the value for confirmation can change once the dialog is opened
+    alternativeDeleteConfirmationText: string;
 }
