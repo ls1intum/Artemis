@@ -263,9 +263,9 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    registerForCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
@@ -279,9 +279,9 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    unenrollFromCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
