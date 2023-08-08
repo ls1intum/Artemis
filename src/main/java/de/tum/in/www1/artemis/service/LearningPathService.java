@@ -305,8 +305,8 @@ public class LearningPathService {
 
             // generate match cluster start and end nodes
             for (int i = 0; i < matchClusters.numberOfSets(); i++) {
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_START));
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_END));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.MATCH_START));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.MATCH_END));
             }
 
             // generate edges between match cluster nodes and corresponding competencies
