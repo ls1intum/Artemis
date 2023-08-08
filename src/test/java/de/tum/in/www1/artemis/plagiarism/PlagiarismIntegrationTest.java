@@ -25,7 +25,9 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
@@ -44,9 +46,6 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
-
-    @Autowired
-    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -238,14 +237,14 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
-        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results-count", HttpStatus.FORBIDDEN, Long.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.get("/api/exercises/" + textExercise.getId() + "/plagiarism-results-count", HttpStatus.FORBIDDEN, Long.class);
+        request.get("/api/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }

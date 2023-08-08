@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.plagiarism.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -52,11 +55,8 @@ public class PlagiarismResource {
 
     private static final String OTHER_SUBMISSION = "Other submission";
 
-    private final SubmissionRepository submissionRepository;
-
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository,
-            SubmissionRepository submissionRepository) {
+            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -64,7 +64,6 @@ public class PlagiarismResource {
         this.plagiarismService = plagiarismService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.exerciseRepository = exerciseRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**

@@ -94,7 +94,6 @@ public class PlagiarismService {
         var comparisonsWithoutDeletedUsers = new HashSet<>();
         for (var comparison : comparisons) {
             addSubmissionIfUserHasNotBeenDeletedForComparison(comparisonsWithoutDeletedUsers, comparison);
-
         }
         // every comparison can lead to two plagiarism cases, that's why we multiply by two
         return comparisonsWithoutDeletedUsers.size() * 2L;
