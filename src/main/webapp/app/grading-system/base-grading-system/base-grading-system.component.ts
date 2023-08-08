@@ -474,7 +474,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 // ignore the last grade step since its inclusivity gets set differently.
                 return true;
             }
-            return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0 || gradeStep.lowerBoundPercentage >= 100;
+            return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
         });
     }
 
