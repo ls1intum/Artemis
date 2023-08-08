@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 
 @Controller
-@Profile("!decoupling || quiz")  // TODO: Remove !decoupling
+@Profile("!decoupling || quiz")
 public class QuizSubmissionWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionWebsocketService.class);

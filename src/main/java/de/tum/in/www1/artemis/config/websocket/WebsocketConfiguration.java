@@ -128,7 +128,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
             config
-                    // .setApplicationDestinationPrefixes("/topic/team")
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay(activeProfiles.contains("quiz") ? new String[] { "/topic" } : new String[] { "/topic", "/queue" })
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
