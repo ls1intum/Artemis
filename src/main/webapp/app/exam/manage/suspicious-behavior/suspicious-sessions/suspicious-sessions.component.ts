@@ -12,6 +12,7 @@ export class SuspiciousSessionsComponent implements OnInit {
     suspiciousFingerprint = false;
     suspiciousIpAddress = false;
     suspiciousUserAgent = false;
+
     ngOnInit(): void {
         this.suspiciousFingerprint = this.isSuspiciousFor(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
         this.suspiciousIpAddress = this.isSuspiciousFor(SuspiciousSessionReason.SAME_IP_ADDRESS);
@@ -25,7 +26,7 @@ export class SuspiciousSessionsComponent implements OnInit {
         return `/course-management/${courseId}/exams/${examId}/student-exams/${studentExamId}`;
     }
 
-    private isSuspiciousFor = (reason: SuspiciousSessionReason) => {
+    private isSuspiciousFor(reason: SuspiciousSessionReason) {
         return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
-    };
+    }
 }
