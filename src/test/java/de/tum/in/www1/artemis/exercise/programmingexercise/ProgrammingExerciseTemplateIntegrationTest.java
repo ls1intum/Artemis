@@ -215,11 +215,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     private int invokeMaven(boolean testwiseCoverageAnalysis) throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setPomFile(testRepo.localRepoFile);
-        var goals = new ArrayList<>(List.of("clean", "test"));
+        mvnRequest.setGoals(List.of("clean", "test"));
         if (testwiseCoverageAnalysis) {
-            goals.add("-Pcoverage");
+            mvnRequest.addArg("-Pcoverage");
         }
-        mvnRequest.setGoals(goals);
         mvnRequest.setShowVersion(true);
 
         Invoker mvnInvoker = new DefaultInvoker();
@@ -234,7 +233,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             BuildLauncher launcher = connector.newBuild();
             String[] tasks;
             if (recordTestwiseCoverage) {
-                tasks = new String[] { "clean", "test", "tiaTests --run-all-tests" };
+                tasks = new String[] { "clean", "test", "tiaTests", "--run-all-tests" };
             }
             else {
                 tasks = new String[] { "clean", "test" };
@@ -259,7 +258,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private Map<TestResult, Integer> readTestReports(String testResultPath) {
         File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
-        assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles);
+        assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles, "the report folder should contain test reports");
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods
         SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), new PrintStreamLogger(System.out));
