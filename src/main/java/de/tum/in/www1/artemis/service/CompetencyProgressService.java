@@ -276,7 +276,7 @@ public class CompetencyProgressService {
      * @return True if the user mastered the competency, false otherwise
      */
     public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
-        // weight taken from client
+        // mastery as a weighted function of progress and confidence (consistent with client)
         final double weight = 2.0 / 3.0;
         final double mastery = (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();

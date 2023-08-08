@@ -67,7 +67,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudents(course);
-        students.forEach((student) -> generateLearningPathForUser(course, student));
+        students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
 
@@ -87,7 +87,7 @@ public class LearningPathService {
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
-        lpToCreate.getCompetencies().addAll(course.getCompetencies());
+        lpToCreate.setCompetencies(course.getCompetencies());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
         log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
         updateLearningPathProgress(persistedLearningPath);

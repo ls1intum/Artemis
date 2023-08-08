@@ -153,13 +153,13 @@ public class LearningPathResource {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
-        if (authorizationCheckService.isStudentInCourse(course, null)) {
-            final var user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authorizationCheckService.isStudentInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
+        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !authorizationCheckService.isAdmin()) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
         NgxLearningPathDTO graph = learningPathService.generateNgxGraphRepresentation(learningPath);
