@@ -151,6 +151,10 @@
         },
         "learningPath": {
             "learningPathButton": "Lernpfade",
+            "breadcrumbs": {
+                "lectureUnit": "Vorlesungseinheit",
+                "exercise": "Aufgabe"
+            },
             "manageLearningPaths": {
                 "title": "Lernpfadmanagement",
                 "health": {
@@ -175,6 +179,18 @@
                     "refresh": "Aktualisieren",
                     "center": "Zentrieren"
                 }
+            },
+            "sideBar": {
+                "hide": "Lernpfad ausblenden",
+                "show": "Lernpfad einblenden",
+                "header": "Lernpfad"
+            },
+            "participate": {
+                "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
+                "prev": "Zurück",
+                "prevHint": "Zurück zur letzten Vorlesungseinheit oder Aufgabe",
+                "next": "Weiter",
+                "nextHint": "Weiter zur nächsten Empfehlung"
             }
         }
     }

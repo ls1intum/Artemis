@@ -36,4 +36,8 @@ export class LearningPathService {
             }),
         );
     }
+
+    getLearningPathId(courseId: number) {
+        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
+    }
 }
