@@ -72,7 +72,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private static final String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
 
-    @BeforeAll
+    // @BeforeAll
     static void detectMavenHome() {
         /*
          * Maven invoker only looks for those two values and ignores maven, even if it is available over PATH. Because Maven reports the path when "-version" is used, we use that
@@ -155,6 +155,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
             }
 
             if (languageFeatures.testwiseCoverageAnalysisSupported()) {
+                if (projectTypes.isEmpty()) {
+                    argumentBuilder.add(Arguments.of(language, null, true));
+                }
                 for (ProjectType projectType : projectTypes) {
                     argumentBuilder.add(Arguments.of(language, projectType, true));
                 }
