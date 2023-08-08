@@ -138,7 +138,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path.
+     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
@@ -147,7 +147,7 @@ public class LearningPathResource {
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable Long learningPathId) {
-        log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
+        log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         if (!course.getLearningPathsEnabled()) {
