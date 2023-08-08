@@ -24,6 +24,7 @@ export class SuspiciousSessionsComponent implements OnInit {
         const examId = studentExam.exam?.id;
         return `/course-management/${courseId}/exams/${examId}/student-exams/${studentExamId}`;
     }
+
     private isSuspiciousFor = (reason: SuspiciousSessionReason) => {
         return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
     };
