@@ -276,10 +276,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         this.setupEnrollmentRequestMocks();
 
-        final var updatedUser = request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        final var updatedUserWithLearningPaths = userRepository.findWithLearningPathsByIdElseThrow(updatedUser.getId());
-        assertThat(updatedUserWithLearningPaths.getLearningPaths()).isNotNull();
-        assertThat(updatedUserWithLearningPaths.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
+        request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        final var user = userRepository.findOneWithLearningPathsByLogin(TEST_PREFIX + "student1337").orElseThrow();
+
+        assertThat(user.getLearningPaths()).isNotNull();
+        assertThat(user.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
     }
 
     private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
