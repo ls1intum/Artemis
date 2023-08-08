@@ -29,7 +29,7 @@ public class LearningPath extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties({ "competencies", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites", "exercises" })
     private Course course;
 
     @ManyToMany
