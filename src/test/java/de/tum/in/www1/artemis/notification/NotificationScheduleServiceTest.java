@@ -84,8 +84,8 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
-        verify(groupNotificationService, timeout(4000).times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(mailService, timeout(4000).atLeast(1)).sendNotification(any(), anyList(), any());
+        verify(groupNotificationService, timeout(4000)).notifyAllGroupsAboutReleasedExercise(exercise);
+        verify(mailService, timeout(4000).atLeastOnce()).sendNotification(any(), anySet(), any());
     }
 
     @Test
@@ -108,7 +108,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
         await().until(() -> notificationRepository.count() > sizeBefore);
-        verify(singleUserNotificationService, timeout(4000).times(1)).notifyUsersAboutAssessedExerciseSubmission(exercise);
-        verify(javaMailSender, timeout(4000).times(1)).send(any(MimeMessage.class));
+        verify(singleUserNotificationService, timeout(4000)).notifyUsersAboutAssessedExerciseSubmission(exercise);
+        verify(javaMailSender, timeout(4000)).send(any(MimeMessage.class));
     }
 }

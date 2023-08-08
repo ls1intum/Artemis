@@ -152,10 +152,10 @@ public class ProgrammingExerciseResource {
      * @param exercise the exercise object we want to check for errors
      */
     private void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+        if (!continuousIntegrationService.orElseThrow().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
-        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
+        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.orElseThrow().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
             throw new BadRequestAlertException("The Template Repository URL seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
@@ -667,7 +667,7 @@ public class ProgrammingExerciseResource {
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+            continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
@@ -817,7 +817,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get build log statistics for ProgrammingExercise with id : {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(programmingExercise);

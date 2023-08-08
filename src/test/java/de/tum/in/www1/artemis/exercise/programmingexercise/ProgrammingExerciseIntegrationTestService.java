@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
@@ -471,7 +472,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
-        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString())).findFirst();
+        Optional<Path> extractedRepo1 = entries.stream()
+                .filter(entry -> entry.toString().endsWith(Path.of("-" + String.valueOf(participation1.getId()) + "-student-submission.git", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -531,7 +533,7 @@ class ProgrammingExerciseIntegrationTestService {
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAnonymizeStudentCommits(true);
+        repositoryExportOptions.setAnonymizeRepository(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         return repositoryExportOptions;
@@ -1622,10 +1624,8 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService, times(1)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
-                participation1.getStudents());
-        verify(versionControlService, times(1)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
-                participation2.getStudents());
+        verify(versionControlService).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation1.getStudents());
+        verify(versionControlService).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation2.getStudents());
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
@@ -1659,8 +1659,10 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1, true);
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2, true);
+        verify(versionControlService).addMemberToRepository(participation1.getVcsRepositoryUrl(), participation1.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
+        verify(versionControlService).addMemberToRepository(participation2.getVcsRepositoryUrl(), participation2.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
@@ -1673,7 +1675,7 @@ class ProgrammingExerciseIntegrationTestService {
     void testCheckPlagiarism() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).get();
+                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1684,7 +1686,7 @@ class ProgrammingExerciseIntegrationTestService {
     void testCheckPlagiarismJplagReport() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).get();
+                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM_JPLAG_REPORT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1722,7 +1724,7 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
+        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1758,13 +1760,13 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(Path.of(jPlagReposDir, projectKey));
-        Path file1 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-1.java"));
+        Files.createDirectories(jPlagReposDir.resolve(projectKey));
+        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
         Files.writeString(file1, exampleProgram);
-        Path file2 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-2.java"));
+        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
         Files.writeString(file2, exampleProgram);
 
-        doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
+        doReturn(jPlagReposDir).when(fileService).getTemporaryUniquePath(any(Path.class), eq(60L));
         doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
@@ -1982,7 +1984,7 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
-        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).isEmpty());
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
@@ -2192,7 +2194,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).get();
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
 
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(),

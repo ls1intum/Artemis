@@ -2,11 +2,10 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { CourseWideContext } from '../../support/constants';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
-import { generateUUID, titleCaseWord, titleLowercase } from '../../support/utils';
+import { titleCaseWord, titleLowercase } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
-import day from 'dayjs/esm';
 import { Channel } from '../../../../main/webapp/app/entities/metis/conversation/channel.model';
 
 describe('Course communication', () => {
@@ -16,31 +15,21 @@ describe('Course communication', () => {
     before('Create course', () => {
         cy.login(admin);
 
-        let uid = generateUUID();
-        let courseName = 'Cypress course' + uid;
-        let courseShortName = 'cypress' + uid;
-        courseManagementRequest
-            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, false)
-            .then((response) => {
-                course = convertCourseAfterMultiPart(response);
-                courseManagementRequest.addInstructorToCourse(course, instructor);
-                courseManagementRequest.addStudentToCourse(course, studentOne);
-                courseManagementRequest.addStudentToCourse(course, studentTwo);
-                courseManagementRequest.addStudentToCourse(course, studentThree);
-            });
+        courseManagementRequest.createCourse({ allowMessaging: false }).then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+        });
 
-        uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest
-            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), undefined, undefined, true, true)
-            .then((response) => {
-                courseWithMessaging = convertCourseAfterMultiPart(response);
-                courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
-                courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
-            });
+        courseManagementRequest.createCourse().then((response) => {
+            courseWithMessaging = convertModelAfterMultiPart(response);
+            courseManagementRequest.addInstructorToCourse(courseWithMessaging, instructor);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentOne);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentTwo);
+            courseManagementRequest.addStudentToCourse(courseWithMessaging, studentThree);
+        });
     });
 
     describe('Course overview communication', () => {
@@ -48,8 +37,8 @@ describe('Course communication', () => {
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
             courseCommunication.selectContextInModal(CourseWideContext.ORGANIZATION);
-            courseCommunication.setTitleInModal('Cypress Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
+            courseCommunication.setTitleInModal('Test Post');
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInModal(text);
             });
             courseCommunication.save();
@@ -257,7 +246,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within exercises', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -373,7 +362,7 @@ describe('Course communication', () => {
         it('students should be able to create posts within lectures', () => {
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
@@ -494,7 +483,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within exercises', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();
@@ -565,7 +554,7 @@ describe('Course communication', () => {
         it('students should be able to create messages within lecture', () => {
             cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            cy.fixture('loremIpsum.txt').then((text) => {
+            cy.fixture('loremIpsum-short.txt').then((text) => {
                 courseCommunication.setContentInline(text);
             });
             courseCommunication.saveMessage();
@@ -618,13 +607,8 @@ describe('Course communication', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (course.id) {
-            courseManagementRequest.deleteCourse(course.id).its('status').should('eq', 200);
-        }
-        if (courseWithMessaging.id) {
-            courseManagementRequest.deleteCourse(courseWithMessaging.id).its('status').should('eq', 200);
-        }
+    after('Delete Courses', () => {
+        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementRequest.deleteCourse(courseWithMessaging, admin);
     });
 });

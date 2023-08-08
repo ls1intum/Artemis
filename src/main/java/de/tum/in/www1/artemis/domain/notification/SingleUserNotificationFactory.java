@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -70,6 +71,33 @@ public class SingleUserNotificationFactory {
         }
         notification = new SingleUserNotification(recipient, title, notificationText, true, placeholderValues);
         notification.setTransientAndStringTarget(createExerciseTarget(exercise, title));
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification for a successful data export creation.
+     *
+     * @param dataExport the data export that was created
+     * @param type       the type of the notification
+     * @param recipient  the user that should be notified (the requester of the data export)
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(DataExport dataExport, NotificationType type, User recipient) {
+        var title = DATA_EXPORT_CREATED_TITLE;
+        var text = DATA_EXPORT_CREATED_TEXT;
+        var path = "data-exports";
+        if (type == NotificationType.DATA_EXPORT_FAILED) {
+            title = DATA_EXPORT_FAILED_TITLE;
+            text = DATA_EXPORT_FAILED_TEXT;
+        }
+        var notification = new SingleUserNotification(recipient, title, text, true, new String[0]);
+        if (type == NotificationType.DATA_EXPORT_FAILED) {
+            notification.setPriority(HIGH);
+            notification.setTransientAndStringTarget(createDataExportFailedTarget(path));
+        }
+        else {
+            notification.setTransientAndStringTarget(createDataExportCreatedTarget(dataExport, path));
+        }
         return notification;
     }
 
@@ -210,9 +238,12 @@ public class SingleUserNotificationFactory {
         if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+
+        String conversationTitle = answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor());
+
         String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
                 answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),
-                answerPost.getAuthor().getName() };
+                answerPost.getAuthor().getName(), conversationTitle };
         SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
         notification.setAuthor(responsibleForAction);

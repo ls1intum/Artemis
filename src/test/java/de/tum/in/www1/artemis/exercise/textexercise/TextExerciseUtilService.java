@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.textexercise;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -93,28 +92,6 @@ public class TextExerciseUtilService {
         for (int i = 0; i < count; i++) {
             textBlock = new TextBlock();
             textBlock.setText("TextBlock" + i);
-            textBlocks.add(textBlock);
-        }
-        return textBlocks;
-    }
-
-    /**
-     * Generate a set of specified size containing TextBlocks with the same text
-     *
-     * @param count expected size of TextBlock set
-     * @return Set of TextBlocks with identical texts
-     */
-    public Set<TextBlock> generateTextBlocksWithIdenticalTexts(int count) {
-        Set<TextBlock> textBlocks = new HashSet<>();
-        TextBlock textBlock;
-        String text = "TextBlock";
-
-        for (int i = 0; i < count; i++) {
-            String blockId = sha1Hex("id" + i + text);
-            textBlock = new TextBlock();
-            textBlock.setText(text);
-            textBlock.setId(blockId);
-            textBlock.automatic();
             textBlocks.add(textBlock);
         }
         return textBlocks;
@@ -224,6 +201,20 @@ public class TextExerciseUtilService {
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return course;
+    }
+
+    /**
+     * renames the passed text exercise using the passed title
+     *
+     * @param textExercise exercise to be renamed
+     * @param title        new title of the exercise
+     * @return the renamed exercise
+     */
+    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+        textExercise.setTitle(title);
+        textExerciseRepository.save(textExercise);
+
+        return textExercise;
     }
 
     public Course addCourseWithOneReleasedTextExercise() {
@@ -356,8 +347,8 @@ public class TextExerciseUtilService {
     }
 
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
-        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId,
-                userId, exerciseId, participationId, submissionId);
+        return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
+                exerciseId, participationId, submissionId);
     }
 
     public Course addCourseWithOneFinishedTextExercise() {
@@ -368,5 +359,17 @@ public class TextExerciseUtilService {
         course = courseRepo.save(course);
         exerciseRepo.save(finishedTextExercise);
         return course;
+    }
+
+    /**
+     * creates and saves a text exercise for an exam
+     *
+     * @param exerciseGroup exercise group to which the text exercise should be added
+     * @return newly created text exercise
+     */
+    public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+        return textExercise;
     }
 }

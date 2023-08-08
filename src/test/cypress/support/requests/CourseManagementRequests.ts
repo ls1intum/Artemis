@@ -6,21 +6,25 @@ import { Exercise as CypressExercise } from 'src/test/cypress/support/pageobject
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
-import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
+import { BASE_API, CourseWideContext, DELETE, ExerciseType, GET, POST, PUT, ProgrammingLanguage } from '../constants';
+import javaProgrammingExerciseTemplate from '../../fixtures/exercise/programming/java/template.json';
+import pythonProgrammingExerciseTemplate from '../../fixtures/exercise/programming/python/template.json';
+import cProgrammingExerciseTemplate from '../../fixtures/exercise/programming/c/template.json';
 import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import modelingExerciseTemplate from '../../fixtures/exercise/modeling/template.json';
-import assessment_submission from '../../fixtures/exercise/programming/assessment/submission.json';
+import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
+import javaAssessmentSubmission from '../../fixtures/exercise/programming/java/assessment/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multiple_choice/submission.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -33,6 +37,7 @@ export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
+export const UPLOAD_EXERCISE_BASE = BASE_API + 'file-upload-exercises/';
 
 /**
  * A class which encapsulates all cypress requests related to course management.
@@ -40,37 +45,58 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param courseId the course id
+     * @param course the course
+     * @param admin the admin user
      * @returns <Chainable> request response
      */
-    deleteCourse(courseId: number) {
-        // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
-        cy.wait(20000);
-        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
+    deleteCourse(course: Course, admin: CypressCredentials) {
+        if (course) {
+            cy.login(admin);
+            // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
+            cy.wait(500);
+            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}`, retryOnStatusCodeFailure: true });
+        }
     }
 
     /**
      * Creates a course with the specified title and short name.
-     * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
-     * @param courseName the title of the course (will generate default name if not provided)
-     * @param courseShortName the short name (will generate default name if not provided)
-     * @param start the start date of the course (default: now() - 2 hours)
-     * @param end the end date of the course (default: now() + 2 hours)
-     * @param fileName the course icon file name (default: undefined)
-     * @param file the course icon file blob (default: undefined)
+     * @param options An object containing the options for creating the course
+     *   - customizeGroups: whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
+     *   - courseName: the title of the course (will generate default name if not provided)
+     *   - courseShortName: the short name (will generate default name if not provided)
+     *   - start: the start date of the course (default: now() - 2 hours)
+     *   - end: the end date of the course (default: now() + 2 hours)
+     *   - iconFileName: the course icon file name (default: undefined)
+     *   - iconFile: the course icon file blob (default: undefined)
+     *   - allowCommunication: if communication should be enabled for the course
+     *   - allowMessaging: if messaging should be enabled for the course
      * @returns <Chainable> request response
      */
     createCourse(
-        customizeGroups = false,
-        courseName = 'Course ' + generateUUID(),
-        courseShortName = 'cypress' + generateUUID(),
-        start = day().subtract(2, 'hours'),
-        end = day().add(2, 'hours'),
-        fileName?: string,
-        file?: Blob,
-        allowCommunication = true,
-        allowMessaging = true,
+        options: {
+            customizeGroups?: boolean;
+            courseName?: string;
+            courseShortName?: string;
+            start?: day.Dayjs;
+            end?: day.Dayjs;
+            iconFileName?: string;
+            iconFile?: Blob;
+            allowCommunication?: boolean;
+            allowMessaging?: boolean;
+        } = {},
     ): Cypress.Chainable<Cypress.Response<Course>> {
+        const {
+            customizeGroups = false,
+            courseName = 'Course ' + generateUUID(),
+            courseShortName = 'cypress' + generateUUID(),
+            start = day().subtract(2, 'hours'),
+            end = day().add(2, 'hours'),
+            iconFileName,
+            iconFile,
+            allowCommunication = true,
+            allowMessaging = true,
+        } = options;
+
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
@@ -95,11 +121,14 @@ export class CourseManagementRequests {
             course.editorGroupName = Cypress.env('editorGroupName');
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
+
         const formData = new FormData();
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
-        if (file) {
-            formData.append('file', file, fileName);
+
+        if (iconFile) {
+            formData.append('file', iconFile, iconFileName);
         }
+
         return cy.request({
             url: COURSE_ADMIN_BASE,
             method: POST,
@@ -108,43 +137,74 @@ export class CourseManagementRequests {
     }
 
     /**
-     * Creates a programming exercise with the specified title and other data.
-     * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
-     * @param releaseDate when the programming exercise should be available (default is now)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
-     * @param title the title of the programming exercise
-     * @param programmingShortName the short name of the programming exercise
-     * @param packageName the package name of the programming exercise
-     * @param assessmentDate the due date of the assessment
-     * @param assessmentType the assessment type of the exercise (default is AUTOMATIC)
+     * Creates a programming exercise with the specified title and other data
+     * @param options An object containing the options for creating the programming exercise
+     *   - course: The course the exercise will be added to
+     *   - exerciseGroup: The exercise group the exercise will be added to
+     *   - scaMaxPenalty: The max percentage (0-100) static code analysis can reduce from the points
+     *                    If sca should be disabled, pass null or omit this property
+     *   - recordTestwiseCoverage: Enable testwise coverage analysis for this exercise
+     *   - releaseDate: When the programming exercise should be available
+     *   - dueDate: When the programming exercise should be due
+     *   - title: The title of the programming exercise
+     *   - programmingShortName: The short name of the programming exercise
+     *   - programmingLanguage: The programming language for the exercise
+     *   - packageName: The package name of the programming exercise
+     *   - assessmentDate: The due date of the assessment
+     *   - assessmentType: The assessment type of the exercise
      * @returns <Chainable> request response
      */
-    createProgrammingExercise(
-        body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        scaMaxPenalty?: number,
-        recordTestwiseCoverage = false,
-        releaseDate = day(),
-        dueDate = day().add(1, 'day'),
-        title = 'Programming ' + generateUUID(),
-        programmingShortName = 'cypress' + generateUUID(),
-        packageName = 'de.test',
-        assessmentDate = day().add(2, 'days'),
-        assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
-    ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
-        const template = {
+    createProgrammingExercise(options: {
+        course?: Course;
+        exerciseGroup?: ExerciseGroup;
+        scaMaxPenalty?: number | null;
+        recordTestwiseCoverage?: boolean;
+        releaseDate?: day.Dayjs;
+        dueDate?: day.Dayjs;
+        title?: string;
+        programmingShortName?: string;
+        programmingLanguage?: ProgrammingLanguage;
+        packageName?: string;
+        assessmentDate?: day.Dayjs;
+        assessmentType?: ProgrammingExerciseAssessmentType;
+    }): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
+        const {
+            course,
+            exerciseGroup,
+            scaMaxPenalty = null,
+            recordTestwiseCoverage = false,
+            releaseDate = day(),
+            dueDate = day().add(1, 'day'),
+            title = 'Programming ' + generateUUID(),
+            programmingShortName = 'programming' + generateUUID(),
+            programmingLanguage = ProgrammingLanguage.JAVA,
+            packageName = 'de.test',
+            assessmentDate = day().add(2, 'days'),
+            assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
+        } = options;
+
+        let programmingExerciseTemplate = {};
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            programmingExerciseTemplate = pythonProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExerciseTemplate = cProgrammingExerciseTemplate;
+        } else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExerciseTemplate = javaProgrammingExerciseTemplate;
+        }
+
+        const exercise = {
             ...programmingExerciseTemplate,
             title,
             shortName: programmingShortName,
             packageName,
             channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
-        };
-        const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
-        // eslint-disable-next-line no-prototype-builtins
-        const isExamExercise = body.hasOwnProperty('exerciseGroup');
-        if (!isExamExercise) {
+            ...(course ? { course } : {}),
+            ...(exerciseGroup ? { exerciseGroup } : {}),
+        } as ProgrammingExercise;
+
+        if (!exerciseGroup) {
             exercise.releaseDate = releaseDate;
             exercise.dueDate = dueDate;
             exercise.assessmentDueDate = assessmentDate;
@@ -155,7 +215,10 @@ export class CourseManagementRequests {
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
 
+        exercise.programmingLanguage = programmingLanguage;
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+
+        console.log(exercise);
 
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
@@ -174,28 +237,28 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${BASE_API}repository/${repositoryId}/files?commit=yes`,
             method: PUT,
-            body: assessment_submission,
+            body: javaAssessmentSubmission,
         });
     }
 
     updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
+        return this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
-    private updateExercise(exercise: Exercise, type: EXERCISE_TYPE) {
+    private updateExercise(exercise: Exercise, type: ExerciseType) {
         let url: string;
         switch (type) {
-            case EXERCISE_TYPE.Programming:
+            case ExerciseType.PROGRAMMING:
                 url = PROGRAMMING_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 url = TEXT_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Modeling:
+            case ExerciseType.MODELING:
                 url = MODELING_EXERCISE_BASE;
                 break;
-            case EXERCISE_TYPE.Quiz:
+            case ExerciseType.QUIZ:
             default:
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
@@ -417,6 +480,47 @@ export class CourseManagementRequests {
     }
 
     /**
+     * Creates a file upload exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
+     * @returns <Chainable> request response
+     */
+    createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()) {
+        const template = {
+            ...fileUploadExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
+        const uploadExercise = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: UPLOAD_EXERCISE_BASE, body: uploadExercise });
+    }
+
+    deleteFileUploadExercise(exerciseID: number) {
+        return cy.request({
+            url: `${UPLOAD_EXERCISE_BASE}/${exerciseID}`,
+            method: DELETE,
+        });
+    }
+
+    makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
+            method: POST,
+            body: { submissionExerciseType: 'file-upload', file },
+        });
+    }
+
+    updateFileUploadExerciseDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.dueDate = due;
+        return this.updateExercise(exercise, ExerciseType.FILE_UPLOAD);
+    }
+
+    updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.assessmentDueDate = due;
+        return this.updateExercise(exercise, ExerciseType.FILE_UPLOAD);
+    }
+
+    /**
      * generate all missing individual exams
      * @returns <Chainable> request response
      */
@@ -438,7 +542,7 @@ export class CourseManagementRequests {
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
-    ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
+    ) {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
@@ -465,7 +569,7 @@ export class CourseManagementRequests {
 
     updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Modeling);
+        return this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
     deleteModelingExercise(exerciseID: number) {
@@ -559,7 +663,7 @@ export class CourseManagementRequests {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
             method: PUT,
-            body: { submissionExerciseType: 'text', text, id: null },
+            body: { submissionExerciseType: 'text', text },
         });
     }
 
@@ -638,12 +742,12 @@ export class CourseManagementRequests {
 
     updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
         exercise.dueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
+        return this.updateExercise(exercise, ExerciseType.TEXT);
     }
 
     updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
         exercise.assessmentDueDate = due;
-        return this.updateExercise(exercise, EXERCISE_TYPE.Text);
+        return this.updateExercise(exercise, ExerciseType.TEXT);
     }
 
     deleteLecture(lectureId: number) {
@@ -804,7 +908,7 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+export function convertModelAfterMultiPart(response: Cypress.Response<Course>): Course {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');

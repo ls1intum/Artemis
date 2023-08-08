@@ -187,7 +187,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -199,7 +199,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -214,12 +214,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow().getComplaintType()).as("more feedback request is not saved")
                 .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -236,7 +236,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is saved").isPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
     }
 
@@ -251,7 +251,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
     }
 
@@ -266,9 +266,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
 
-        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
-        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
+        Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).orElseThrow();
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessmentNoteIfPresent()).isEqualTo(modelingAssessment.getAssessmentNoteIfPresent());
@@ -291,14 +291,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
-        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
+        Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result result = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
         result.setCompletionDate(ZonedDateTime.ofInstant(result.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
@@ -337,6 +337,34 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void submitComplaintResponse_examExercise() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
+        exam.setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        examExerciseComplaint = complaintRepo.save(examExerciseComplaint);
+
+        examCourse = courseUtilService.updateCourseComplaintResponseTextLimit(examCourse, 20);
+        courseRepository.save(examCourse);
+
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", examExerciseComplaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters, above course limit but valid for exam exercises (where complaint limits don't apply)
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
+        assertThat(complaintRepo.findByResultId(textSubmission.getId())).isPresent();
     }
 
     @Test
@@ -891,9 +919,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
         assertThat(storedComplaint).as("complaint is saved").isPresent();
-        assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
+        assertThat(storedComplaint.orElseThrow().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         // set date to UTC for comparison
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
@@ -966,7 +994,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
-        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
+        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.orElseThrow().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
 
@@ -990,5 +1018,61 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
         assertThat(storedComplaint).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsEnabled_exceededCourseLimit_success() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        examCourse = courseUtilService.updateCourseComplaintTextLimit(examCourse, 25);
+        // enable course complaints
+        examCourse.setMaxComplaintTimeDays(3);
+        courseRepository.save(examCourse);
+        // 26 characters, exceeds course limit but lower than 2000 --> allowed for exam exercise
+        String complaintText = "abcdefghijklmnopqrstuvwxyz";
+        var examSubmission = createComplaintForExamExercise(examExercise, complaintText, HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultSubmissionId(examSubmission.getId());
+        assertThat(storedComplaint).isPresent();
+        assertThat(storedComplaint.get().getComplaintText()).isEqualTo(complaintText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsDisabled_notExceededTextLimit() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        // disable course complaints
+        examCourse.setMaxComplaintTimeDays(0);
+        courseRepository.save(examCourse);
+        // less than 2000 characters
+        var examSubmission = createComplaintForExamExercise(examExercise, "abcdefghijklmnopqrstuvwxyz", HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultSubmissionId(examSubmission.getId());
+        assertThat(storedComplaint).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExam_courseComplaintsDisabled_exceededTextLimit() throws Exception {
+        TextExercise examExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        // disable course complaints
+        examCourse.setMaxComplaintTimeDays(0);
+        courseRepository.save(examCourse);
+        // 2004 characters (4 over the limit of 2000)
+        createComplaintForExamExercise(examExercise, "abcd".repeat(501), HttpStatus.BAD_REQUEST);
+    }
+
+    private Submission createComplaintForExamExercise(TextExercise examExercise, String complaintText, HttpStatus expectedStatus) throws Exception {
+        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewStart(ZonedDateTime.now().minusHours(1));
+        examExercise.getExamViaExerciseGroupOrCourseMember().setExamStudentReviewEnd(ZonedDateTime.now().plusHours(1));
+        examRepository.save(examExercise.getExamViaExerciseGroupOrCourseMember());
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Complaint examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        examExerciseComplaint.setComplaintText(complaintText);
+        String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examExercise.getExamViaExerciseGroupOrCourseMember().getId()));
+        request.post(url, examExerciseComplaint, expectedStatus);
+        return textSubmission;
     }
 }

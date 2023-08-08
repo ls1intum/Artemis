@@ -3,7 +3,13 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -13,7 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -178,6 +186,14 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_NoZip_badRequest() throws Exception {
         programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_exception_directoryDeleted() throws Exception {
+        doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -348,6 +364,22 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportInstructorRepositories() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
+        // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
+        verify(fileService, times(6)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
+        programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
+        // once for the temp directory and once for the directory with the zip file
+        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exportAuxiliaryRepository_forbidden() throws Exception {
+        programmingExerciseTestService.exportInstructorAuxiliaryRepository_forbidden();
     }
 
     @Test
@@ -359,7 +391,31 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
+        // we have a working directory and one directory for each repository
+        verify(fileService, times(4)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).scheduleForDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportProgrammingExerciseInstructorMaterial_problemStatementNull() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementNull_success();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.createTempDirectory(any(Path.class), any(String.class))).thenThrow(IOException.class);
+            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_embeddedFilesDontExist() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false);
     }
 
     @Test
@@ -438,12 +494,18 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError

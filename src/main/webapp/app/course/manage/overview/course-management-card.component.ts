@@ -5,19 +5,21 @@ import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
     faAngleUp,
     faChartBar,
     faClipboard,
+    faComment,
     faComments,
     faFilePdf,
     faFlag,
     faGraduationCap,
     faListAlt,
     faPersonChalkboard,
+    faSpinner,
     faTable,
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
@@ -67,20 +69,28 @@ export class CourseManagementCardComponent implements OnChanges {
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
+    faComment = faComment;
     faComments = faComments;
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
     faPersonChalkboard = faPersonChalkboard;
+    faSpinner = faSpinner;
 
     courseColor: string;
 
     readonly FeatureToggle = FeatureToggle;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     ngOnChanges() {
+        const targetCourseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
+        if (this.courseColor !== targetCourseColor) {
+            this.courseColor = targetCourseColor;
+        }
+
         // Only sort one time once loaded
         if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
             this.statisticsSorted = true;
@@ -99,8 +109,6 @@ export class CourseManagementCardComponent implements OnChanges {
 
         // If there are no future exercises either, show the past exercises by default
         this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
-
-        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**

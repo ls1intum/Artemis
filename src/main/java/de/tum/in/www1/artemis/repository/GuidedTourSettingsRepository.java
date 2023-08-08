@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 /**
  * Spring Data JPA repository for the GuidedTourSetting entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface GuidedTourSettingsRepository extends JpaRepository<GuidedTourSetting, Long> {
 

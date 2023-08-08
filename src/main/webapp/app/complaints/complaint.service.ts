@@ -260,7 +260,10 @@ export class ComplaintService implements IComplaintService {
         }
         const complaintStartDate = dayjs.max(possibleComplaintStartDates);
 
-        return dayjs().isBefore(complaintStartDate) ? undefined : complaintStartDate.add(complaintTimeFrame, 'days');
+        if (!complaintStartDate || dayjs().isBefore(complaintStartDate)) {
+            return undefined;
+        }
+        return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

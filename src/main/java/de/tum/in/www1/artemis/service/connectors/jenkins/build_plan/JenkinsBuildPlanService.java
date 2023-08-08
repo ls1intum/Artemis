@@ -155,7 +155,8 @@ public class JenkinsBuildPlanService {
      */
     public void configureBuildPlanForParticipation(ProgrammingExerciseParticipation participation) {
         // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId())
+                .orElseThrow();
         participation.setProgrammingExercise(programmingExercise);
 
         String projectKey = programmingExercise.getProjectKey();

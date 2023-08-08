@@ -22,7 +22,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -42,6 +42,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -112,6 +113,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 text: 'Second text.',
                 startIndex: 12,
                 endIndex: 24,
+                type: TextBlockType.MANUAL,
                 submission,
             } as TextBlock,
         ];
@@ -402,31 +404,62 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
-    it('should navigate to conflicting submission', () => {
-        const routerSpy = jest.spyOn(router, 'navigate');
+    it('should always let instructors override', () => {
+        component.exercise!.isAtLeastInstructor = true;
+        expect(component.canOverride).toBeTrue();
+    });
+
+    it('should not allow tutors to override after the assessment due date', () => {
+        component.exercise!.isAtLeastInstructor = false;
+        component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
+        component.complaint = undefined;
+        expect(component.canOverride).toBeFalse();
+    });
+
+    it('should recalculate text block refs correctly', () => {
+        jest.useFakeTimers();
+        component.recalculateTextBlockRefs();
+        fixture.detectChanges();
+        jest.advanceTimersByTime(300);
+
+        expect(component.textBlockRefs).toHaveLength(2);
+        expect(component.unusedTextBlockRefs).toHaveLength(0);
+    });
+
+    it('should handle overlapping manual text blocks correctly', () => {
+        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
+
+        // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
+        submission.blocks?.push({
+            id: 'third text id',
+            text: 'text.',
+            startIndex: 19,
+            endIndex: 24,
+            type: TextBlockType.MANUAL,
+            submission,
+        } as TextBlock);
+
+        getLatestSubmissionResult(submission)?.feedbacks?.push({
+            id: 3,
+            detailText: 'Third Feedback',
+            credits: 0,
+            reference: 'third text id',
+        } as Feedback);
+        // END: Adding a new block (with feedback) that overlaps with an existing block
+
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
-        const feedback = getLatestSubmissionResult(submission)!.feedbacks!;
-        const url = [
-            '/course-management',
-            component.courseId,
-            'exams',
-            component.examId,
-            'exercise-groups',
-            component.exerciseGroupId,
-            'text-exercises',
-            component.exerciseId,
-            'participations',
-            submission.participation!.id,
-            'submissions',
-            component.submission!.id,
-            'text-feedback-conflict',
-            feedback[0].id,
-        ];
 
-        component.navigateToConflictingSubmissions(1);
+        expect(sortAndSetTextBlockRefsSpy).toHaveBeenCalled();
 
-        expect(routerSpy).toHaveBeenCalledOnce();
-        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
+        expect(component.textBlockRefs).toEqual(
+            // Checking if sortAndSetTextBlockRefs selected the right TextBlockRef (the one having a feedback)
+            // Performing partial match for { block: { text: ...}, feedback: { id: ... } }
+            expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'text.' }), feedback: expect.objectContaining({ id: 3 }) })]),
+        );
+
+        // Checking if a new block was added to compensate for the loss of submitted text due to the overlap between blocks
+        // Performing partial match for { block: { text: ...} }
+        expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 });

@@ -1,6 +1,7 @@
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { EXERCISE_TYPE } from '../../constants';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseType } from '../../constants';
 import { getExercise } from '../../utils';
 import {
     courseList,
@@ -27,18 +28,18 @@ export class ExamParticipation {
      * @param exerciseType the type of the exercise
      * @param additionalData additional data such as the expected score
      */
-    makeSubmission(exerciseID: number, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
+    makeSubmission(exerciseID: number, exerciseType: ExerciseType, additionalData?: AdditionalData) {
         switch (exerciseType) {
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 this.makeTextExerciseSubmission(exerciseID, additionalData!.textFixture!);
                 break;
-            case EXERCISE_TYPE.Modeling:
+            case ExerciseType.MODELING:
                 this.makeModelingExerciseSubmission(exerciseID);
                 break;
-            case EXERCISE_TYPE.Quiz:
+            case ExerciseType.QUIZ:
                 this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
                 break;
-            case EXERCISE_TYPE.Programming:
+            case ExerciseType.PROGRAMMING:
                 this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
                 break;
         }
@@ -56,7 +57,7 @@ export class ExamParticipation {
         programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
         programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
-        programmingExerciseEditor.typeSubmission(exerciseID, submission, 'de.test');
+        programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             programmingExerciseEditor.submitPractice(exerciseID);
         } else {
@@ -101,6 +102,23 @@ export class ExamParticipation {
         cy.get('#exam-title').contains(title);
     }
 
+    getResultScore() {
+        cy.reloadUntilFound('#result-score');
+        return cy.get('#result-score');
+    }
+
+    checkExamFinishedTitle(title: string) {
+        cy.get('#exam-finished-title').contains(title, { timeout: 40000 });
+    }
+
+    checkExamFullnameInputExists() {
+        cy.get('#fullname', { timeout: 20000 }).should('exist');
+    }
+
+    checkYourFullname(name: string) {
+        cy.get('#your-name', { timeout: 20000 }).contains(name);
+    }
+
     handInEarly() {
         examNavigation.handInEarly();
         examStartEnd.finishExam().then((request: Interception) => {
@@ -130,7 +148,8 @@ export class AdditionalData {
 
 export type Exercise = {
     title: string;
-    type: EXERCISE_TYPE;
+    type: ExerciseType;
     id: number;
     additionalData?: AdditionalData;
+    exerciseGroup?: ExerciseGroup;
 };

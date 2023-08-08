@@ -530,10 +530,10 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
-        var student = userRepo.findOneByLogin(userPrefix + "student1").get();
+        var student = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getDefaultStudentGroupName(), false);
 
-        var instructor1 = userRepo.findOneByLogin(userPrefix + "instructor1").get();
+        var instructor1 = userRepo.findOneByLogin(userPrefix + "instructor1").orElseThrow();
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course1.getDefaultInstructorGroupName(), false);
 
         var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
@@ -735,7 +735,7 @@ public class CourseTestService {
         for (Course course : coursesCreated) {
             Optional<Course> found = courses.stream().filter(c -> Objects.equals(c.getId(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
-            Course courseFound = found.get();
+            Course courseFound = found.orElseThrow();
             for (Exercise exercise : courseFound.getExercises()) {
                 assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
                 assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
@@ -755,7 +755,7 @@ public class CourseTestService {
 
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), activeCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
-        Course activeCourseNotFiltered = optionalCourse.get();
+        Course activeCourseNotFiltered = optionalCourse.orElseThrow();
 
         for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
             assertThat(exercise.getGradingInstructions()).as("Grading instructions are filtered out").isNull();
@@ -852,8 +852,8 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
-        User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").get();
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+        User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").orElseThrow();
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").orElseThrow();
         String suffix = "instructorExam";
         adjustUserGroupsToCustomGroups(suffix);
 
@@ -978,13 +978,13 @@ public class CourseTestService {
         List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.stream().filter(dto -> dto.course().getId().equals(course.getId()))
-                .findFirst().get();
+                .findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
         assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
 
-        assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(1);
-        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(2);
+        assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(1);
+        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().orElseThrow().getStudentParticipations()).hasSize(2);
 
         assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
         assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
@@ -1122,7 +1122,7 @@ public class CourseTestService {
 
         Optional<Course> optionalCourse = receivedCourses.stream().filter(c -> Objects.equals(c.getId(), course.getId())).findFirst();
         assertThat(optionalCourse).as("Course is returned").isPresent();
-        Course returnedCourse = optionalCourse.get();
+        Course returnedCourse = optionalCourse.orElseThrow();
 
         assertThat(returnedCourse.getNumberOfStudents()).isEqualTo(numberOfStudents);
         assertThat(returnedCourse.getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
@@ -1542,15 +1542,15 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
         assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1597,8 +1597,8 @@ public class CourseTestService {
     }
 
     private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
@@ -1770,10 +1770,10 @@ public class CourseTestService {
 
     private void testAddStudentOrTutorOrEditorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
         adjustUserGroupsToCustomGroups();
-        var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").get();
-        var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "tutor1").get();
-        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "editor1").get();
-        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").get();
+        var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").orElseThrow();
+        var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "tutor1").orElseThrow();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "editor1").orElseThrow();
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").orElseThrow();
 
         mockDelegate.mockAddUserToGroupInUserManagement(student, course.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), false);
@@ -1795,9 +1795,9 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
-        var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "tutor1").get();
-        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "editor1").get();
-        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").get();
+        var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "tutor1").orElseThrow();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "editor1").orElseThrow();
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").orElseThrow();
 
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), true);
         mockDelegate.mockAddUserToGroupInUserManagement(editor1, course.getEditorGroupName(), true);
@@ -1817,7 +1817,7 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
-        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").get();
+        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").orElseThrow();
         mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName(), true);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1860,10 +1860,10 @@ public class CourseTestService {
 
     private void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
         // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").get();
-        User editor = userRepo.findOneWithGroupsByLogin(userPrefix + "editor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin(userPrefix + "instructor1").get();
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").orElseThrow();
+        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").orElseThrow();
+        User editor = userRepo.findOneWithGroupsByLogin(userPrefix + "editor1").orElseThrow();
+        User instructor = userRepo.findOneWithGroupsByLogin(userPrefix + "instructor1").orElseThrow();
 
         // Mock remove requests
         mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
@@ -1923,8 +1923,8 @@ public class CourseTestService {
     public Course testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         var course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-        await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
-        var updatedCourse = courseRepo.findById(course.getId()).get();
+        await().until(() -> courseRepo.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
+        var updatedCourse = courseRepo.findById(course.getId()).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
         return updatedCourse;
     }
@@ -2100,7 +2100,7 @@ public class CourseTestService {
         Files.createDirectories(Path.of(courseArchivesDirPath));
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = FileService.removeIllegalCharacters(zipGroupName);
         doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
                 any(Path.class));
 
@@ -2233,7 +2233,7 @@ public class CourseTestService {
 
         var exercises = exerciseRepo.findAllExercisesByCourseId(updatedCourse.getId());
         for (Exercise exercise : exercises) {
-            var exerciseWithParticipation = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).get();
+            var exerciseWithParticipation = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
             for (Participation participation : exerciseWithParticipation.getStudentParticipations()) {
                 for (Submission submission : participation.getSubmissions()) {
                     if (submission instanceof FileUploadSubmission) {
@@ -2288,7 +2288,7 @@ public class CourseTestService {
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
         course.getExercises().forEach(exercise -> {
-            var exerciseWithParticipations = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).get();
+            var exerciseWithParticipations = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
             if (exercise instanceof ProgrammingExercise) {
                 for (StudentParticipation participation : exerciseWithParticipations.getStudentParticipations()) {
                     ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
@@ -2336,7 +2336,7 @@ public class CourseTestService {
 
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Instructors course is returned").isPresent();
-        Course returnedCourse = optionalCourse.get();
+        Course returnedCourse = optionalCourse.orElseThrow();
 
         assertThat(returnedCourse.getId()).isEqualTo(instructorsCourse.getId());
     }
@@ -2363,7 +2363,7 @@ public class CourseTestService {
 
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Instructors course is returned").isPresent();
-        Course returnedCourse = optionalCourse.get();
+        Course returnedCourse = optionalCourse.orElseThrow();
 
         var exerciseDetails = returnedCourse.getExercises();
         assertThat(exerciseDetails).isNotNull();
@@ -2462,7 +2462,7 @@ public class CourseTestService {
         Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId()))
                 .findFirst();
         assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
-        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.get();
+        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
 
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
         assertThat(dto.getActiveStudents()).as("course was only active for 3 days").hasSize(1);
@@ -2554,7 +2554,7 @@ public class CourseTestService {
 
         var optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
-        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.get();
+        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.orElseThrow();
 
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
 
@@ -2892,7 +2892,7 @@ public class CourseTestService {
 
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
 
-        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().get();
+        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().orElseThrow();
         assertThat(receivedCourse.getOnlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
     }
 

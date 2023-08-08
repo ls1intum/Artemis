@@ -123,7 +123,7 @@ public class FileService implements DisposableBean {
     }
 
     @CacheEvict(value = "files", key = "#path")
-    public void resetOnPath(String path) {
+    public void evictCacheForPath(String path) {
         log.info("Invalidate files cache for {}", path);
         // Intentionally blank
     }
@@ -1012,21 +1012,10 @@ public class FileService implements DisposableBean {
      * Note: the method also tries to create the mentioned folder
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
-     * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868
-     */
-    public String getUniquePathString(String path) {
-        return getUniquePath(path).toString();
-    }
-
-    /**
-     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
-     * Note: the method also tries to create the mentioned folder
-     *
-     * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
-    public Path getUniquePath(String path) {
-        var uniquePath = Path.of(path, String.valueOf(System.currentTimeMillis()));
+    private Path getUniquePath(Path path) {
+        var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
@@ -1035,19 +1024,35 @@ public class FileService implements DisposableBean {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
+
         return uniquePath;
     }
 
     /**
-     * Removes illegal characters for filenames from the string.
-     * <p>
-     * S<a href="ee:">https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#1507</a>5907
+     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system and schedules it for deletion
+     *
+     * @param path                 the original path, e.g. /opt/artemis/repos-download
+     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     */
+    public Path getTemporaryUniquePath(Path path, long deleteDelayInMinutes) {
+        var temporaryPath = getUniquePath(path);
+        scheduleForDirectoryDeletion(temporaryPath, deleteDelayInMinutes);
+        return temporaryPath;
+    }
+
+    /**
+     * <a href="https://stackoverflow.com/a/15075907">Removes illegal characters for filenames from the string</a>
+     * This method will make sure that path traversal is not possible, because illegal characters or character sequences such as '/', '\\' and '..' will be removed
+     * Escaping such sequences is also not possible, because only a-z, A-Z, 0-9, '-', '.', and '_' are allowed
      *
      * @param string the string with the characters
      * @return stripped string
      */
-    public String removeIllegalCharacters(String string) {
-        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
+    public static String removeIllegalCharacters(String string) {
+        // First replace all characters that are not (^) a-z, A-Z, 0-9, '-', '.' with '_'
+        // Then replace multiple points, e.g. '...' with one point '.'
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_").replaceAll("\\.+", ".");
     }
 
     /**
@@ -1160,14 +1165,15 @@ public class FileService implements DisposableBean {
      * @param fileName        file name to set file name
      * @param extension       extension of the file (e.g .pdf or .png)
      * @param streamByteArray byte array to save to the temp file
-     * @return multipartFile wrapper for the file stored on disk
+     * @return multipartFile wrapper for the file stored on disk with a sanitized name
      */
     public MultipartFile convertByteArrayToMultipart(String fileName, String extension, byte[] streamByteArray) {
         try {
-            Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
+            Path tempPath = Path.of(FilePathService.getTempFilePath(), removeIllegalCharacters(fileName) + extension);
             Files.write(tempPath, streamByteArray);
             File outputFile = tempPath.toFile();
-            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+            FileItem fileItem = new DiskFileItem(removeIllegalCharacters(fileName), Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
 
             try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);

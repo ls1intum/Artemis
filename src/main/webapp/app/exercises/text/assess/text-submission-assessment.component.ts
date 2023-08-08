@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
@@ -163,10 +163,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
-    private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
+    private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
-        if (studentParticipation == undefined) {
+        if (!studentParticipation) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;
@@ -195,9 +195,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.checkPermissions(this.result);
         this.totalScore = this.computeTotalScore(this.assessments);
         this.isLoading = false;
-
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'start');
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
@@ -239,9 +236,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'save');
-
         this.saveBusy = true;
         this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -262,9 +256,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission, 'submit');
-
         this.submitBusy = true;
         this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
@@ -275,9 +266,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        response.body!.feedbacks?.forEach((newFeedback) => {
-            newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
-        });
         this.result = response.body!;
         setSubmissionResultByCorrectionRound(this.submission!, this.result, this.correctionRound);
         this.saveBusy = this.submitBusy = false;
@@ -301,50 +289,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id!, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy = true;
         await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
-    }
-
-    /**
-     * if the conflict badge is clicked, navigate to conflict page and add the submission to the extras.
-     * @param feedbackId - selected feedback id with conflicts.
-     */
-    async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
-        const tempSubmission = this.submission!;
-        const latestSubmissionResult = getLatestSubmissionResult(tempSubmission)!;
-        latestSubmissionResult.completionDate = undefined;
-        latestSubmissionResult.submission = undefined;
-        latestSubmissionResult.participation = undefined;
-
-        const url = !this.isExamMode
-            ? [
-                  '/course-management',
-                  this.courseId,
-                  'text-exercises',
-                  this.exerciseId,
-                  'participations',
-                  tempSubmission.participation!.id,
-                  'submissions',
-                  this.submission!.id,
-                  'text-feedback-conflict',
-                  feedbackId,
-              ]
-            : [
-                  '/course-management',
-                  this.courseId,
-                  'exams',
-                  this.examId,
-                  'exercise-groups',
-                  this.exerciseGroupId,
-                  'text-exercises',
-                  this.exerciseId,
-                  'participations',
-                  tempSubmission.participation!.id,
-                  'submissions',
-                  this.submission!.id,
-                  'text-feedback-conflict',
-                  feedbackId,
-              ];
-        const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
-        await this.router.navigate(url, navigationExtras);
     }
 
     /**

@@ -76,6 +76,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     private ExamRepository examRepository;
 
     @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
     private CompassService compassService;
 
     @Autowired
@@ -284,7 +287,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         userUtilService.changeUser(TEST_PREFIX + "student1");
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
         assertThat(version.get().getContent()).as("submission version has correct content")
                 .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
@@ -301,7 +304,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         userUtilService.changeUser(TEST_PREFIX + "student2");
         version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
         assertThat(version.get().getContent()).as("submission version has correct content")
                 .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
@@ -350,7 +353,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
                 ModelingSubmission.class);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
+        storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).orElseThrow();
         assertThat(storedSubmission.getLatestResult()).as("submission still unrated").isNull();
     }
 
@@ -748,6 +751,41 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
         request.get("/api/participations/" + modelingSubmission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getModelingResult_testExam() throws Exception {
+        // create test exam
+        Exam exam = examUtilService.addTestExamWithExerciseGroup(course, true);
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
+        exerciseGroup.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+
+        exam = examRepository.save(exam);
+
+        var studentExam = examUtilService.addStudentExamForTestExam(exam, TEST_PREFIX + "student1");
+        studentExam.setStarted(true);
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        studentExamRepository.save(studentExam);
+
+        ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission("Some text", true);
+        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        // students can always view their submissions for test exams
+        var submission = request.get("/api/participations/" + modelingSubmission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(submission).isNotNull();
+        assertThat(submission.getId()).isEqualTo(modelingSubmission.getId());
+        assertThat(submission.getParticipation().getExercise().getExerciseGroup().getExam()).as("The exam object should not be send to students").isNull();
+
     }
 
     @Test

@@ -11,13 +11,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
@@ -61,6 +60,7 @@ import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -409,8 +409,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
-
-            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+            for (Exercise exercise : response.getExercises()) {
+                assertThat(exercise.getExerciseGroup()).isNotNull();
+                assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
+                assertThat(exercise.getExerciseGroup().getExam()).isNull();
+            }
+            assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
         }
 
@@ -460,7 +464,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class, headers);
         assertThat(response).isEqualTo(studentExamForStart);
-        assertThat(studentExamRepository.findById(studentExamForStart.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(studentExamForStart.getId()).orElseThrow().isStarted()).isTrue();
         assertParticipationAndSubmissions(response, student1);
 
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
@@ -551,7 +555,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getStudentParticipations()).hasSize(1);
         }
         // Ensure that student exam was marked as started
-        assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isStarted()).isTrue();
     }
 
     @Test
@@ -715,7 +719,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
     }
 
     @Test
@@ -727,14 +731,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
 
         newWorkingTime = -10;
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
     }
 
@@ -748,8 +752,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(messagingTemplate, times(1)).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
+        verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test
@@ -795,7 +799,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         // Ensure that student exam has been marked as submitted
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
         // Ensure that student exam has been set
@@ -837,7 +841,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
         // Important: we have to retrieve the specific exam, because the order in the list is not guaranteed, otherwise the test will be flaky
-        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals(TEST_PREFIX + "student1")).findFirst().get();
+        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         studentExamResponse.setExercises(null);
@@ -880,7 +884,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                 }
@@ -916,7 +920,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                     }
@@ -958,7 +962,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                 }
@@ -1000,7 +1004,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                     }
@@ -1183,7 +1187,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     final var newText = "New Text";
                     textSubmission.setText(newText);
                     request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).get();
+                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
                     // check that a submitted version was created
@@ -1256,7 +1260,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
                 var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst()
+                        .orElseThrow();
                 var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
                 var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
@@ -1421,7 +1426,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1471,6 +1476,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         }
                     }
                 });
+            }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
             }
         }
         deleteExamWithInstructor(exam1);
@@ -1525,6 +1535,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         }
                     }
                 });
+            }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).hasSize(1);
+                var result = participation.getResults().iterator().next();
+                assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
             }
         }
         deleteExamWithInstructor(exam1);
@@ -1596,7 +1612,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
@@ -1614,7 +1630,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             gradingScale.setGradeType(GradeType.BONUS);
         }
         else {
-            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }),
+            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }),
                     true, 1);
         }
         gradingScaleRepository.save(gradingScale);
@@ -2031,7 +2047,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
@@ -2213,7 +2229,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
-        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).get();
+        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).orElseThrow();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
@@ -2519,6 +2535,334 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             studentParticipation
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
+        }
+    }
+
+    @Nested
+    class ChangedAndUnchangedSubmissionsIntegrationTest {
+
+        // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
+        // + update Student Exam + find Student Participations By Student Exam With Submissions Result
+        private final int BASE_QUERY_COUNT = 5;
+
+        private TextExercise textExercise;
+
+        private ModelingExercise modeExercise;
+
+        private QuizExercise quizExercise;
+
+        private TextSubmission textSubmission;
+
+        private ModelingSubmission modeSubmission;
+
+        private QuizSubmission quizSubmission;
+
+        private DragAndDropQuestion dragAndDropQuestion;
+
+        private MultipleChoiceQuestion multipleChoiceQuestion;
+
+        private ShortAnswerQuestion shortAnswerQuestion;
+
+        private StudentExam studentExamForConduction;
+
+        @BeforeEach
+        void setUpStudentExamWithExercises() throws Exception {
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            // Add exercises to active exam
+            exam1.setExamMaxPoints(19);
+            exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+
+            // Generate student exam
+            List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            assertThat(studentExams).hasSize(exam1.getExamUsers().size());
+            assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
+
+            // Prepare student exam
+            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
+            StudentExam studentExam = studentExams.get(0);
+            userUtilService.changeUser(studentExam.getUser().getLogin());
+            studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                    HttpStatus.OK, StudentExam.class);
+            assertThat(studentExamForConduction.isStarted()).isTrue();
+
+            // Get exercises for testing
+            textExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, TextExercise.class);
+            modeExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, ModelingExercise.class);
+            quizExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, QuizExercise.class);
+
+            // Get quiz questions for testing
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                if (quizQuestion instanceof DragAndDropQuestion && dragAndDropQuestion == null) {
+                    dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof MultipleChoiceQuestion && multipleChoiceQuestion == null) {
+                    multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof ShortAnswerQuestion && shortAnswerQuestion == null) {
+                    shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                }
+            }
+            assertThat(dragAndDropQuestion).isNotNull();
+            assertThat(multipleChoiceQuestion).isNotNull();
+            assertThat(shortAnswerQuestion).isNotNull();
+
+            textSubmission = (TextSubmission) textExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            modeSubmission = (ModelingSubmission) modeExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            quizSubmission = (QuizSubmission) quizExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndSubmittedDoesNotChangeQueryCount() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed and submitted answer";
+            textSubmission.setText(changedAnswer);
+            request.put("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+
+            final String changedModel = "This is a changed and submitted model";
+            final String changedExplanation = "This is a changed and submitted explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+            request.put("/api/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(1, 0);
+
+            final String text = "Changed and submitted short answer text";
+            final int spotIndex = 0;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            final List<Integer> selectedOptionIndices = List.of(0, 1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+
+            // load Quiz Submissions Submitted Answers (for comparison) * 3
+            final int quizQueryCount = 3;
+
+            // When
+            StudentExam submittedExam = assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + quizQueryCount);
+
+            // Then
+            TextExercise textExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission textSubmissionAfterExamSubmission = (TextSubmission) textExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(textSubmissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(textSubmissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(textSubmissionAfterExamSubmission);
+
+            ModelingExercise modeExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission modeSubmissionAfterExamSubmission = (ModelingSubmission) modeExerciseAfterExamSubmission.getStudentParticipations().iterator().next()
+                    .findLatestSubmission().orElseThrow();
+            assertThat(modeSubmissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(modeSubmissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(modeSubmissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(modeSubmissionAfterExamSubmission);
+
+            QuizExercise quizExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission quizSubmissionAfterExamSubmission = (QuizSubmission) quizExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(quizSubmissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(quizSubmissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, quizSubmissionAfterExamSubmission);
+            verifyShortAnswerSubmission(changedText, quizSubmissionAfterExamSubmission);
+            verifyMultipleChoiceSubmission(changedAnswerOptions, quizSubmissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedTextSubmission() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed answer";
+            textSubmission.setText(changedAnswer);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            TextExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission submissionAfterExamSubmission = (TextSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedModelingSubmission() throws Exception {
+            // Given
+            final String changedModel = "This is a changed model";
+            final String changedExplanation = "This is a changed explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            ModelingExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission submissionAfterExamSubmission = (ModelingSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(submissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(submissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedDragAndDropQuestionSubmission() throws Exception {
+            // Given
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(0, 1);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
+            // Given
+            getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
+
+            final String text = "Changed short answer text";
+            final int spotIndex = 1;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyShortAnswerSubmission(changedText, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedMultipleChoiceQuestionSubmission() throws Exception {
+            // Given
+            final List<Integer> selectedOptionIndices = List.of(1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            // When
+            StudentExam submittedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit",
+                    studentExamForConduction, StudentExam.class, HttpStatus.OK);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyMultipleChoiceSubmission(changedAnswerOptions, submissionAfterExamSubmission);
+        }
+
+        private void changeModelingSubmission(String changedModel, String changedExplanation) {
+            modeSubmission.setModel(changedModel);
+            modeSubmission.setExplanationText(changedExplanation);
+        }
+
+        private DragAndDropMapping getchangedDragAndDropMapping(int dndDragItemIndex, int dndDropLocationIndex) {
+            DragAndDropMapping changedMapping = new DragAndDropMapping();
+
+            changedMapping.setDragItemIndex(dndDragItemIndex);
+            changedMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
+
+            changedMapping.setDropLocationIndex(dndDropLocationIndex);
+            changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
+
+            DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
+            changedAnswer.getMappings().add(changedMapping);
+            changedAnswer.setQuizQuestion(dragAndDropQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedMapping;
+        }
+
+        private ShortAnswerSubmittedText getChangedShortAnswerSubmittedText(String text, int spotIndex) {
+            ShortAnswerSubmittedText changedText = new ShortAnswerSubmittedText();
+            changedText.setText(text);
+            changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
+
+            ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
+            changedAnswer.getSubmittedTexts().add(changedText);
+            changedAnswer.setQuizQuestion(shortAnswerQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedText;
+        }
+
+        private List<AnswerOption> getChangedAnswerOptions(List<Integer> selectedOptionIndices) {
+            List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+
+            MultipleChoiceSubmittedAnswer changedAnswer = new MultipleChoiceSubmittedAnswer();
+            selectedOptionIndices.forEach(selectedOptionIndex -> changedAnswer.addSelectedOptions(answerOptions.get(selectedOptionIndex)));
+            changedAnswer.setQuizQuestion(multipleChoiceQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return selectedOptionIndices.stream().map(answerOptions::get).toList();
+        }
+
+        private void verifyDragAndDropSubmission(DragAndDropMapping changedMapping, QuizSubmission submissionAfterExamSubmission) {
+            DragAndDropSubmittedAnswer answerAfterSubmission = (DragAndDropSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(dragAndDropQuestion);
+            Comparator<DragAndDropMapping> dndMappingComparator = Comparator.comparing(DragAndDropMapping::getDragItemIndex)
+                    .thenComparing(DragAndDropMapping::getDropLocationIndex);
+
+            assertThat(answerAfterSubmission.getMappings()).hasSize(1);
+            assertThat(answerAfterSubmission.getMappings().iterator().next()).usingComparator(dndMappingComparator).isEqualTo(changedMapping);
+        }
+
+        private void verifyShortAnswerSubmission(ShortAnswerSubmittedText changedText, QuizSubmission submissionAfterExamSubmission) {
+            ShortAnswerSubmittedAnswer answerAfterSubmission = (ShortAnswerSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(shortAnswerQuestion);
+            Comparator<ShortAnswerSubmittedText> saMappingComparator = Comparator.comparing(ShortAnswerSubmittedText::getText).thenComparing(saText -> saText.getSpot().getId());
+
+            assertThat(answerAfterSubmission.getSubmittedTexts()).hasSize(1);
+            assertThat(answerAfterSubmission.getSubmittedTexts().iterator().next()).usingComparator(saMappingComparator).isEqualTo(changedText);
+        }
+
+        private void verifyMultipleChoiceSubmission(List<AnswerOption> changedAnswerOption, QuizSubmission submissionAfterExamSubmission) {
+            MultipleChoiceSubmittedAnswer answerAfterSubmission = (MultipleChoiceSubmittedAnswer) submissionAfterExamSubmission
+                    .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
+
+            assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
         }
     }
 }

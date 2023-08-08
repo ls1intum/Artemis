@@ -66,8 +66,8 @@ class AppleFirebasePushNotificationServiceTest {
         PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
                 new Date(), payload, student);
 
-        when(repositoryMock.findByUserIn(anyList(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
-        when(repositoryMock.findByUserIn(anyList(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
 
         applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
         firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);
@@ -87,8 +87,8 @@ class AppleFirebasePushNotificationServiceTest {
         firebasePushNotificationService.sendNotification(notification, student, null);
 
         // Then
-        verify(appleRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
-        verify(firebaseRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(appleRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(firebaseRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
     }
 
     @Test

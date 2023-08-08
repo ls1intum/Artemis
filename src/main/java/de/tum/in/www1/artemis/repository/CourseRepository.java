@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Course entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -113,15 +112,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    /**
-     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
-     *
-     * @param courseId the id of the course to find
-     * @return Found course with lectures, their attachments and exams
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithLecturesAndExamsById(long courseId);
-
     @Query("""
             SELECT DISTINCT c
             FROM Course c
@@ -134,19 +124,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 AND (student.id = :userId OR tutor.id = :userId)
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
-
-    // Note: this is currently only used for testing purposes
-    @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-                LEFT JOIN FETCH c.exercises exercises
-                LEFT JOIN FETCH c.lectures lectures
-                LEFT JOIN FETCH lectures.attachments
-                LEFT JOIN FETCH exercises.categories
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                """)
-    List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
@@ -231,19 +208,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
     /**
-     * Returns the student group name of a single course
-     *
-     * @param courseId the course id of the course to get the name for
-     * @return the student group name
-     */
-    @Query("""
-            SELECT c.studentGroupName
-            FROM Course c
-            WHERE c.id = :courseId
-            """)
-    String findStudentGroupName(@Param("courseId") long courseId);
-
-    /**
      * Get active students in the timeframe from startDate to endDate for the exerciseIds
      *
      * @param exerciseIds exerciseIds from all exercises to get the statistics for
@@ -279,25 +243,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
-
-    /**
-     * Fetches the courses the user is currently a member of, regardless if the course is active or not
-     * This is used for the data export only.
-     *
-     * @param isAdmin    whether the user to fetch the courses for is an admin (which gets all courses)
-     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
-     * @return a set of courses the user is a member of
-     */
-    @Query("""
-            SELECT c
-            FROM Course c
-            WHERE (:isAdmin = TRUE
-                   OR c.studentGroupName IN :userGroups
-                   OR c.teachingAssistantGroupName IN :userGroups
-                   OR c.editorGroupName IN :userGroups
-                   OR c.instructorGroupName IN :userGroups)
-            """)
-    Set<Course> getAllCoursesUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
 
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {

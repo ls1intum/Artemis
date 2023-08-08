@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -159,7 +160,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -958,7 +959,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         examRepository.save(exam);
         var studentExam = examUtilService.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
-        studentExam.setUser(participation.getStudent().get());
+        studentExam.setUser(participation.getStudent().orElseThrow());
         studentExam.addExercise(programmingExercise);
         studentExamRepository.save(studentExam);
         return programmingExercise;
@@ -1027,9 +1028,10 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, participation, true);
+        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUrl(), participation.getStudent().orElseThrow(),
+                VersionControlRepositoryPermission.REPO_WRITE);
 
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
         assertThat(participation.isLocked()).isFalse();
@@ -1039,7 +1041,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;

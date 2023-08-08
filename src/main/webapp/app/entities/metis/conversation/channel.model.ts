@@ -3,6 +3,15 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exam } from 'app/entities/exam.model';
 
+// IMPORTANT NOTICE: The following strings have to be consistent with
+// the types defined in ChannelSubType.java
+export enum ChannelSubType {
+    GENERAL = 'general',
+    EXERCISE = 'exercise',
+    LECTURE = 'lecture',
+    EXAM = 'exam',
+}
+
 /**
  * Entity
  */
@@ -27,6 +36,8 @@ export class Channel extends Conversation {
  * DTO
  */
 export class ChannelDTO extends ConversationDto {
+    public subType?: ChannelSubType;
+    public subTypeReferenceId?: number;
     public name?: string;
     public description?: string;
     public topic?: string;

@@ -110,9 +110,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
         // creator is automatically added as channel moderator
-        assertThat(participants.stream().findFirst().get().getIsModerator()).isTrue();
+        assertThat(participants.stream().findFirst().orElseThrow().getIsModerator()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
+
+        // cannot create channels with duplicate names
+        expectCreateBadRequest(channelDTO);
 
         // cleanup
         conversationRepository.deleteById(chat.getId());
@@ -242,8 +245,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         var tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
-        var channelFromDatabase = channelRepository.findById(channel.getId()).get();
+                userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of());
+        var channelFromDatabase = channelRepository.findById(channel.getId()).orElseThrow();
 
         tutorialGroup.setTutorialGroupChannel(channelFromDatabase);
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
@@ -306,6 +309,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void updateChannel_asUserWithChannelModerationRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX + "1");
+        var channelForDuplicateCheck = createChannel(isPublicChannel, TEST_PREFIX + "duplicate");
         var updateDTO = new ChannelDTO();
         updateDTO.setName(TEST_PREFIX + "2");
         updateDTO.setDescription("new description");
@@ -320,6 +324,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // channel moderators can also update the channel
         updateDTO.setName(TEST_PREFIX + "3");
@@ -330,6 +337,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        // The channel name can not be modified if it matches another existing channel
+        updateDTO.setName(channelForDuplicateCheck.getName());
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -770,7 +780,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(exerciseChannel.getExercise().getId()).isEqualTo(exercise.getId());
+        assertThat(exerciseChannel.getExercise()).isNull();
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
     }
@@ -796,7 +806,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(lectureChannel.getLecture().getId()).isEqualTo(lecture.getId());
+        assertThat(lectureChannel.getLecture()).isNull();
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         lectureRepository.deleteById(lecture.getId());

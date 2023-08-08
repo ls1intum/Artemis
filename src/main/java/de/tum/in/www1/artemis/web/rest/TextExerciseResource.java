@@ -329,25 +329,29 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
+        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
             throw new AccessForbiddenException();
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
+        if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
 
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
-        participation.getExercise().filterSensitiveInformation();
 
         if (optionalSubmission.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
 
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
+
+            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                textSubmission.setResults(Collections.emptyList());
+                participation.setResults(Collections.emptySet());
+            }
 
             Result result = textSubmission.getLatestResult();
             if (result != null) {
@@ -361,7 +365,7 @@ public class TextExerciseResource {
                 }
 
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                    result.setAssessor(null);
+                    result.filterSensitiveInformation();
                 }
             }
 
@@ -369,7 +373,12 @@ public class TextExerciseResource {
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
-            participation.setParticipant(null);
+            participation.filterSensitiveInformation();
+        }
+
+        textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExerciseGroup().setExam(null);
         }
 
         return ResponseEntity.ok(participation);
