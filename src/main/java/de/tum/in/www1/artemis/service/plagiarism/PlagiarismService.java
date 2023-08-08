@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -8,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
@@ -89,29 +91,53 @@ public class PlagiarismService {
         }
     }
 
+    /**
+     * Retrieves the number of potential plagiarism cases by considering the plagiarism comparisons for the exercise
+     * Additionally, it filters out cases for deleted user --> isDeleted = true because we do not delete the user entity entirely.
+     *
+     * @param exerciseId the exercise id for which the potential plagiarism cases should be retrieved
+     * @return the number of potential plagiarism cases
+     */
     public long getNumberOfPotentialPlagiarismCasesForExercise(long exerciseId) {
         var comparisons = plagiarismComparisonRepository.findAllByExerciseId(exerciseId);
-        var comparisonsWithoutDeletedUsers = new HashSet<>();
+        Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers = new HashSet<>();
         for (var comparison : comparisons) {
-            addSubmissionIfUserHasNotBeenDeletedForComparison(comparisonsWithoutDeletedUsers, comparison);
+            addSubmissionsIfUserHasNotBeenDeleted(comparison, submissionsWithoutDeletedUsers);
         }
-        // every comparison can lead to two plagiarism cases, that's why we multiply by two
-        return comparisonsWithoutDeletedUsers.size() * 2L;
+        return submissionsWithoutDeletedUsers.size();
     }
 
-    private void addSubmissionIfUserHasNotBeenDeletedForComparison(HashSet<Object> comparisonsWithoutDeletedUsers, PlagiarismComparison<?> comparison) {
-        var submissionA = submissionRepository.findById(comparison.getSubmissionA().getSubmissionId()).orElseThrow();
-        var submissionB = submissionRepository.findById(comparison.getSubmissionB().getSubmissionId()).orElseThrow();
-        checkIfUserForSubmissionStillExistsAndAddIfExistent(comparisonsWithoutDeletedUsers, comparison, submissionA);
-        checkIfUserForSubmissionStillExistsAndAddIfExistent(comparisonsWithoutDeletedUsers, comparison, submissionB);
+    /**
+     * Add each submission of the plagiarism comparison if the corresponding user has not been deleted
+     *
+     * @param comparison                     the comparison for which we want check if the user of the submission has been deleted.
+     * @param submissionsWithoutDeletedUsers a set of plagiarism submissions for which the user still exists.
+     */
+    private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison<?> comparison, Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers) {
+        var plagiarismSubmissionA = comparison.getSubmissionA();
+        var plagiarismSubmissionB = comparison.getSubmissionB();
+        var submissionA = submissionRepository.findById(plagiarismSubmissionA.getSubmissionId()).orElseThrow();
+        var submissionB = submissionRepository.findById(plagiarismSubmissionB.getSubmissionId()).orElseThrow();
+        if (userForSubmissionNotDeleted(submissionA)) {
+            submissionsWithoutDeletedUsers.add(plagiarismSubmissionA);
+        }
+        if (userForSubmissionNotDeleted(submissionB)) {
+            submissionsWithoutDeletedUsers.add(plagiarismSubmissionB);
+
+        }
     }
 
-    private void checkIfUserForSubmissionStillExistsAndAddIfExistent(HashSet<Object> comparisonsWithoutDeletedUsers, PlagiarismComparison<?> comparison, Submission submission) {
+    /**
+     * Checks if the user the submission belongs to, has not the isDeleted flag set to true
+     *
+     * @param submission the submission to check
+     * @return true if the user is NOT deleted, false otherwise
+     */
+    private boolean userForSubmissionNotDeleted(Submission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             var user = userRepository.findOneByLogin(studentParticipation.getParticipant().getParticipantIdentifier()).orElseThrow();
-            if (!user.isDeleted()) {
-                comparisonsWithoutDeletedUsers.add(comparison);
-            }
+            return !user.isDeleted();
         }
+        return false;
     }
 }
