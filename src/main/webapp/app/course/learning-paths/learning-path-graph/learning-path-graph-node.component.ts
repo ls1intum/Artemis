@@ -14,7 +14,7 @@ export class LearningPathGraphNodeComponent {
     faCheckCircle = faCheckCircle;
     faPlayCircle = faPlayCircle;
     faQuestionCircle = faQuestionCircle;
-
     faCircle = faCircle;
+
     protected readonly NodeType = NodeType;
 }

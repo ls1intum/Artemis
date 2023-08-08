@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningPathRepository;
@@ -152,13 +153,13 @@ public class LearningPathResource {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
-        if (authorizationCheckService.isStudentInCourse(course, null)) {
-            final var user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authorizationCheckService.isStudentInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
+        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !authorizationCheckService.isAdmin()) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
         NgxLearningPathDTO graph = learningPathService.generateNgxGraphRepresentation(learningPath);
