@@ -80,8 +80,8 @@ public class AthenaHealthIndicator implements HealthIndicator {
             }
             health.setAdditionalInfo(additionalInfo);
         }
-        catch (Exception emAll) {
-            health = new ConnectorHealth(emAll);
+        catch (Exception e) {
+            health = new ConnectorHealth(e);
             health.setAdditionalInfo(Map.of(ATHENA_URL_KEY, athenaUrl));
         }
 
