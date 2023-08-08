@@ -194,14 +194,14 @@
                             <dependency>
                                 <groupId>com.teamscale</groupId>
                                 <artifactId>teamscale-surefire-provider</artifactId>
-                                <version>30.0.2</version>
+                                <version>29.1.3</version>
                             </dependency>
                         </dependencies>
                     </plugin>
                     <plugin>
                         <groupId>com.teamscale</groupId>
                         <artifactId>teamscale-maven-plugin</artifactId>
-                        <version>30.0.2</version>
+                        <version>30.1.1</version>
                         <configuration>
                             <teamscaleUrl>http://localhost</teamscaleUrl>
                             <accessToken>dummy</accessToken>
