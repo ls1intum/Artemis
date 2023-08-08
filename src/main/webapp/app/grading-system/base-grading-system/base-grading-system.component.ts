@@ -540,7 +540,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             upperBoundPercentage: 100,
             isPassingGrade: true,
             lowerBoundInclusive: this.lowerBoundInclusivity,
-            upperBoundInclusive: true,
+            upperBoundInclusive: !this.lowerBoundInclusivity,
         };
         this.setPoints(gradeStep, true);
         this.setPoints(gradeStep, false);
