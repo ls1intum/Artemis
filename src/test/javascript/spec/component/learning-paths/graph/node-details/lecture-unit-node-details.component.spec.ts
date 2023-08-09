@@ -47,11 +47,18 @@ describe('LectureUnitNodeDetailsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load lecture unit on init', () => {
+    it('should load lecture unit on init if not present', () => {
         fixture.detectChanges();
         expect(findWithDetailsStub).toHaveBeenCalledOnce();
         expect(findWithDetailsStub).toHaveBeenCalledWith(lecture.id);
         expect(comp.lecture).toEqual(lecture);
         expect(comp.lectureUnit).toEqual(lectureUnit);
+    });
+
+    it('should not load lecture unit on init if already present', () => {
+        comp.lecture = lecture;
+        comp.lectureUnit = lectureUnit;
+        fixture.detectChanges();
+        expect(findWithDetailsStub).not.toHaveBeenCalled();
     });
 });

@@ -1,6 +1,18 @@
 import { Component, Input } from '@angular/core';
 import { faCheckCircle, faCircle, faPlayCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { Competency, CompetencyProgress } from 'app/entities/competency.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+
+class NodeDetailsData {
+    competency?: Competency;
+    competencyProgress?: CompetencyProgress;
+    exercise?: Exercise;
+    lecture?: Lecture;
+    lectureUnit?: LectureUnit;
+}
 
 @Component({
     selector: 'jhi-learning-path-graph-node',
@@ -14,6 +26,8 @@ export class LearningPathGraphNodeComponent {
     faPlayCircle = faPlayCircle;
     faQuestionCircle = faQuestionCircle;
     faCircle = faCircle;
+
+    nodeDetailsData = new NodeDetailsData();
 
     protected readonly NodeType = NodeType;
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,15 +14,18 @@ export class LectureUnitNodeDetailsComponent implements OnInit {
     @Input() lectureId: number;
     @Input() lectureUnitId: number;
 
-    lecture: Lecture;
-    lectureUnit: LectureUnit;
+    @Input() lecture?: Lecture;
+    @Output() lectureChange = new EventEmitter<Lecture>();
+    @Input() lectureUnit?: LectureUnit;
+    @Output() lectureUnitChange = new EventEmitter<LectureUnit>();
 
     isLoading = false;
 
     constructor(private lectureService: LectureService, private alertService: AlertService) {}
 
     ngOnInit() {
-        if (this.lectureId && this.lectureUnitId) {
+        console.log(this.lectureUnit);
+        if (!this.lecture || !this.lectureUnit) {
             this.loadData();
         }
     }
@@ -35,6 +38,8 @@ export class LectureUnitNodeDetailsComponent implements OnInit {
                     this.lectureUnit = this.lecture.lectureUnits.find((lectureUnit) => lectureUnit.id === this.lectureUnitId)!;
                 }
                 this.isLoading = false;
+                this.lectureChange.emit(this.lecture);
+                this.lectureUnitChange.emit(this.lectureUnit);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });

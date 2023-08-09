@@ -41,10 +41,16 @@ describe('ExerciseNodeDetailsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load exercise on init', () => {
+    it('should load exercise on init if not present', () => {
         fixture.detectChanges();
         expect(findStub).toHaveBeenCalledOnce();
         expect(findStub).toHaveBeenCalledWith(exercise.id);
         expect(comp.exercise).toEqual(exercise);
+    });
+
+    it('should load not exercise on init if already present', () => {
+        comp.exercise = exercise;
+        fixture.detectChanges();
+        expect(findStub).not.toHaveBeenCalled();
     });
 });
