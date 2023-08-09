@@ -90,16 +90,14 @@ public class QuizJMSListenerService {
                     var quizSubmission = objectMapper.readValue(bytes, QuizSubmission.class);
                     var address = activeMQMessage.getCoreMessage().getAddress();
                     var username = JMSListenerUtils.extractUsernameFromMessage(message);
-                    try {
-                        var exerciseId = extractExerciseIdFromAddress(address);
-                        quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, username, false);
-                    }
-                    catch (JMSException e) {
-                        logger.warn(String.format("Received JMSException for topic %s: %s", address, e));
-                    }
-                    catch (QuizSubmissionException e) {
-                        logger.warn(String.format("Could not process Quiz Submission: %s", e));
-                    }
+                    var exerciseId = extractExerciseIdFromAddress(address);
+                    quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, username, false);
+                }
+                catch (JMSException e) {
+                    logger.warn(String.format("Received JMSException: %s", e));
+                }
+                catch (QuizSubmissionException e) {
+                    logger.warn(String.format("Could not process Quiz Submission: %s", e));
                 }
                 catch (IOException e) {
                     logger.warn(String.format("Could not process read JMS message: %s", e));

@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Profile("!decoupling || quiz")  // TODO: Remove !decoupling
+@Profile("!decoupling || quiz")
 public class QuizExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);

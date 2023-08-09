@@ -127,9 +127,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
+            var relayedDestinations = new ArrayList<String>();
+            // Also relay messages to /topic
+            relayedDestinations.add("/topic");
+            if (!activeProfiles.contains("quiz")) {
+                relayedDestinations.add("/queue");
+            }
+
             config
-                    // Enable the relay for "/topic"
-                    .enableStompBrokerRelay(activeProfiles.contains("quiz") ? new String[] { "/topic" } : new String[] { "/topic", "/queue" })
+                    // Enable the relay the specified destinations
+                    .enableStompBrokerRelay(relayedDestinations.toArray(new String[0]))
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
