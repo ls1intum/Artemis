@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, filter, map, pairwise, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -19,21 +19,18 @@ export enum ProfileToggle {
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;
 
-const defaultActiveProfileState: ActiveProfileToggles = Object.values(ProfileToggle);
-
 @Injectable({ providedIn: 'root' })
 export class ProfileToggleService {
     private infoUrl = 'management/info';
 
     private readonly topic = `/topic/management/profile-toggles`;
-    private subject: BehaviorSubject<ActiveProfileToggles>;
+    private subject: BehaviorSubject<ActiveProfileToggles | undefined> = new BehaviorSubject<ActiveProfileToggles | undefined>(undefined);
     private subscriptionInitialized = false;
 
     private profileForCurrentRoute: ProfileToggle | undefined = undefined;
     private errorShownForCurrentRoute = false;
 
     constructor(private websocketService: JhiWebsocketService, private alertService: AlertService, private router: Router, private http: HttpClient) {
-        this.subject = new BehaviorSubject<ActiveProfileToggles>(defaultActiveProfileState);
         this.websocketService.onWebSocketConnected().subscribe(() => {
             this.reloadActiveProfileTogglesFromServer();
         });
@@ -83,7 +80,9 @@ export class ProfileToggleService {
      * Getter method for the profile toggles as an observable.
      */
     getProfileToggles(): Observable<ActiveProfileToggles> {
-        return this.subject.asObservable().pipe(distinctUntilChanged());
+        return this.subject
+            .asObservable()
+            .pipe(filter((activeProfiles) => !!activeProfiles) as OperatorFunction<ActiveProfileToggles | undefined, ActiveProfileToggles>, distinctUntilChanged());
     }
 
     /**
@@ -108,7 +107,8 @@ export class ProfileToggleService {
      */
     getProfileTogglesActive(profiles: ProfileToggle[]): Observable<boolean> {
         return this.subject.asObservable().pipe(
-            map((activeProfiles) => {
+            filter((activeProfiles) => !!activeProfiles),
+            map((activeProfiles: ActiveProfileToggles) => {
                 if (activeProfiles.includes(ProfileToggle.DECOUPLING)) {
                     // If the 'Decoupling' proxy-profile is set -> Decoupling is activated -> Apply logic
                     return profiles.every((profile) => activeProfiles.includes(profile));
@@ -126,7 +126,7 @@ export class ProfileToggleService {
      */
     getProfileTogglesActiveInstant(profiles: ProfileToggle[]): boolean {
         const activeProfiles = this.subject.value;
-        if (activeProfiles.includes(ProfileToggle.DECOUPLING)) {
+        if (activeProfiles && activeProfiles.includes(ProfileToggle.DECOUPLING)) {
             // If the 'Decoupling' proxy-profile is set -> Decoupling is activated -> Apply logic
             return profiles.every((profile) => activeProfiles.includes(profile));
         }

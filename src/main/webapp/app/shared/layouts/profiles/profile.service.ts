@@ -90,7 +90,7 @@ export class ProfileService {
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
                     this.featureToggleService.initializeFeatureToggles(profileInfo.features);
-                    this.profileToggleService.initializeProfileToggles(profileInfo.combinedProfiles);
+                    this.profileToggleService.initializeProfileToggles(profileInfo.combinedProfiles || []);
                     this.browserFingerprintService.initialize(profileInfo.studentExamStoreSessionData);
                 });
         }

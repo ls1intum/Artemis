@@ -82,8 +82,8 @@ export class AccountService implements IAccountService {
         this.userIdentity = identity;
     }
 
-    syncGroups(identity: User) {
-        this.userIdentity!.groups = identity.groups;
+    syncGroups(groups: string[]) {
+        this.userIdentity!.groups = groups;
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
