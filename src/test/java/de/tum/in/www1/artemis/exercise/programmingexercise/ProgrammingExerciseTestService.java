@@ -1679,7 +1679,7 @@ public class ProgrammingExerciseTestService {
             Files.createFile(file);
         }
         localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
-        gitService.commit(localRepository.localGit).setMessage("Added testfile").call();
+        GitService.commit(localRepository.localGit).setMessage("Added testfile").call();
     }
 
     // Test

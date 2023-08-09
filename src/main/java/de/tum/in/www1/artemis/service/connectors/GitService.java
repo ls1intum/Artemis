@@ -640,7 +640,7 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         }
     }
 
@@ -652,7 +652,7 @@ public class GitService {
      * @param git Git Repository Object.
      * @return CommitCommand with signing set to false.
      */
-    public CommitCommand commit(Git git) {
+    public static CommitCommand commit(Git git) {
         return git.commit().setSign(false);
     }
 
@@ -669,7 +669,7 @@ public class GitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
@@ -986,7 +986,7 @@ public class GitService {
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
+            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -1040,7 +1040,7 @@ public class GitService {
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                    commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
             // Delete copy branch
@@ -1189,7 +1189,7 @@ public class GitService {
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
-                commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
             }

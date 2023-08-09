@@ -36,9 +36,6 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    @Autowired
-    private GitService gitService;
-
     private LocalRepository assignmentRepository;
 
     private LocalRepository templateRepository;
@@ -227,7 +224,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         Path testFilePath = assignmentRepository.localRepoFile.toPath().resolve("new-file.txt");
         Files.createFile(testFilePath);
         assignmentRepository.localGit.add().addFilepattern(".").call();
-        gitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
+        GitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
         pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
         assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
         submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());

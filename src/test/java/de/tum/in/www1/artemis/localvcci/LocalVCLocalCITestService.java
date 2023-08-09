@@ -74,9 +74,6 @@ public class LocalVCLocalCITestService {
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    private GitService gitService;
-
-    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Value("${artemis.version-control.url}")
@@ -368,7 +365,7 @@ public class LocalVCLocalCITestService {
         Path testFilePath = localRepositoryFolder.resolve(fileName);
         Files.createFile(testFilePath);
         localGit.add().addFilepattern(".").call();
-        RevCommit commit = gitService.commit(localGit).setMessage("Add " + fileName).call();
+        RevCommit commit = GitService.commit(localGit).setMessage("Add " + fileName).call();
         return commit.getId().getName();
     }
 
