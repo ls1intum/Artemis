@@ -40,7 +40,7 @@
 
             UPDATE feedback
             <!-- Find the testcase by matching the text / test name and the exercise -->
-            SET feedback.test_case_id = (SELECT programming_exercise_test_case.id
+            SET test_case_id = (SELECT programming_exercise_test_case.id
                                 FROM programming_exercise_test_case,
                                      fe
                                 WHERE programming_exercise_test_case.test_name = fe.text
