@@ -12,6 +12,11 @@ public class ProfileInfoContributor implements InfoContributor {
 
     private final ProfileToggleService profileToggleService;
 
+    /**
+     * Create a new ProfileInfoContributor
+     *
+     * @param profileToggleService the ProfileToggleService that provides the information.
+     */
     public ProfileInfoContributor(ProfileToggleService profileToggleService) {
         this.profileToggleService = profileToggleService;
     }
