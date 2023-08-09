@@ -4,8 +4,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Properties;
-import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
 
@@ -18,7 +16,7 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
-import org.springframework.core.env.*;
+import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
@@ -45,13 +43,6 @@ public class ArtemisApp {
      */
     @PostConstruct
     public void initApplication() {
-        Properties props = new Properties();
-        MutablePropertySources propSrcs = ((AbstractEnvironment) env).getPropertySources();
-        StreamSupport.stream(propSrcs.spliterator(), false).filter(ps -> ps instanceof EnumerablePropertySource).map(ps -> ((EnumerablePropertySource) ps).getPropertyNames())
-                .flatMap(Arrays::stream).forEach(propName -> props.setProperty(propName, env.getProperty(propName)));
-
-        props.forEach((key, value) -> log.info(String.format("Found property %s with value %s:", key, value)));
-
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
