@@ -68,7 +68,7 @@ public class ProgrammingExerciseExportService {
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
+    private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -113,13 +113,10 @@ public class ProgrammingExerciseExportService {
      */
     public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
-        Path repoDownloadClonePathAsPath = Path.of(repoDownloadClonePath);
-        if (!Files.exists(repoDownloadClonePathAsPath)) {
-            Files.createDirectories(repoDownloadClonePathAsPath);
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
         }
-        Path exportDir = Files.createTempDirectory(repoDownloadClonePathAsPath, "programming-exercise-material");
-        // Schedule deletion of export directory directly here, so it always gets deleted, even if an exception is thrown
-        fileService.scheduleForDirectoryDeletion(exportDir, 5);
+        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -138,7 +135,7 @@ public class ProgrammingExerciseExportService {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileService.sanitizeFilename(exerciseDetailsFileName);
-        var exerciseDetailsExportPath = Path.of(exportDir.toString(), cleanExerciseDetailsFileName);
+        var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
 
         // Setup path to store the zip file for the exported programming exercise
@@ -146,10 +143,10 @@ public class ProgrammingExerciseExportService {
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
         String cleanFilename = FileService.sanitizeFilename(exportedExerciseZipFileName);
-        Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
+        Path pathToZippedExercise = exportDir.resolve(cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
-        zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
+        zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);
         return pathToZippedExercise;
     }
 
@@ -304,7 +301,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
 
@@ -319,7 +316,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
-        Path uniquePath = fileService.getUniquePath(repoDownloadClonePath);
+        Path uniquePath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
@@ -334,7 +331,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, exportErrors);
     }
 
@@ -503,7 +500,7 @@ public class ProgrammingExerciseExportService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow();
 
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 10);
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
@@ -513,9 +510,6 @@ public class ProgrammingExerciseExportService {
         catch (IOException ex) {
             log.error("Creating zip file for programming exercise {} did not work correctly: {} ", programmingExercise.getTitle(), ex.getMessage());
             return null;
-        }
-        finally {
-            fileService.scheduleForDirectoryDeletion(outputDir, 5);
         }
     }
 
@@ -571,7 +565,7 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getUniquePathString(outputDir.toString());
+        var repositoryDir = fileService.getTemporaryUniquePath(outputDir, 5);
         Path localRepoPath;
 
         // Checkout the repository
@@ -687,9 +681,9 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise the programming exercise for which repos have been downloaded
      * @param targetPath          the path in which the repositories have been downloaded
      */
-    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
+    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, Path targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
-        Path projectPath = Path.of(targetPath, projectDirName);
+        Path projectPath = targetPath.resolve(projectDirName);
         try {
             log.info("Delete project root directory {}", projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());

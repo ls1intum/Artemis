@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -303,10 +306,11 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     // TODO: either rework those tests or delete them
     @Test
-    void testGetUniquePath_shouldNotThrowException() {
+    void testGetUniqueTemporaryPath_shouldNotThrowException() {
         assertThatNoException().isThrownBy(() -> {
-            var uniquePath = fileService.getUniquePath("some-random-path-which-does-not-exist");
+            var uniquePath = fileService.getTemporaryUniquePath(Path.of("some-random-path-which-does-not-exist"), 1);
             assertThat(uniquePath.toString()).isNotEmpty();
+            verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(1L));
         });
     }
 
