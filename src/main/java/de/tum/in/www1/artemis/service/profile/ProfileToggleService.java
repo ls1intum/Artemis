@@ -43,6 +43,13 @@ public class ProfileToggleService {
 
     private final IMap<UUID, String> instanceProfilesMap;
 
+    /**
+     * Create a new ProfileToggleService
+     *
+     * @param websocketMessagingService to send updates to clients
+     * @param hazelcastInstance         to retrieve updates from Hazelcast
+     * @param env                       to get the profiles active within this instance
+     */
     public ProfileToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance, Environment env) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
