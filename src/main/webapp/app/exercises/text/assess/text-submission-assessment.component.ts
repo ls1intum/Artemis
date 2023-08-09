@@ -332,6 +332,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 for (const suggestion of feedbackSuggestions) {
                     this.addAutomaticTextBlockRef(suggestion);
                 }
+                this.validateFeedback();
             });
     }
 
