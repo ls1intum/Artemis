@@ -7,14 +7,13 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo;
+import de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
@@ -41,6 +40,34 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
+
+    @Query("""
+             SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
+                 conv.id,
+                 cp,
+                 COUNT(p.id)
+             )
+             FROM Conversation conv
+                 LEFT JOIN Channel channel ON conv.id = channel.id
+                 LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
+                 LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
+             WHERE conv.id IN :conversationIds
+                 AND (channel.isCourseWide IS true OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
+             GROUP BY conv.id
+            """)
+    List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
+
+    @Query("""
+             SELECT new de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo (
+                 conv.id,
+                 COUNT(cp.user.id)
+             )
+             FROM Conversation conv
+                 LEFT JOIN conv.conversationParticipants cp
+             WHERE conv.id IN :conversationIds
+             GROUP BY conv.id
+            """)
+    List<GeneralConversationInfo> getGeneralInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds);
 
     @Query("""
              SELECT COUNT(p.id) > 0

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -114,22 +115,41 @@ public class ConversationService {
      * @return the conversation in the course for which the user is a member
      */
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
-        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream()
-                .map(UserOneToOneChatSummary::new).toList();
+        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId()).stream().map(UserGroupChatSummary::new)
-                .toList();
+        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
 
-        var conversationSummaries = new ArrayList<UserConversationSummary>();
-        conversationSummaries.addAll(oneToOneChatsOfUser);
-        conversationSummaries.addAll(groupChatsOfUser);
+        var conversationsOfUser = new ArrayList<Conversation>();
+        conversationsOfUser.addAll(oneToOneChatsOfUser);
+        conversationsOfUser.addAll(groupChatsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
-        conversationSummaries.addAll(filteredChannels);
+        conversationsOfUser.addAll(filteredChannels);
 
-        return conversationSummaries.stream().map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        var conversationIds = conversationsOfUser.stream().map(Conversation::getId).collect(Collectors.toList());
+        var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
+                .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
+        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
+                .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
+
+        Integer numberOfCourseMembers = null;
+        for (Channel channel : filteredChannels) {
+            if (channel.getIsCourseWide()) {
+                if (numberOfCourseMembers == null) {
+                    numberOfCourseMembers = courseRepository.countCourseMembers(courseId);
+                }
+                generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
+            }
+        }
+
+        Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
+                .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
+
+        return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+
+        // return conversationSummaries.stream().map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
     }
 
     /**
@@ -479,12 +499,11 @@ public class ConversationService {
     /**
      * Filter all channels where the attached lecture/exercise has been released
      *
-     * @param summaries A stream of UserChannelSummaries
+     * @param channels A stream of Channels
      * @return A stream of channels for lectures/exercises that have been released
      */
-    public Stream<UserChannelSummary> filterVisibleChannelsForStudents(Stream<UserChannelSummary> summaries) {
-        return summaries.filter(summary -> {
-            Channel channel = summary.channel();
+    public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
+        return channels.filter(channel -> {
             if (channel.getLecture() != null) {
                 return channel.getLecture().isVisibleToStudents();
             }

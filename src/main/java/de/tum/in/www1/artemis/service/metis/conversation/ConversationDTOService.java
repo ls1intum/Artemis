@@ -79,15 +79,15 @@ public class ConversationDTOService {
      * @param requestingUser the user requesting the DTO
      * @return the created ConversationDTO
      */
-    public ConversationDTO convertToDTO(UserConversationSummary summary, User requestingUser) {
-        if (summary instanceof UserChannelSummary channelSummary) {
-            return convertChannelToDto(requestingUser, channelSummary.channel());
+    public ConversationDTO convertToDTO(ConversationSummary summary, User requestingUser) {
+        if (summary.getConversation() instanceof Channel channel) {
+            return convertChannelToDto(requestingUser, channel, summary);
         }
-        if (summary instanceof UserOneToOneChatSummary oneToOneChatSummary) {
-            return convertOneToOneChatToDto(requestingUser, oneToOneChatSummary.oneToOneChat());
+        if (summary.getConversation() instanceof OneToOneChat oneToOneChat) {
+            return convertOneToOneChatToDto(requestingUser, oneToOneChat);
         }
-        if (summary instanceof UserGroupChatSummary groupChatSummary) {
-            return convertGroupChatToDto(requestingUser, groupChatSummary.groupChat());
+        if (summary.getConversation() instanceof GroupChat groupChat) {
+            return convertGroupChatToDto(requestingUser, groupChat);
         }
         throw new IllegalArgumentException("Conversation type not supported");
     }
@@ -147,9 +147,29 @@ public class ConversationDTOService {
      * @return the created ChannelDTO
      */
     @NotNull
-    public ChannelDTO convertChannelToDto(User requestingUser, UserChannelSummary channelSummary) {
-        ChannelDTO channelDTO = this.convertChannelToDto(requestingUser, channelSummary.channel());
-        channelDTO.setUnreadMessagesCount(channelSummary.unreadMessagesCount());
+    public ChannelDTO convertChannelToDto(User requestingUser, Channel channel, ConversationSummary channelSummary) {
+        var channelDTO = new ChannelDTO(channel);
+
+        var participantOptional = Optional.ofNullable(channelSummary.getUserConversationInfo().getConversationParticipant());
+        channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipant::getIsModerator).orElse(false));
+        channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
+        channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
+        participantOptional.ifPresent(participant -> channelDTO.setLastReadDate(participant.getLastRead()));
+
+        channelDTO.setIsMember(participantOptional.isPresent() || channel.getIsCourseWide());
+
+        channelDTO.setUnreadMessagesCount(channelSummary.getUserConversationInfo().getUnreadMessagesCount());
+        channelDTO.setNumberOfMembers(channelSummary.getGeneralConversationInfo().getNumberOfParticipants());
+        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
+
+        setDTOCreatorProperty(requestingUser, channel, channelDTO);
+
+        tutorialGroup.ifPresent(tg -> {
+            channelDTO.setTutorialGroupId(tg.getId());
+            channelDTO.setTutorialGroupTitle(tg.getTitle());
+        });
+
         return channelDTO;
     }
 

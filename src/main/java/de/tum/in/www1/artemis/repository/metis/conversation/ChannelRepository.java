@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.UserChannelSummary;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
@@ -45,19 +44,15 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-             SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserChannelSummary (
-                 channel,
-                 COUNT(p.id)
-             )
+             SELECT channel
              FROM Channel channel
-                 LEFT JOIN ConversationParticipant cp ON channel.id = cp.conversation.id AND cp.user.id = :userId
-                 LEFT JOIN Post p ON channel.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
+                 LEFT JOIN channel.conversationParticipants cp
              WHERE channel.course.id = :courseId
                  AND (channel.isCourseWide IS true OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
              GROUP BY channel
              ORDER BY channel.name
             """)
-    List<UserChannelSummary> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
              SELECT DISTINCT channel
