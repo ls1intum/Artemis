@@ -26,7 +26,6 @@ plugins {
     id "info.solidsoft.pitest" version "1.9.11"
     id "org.owasp.dependencycheck" version "8.3.1"
     id "com.adarshr.test-logger" version "3.2.0"
-    id "org.springdoc.openapi-gradle-plugin" version "1.6.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -460,22 +459,6 @@ pitest {
     timeoutFactor = 1.5
     timeoutConstInMillis = 10000
     useClasspathFile = true
-}
-
-openApi {
-    apiDocsUrl.set("http://localhost:8080/api-docs")
-    waitTimeInSeconds.set(600)
-    outputDir.set(file("$buildDir/docs"))
-    outputFileName.set("swagger.json")
-    customBootRun {
-        args.set([
-            "--spring.profiles.active=test,dev,artemis,ldap,scheduling,athene,apollon",
-            "--artemis.user-management.use-external=false",
-            "--server.url=https://artemislocal.ase.in.tum.de",
-            "--server.port=8080",
-            "--jhipster.security.authentication.jwt=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo="
-        ])
-    }
 }
 
 // Available commands:

@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileToggleLinkDirective } from 'app/shared/profile-toggle/profile-toggle-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
