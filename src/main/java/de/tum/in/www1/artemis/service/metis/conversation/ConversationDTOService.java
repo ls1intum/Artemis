@@ -154,10 +154,10 @@ public class ConversationDTOService {
         channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipant::getIsModerator).orElse(false));
         channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
         channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         participantOptional.ifPresent(participant -> channelDTO.setLastReadDate(participant.getLastRead()));
 
-        channelDTO.setIsMember(participantOptional.isPresent() || channel.getIsCourseWide());
+        channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
+        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, participantOptional, requestingUser));
 
         channelDTO.setUnreadMessagesCount(channelSummary.getUserConversationInfo().getUnreadMessagesCount());
         channelDTO.setNumberOfMembers(channelSummary.getGeneralConversationInfo().getNumberOfParticipants());

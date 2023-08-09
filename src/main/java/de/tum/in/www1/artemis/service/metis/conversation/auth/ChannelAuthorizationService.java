@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -148,6 +147,17 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     }
 
     /**
+     * Checks if a user is a member of a channel
+     *
+     * @param channel     the channel
+     * @param participant optional participant for the user
+     * @return true if the user is a member of the channel, false otherwise
+     */
+    public boolean isMember(Channel channel, Optional<ConversationParticipant> participant) {
+        return channel.getIsCourseWide() || participant.isPresent();
+    }
+
+    /**
      * Checks if a user is a moderator of a channel
      *
      * @param channelId the id of the channel
@@ -155,7 +165,8 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @return true if the user is a moderator of the channel, false otherwise
      */
     public boolean isChannelModerator(Long channelId, Long userId) {
-        return conversationParticipantRepository.findModeratorConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId);
+        return isChannelModerator(participant);
     }
 
     /**
@@ -171,6 +182,19 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         var userToCheck = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
         return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.orElseThrow().getCourse(), userToCheck);
+    }
+
+    /**
+     * Checks if a user has channel moderation rights to a channel
+     * <p>
+     * Note: Either the user is a course instructor or a channel moderator to have moderation rights
+     *
+     * @param channel     the channel
+     * @param participant optional participant for the user
+     * @return true if the user has moderation rights, false otherwise
+     */
+    public boolean hasChannelModerationRights(@NotNull Channel channel, Optional<ConversationParticipant> participant, @NotNull User user) {
+        return isChannelModerator(participant) || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
     }
 
     /**
@@ -275,6 +299,16 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");
         }
+    }
+
+    /**
+     * Checks if a user is a moderator of a channel
+     *
+     * @param conversationParticipant optional ConversationParticipant
+     * @return true if the user is a moderator of the channel, false otherwise
+     */
+    private boolean isChannelModerator(Optional<ConversationParticipant> conversationParticipant) {
+        return conversationParticipant.map(ConversationParticipant::getIsModerator).orElse(false);
     }
 
 }
