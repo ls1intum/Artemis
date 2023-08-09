@@ -87,7 +87,14 @@ public class ExamSessionService {
         for (var examSession : examSessions) {
             boolean alreadyContained = false;
             for (var suspiciousExamSession : suspiciousExamSessions) {
-                if (suspiciousExamSession.examSessions().contains(examSession)) {
+                boolean sameStudentExam = false;
+                for (var existingSuspiciousSession : suspiciousExamSession.examSessions()) {
+                    if (existingSuspiciousSession.getStudentExam().getId().equals(examSession.getStudentExam().getId())) {
+                        sameStudentExam = true;
+                        break;
+                    }
+                }
+                if (suspiciousExamSession.examSessions().contains(examSession) || sameStudentExam) {
                     alreadyContained = true;
                     break;
                 }
