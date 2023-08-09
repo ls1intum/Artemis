@@ -72,7 +72,6 @@ export class ProfileToggleService {
      * @param activeProfiles
      */
     initializeProfileToggles(activeProfiles: ActiveProfileToggles): void {
-        console.log('init called');
         this.notifySubscribers(activeProfiles);
     }
 
