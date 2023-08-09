@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -807,6 +809,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
+        verify(fileService).scheduleForDeletion(any(Path.class), eq(1L));
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
