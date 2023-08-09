@@ -22,6 +22,7 @@ import { of } from 'rxjs';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -42,7 +43,12 @@ describe('PostingsMarkdownEditor', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), { provide: HttpClient, useClass: MockHttpService }],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                MockProvider(LectureService),
+                { provide: HttpClient, useClass: MockHttpService },
+                MockProvider(AlertService),
+            ],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })

@@ -151,7 +151,7 @@ export class ProfileToggleService {
     checkActiveRouteForActivatedProfiles(): void {
         // Store the required profile for the current route
         this.router.events
-            .pipe(
+            ?.pipe(
                 // We are only interested in the primary outlet since it contains the 'profile'-data
                 filter((event) => event instanceof ActivationStart && event.snapshot.outlet === 'primary'),
             )
@@ -160,7 +160,7 @@ export class ProfileToggleService {
             });
 
         // When the user navigates to a new page -> Reset the error-shown state
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.errorShownForCurrentRoute = false));
+        this.router.events?.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.errorShownForCurrentRoute = false));
 
         // Calculate whether the currently required profile is (un-)available and inform the user
         this.getProfileToggles()

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -19,6 +19,7 @@ import {
     metisLecture,
     metisLecturePosts,
 } from '../../../../helpers/sample/metis-sample-data';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('PostingContentComponent', () => {
     let component: PostingContentComponent;
@@ -28,7 +29,7 @@ describe('PostingContentComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(AlertService)],
             declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

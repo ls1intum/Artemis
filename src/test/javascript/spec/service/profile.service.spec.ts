@@ -10,6 +10,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('Profile Service', () => {
     let service: ProfileService;
@@ -282,6 +284,7 @@ describe('Profile Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },
                 { provide: BrowserFingerprintService, useValue: { initialize: jest.fn() } },
+                MockProvider(AlertService),
             ],
         });
         service = TestBed.inject(ProfileService);
