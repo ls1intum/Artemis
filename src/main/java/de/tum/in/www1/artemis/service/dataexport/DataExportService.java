@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.dataexport;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -53,13 +55,13 @@ public class DataExportService {
      *
      * @return the created DataExport object
      */
-    public DataExport requestDataExport() throws IOException {
+    public RequestDataExportDTO requestDataExport() throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();
         dataExport.setUser(user);
         dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
     }
 
     /**
@@ -123,7 +125,7 @@ public class DataExportService {
         if (dataExport.getFilePath() == null) {
             return;
         }
-        fileService.scheduleForDirectoryDeletion(Path.of(dataExport.getFilePath()), 2);
+        fileService.scheduleForDeletion(Path.of(dataExport.getFilePath()), 2);
         if (dataExport.getDataExportState().hasBeenDownloaded()) {
             dataExport.setDataExportState(DataExportState.DOWNLOADED_DELETED);
         }
