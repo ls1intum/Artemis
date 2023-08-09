@@ -507,7 +507,6 @@ public class Result extends DomainObject implements Comparable<Result> {
         }
 
         setTestCaseCount(testCaseFeedback.size());
-        // TODO: this is not good code!
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
 

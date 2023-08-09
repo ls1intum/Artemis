@@ -67,7 +67,7 @@ public class Feedback extends DomainObject {
      * null if the feedback was not created by an automatic test case.
      */
     @ManyToOne
-    @JsonIgnoreProperties({ "tasks", "solutionEntries", "exercise" })
+    @JsonIgnoreProperties({ "tasks", "solutionEntries", "exercise", "coverageEntries" })
     private ProgrammingExerciseTestCase testCase;
 
     /**

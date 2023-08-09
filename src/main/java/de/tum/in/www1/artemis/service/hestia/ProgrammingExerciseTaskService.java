@@ -33,11 +33,11 @@ public class ProgrammingExerciseTaskService {
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
-    private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
-    private final Pattern plantUMLPattern = Pattern.compile("@startuml([^@]*)@enduml");
+    private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
-    private final Pattern testsColorPattern = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]+\\))*[^()]*)\\)");
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]+\\))*[^()]*)\\)");
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
@@ -177,7 +177,7 @@ public class ProgrammingExerciseTaskService {
         if (problemStatement == null || problemStatement.isEmpty()) {
             return tasks;
         }
-        var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
+        var matcher = TASK_PATTERN.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
         while (matcher.find()) {
             var taskName = matcher.group("name");
@@ -251,13 +251,19 @@ public class ProgrammingExerciseTaskService {
         return testCaseNames;
     }
 
+    /**
+     * Replaces the test names embedded into the problem statement with their corresponding id.
+     * The result does not get saved yet.
+     *
+     * @param exercise the exercise to replaces the test names in the problem statement
+     */
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
         if (problemStatement == null || problemStatement.isEmpty()) {
             return;
         }
-        // check the logic for activating test cases again (just to be sure)
-        // only load active test cases and use them to link the feedback (?)
+        // TODO check the logic for activating test cases again (just to be sure)
+        // only replace active test cases (test cases that also exist in the test repository)
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
         if (testCases.isEmpty()) {
@@ -271,10 +277,11 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String replaceTaskTestsWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
-        Matcher matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
+        Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
             String fullMatch = matchResult.group();
+            // group 1: task name, group 2: test names
             String testNames = matchResult.group(2);
 
             String testIds = extractTestCaseIdsFromNames(testNames, testCases);
@@ -284,13 +291,14 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String replacePlantUMLTestCasesWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
-        Matcher matcher = plantUMLPattern.matcher(problemStatement);
+        Matcher matcher = PLANTUML_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
             String diagram = matchResult.group();
-            Matcher tests = testsColorPattern.matcher(diagram);
+            Matcher tests = TESTSCOLOR_PATTERN.matcher(diagram);
             return tests.replaceAll(testsMatchResult -> {
                 String fullMatch = testsMatchResult.group();
+                // group 1: test names
                 String testNames = testsMatchResult.group(1);
                 String testIds = extractTestCaseIdsFromNames(testNames, testCases);
                 return fullMatch.replace(testNames, testIds);
@@ -299,6 +307,7 @@ public class ProgrammingExerciseTaskService {
     }
 
     // TODO: remove this
+    // TODO: Double check the hint integration (both directions)
     public static void main(String[] args) {
         String test = """
                 [task][Task](test1)

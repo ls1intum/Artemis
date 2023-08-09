@@ -32,7 +32,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
-    public AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
+    protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService,
             ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;

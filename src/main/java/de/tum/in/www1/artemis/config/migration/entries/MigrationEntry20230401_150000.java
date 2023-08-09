@@ -10,9 +10,9 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 public class MigrationEntry20230401_150000 extends MigrationEntry {
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final transient ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseTaskService taskService;
+    private final transient ProgrammingExerciseTaskService taskService;
 
     public MigrationEntry20230401_150000(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService taskService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -22,18 +22,16 @@ public class MigrationEntry20230401_150000 extends MigrationEntry {
     @Override
     public void execute() {
         Pageable pageable = Pageable.ofSize(50);
-        Page<ProgrammingExercise> exercises = programmingExerciseRepository.findAll(pageable);
-        for (ProgrammingExercise exercise : exercises.getContent()) {
-            taskService.replaceTestNamesWithIds(exercise);
-        }
-        programmingExerciseRepository.saveAll(exercises.getContent());
-
-        while (exercises.hasNext()) {
-            exercises = programmingExerciseRepository.findAll(exercises.nextPageable());
+        while (true) {
+            Page<ProgrammingExercise> exercises = programmingExerciseRepository.findAll(pageable);
             for (ProgrammingExercise exercise : exercises.getContent()) {
                 taskService.replaceTestNamesWithIds(exercise);
             }
             programmingExerciseRepository.saveAll(exercises.getContent());
+            if (exercises.isLast()) {
+                break;
+            }
+            pageable = pageable.next();
         }
     }
 

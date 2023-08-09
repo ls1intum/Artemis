@@ -258,5 +258,4 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     public boolean wasNotExecuted(Result result) {
         return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).noneMatch(feedback -> this.equals(feedback.getTestCase()));
     }
-
 }
