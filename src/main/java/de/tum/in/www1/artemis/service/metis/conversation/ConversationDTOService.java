@@ -161,10 +161,10 @@ public class ConversationDTOService {
 
         channelDTO.setUnreadMessagesCount(channelSummary.getUserConversationInfo().getUnreadMessagesCount());
         channelDTO.setNumberOfMembers(channelSummary.getGeneralConversationInfo().getNumberOfParticipants());
-        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
 
         setDTOCreatorProperty(requestingUser, channel, channelDTO);
 
+        var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
         tutorialGroup.ifPresent(tg -> {
             channelDTO.setTutorialGroupId(tg.getId());
             channelDTO.setTutorialGroupTitle(tg.getTitle());
