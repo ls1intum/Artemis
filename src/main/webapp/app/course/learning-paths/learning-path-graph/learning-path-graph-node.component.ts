@@ -10,7 +10,6 @@ export class LearningPathGraphNodeComponent {
     @Input() courseId: number;
     @Input() node: NgxLearningPathNode;
 
-    //icons
     faCheckCircle = faCheckCircle;
     faPlayCircle = faPlayCircle;
     faQuestionCircle = faQuestionCircle;
