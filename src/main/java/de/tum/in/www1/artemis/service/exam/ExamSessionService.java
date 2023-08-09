@@ -83,18 +83,13 @@ public class ExamSessionService {
     public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
+        examSessions = filterSameExamSessionsForSameStudentExam(examSessions);
 
         for (var examSession : examSessions) {
             boolean alreadyContained = false;
             for (var suspiciousExamSession : suspiciousExamSessions) {
-                boolean sameStudentExam = false;
-                for (var existingSuspiciousSession : suspiciousExamSession.examSessions()) {
-                    if (existingSuspiciousSession.getStudentExam().getId().equals(examSession.getStudentExam().getId())) {
-                        sameStudentExam = true;
-                        break;
-                    }
-                }
-                if (suspiciousExamSession.examSessions().contains(examSession) || sameStudentExam) {
+
+                if (suspiciousExamSession.examSessions().contains(examSession)) {
                     alreadyContained = true;
                     break;
                 }
@@ -111,6 +106,23 @@ public class ExamSessionService {
         }
 
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
+    }
+
+    private Set<ExamSession> filterSameExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
+        Set<ExamSession> filteredSessions = new HashSet<>();
+        for (var examSession1 : examSessions) {
+            for (var examSession2 : examSessions) {
+                if (examSession1.equals(examSession2)) {
+                    continue;
+                }
+                if (examSession1.hasSameBrowserFingerprint(examSession2) && examSession1.hasSameIpAddress(examSession2) && examSession1.hasSameUserAgent(examSession2)
+                        && examSession1.hasSameStudentExam(examSession2)) {
+                    continue;
+                }
+                filteredSessions.add(examSession1);
+            }
+        }
+        return filteredSessions;
     }
 
     private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
