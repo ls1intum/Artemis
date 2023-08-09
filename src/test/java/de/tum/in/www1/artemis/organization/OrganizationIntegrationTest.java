@@ -140,13 +140,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
-        updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course2.getStudentGroupName());
+        updatedGroups = request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/courses/" + course3.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     /**
