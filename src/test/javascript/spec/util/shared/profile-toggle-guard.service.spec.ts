@@ -34,7 +34,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING]);
 
-        const snapshot = { data: { profile: ProfileToggle.LECTURE } as any as ActivatedRouteSnapshot };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } } as any as ActivatedRouteSnapshot;
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeFalse();
         expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -44,7 +44,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING, ProfileToggle.LECTURE]);
 
-        const snapshot = { data: { profile: ProfileToggle.LECTURE } as any as ActivatedRouteSnapshot };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } } as any as ActivatedRouteSnapshot;
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([]);
 
-        const snapshot = { data: { profile: ProfileToggle.LECTURE } as any as ActivatedRouteSnapshot };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } } as any as ActivatedRouteSnapshot;
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();
