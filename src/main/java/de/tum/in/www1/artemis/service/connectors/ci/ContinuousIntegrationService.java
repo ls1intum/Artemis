@@ -53,15 +53,16 @@ public interface ContinuousIntegrationService {
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
-     * @param sourceProjectKey    The key of the source project, normally the key of the exercise -> courseShortName + exerciseShortName.
+     * @param sourceExercise      The exercise from which the build plan should be copied
      * @param sourcePlanName      The name of the source plan
-     * @param targetProjectKey    The key of the project the plan should get copied to
+     * @param targetExercise      The exercise to which the build plan is copied to
      * @param targetProjectName   The wanted name of the new project
      * @param targetPlanName      The wanted name of the new plan after copying it
      * @param targetProjectExists whether the target project already exists or not
      * @return The key of the new build plan
      */
-    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName, boolean targetProjectExists);
+    String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
+            boolean targetProjectExists);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
