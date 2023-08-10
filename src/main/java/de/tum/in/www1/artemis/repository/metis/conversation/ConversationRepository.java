@@ -44,7 +44,11 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Query("""
              SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
                  conv.id,
-                 cp,
+                 cp.id,
+                 cp.isModerator,
+                 cp.isFavorite,
+                 cp.isHidden,
+                 cp.lastRead,
                  COUNT(p.id)
              )
              FROM Conversation conv

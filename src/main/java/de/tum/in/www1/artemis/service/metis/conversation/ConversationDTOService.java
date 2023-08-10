@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -153,8 +154,8 @@ public class ConversationDTOService {
         this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
 
         // channel-DTO specific fields
-        var participantOptional = Optional.ofNullable(channelSummary.getUserConversationInfo().getConversationParticipant());
-        channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipant::getIsModerator).orElse(false));
+        var participantOptional = Optional.ofNullable(channelSummary.getUserConversationInfo().getConversationParticipantSettingsView());
+        channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipantSettingsView::getIsModerator).orElse(false));
 
         channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, participantOptional, requestingUser));
@@ -301,11 +302,11 @@ public class ConversationDTOService {
     }
 
     private void fillGeneralConversationDtoFields(ConversationDTO conversationDTO, User requestingUser, ConversationSummary conversationSummary) {
-        var participantOptional = Optional.ofNullable(conversationSummary.getUserConversationInfo().getConversationParticipant());
+        var participantOptional = Optional.ofNullable(conversationSummary.getUserConversationInfo().getConversationParticipantSettingsView());
 
         conversationDTO.setIsMember(participantOptional.isPresent());
-        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::getIsFavorite).orElse(false));
+        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipantSettingsView::getIsHidden).orElse(false));
         participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.getLastRead()));
 
         conversationDTO.setUnreadMessagesCount(conversationSummary.getUserConversationInfo().getUnreadMessagesCount());

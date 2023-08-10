@@ -57,6 +57,15 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
                 .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
     }
 
+    @Query("""
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.id = :#{#conversationId}
+            AND conversationParticipant.user.id = :#{#userId}
+            AND conversationParticipant.isModerator = true
+            """)
+    Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+
     Integer countByConversationId(Long conversationId);
 
     @Transactional // ok because of delete

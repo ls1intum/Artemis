@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
@@ -23,10 +24,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -72,14 +70,16 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     Long exampleCourseId;
 
+    Course exampleCourse;
+
     String testPrefix = "";
 
     @BeforeEach
     void setupTestScenario() throws Exception {
         this.testPrefix = getTestPrefix();
         var course = courseUtilService.createCourseWithMessagingEnabled();
-        courseRepository.save(course);
-        exampleCourseId = course.getId();
+        exampleCourse = courseRepository.save(course);
+        exampleCourseId = exampleCourse.getId();
     }
 
     abstract String getTestPrefix();

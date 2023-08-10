@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -153,7 +153,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param participant optional participant for the user
      * @return true if the user is a member of the channel, false otherwise
      */
-    public boolean isMember(Channel channel, Optional<ConversationParticipant> participant) {
+    public boolean isMember(Channel channel, Optional<ConversationParticipantSettingsView> participant) {
         return channel.getIsCourseWide() || participant.isPresent();
     }
 
@@ -165,8 +165,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @return true if the user is a moderator of the channel, false otherwise
      */
     public boolean isChannelModerator(Long channelId, Long userId) {
-        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId);
-        return isChannelModerator(participant);
+        return conversationParticipantRepository.findModeratorConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
     }
 
     /**
@@ -193,8 +192,9 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param participant optional participant for the user
      * @return true if the user has moderation rights, false otherwise
      */
-    public boolean hasChannelModerationRights(@NotNull Channel channel, Optional<ConversationParticipant> participant, @NotNull User user) {
-        return isChannelModerator(participant) || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
+    public boolean hasChannelModerationRights(@NotNull Channel channel, Optional<ConversationParticipantSettingsView> participant, @NotNull User user) {
+        return participant.map(ConversationParticipantSettingsView::getIsModerator).orElse(false)
+                || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
     }
 
     /**
@@ -300,15 +300,4 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");
         }
     }
-
-    /**
-     * Checks if a user is a moderator of a channel
-     *
-     * @param conversationParticipant optional ConversationParticipant
-     * @return true if the user is a moderator of the channel, false otherwise
-     */
-    private boolean isChannelModerator(Optional<ConversationParticipant> conversationParticipant) {
-        return conversationParticipant.map(ConversationParticipant::getIsModerator).orElse(false);
-    }
-
 }

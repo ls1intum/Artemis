@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
@@ -39,13 +40,16 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     private final LectureUtilService lectureUtilService;
 
+    private final ConversationUtilService conversationUtilService;
+
     @Autowired
     public ConversationIntegrationTest(TextExerciseUtilService textExerciseUtilService, ExerciseUtilService exerciseUtilService, ExamUtilService examUtilService,
-            LectureUtilService lectureUtilService) {
+            LectureUtilService lectureUtilService, ConversationUtilService conversationUtilService) {
         this.textExerciseUtilService = textExerciseUtilService;
         this.exerciseUtilService = exerciseUtilService;
         this.examUtilService = examUtilService;
         this.lectureUtilService = lectureUtilService;
+        this.conversationUtilService = conversationUtilService;
     }
 
     @BeforeEach
@@ -135,6 +139,37 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
         conversationRepository.deleteById(channel2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getConversationsOfUser_onlyFewDatabaseCalls() throws Exception {
+        // given
+        var channel = createChannel(false, TEST_PREFIX + "1");
+        addUsersToConversation(channel.getId(), "tutor1");
+
+        var groupChat = createGroupChat("tutor1");
+        hideConversation(groupChat.getId(), "tutor1");
+
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
+        this.resetWebsocketMock();
+        favoriteConversation(oneToOneChat.getId(), "tutor1");
+
+        var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
+        conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        // expected are 11 database calls independent of the number of conversations.
+        // 5 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
+        assertThatDb(() -> request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
+
+        // cleanup
+        conversationMessageRepository.deleteById(post.getId());
+        conversationRepository.deleteById(groupChat.getId());
+        conversationRepository.deleteById(oneToOneChat.getId());
+        conversationRepository.deleteById(channel.getId());
+        conversationRepository.deleteById(courseWideChannel.getId());
     }
 
     @Test
