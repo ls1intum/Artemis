@@ -1,6 +1,6 @@
 import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 import { users } from '../../users';
-import { POST } from '../../constants';
+import { GET, POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
@@ -38,6 +38,8 @@ export class ExamStartEndPage {
     }
 
     pressShowSummary() {
-        cy.get('#showExamSummaryButton').click();
+        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/summary').as('examSummaryDownload');
+        cy.get('#showExamSummaryButton', { timeout: 20000 }).should('be.visible').click();
+        cy.wait('@examSummaryDownload');
     }
 }

@@ -83,9 +83,7 @@ describe('Exam participation', () => {
                 examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
             }
             examParticipation.handInEarly();
-            cy.wait(6000);
             examStartEnd.pressShowSummary();
-            cy.wait(500);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
@@ -186,6 +184,7 @@ describe('Exam participation', () => {
             examParticipation.clickSaveAndContinue();
 
             examParticipation.handInEarly();
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
             examParticipation.checkExamTitle(examTitle);
 
@@ -207,7 +206,7 @@ describe('Exam participation', () => {
             textExerciseEditor.checkCurrentContent(textExercise.id, textExercise.additionalData!.textFixture!);
             examParticipation.clickSaveAndContinue();
             examParticipation.handInEarly();
-
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
@@ -223,7 +222,7 @@ describe('Exam participation', () => {
             examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
             examParticipation.clickSaveAndContinue();
             examParticipation.handInEarly();
-
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
