@@ -246,6 +246,7 @@ public class JenkinsBuildPlanService {
      */
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetPlanName) {
         buildPlanRepository.copyBetweenExercises(sourceExercise, targetExercise);
+        targetExercise.generateAndSetBuildPlanAccessSecret();
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
         String sourceProjectKey = sourceExercise.getProjectKey();
