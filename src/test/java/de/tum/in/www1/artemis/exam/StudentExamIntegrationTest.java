@@ -177,7 +177,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 2);
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -562,7 +562,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindAllTestRunsForExam() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        var instructor2 = userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1).get(0);
+        var instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -634,8 +634,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetWorkingTimesNoStudentExams() {
-        final int numberOfStudent = 2;
-
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
@@ -645,7 +643,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(numberOfStudent);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         for (User student : registeredStudents) {
             var examUser = new ExamUser();
             examUser.setUser(student);
@@ -1488,7 +1486,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStudentExamSummaryAsStudentAfterPublishResults_dontFilter() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
@@ -1548,7 +1546,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         // users tries to access exam summary after results are published
         userUtilService.changeUser(studentExam.getUser().getLogin());
@@ -1583,8 +1581,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @NotNull
-    private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields) throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, 1).get(0);
+    private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).get(0);
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam, studentExam.getUser().getLogin(), studentExam);
 
@@ -1639,7 +1637,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
@@ -1721,7 +1719,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentBeforePublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         exam2.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
@@ -1739,7 +1737,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
@@ -1766,25 +1764,25 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
-        exam2 = createStudentExamWithResultsAndAssessments(true).getExam();
+        exam2 = createStudentExamWithResultsAndAssessments(true, 2).getExam();
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
-        // users tries to access exam summary after results are published
+        // users try to access exam summary after results are published
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.changeUser(student1.getLogin());
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        userUtilService.changeUser(student2.getLogin());
-        User student3 = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0).get(0);
-        // Note: student2 cannot see the grade summary for student3
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student3.getId(), HttpStatus.FORBIDDEN,
+        // Note: student1 cannot see the grade summary for student2
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student2.getId(), HttpStatus.FORBIDDEN,
                 StudentExamWithGradeDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsInstructorAfterPublishResultsWithOtherUserId() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
         exam2 = studentExam.getExam();
 
         GradingScale gradingScale = createGradeScale(false);
@@ -1808,7 +1806,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
@@ -1855,9 +1853,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithBonusExam(boolean asStudent) throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
-        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
 
         BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
 
@@ -1921,9 +1919,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithBonusExamAndPlagiarismAsStudent() throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
-        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
 
         BonusStrategy bonusStrategy = BonusStrategy.POINTS;
 
@@ -1972,7 +1970,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
 
         User student = finalStudentExam.getUser();
