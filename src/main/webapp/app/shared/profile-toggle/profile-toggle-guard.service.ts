@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, first, tap } from 'rxjs';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -13,6 +13,7 @@ export class ProfileToggleGuard implements CanActivate {
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
         const profile: ProfileToggle = route.data?.profile;
         return this.profileToggleService.getProfileToggleActive(profile).pipe(
+            first(),
             tap((activated: boolean) => {
                 if (!activated) {
                     this.router.navigate(['/courses']);
