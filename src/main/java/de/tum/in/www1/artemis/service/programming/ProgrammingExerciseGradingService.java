@@ -50,8 +50,6 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final ResultRepository resultRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -80,11 +78,8 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
-    private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
-
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseFeedbackCreationService programmingExerciseFeedbackService, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
@@ -94,8 +89,6 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
-        this.feedbackCreationService = programmingExerciseFeedbackService;
-        this.websocketMessagingService = websocketMessagingService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
