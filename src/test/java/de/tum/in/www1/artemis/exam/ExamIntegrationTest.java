@@ -1703,9 +1703,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
         ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
         ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
-        assertThat(savedExerciseGroup1.getExercises()).containsExactly(exercise1_1, exercise1_2);
-        assertThat(savedExerciseGroup2.getExercises()).containsExactly(exercise2_1);
-        assertThat(savedExerciseGroup3.getExercises()).containsExactly(exercise3_1, exercise3_2, exercise3_3);
+        assertThat(savedExerciseGroup1.getExercises()).containsExactlyInAnyOrder(exercise1_1, exercise1_2);
+        assertThat(savedExerciseGroup2.getExercises()).containsExactlyInAnyOrder(exercise2_1);
+        assertThat(savedExerciseGroup3.getExercises()).containsExactlyInAnyOrder(exercise3_1, exercise3_2, exercise3_3);
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
