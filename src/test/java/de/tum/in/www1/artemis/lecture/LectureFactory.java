@@ -35,6 +35,12 @@ public class LectureFactory {
         return lecture;
     }
 
+    /**
+     * Create a dummy attachment unit for testing. Includes a dummy attachment with optional placeholder image file on disk
+     *
+     * @param withFile Whether to include a placeholder image file on disk
+     * @return AttachmentUnit that was created
+     */
     public static AttachmentUnit generateAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
