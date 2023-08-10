@@ -192,7 +192,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     private ProgrammingExerciseTestCase createTest(String testName, long testId, ProgrammingExerciseTestCaseType testCaseType, Visibility visibility) {
-        var testCase = new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.).id(testId).bonusMultiplier(1D).bonusPoints(0D)
+        var testCase = new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.).id(testId).bonusMultiplier(1.).bonusPoints(0.)
                 .visibility(visibility);
         testCase.setType(testCaseType);
         return testCase;

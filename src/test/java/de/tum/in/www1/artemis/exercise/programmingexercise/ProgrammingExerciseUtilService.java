@@ -345,8 +345,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     public ProgrammingExerciseTestCase addTestCaseToProgrammingExercise(ProgrammingExercise programmingExercise, String testName) {
-        var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
-                .bonusPoints(0D);
+        var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1.)
+                .bonusPoints(0.);
         return testCaseRepository.save(testCase);
     }
 
