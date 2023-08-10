@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -12,19 +12,19 @@ import { NgForm } from '@angular/forms';
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
-export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
+export class DeleteDialogComponent implements OnInit, OnDestroy {
     readonly actionTypes = ActionType;
     private dialogErrorSubscription: Subscription;
-    private loginSubscription: Subscription;
     dialogError: Observable<string>;
     @Output() delete: EventEmitter<{ [key: string]: boolean }>;
+    @Output() dataExportForAnotherUser: EventEmitter<string>;
     @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
 
     submitDisabled: boolean;
     confirmEntityName: string;
     entityTitle: string;
     buttonType: ButtonType;
-    alternativeDeleteConfirmationText: string;
+    alternativeEntityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;
@@ -33,6 +33,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
     actionType: ActionType;
     // do not use faTimes icon if it's a confirmation but not a delete dialog
     useFaCheckIcon: boolean;
+    private oldEntityTitle: string;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
@@ -77,12 +78,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
             this.dialogErrorSubscription.unsubscribe();
         }
     }
-    ngOnChanges(): void {
-        this.loginSubscription = this.deleteForm.value('login').valueChanges.subscribe((val: any) => {
-            const formattedMessage = `Email is ${val}.`;
-            console.log(formattedMessage);
-        });
-    }
 
     /**
      * Closes the dialog
@@ -97,6 +92,11 @@ export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
      */
     confirmDelete(): void {
         this.submitDisabled = true;
+        // we need to emit the login if it is a request by an admin for another user, so we can make the request for the data export using the login
+        if (this.actionType === ActionType.RequestDataExport && this.isAnyAdditionalCheckSelected) {
+            this.dataExportForAnotherUser.emit(this.entityTitle);
+            return;
+        }
         this.delete.emit(this.additionalChecksValues);
     }
 
@@ -119,5 +119,20 @@ export class DeleteDialogComponent implements OnInit, OnDestroy, OnChanges {
             this.confirmEntityName !== this.entityTitle &&
             (!this.requireConfirmationOnlyForAdditionalChecks || this.isAnyAdditionalCheckSelected)
         );
+    }
+
+    onRequestDataExportForOtherUserChanged(event: any) {
+        console.log('checkbox status changed');
+        if (event.target.checked) {
+            this.oldEntityTitle = this.entityTitle;
+            this.entityTitle = this.alternativeEntityTitle ?? '';
+            this.deleteConfirmationText = 'artemisApp.dataExport.typeUserLoginToConfirm';
+            this.confirmEntityName = '';
+        } else {
+            this.confirmEntityName = '';
+            this.entityTitle = this.oldEntityTitle;
+            this.deleteConfirmationText = 'artemisApp.dataExport.typeLoginToConfirm';
+            this.alternativeEntityTitle = '';
+        }
     }
 }

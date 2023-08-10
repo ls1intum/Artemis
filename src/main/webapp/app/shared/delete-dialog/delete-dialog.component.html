@@ -17,20 +17,31 @@
         <div *ngIf="additionalChecks">
             <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
-                    <div class="control-label text-danger form-check">
+                    <div *ngIf="actionType !== actionTypes.RequestDataExport" class="control-label text-danger form-check">
                         <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
                         <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
                     </div>
-                    <div *ngIf="additionalChecksValues[checkKey] && actionType === actionTypes.RequestDataExport">
-                        <label for="additional-check-{{ i }}-text" class="form-check-label">Login</label>
-                        <input id="additional-check-{{ i }}-text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+                    <div *ngIf="actionType === actionTypes.RequestDataExport" class="control-label form-check">
+                        <input
+                            id="additional-check-{{ i }}"
+                            type="checkbox"
+                            name="checkbox"
+                            class="form-check-input"
+                            (change)="onRequestDataExportForOtherUserChanged($event)"
+                            [(ngModel)]="additionalChecksValues[checkKey]"
+                        />
+                        <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
+                    </div>
+                    <div *ngIf="additionalChecksValues[checkKey]">
+                        <label for="additional-check-{{ i }}-text">{{ 'artemisApp.dataExport.login' | artemisTranslate }}</label>
+                        <input id="additional-check-{{ i }}-text" class="form-control" name="alternativeEntityTitle" [(ngModel)]="entityTitle" />
                     </div>
                 </div>
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
             <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="alternativeDeleteConfirmationText" />
+            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
     <div class="modal-footer">
@@ -42,7 +53,7 @@
             type="submit"
             [ngClass]="['btn', buttonType]"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
+            [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled || confirmEntityName.trim().length === 0"
             [ngSwitch]="actionType"
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>

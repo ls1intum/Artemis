@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -64,13 +65,13 @@ public class DataExportResource {
         return dataExportService.requestDataExport();
     }
 
-    @PostMapping("data-exports-for-user")
+    @PostMapping("data-exports/{login}")
     @EnforceAdmin
-    public RequestDataExportDTO requestDataExportForUser(@RequestBody long userId) {
-        if (!canRequestDataExport()) {
+    public RequestDataExportDTO requestDataExportForUser(@PathVariable String login) {
+        if (!canRequestDataExport(login)) {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
-        return dataExportService.requestDataExportForUserAsAdmin(userId);
+        return dataExportService.requestDataExportForUserAsAdmin(login);
     }
 
     /**
@@ -80,6 +81,11 @@ public class DataExportResource {
      */
     private boolean canRequestDataExport() {
         var user = userRepository.getUser();
+        return checkIfUserCanRequest(user);
+
+    }
+
+    private boolean checkIfUserCanRequest(User user) {
         var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
         if (dataExports.isEmpty()) {
             return true;
@@ -89,6 +95,11 @@ public class DataExportResource {
                 .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 
         return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState() == DataExportState.FAILED;
+    }
+
+    private boolean canRequestDataExport(String login) {
+        var user = userRepository.getUserByLoginElseThrow(login);
+        return checkIfUserCanRequest(user);
 
     }
 

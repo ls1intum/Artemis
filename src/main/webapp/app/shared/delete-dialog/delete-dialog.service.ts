@@ -22,11 +22,11 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
-        this.modalRef.componentInstance.alternativeDeleteConfirmationText = deleteDialogData.alternativeDeleteConfirmationText;
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.buttonType = deleteDialogData.buttonType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;
+        this.modalRef.componentInstance.dataExportForAnotherUser = deleteDialogData.dataExportForAnotherUser;
         this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
         this.modalRef.componentInstance.requireConfirmationOnlyForAdditionalChecks = deleteDialogData.requireConfirmationOnlyForAdditionalChecks;
 

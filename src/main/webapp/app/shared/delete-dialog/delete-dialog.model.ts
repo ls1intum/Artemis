@@ -45,9 +45,9 @@ export class DeleteDialogData {
     // output event passed to the delete dialog component
     delete: EventEmitter<any>;
 
+    //output event passed to the delete dialog component, used to request a data export for another user, emitting the entered login
+    dataExportForAnotherUser: EventEmitter<string>;
+
     // require the confirmation security check only when at least one additional check is selected
     requireConfirmationOnlyForAdditionalChecks: boolean;
-
-    // alternative delete confirmation text used if the value for confirmation can change once the dialog is opened
-    alternativeDeleteConfirmationText: string;
 }
