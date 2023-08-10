@@ -164,7 +164,6 @@ export class FeedbackComponent implements OnInit {
 
     /**
      * Fetches additional information about feedbacks and build logs if required.
-     * @private
      */
     private initFeedbackInformation() {
         of(this.result.feedbacks)
