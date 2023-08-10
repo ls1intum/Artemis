@@ -128,10 +128,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
             var relayedDestinations = new ArrayList<String>();
-            // Also relay messages to /topic
+            // Relay messages to /topic
             relayedDestinations.add("/topic");
             if (!activeProfiles.contains("quiz")) {
-                relayedDestinations.add("/queue");
+                // Relay messages to /queue/quizExercise only if the quiz functionality is not used
+                relayedDestinations.add("/queue/quizExercise");
             }
 
             config

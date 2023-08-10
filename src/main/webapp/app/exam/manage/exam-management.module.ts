@@ -53,6 +53,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -87,6 +88,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
+        ProfileToggleModule,
     ],
     declarations: [
         ExamManagementComponent,

@@ -5,6 +5,13 @@ import javax.jms.Message;
 
 public class JMSListenerUtils {
 
+    /**
+     * Extract the username from a received JMS message.
+     *
+     * @param message the message from which the username should be extracted
+     * @return the username as string
+     * @throws JMSException if the property could not be extracted
+     */
     public static String extractUsernameFromMessage(Message message) throws JMSException {
         return message.getStringProperty("user-name");
     }

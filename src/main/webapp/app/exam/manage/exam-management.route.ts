@@ -55,6 +55,8 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 
 export const examManagementRoute: Routes = [
     {
@@ -437,8 +439,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     // Import Quiz Exercise
     {
@@ -447,8 +450,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     // Edit Quiz Exercise
     {
@@ -457,8 +461,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     // Create Programming Exercise
     {
@@ -557,8 +562,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
         canDeactivate: [PendingChangesGuard],
     },
     {
@@ -613,8 +619,9 @@ export const examManagementRoute: Routes = [
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
@@ -623,8 +630,9 @@ export const examManagementRoute: Routes = [
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/re-evaluate',
@@ -632,8 +640,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/quiz-point-statistic',
@@ -641,8 +650,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/quiz-statistic',
@@ -650,8 +660,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/mc-question-statistic/:questionId',
@@ -659,8 +670,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/dnd-question-statistic/:questionId',
@@ -668,8 +680,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
@@ -677,8 +690,9 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':examId/assessment-dashboard',
