@@ -13,6 +13,16 @@
         width: 100%;
         height: 100%;
     }
+
+    #arrow {
+        stroke: var(--body-color);
+        fill: var(--body-color);
+    }
+
+    .edge {
+        stroke: var(--body-color) !important;
+        marker-end: url(#arrow);
+    }
 }
 
 jhi-learning-path-graph-node:hover {
@@ -40,5 +50,5 @@ jhi-learning-path-graph-node:hover {
 
 .node-details {
     display: block;
-    max-width: 90vh;
+    max-width: 40vw;
 }
