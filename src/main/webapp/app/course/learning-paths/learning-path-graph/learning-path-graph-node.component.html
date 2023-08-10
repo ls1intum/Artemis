@@ -36,9 +36,7 @@
     <jhi-lecture-unit-node-details
         class="node-details"
         *ngIf="node.type === NodeType.LECTURE_UNIT"
-        [lectureId]="node.linkedResourceParent!"
         [lectureUnitId]="node.linkedResource!"
-        [(lecture)]="nodeDetailsData.lecture"
         [(lectureUnit)]="nodeDetailsData.lectureUnit"
     ></jhi-lecture-unit-node-details>
 </ng-template>

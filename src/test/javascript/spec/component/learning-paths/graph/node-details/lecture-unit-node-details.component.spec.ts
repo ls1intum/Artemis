@@ -6,18 +6,15 @@ import { HttpResponse } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { LectureUnitNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/lecture-unit-node-details.component';
-import { LectureService } from 'app/lecture/lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 describe('LectureUnitNodeDetailsComponent', () => {
     let fixture: ComponentFixture<LectureUnitNodeDetailsComponent>;
     let comp: LectureUnitNodeDetailsComponent;
-    let lectureService: LectureService;
-    let findWithDetailsStub: jest.SpyInstance;
-    let lecture: Lecture;
-    let lectureUnit: LectureUnit;
+    let lectureUnitService: LectureUnitService;
+    let getLectureUnitForLearningPathNodeDetailsStub: jest.SpyInstance;
+    let lectureUnit: LectureUnitForLearningPathNodeDetailsDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,16 +26,15 @@ describe('LectureUnitNodeDetailsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureUnitNodeDetailsComponent);
                 comp = fixture.componentInstance;
-                lecture = new Lecture();
-                lecture.id = 1;
-                lectureUnit = new TextUnit();
-                lectureUnit.id = 2;
+                lectureUnit = new LectureUnitForLearningPathNodeDetailsDTO();
+                lectureUnit.id = 1;
                 lectureUnit.name = 'Some arbitrary name';
-                lecture.lectureUnits = [lectureUnit];
+                lectureUnit.type = LectureUnitType.TEXT;
 
-                lectureService = TestBed.inject(LectureService);
-                findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: lecture })));
-                comp.lectureId = lecture.id;
+                lectureUnitService = TestBed.inject(LectureUnitService);
+                getLectureUnitForLearningPathNodeDetailsStub = jest
+                    .spyOn(lectureUnitService, 'getLectureUnitForLearningPathNodeDetails')
+                    .mockReturnValue(of(new HttpResponse({ body: lectureUnit })));
                 comp.lectureUnitId = lectureUnit.id;
             });
     });
@@ -49,16 +45,14 @@ describe('LectureUnitNodeDetailsComponent', () => {
 
     it('should load lecture unit on init if not present', () => {
         fixture.detectChanges();
-        expect(findWithDetailsStub).toHaveBeenCalledOnce();
-        expect(findWithDetailsStub).toHaveBeenCalledWith(lecture.id);
-        expect(comp.lecture).toEqual(lecture);
+        expect(getLectureUnitForLearningPathNodeDetailsStub).toHaveBeenCalledOnce();
+        expect(getLectureUnitForLearningPathNodeDetailsStub).toHaveBeenCalledWith(lectureUnit.id);
         expect(comp.lectureUnit).toEqual(lectureUnit);
     });
 
     it('should not load lecture unit on init if already present', () => {
-        comp.lecture = lecture;
         comp.lectureUnit = lectureUnit;
         fixture.detectChanges();
-        expect(findWithDetailsStub).not.toHaveBeenCalled();
+        expect(getLectureUnitForLearningPathNodeDetailsStub).not.toHaveBeenCalled();
     });
 });

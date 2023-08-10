@@ -4,14 +4,14 @@ import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitForLearningPathNodeDetailsDTO } from 'app/entities/lecture-unit/lectureUnit.model';
 
 class NodeDetailsData {
     competency?: Competency;
     competencyProgress?: CompetencyProgress;
     exercise?: Exercise;
     lecture?: Lecture;
-    lectureUnit?: LectureUnit;
+    lectureUnit?: LectureUnitForLearningPathNodeDetailsDTO;
 }
 
 @Component({
