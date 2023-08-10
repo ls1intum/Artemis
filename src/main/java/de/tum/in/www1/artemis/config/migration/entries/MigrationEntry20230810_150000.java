@@ -45,6 +45,6 @@ public class MigrationEntry20230810_150000 extends MigrationEntry {
 
     @Override
     public String date() {
-        return "20230401_150000";
+        return "20230810_150000";
     }
 }

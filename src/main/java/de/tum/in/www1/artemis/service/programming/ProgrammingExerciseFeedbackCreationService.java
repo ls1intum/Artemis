@@ -256,7 +256,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param buildResult from which to extract the test cases.
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
-    public void extractTestCasesFromResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise exercise) {
+    public void extractTestCasesFromResultAndBroadcastUpdates(AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise exercise) {
         boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases

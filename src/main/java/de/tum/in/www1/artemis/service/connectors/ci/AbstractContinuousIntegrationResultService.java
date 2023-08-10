@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -46,17 +45,14 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     @Override
     public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
-        final var result = new Result();
         ProgrammingExercise exercise = participation.getProgrammingExercise();
+
+        final var result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
         result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
-
-        if (participation instanceof SolutionProgrammingExerciseParticipation) {
-            feedbackCreationService.extractTestCasesFromResult(buildResult, exercise);
-        }
 
         addFeedbackToResult(result, buildResult);
         return result;

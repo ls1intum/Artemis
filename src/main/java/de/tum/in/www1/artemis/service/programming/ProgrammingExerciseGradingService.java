@@ -76,6 +76,8 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
+
     private final FeedbackService feedbackService;
 
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
@@ -84,7 +86,8 @@ public class ProgrammingExerciseGradingService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackService feedbackService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            FeedbackService feedbackService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -101,6 +104,7 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
     }
 
@@ -121,6 +125,11 @@ public class ProgrammingExerciseGradingService {
             var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
+            ProgrammingExercise exercise = participation.getProgrammingExercise();
+            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
+            }
+
             newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
@@ -130,8 +139,8 @@ public class ProgrammingExerciseGradingService {
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
-                var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-                var projectType = participation.getProgrammingExercise().getProjectType();
+                var programmingLanguage = exercise.getProgrammingLanguage();
+                var projectType = exercise.getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
                 continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
