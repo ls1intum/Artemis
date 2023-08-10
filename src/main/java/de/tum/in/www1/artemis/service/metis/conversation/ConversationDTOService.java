@@ -84,10 +84,10 @@ public class ConversationDTOService {
             return convertChannelToDto(requestingUser, channel, summary);
         }
         if (summary.getConversation() instanceof OneToOneChat oneToOneChat) {
-            return convertOneToOneChatToDto(requestingUser, oneToOneChat);
+            return convertOneToOneChatToDto(requestingUser, oneToOneChat, summary);
         }
         if (summary.getConversation() instanceof GroupChat groupChat) {
-            return convertGroupChatToDto(requestingUser, groupChat);
+            return convertGroupChatToDto(requestingUser, groupChat, summary);
         }
         throw new IllegalArgumentException("Conversation type not supported");
     }
@@ -143,26 +143,21 @@ public class ConversationDTOService {
      * Creates a ChannelDTO from a Channel
      *
      * @param requestingUser the user requesting the DTO
-     * @param channelSummary the channel to create the DTO from
+     * @param channel        the channel to create the DTO from
+     * @param channelSummary additional data about the channel
      * @return the created ChannelDTO
      */
     @NotNull
-    public ChannelDTO convertChannelToDto(User requestingUser, Channel channel, ConversationSummary channelSummary) {
+    private ChannelDTO convertChannelToDto(User requestingUser, Channel channel, ConversationSummary channelSummary) {
         var channelDTO = new ChannelDTO(channel);
+        this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
 
+        // channel-DTO specific fields
         var participantOptional = Optional.ofNullable(channelSummary.getUserConversationInfo().getConversationParticipant());
         channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipant::getIsModerator).orElse(false));
-        channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        participantOptional.ifPresent(participant -> channelDTO.setLastReadDate(participant.getLastRead()));
 
         channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, participantOptional, requestingUser));
-
-        channelDTO.setUnreadMessagesCount(channelSummary.getUserConversationInfo().getUnreadMessagesCount());
-        channelDTO.setNumberOfMembers(channelSummary.getGeneralConversationInfo().getNumberOfParticipants());
-
-        setDTOCreatorProperty(requestingUser, channel, channelDTO);
 
         var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
         tutorialGroup.ifPresent(tg -> {
@@ -175,7 +170,6 @@ public class ConversationDTOService {
 
     /**
      * Creates a OneToOneChatDTO from a OneToOneChat
-     * w
      *
      * @param requestingUser the user requesting the DTO
      * @param oneToOneChat   the one to one chat to create the DTO from
@@ -193,6 +187,25 @@ public class ConversationDTOService {
         setDTOCreatorProperty(requestingUser, oneToOneChat, oneToOneChatDTO);
         oneToOneChatDTO.setMembers(chatParticipants);
         oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
+        return oneToOneChatDTO;
+    }
+
+    /**
+     * Creates a OneToOneChatDTO from a OneToOneChat
+     *
+     * @param requestingUser      the user requesting the DTO
+     * @param oneToOneChat        the one to one chat to create the DTO from
+     * @param oneToOneChatSummary additional data about the oneToOneChat
+     * @return the created OneToOneChatDTO
+     */
+    @NotNull
+    private OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat, ConversationSummary oneToOneChatSummary) {
+        var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
+        this.fillGeneralConversationDtoFields(oneToOneChatDTO, requestingUser, oneToOneChatSummary);
+
+        // oneToOneChat-DTO specific fields
+        Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, oneToOneChat.getCourse(), getConversationParticipants(oneToOneChat));
+        oneToOneChatDTO.setMembers(chatParticipants);
         return oneToOneChatDTO;
     }
 
@@ -215,6 +228,25 @@ public class ConversationDTOService {
         setDTOCreatorProperty(requestingUser, groupChat, groupChatDTO);
         groupChatDTO.setMembers(chatParticipants);
         groupChatDTO.setNumberOfMembers(conversationParticipants.size());
+        return groupChatDTO;
+    }
+
+    /**
+     * Creates a GroupChatDTO from a GroupChat
+     *
+     * @param requestingUser   the user requesting the DTO
+     * @param groupChat        the group chat to create the DTO from
+     * @param groupChatSummary additional data about the groupChat
+     * @return the created GroupChatDTO
+     */
+    @NotNull
+    private GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat, ConversationSummary groupChatSummary) {
+        var groupChatDTO = new GroupChatDTO(groupChat);
+        this.fillGeneralConversationDtoFields(groupChatDTO, requestingUser, groupChatSummary);
+
+        // groupChat-DTO specific fields
+        Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, groupChat.getCourse(), getConversationParticipants(groupChat));
+        groupChatDTO.setMembers(chatParticipants);
         return groupChatDTO;
     }
 
@@ -266,5 +298,19 @@ public class ConversationDTOService {
             // Is the case for conversations created by the system such as tutorial group channels
             conversationDTO.setIsCreator(false);
         }
+    }
+
+    private void fillGeneralConversationDtoFields(ConversationDTO conversationDTO, User requestingUser, ConversationSummary conversationSummary) {
+        var participantOptional = Optional.ofNullable(conversationSummary.getUserConversationInfo().getConversationParticipant());
+
+        conversationDTO.setIsMember(participantOptional.isPresent());
+        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
+        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+        participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.getLastRead()));
+
+        conversationDTO.setUnreadMessagesCount(conversationSummary.getUserConversationInfo().getUnreadMessagesCount());
+        conversationDTO.setNumberOfMembers(conversationSummary.getGeneralConversationInfo().getNumberOfParticipants());
+
+        setDTOCreatorProperty(requestingUser, conversationSummary.getConversation(), conversationDTO);
     }
 }
