@@ -41,7 +41,6 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import {
     BONUS_GRADE_KEY,
-    BONUS_POINTS_KEY,
     EMAIL_KEY,
     EXAM_ACHIEVED_POINTS,
     EXAM_ACHIEVED_SCORE,

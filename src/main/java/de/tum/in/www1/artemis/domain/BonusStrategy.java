@@ -15,7 +15,7 @@ public enum BonusStrategy implements IBonusStrategy {
 
         @Override
         public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                Double reachablePointsOfBonusTo, GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
             throw new NotImplementedException("GRADES_DISCRETE bonus strategy not yet implemented");
         }
     },
@@ -23,7 +23,8 @@ public enum BonusStrategy implements IBonusStrategy {
 
         @Override
         public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                Double reachablePointsOfBonusTo, GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+            final double reachablePointsOfBonusTo = bonusToGradingScale.getMaxPoints();
             GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfSource / reachablePointsOfSource, sourceGradingScale.getId());
             GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfBonusTo / reachablePointsOfBonusTo,
                     bonusToGradingScale.getId());
@@ -54,7 +55,8 @@ public enum BonusStrategy implements IBonusStrategy {
 
         @Override
         public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                Double reachablePointsOfBonusTo, GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+            final double reachablePointsOfBonusTo = bonusToGradingScale.getMaxPoints();
             GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfSource / reachablePointsOfSource, sourceGradingScale.getId());
 
             Double bonusGrade = bonusGradeStep.getNumericValue();

@@ -297,7 +297,6 @@ public class ExamService {
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
-        final double reachableTargetPoints = targetGradingScale.getMaxPoints();
         double tempReachableSourcePoints = sourceGradingScale.getMaxPoints();
         if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
             // fetch course with exercises to calculate reachable points
@@ -318,8 +317,7 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, reachableTargetPoints, achievedPointsOfSource,
-                    reachableSourcePoints);
+            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource, reachableSourcePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();

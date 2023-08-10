@@ -95,12 +95,11 @@ public class BonusResource {
         return ResponseEntity.ok(bonus);
     }
 
-    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double reachableTargetPoints, Double sourcePoints,
-            Double reachableSourcePoints, GradingScale targetGradingScale, GradingScale sourceGradingScale) {
+    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, Double reachableSourcePoints,
+            GradingScale targetGradingScale, GradingScale sourceGradingScale) {
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
-        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, reachableTargetPoints, sourceGradingScale, sourcePoints, reachableSourcePoints,
-                calculationSign);
+        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, reachableSourcePoints, calculationSign);
     }
 
     /**
@@ -129,11 +128,10 @@ public class BonusResource {
         var bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
-        double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
         double sourceReachablePoints = getSourceReachablePoints(sourceGradingScale);
 
-        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, bonusToReachablePoints, sourcePoints, sourceReachablePoints,
-                bonusToGradingScale, sourceGradingScale);
+        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, sourcePoints, sourceReachablePoints, bonusToGradingScale,
+                sourceGradingScale);
         return ResponseEntity.ok(gradeWithBonus);
     }
 
