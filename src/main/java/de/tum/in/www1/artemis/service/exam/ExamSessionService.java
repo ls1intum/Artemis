@@ -90,26 +90,14 @@ public class ExamSessionService {
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
         Set<ExamSession> examSessionsProcessed = new HashSet<>();
-        // first step find all sessions that have matching browser fingerprint, ip address and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
-                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
-        // second step find all sessions that have only matching browser fingerprint and ip address
+        // first step find all sessions that have matching browser fingerprint and ip address
         findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
-        // third step find all sessions that have only matching browser fingerprint and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
-                examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
-        // fourth step find all sessions that have only matching ip address and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
-                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
-        // fifth step find all sessions that have only matching browser fingerprint
+        // second step find all sessions that have only matching browser fingerprint
         findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
-        // sixth step find all sessions that have only matching ip address
+        // third step find all sessions that have only matching ip address
         findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
-                suspiciousExamSessions);
-        // seventh step find all sessions that have only matching user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession,
                 suspiciousExamSessions);
         // checkExamSessionsForEachStudentExam(examId, suspiciousExamSessions);
 
@@ -166,12 +154,22 @@ public class ExamSessionService {
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
             examSessionsProcessed.addAll(relatedExamSessions);
             relatedExamSessions = filterEqualExamSessionsForSameStudentExam(relatedExamSessions);
-            if (!relatedExamSessions.isEmpty()) {
+
+            if (!relatedExamSessions.isEmpty() && !isSubset(relatedExamSessions, suspiciousExamSessions)) {
                 addSuspiciousReasons(examSession, relatedExamSessions);
                 relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         }
+    }
+
+    private boolean isSubset(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        for (var suspiciousExamSession : suspiciousExamSessions) {
+            if (suspiciousExamSession.examSessions().containsAll(relatedExamSessions)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
