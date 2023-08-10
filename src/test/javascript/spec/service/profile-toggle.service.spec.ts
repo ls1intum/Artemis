@@ -9,8 +9,6 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 describe('ProfileToggleService', () => {
     const router = new MockRouter();
 
-    let service: ProfileToggleService;
-
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
 
