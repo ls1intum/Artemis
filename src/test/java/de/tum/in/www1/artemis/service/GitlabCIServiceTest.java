@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -241,15 +242,20 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCopyBuildPlan() {
-        final String targetProjectKey = "TARGETPROJECTKEY";
+        final Course course = new Course();
+        final ProgrammingExercise targetExercise = new ProgrammingExercise();
+        course.addExercises(targetExercise);
+        targetExercise.generateAndSetProjectKey();
+
+        final String targetProjectKey = targetExercise.getProjectKey();
         final String targetPlanName1 = "TARGETPLANNAME1";
         final String targetPlanName2 = "target-plan-name-#2";
 
-        final String expectedBuildPlanKey1 = "TARGETPROJECTKEY-TARGETPLANNAME1";
-        final String expectedBuildPlanKey2 = "TARGETPROJECTKEY-TARGETPLANNAME2";
+        final String expectedBuildPlanKey1 = targetProjectKey + "-TARGETPLANNAME1";
+        final String expectedBuildPlanKey2 = targetProjectKey + "-TARGETPLANNAME2";
 
-        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName1, false)).isEqualTo(expectedBuildPlanKey1);
-        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName2, false)).isEqualTo(expectedBuildPlanKey2);
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetExercise, null, targetPlanName1, false)).isEqualTo(expectedBuildPlanKey1);
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetExercise, null, targetPlanName2, false)).isEqualTo(expectedBuildPlanKey2);
     }
 
     @Test

@@ -193,14 +193,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         // In GitLab CI we don't have to copy the build plan.
         // Instead, we configure a CI config path leading to the API when enabling the CI.
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
-        return targetProjectKey + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return targetExercise.getProjectKey() + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
