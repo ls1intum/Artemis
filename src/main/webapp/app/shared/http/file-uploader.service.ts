@@ -41,7 +41,6 @@ export class FileUploaderService {
      * @param fileName The name of the file
      * @param options The options dictionary (e.g, { keepFileName: true })
      * @return A promise with the response from the server or an error
-     * @private
      */
     private handleFileUpload(endpoint: string, allowedExtensions: string[], file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : (file as File).name.split('.').pop()!.toLocaleLowerCase();

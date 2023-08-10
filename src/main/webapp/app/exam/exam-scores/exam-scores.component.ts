@@ -681,7 +681,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates the list of columns that should be part of the exported file.
-     * @private
      */
     private generateExportColumnNames(): Array<string> {
         const headers = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
@@ -721,7 +720,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Constructs a new export row builder for an export row.
      * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
-     * @private
      */
     private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
         if (csvExportOptions) {
@@ -735,7 +733,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Generates the export rows from a student's result
      * @param studentResult
      * @param csvExportOptions If present, this method generates a CSV row with these options, otherwise an Excel row is returned.
-     * @private
      */
     private convertToExportRow(studentResult: StudentResult, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
@@ -892,7 +889,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * It identifies the bar representing the corresponding median type and
      * highlights it by making all other chart bars a bit more transparent
      * @param medianType enum representing the type of median to be highlighted
-     * @private
      */
     private determineAndHighlightChartMedian(medianType: MedianType): void {
         let chartMedian;
@@ -913,7 +909,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Auxiliary method that sets overallChartMedian depending on if only submitted exams are included or not
      * @param medianType enum indicating if the median of all exams should be shown or only of submitted exams
-     * @private
      */
     private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
         if (medianType === MedianType.OVERALL) {
@@ -930,7 +925,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Auxiliary method that updates the statistics table above the score distribution depending on the current filter state
      * The filter of interest is determined by the two boolean flags {@link ExamScoresComponent#filterForSubmittedExams} and
      * {@link ExamScoresComponent#filterForNonEmptySubmissions}
-     * @private
      */
     private updateValuesAccordingToFilter(): void {
         this.tableState.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmitted;
@@ -966,7 +960,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Auxiliary method that sets the variants including only submitted AND not empty exams for all affected statistical values
-     * @private
      */
     private determineSubmittedAndNonEmptyValues(): void {
         // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalculating every time
@@ -1009,7 +1002,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} if only submitted and non empty
      * student exams are considered
      * @param overallPointsSubmittedAndNonEmpty array containing the overall points of every submitted and non-empty student exam
-     * @private
      */
     private determineMeanMedianAndStandardDeviationSubmittedAndNonEmpty(overallPointsSubmittedAndNonEmpty: number[]): void {
         if (overallPointsSubmittedAndNonEmpty.length > 0) {
@@ -1027,7 +1019,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} after first correction
      * if only submitted and non empty student exams are considered
      * @param pointsSubmittedAndNonEmptyInFirstCorrection array containing the overall points of every submitted and non-empty student exam after the first correction round
-     * @private
      */
     private determineMeanMedianAndStandardDeviationSubmittedAndNonEmptyInFirstCorrection(pointsSubmittedAndNonEmptyInFirstCorrection: number[]): void {
         if (this.hasSecondCorrectionAndStarted && pointsSubmittedAndNonEmptyInFirstCorrection.length > 0) {
@@ -1048,7 +1039,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * student exams are considered.
      * This includes the corresponding grades after the first correction round if appropriate
      * @param atLeastOneExam indicates whether at least one student exam has been submitted and is not empty
-     * @private
      */
     private determineGradesSubmittedAndNonEmpty(atLeastOneExam: boolean): void {
         if (atLeastOneExam) {
@@ -1077,7 +1067,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Auxiliary method that sets the variants including only not empty exams for all affected statistical values
-     * @private
      */
     private determineNonEmptyValues(): void {
         if (this.aggregatedExamResults.meanPointsNonEmpty) {
@@ -1118,7 +1107,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} if only non empty
      * student exams are considered
      * @param overallPointsNonEmpty array containing the overall points of every non-empty student exam
-     * @private
      */
     private determineMeanMedianAndStandardDeviationNonEmpty(overallPointsNonEmpty: number[]): void {
         if (overallPointsNonEmpty.length > 0) {
@@ -1136,7 +1124,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} after first correction
      * if only non empty student exams are considered
      * @param pointsNonEmptyInFirstCorrection array containing the overall points of every non-empty student exam after the first correction round
-     * @private
      */
     private determineMeanMedianAndStandardDeviationNonEmptyInFirstCorrection(pointsNonEmptyInFirstCorrection: number[]): void {
         if (this.hasSecondCorrectionAndStarted && pointsNonEmptyInFirstCorrection.length > 0) {
@@ -1156,7 +1143,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * student exams are considered.
      * This includes the corresponding grades after the first correction round if appropriate
      * @param atLeastOneExam indicates whether at least one student exam is not empty
-     * @private
      */
     private determineGradesNonEmpty(atLeastOneExam: boolean): void {
         if (atLeastOneExam) {
@@ -1187,7 +1173,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Auxiliary method in order to collect all numeric overall grades for the exam
      * @param grades the currently collected overall grades
      * @param result the result containing a numeric or not numeric overall grade
-     * @private
      * @returns updated array of collected grades
      */
     private collectOverallGrades(grades: number[], result: StudentResult): number[] {
@@ -1201,7 +1186,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Auxiliary method in order to collect all numeric grades after first correction round for the exam
      * @param grades the currently collected grades after first correction round
      * @param result the result containing a numeric or not numeric grade after first correction round
-     * @private
      * @returns updated array of collected grades
      */
     private collectOverallGradesInFirstCorrection(grades: number[], result: StudentResult): number[] {
@@ -1214,7 +1198,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if both filter options are activated
      * @param tableState object containing the values currently displayed by the table
-     * @private
      */
     private setValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
         this.setAverageValuesForSubmittedAndNonEmptyFilter(tableState);
@@ -1225,7 +1208,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all average values to the table state if both filter options are activated
      * @param tableState the table state that should be updated
-     * @private
      */
     private setAverageValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
         const averagePointsSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty);
@@ -1253,7 +1235,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all median values to the table state if both filter options are activated
      * @param tableState the table state that should be updated
-     * @private
      */
     private setMedianValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
         const medianPointsSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmpty);
@@ -1279,7 +1260,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all standard deviations to the table state if both filter options are activated
      * @param tableState the table state that should be updated
-     * @private
      */
     private setStandardDeviationForSubmittedAndNonEmptyFilter(tableState: TableState): void {
         const standardDeviationSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty);
@@ -1303,7 +1283,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if only not empty exams should be included in calculation
      * @param tableState object containing the values currently displayed by the table
-     * @private
      */
     private setValuesForNonEmptyFilter(tableState: TableState): void {
         this.setAverageValuesForNonEmptyFilter(tableState);
@@ -1314,7 +1293,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all average values to the table state if only not empty exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setAverageValuesForNonEmptyFilter(tableState: TableState): void {
         tableState.averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty);
@@ -1334,7 +1312,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all median values to the table state if only not empty exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setMedianValuesForNonEmptyFilter(tableState: TableState): void {
         tableState.medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmpty);
@@ -1354,7 +1331,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all standard deviations to the table state if only not empty exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setStandardDeviationForNonEmptyFilter(tableState: TableState): void {
         tableState.standardDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty);
@@ -1374,7 +1350,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if only submitted exams should be included in calculation
      * @param tableState object containing the values currently displayed by the table
-     * @private
      */
     private setValuesForSubmittedFilter(tableState: TableState): void {
         this.setAverageValuesForSubmittedFilter(tableState);
@@ -1385,7 +1360,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all average values to the table state if only submitted exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setAverageValuesForSubmittedFilter(tableState: TableState): void {
         const averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmitted);
@@ -1411,7 +1385,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all median values to the table state if only submitted exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setMedianValuesForSubmittedFilter(tableState: TableState): void {
         const medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmitted);
@@ -1437,7 +1410,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets all standard deviations to the table state if only submitted exams should be included in calculation
      * @param tableState the table state that should be updated
-     * @private
      */
     private setStandardDeviationForSubmittedFilter(tableState: TableState): void {
         const standardDeviationPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmitted);
@@ -1457,7 +1429,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if no filter is selected
      * @param tableState object containing the values currently displayed by the table
-     * @private
      */
     private setValuesForNoFilter(tableState: TableState): void {
         this.setSubmittedValuesForNoFilter(tableState);
@@ -1467,7 +1438,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the values for the total row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setTotalValuesForNoFilter(tableState: TableState): void {
         this.setTotalAverageValuesForNoFilter(tableState);
@@ -1478,7 +1448,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the average values for the total row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setTotalAverageValuesForNoFilter(tableState: TableState): void {
         tableState.averagePointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsTotal);
@@ -1492,7 +1461,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the median values for the total row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setTotalMedianValuesForNoFilter(tableState: TableState): void {
         tableState.medianPointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianTotal);
@@ -1506,7 +1474,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the standard deviations for the total row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setTotalStandardDeviationForNoFilter(tableState: TableState): void {
         tableState.standardDeviationTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationTotal);
@@ -1518,7 +1485,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the values for the submitted row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setSubmittedValuesForNoFilter(tableState: TableState): void {
         this.setSubmittedAverageValuesForNoFilter(tableState);
@@ -1529,7 +1495,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the average values for the submitted row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setSubmittedAverageValuesForNoFilter(tableState: TableState): void {
         tableState.averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmitted);
@@ -1543,7 +1508,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the median for the submitted row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setSubmittedMedianValuesForNoFilter(tableState: TableState): void {
         tableState.medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmitted);
@@ -1557,7 +1521,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     /**
      * Sets the standard deviations for the submitted row in the table if no filter is selected
      * @param tableState the table state that should be updated
-     * @private
      */
     private setSubmittedStandardDeviationsForNoFilter(tableState: TableState): void {
         tableState.standardDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmitted);
@@ -1570,7 +1533,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Wrapper method that handles null or undefined values for statistical numbers and replaces it with '-' string.
      * If the passed value is not null or undefined, the rounded and localized string is returned
      * @param value the value that should be rounded and localized
-     * @private
      */
     private roundAndLocalizeStatisticalValue(value: number | undefined): string {
         if (value === null || value === undefined) {
