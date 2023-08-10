@@ -281,6 +281,7 @@ describe('Exam participation', () => {
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
