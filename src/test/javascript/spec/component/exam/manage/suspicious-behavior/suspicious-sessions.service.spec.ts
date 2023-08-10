@@ -14,11 +14,11 @@ describe('SuspiciousSessionsService', () => {
                 userAgent: 'user-agent',
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
             },
             {
                 id: 2,
-                suspiciousReasons: [SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason, SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
                 userAgent: 'user-agent',
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',

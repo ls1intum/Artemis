@@ -15,7 +15,7 @@ describe('SuspiciousSessionsComponent', () => {
     const suspiciousSessions1 = {
         examSessions: [
             {
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
             },
         ],
     } as SuspiciousExamSessions;

@@ -13,9 +13,9 @@ describe('SuspiciousSessionsComponent', () => {
                 id: 1,
                 userAgent: 'user-agent',
                 ipAddress: '192.168.0.0',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_USER_AGENT],
+                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason],
             },
-            { id: 2, suspiciousReasons: [SuspiciousSessionReason.SAME_USER_AGENT, SuspiciousSessionReason.SAME_IP_ADDRESS], userAgent: 'user-agent', ipAddress: '192.168.0.0' },
+            { id: 2, suspiciousReasons: [SuspiciousSessionReason, SuspiciousSessionReason.SAME_IP_ADDRESS], userAgent: 'user-agent', ipAddress: '192.168.0.0' },
         ],
     } as SuspiciousExamSessions;
     let component: SuspiciousSessionsOverviewComponent;
