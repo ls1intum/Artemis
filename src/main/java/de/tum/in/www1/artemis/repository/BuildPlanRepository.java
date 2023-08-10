@@ -44,4 +44,9 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
         buildPlanWrapper.addProgrammingExercise(exercise);
         return save(buildPlanWrapper);
     }
+
+    default void copyBetweenExercises(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
+        BuildPlan buildPlan = findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
+        setBuildPlanForExercise(buildPlan.getBuildPlan(), targetExercise);
+    }
 }
