@@ -147,12 +147,4 @@ public class ExamSession extends AbstractAuditingEntity {
         return getBrowserFingerprintHash() != null && getBrowserFingerprintHash().equals(other.getBrowserFingerprintHash());
     }
 
-    @JsonIgnore
-    public boolean hasSameUserAgent(ExamSession other) {
-        if (other == null) {
-            return false;
-        }
-        return getUserAgent() != null && getUserAgent().equals(other.getUserAgent());
-    }
-
 }

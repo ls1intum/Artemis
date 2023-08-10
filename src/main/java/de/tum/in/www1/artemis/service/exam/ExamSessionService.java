@@ -111,7 +111,7 @@ public class ExamSessionService {
         // seventh step find all sessions that have only matching user agent
         findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession,
                 suspiciousExamSessions);
-        checkExamSessionsForEachStudentExam(examId, suspiciousExamSessions);
+        // checkExamSessionsForEachStudentExam(examId, suspiciousExamSessions);
 
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
@@ -133,9 +133,6 @@ public class ExamSessionService {
                         relatedExamSessions.add(examSession2);
                     }
                     if (!examSession.hasSameIpAddress(examSession2)) {
-                        relatedExamSessions.add(examSession2);
-                    }
-                    if (!examSession.hasSameUserAgent(examSession2)) {
                         relatedExamSessions.add(examSession2);
                     }
                 }
@@ -211,8 +208,8 @@ public class ExamSessionService {
                 var courseDTO = new CourseWithIdDTO(examSession.getStudentExam().getExam().getCourse().getId());
                 var examDTO = new ExamWithIdAndCourseDTO(examSession.getStudentExam().getExam().getId(), courseDTO);
                 var studentExamDTO = new StudentExamWithIdAndExamAndUserDTO(examSession.getStudentExam().getId(), examDTO, userDTO);
-                examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getSessionToken(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(),
-                        examSession.getInstanceId(), examSession.getIpAddress(), examSession.getSuspiciousReasons(), examSession.getCreatedDate(), studentExamDTO));
+                examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(), examSession.getIpAddress(),
+                        examSession.getSuspiciousReasons(), examSession.getCreatedDate(), studentExamDTO));
             }
             suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
         }
@@ -236,10 +233,7 @@ public class ExamSessionService {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
             }
-            if (relatedExamSession.hasSameUserAgent(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
-                session.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
-            }
+
             if (!relatedExamSession.hasSameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
                 session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
@@ -248,10 +242,7 @@ public class ExamSessionService {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
                 session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
             }
-            if (!relatedExamSession.hasSameUserAgent(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_USER_AGENT);
-                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_USER_AGENT);
-            }
+
         }
     }
 

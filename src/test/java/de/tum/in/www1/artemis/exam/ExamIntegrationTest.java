@@ -3406,8 +3406,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
         examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
         ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
-        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_USER_AGENT,
-                SuspiciousSessionReason.SAME_IP_ADDRESS);
+        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_IP_ADDRESS);
         firstExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
         secondExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
         Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions",
@@ -3427,10 +3426,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var secondStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session2.getStudentExam().getId(),
                 new ExamWithIdAndCourseDTO(session2.getStudentExam().getExam().getId(), new CourseWithIdDTO(session2.getStudentExam().getExam().getCourse().getId())),
                 new UserWithIdAndLoginDTO(session2.getStudentExam().getUser().getId(), session2.getStudentExam().getUser().getLogin()));
-        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getSessionToken(), session1.getBrowserFingerprintHash(), session1.getUserAgent(),
-                session1.getInstanceId(), session1.getIpAddress(), session1.getSuspiciousReasons(), session1.getCreatedDate(), firstStudentExamDTO);
-        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getSessionToken(), session2.getBrowserFingerprintHash(), session2.getUserAgent(),
-                session2.getInstanceId(), session2.getIpAddress(), session2.getSuspiciousReasons(), session2.getCreatedDate(), secondStudentExamDTO);
+        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getBrowserFingerprintHash(), session1.getUserAgent(), session1.getIpAddress(),
+                session1.getSuspiciousReasons(), session1.getCreatedDate(), firstStudentExamDTO);
+        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getBrowserFingerprintHash(), session2.getUserAgent(), session2.getIpAddress(),
+                session2.getSuspiciousReasons(), session2.getCreatedDate(), secondStudentExamDTO);
         expectedDTOs.add(firstExamSessionDTO);
         expectedDTOs.add(secondExamSessionDTO);
         return expectedDTOs;
