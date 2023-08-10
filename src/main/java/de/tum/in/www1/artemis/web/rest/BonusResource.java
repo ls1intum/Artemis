@@ -86,6 +86,12 @@ public class BonusResource {
         var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
         bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
         filterBonusForResponse(bonus, includeSourceGradeSteps);
+
+        GradingScale sourceGradingScale = bonus.getSourceGradingScale();
+        if (sourceGradingScale != null && sourceGradingScale.getCourse() != null) {
+            sourceGradingScale.getCourse().setMaxPoints((int) getSourceReachablePoints(sourceGradingScale));
+        }
+
         return ResponseEntity.ok(bonus);
     }
 
@@ -124,12 +130,7 @@ public class BonusResource {
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
         double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
-        double sourceReachablePoints = sourceGradingScale.getMaxPoints();
-        if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
-            // fetch course with exercises to calculate reachable points
-            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
-            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
-        }
+        double sourceReachablePoints = getSourceReachablePoints(sourceGradingScale);
 
         BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, bonusToReachablePoints, sourcePoints, sourceReachablePoints,
                 bonusToGradingScale, sourceGradingScale);
@@ -274,6 +275,32 @@ public class BonusResource {
 
         bonusRepository.delete(bonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
+    }
+
+    /**
+     * Calculates the reachable points for the source grading scale.
+     * <br>
+     * If the source grading scale is an exam grading scale, the reachable points are the max points of the exam.
+     * If the source grading scale is a course grading scale, the reachable points are the sum of all exercise points (excluding optional and bonus points).
+     * <br>
+     * Note: The reachable points need to be calculated since the {@link Course#getMaxPoints()} method might return a value different to the actual achievable points of a course.
+     * This is only relevant for courses, since the instructors should be able to change the exam's max points and thereby the exam grades.
+     *
+     * @param sourceGradingScale the source grading scale
+     * @return the reachable points of a course or the max points of an exam
+     */
+    private double getSourceReachablePoints(GradingScale sourceGradingScale) {
+        if (sourceGradingScale == null) {
+            return 0.0;
+        }
+
+        double sourceReachablePoints = sourceGradingScale.getMaxPoints();
+        if (sourceGradingScale.getCourse() != null) {
+            // fetch course with exercises to calculate reachable points
+            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
+            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+        }
+        return sourceReachablePoints;
     }
 
 }
