@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('ProfileToggleService', () => {
@@ -37,7 +37,7 @@ describe('ProfileToggleService', () => {
         // First enabled
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING, ProfileToggle.LECTURE]);
 
-        router.addActivationStart({ outlet: 'primary', data: { profile: ProfileToggle.LECTURE } });
+        router.addActivationStart({ outlet: 'primary', data: { profile: ProfileToggle.LECTURE } } as any as ActivatedRouteSnapshot);
 
         // Then disabled
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING]);
@@ -63,7 +63,7 @@ describe('ProfileToggleService', () => {
     });
 
     it('should not create an alert if the current route does not use profiles', () => {
-        router.addActivationStart({ outlet: 'primary' });
+        router.addActivationStart({ outlet: 'primary' } as any as ActivatedRouteSnapshot);
 
         alertServiceStub = jest.spyOn(alertService, 'addAlert');
 
