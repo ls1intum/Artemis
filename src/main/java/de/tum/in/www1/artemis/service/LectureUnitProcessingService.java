@@ -71,8 +71,8 @@ public class LectureUnitProcessingService {
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
                 if (lectureUnitInformationDTO.removeBreakSlides() || lectureUnitInformationDTO.removeSolutionSlides()) {
-                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesName(),
-                            lectureUnitInformationDTO.removeSolutionSlides());
+                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesKeyword(),
+                            lectureUnitInformationDTO.removeSolutionSlides(), lectureUnitInformationDTO.removeSolutionSlidesKeyword());
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
                 documentUnits.get(0).save(outputStream);
@@ -101,8 +101,9 @@ public class LectureUnitProcessingService {
      *
      * @param document document to remove break slides from
      */
-    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesName, boolean removeSolutionSlides) {
-        log.warn(removeBreakSlidesName);
+    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyword, boolean removeSolutionSlides,
+            String removeSolutionSlidesKeyword) {
+        log.warn(removeBreakSlidesKeyword);
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
@@ -114,10 +115,10 @@ public class LectureUnitProcessingService {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (isBreakSlide(slideText, removeBreakSlidesName) && removeBreakSlides) {
+                if (breakSlideContainsKeyword(slideText, removeBreakSlidesKeyword) && removeBreakSlides) {
                     document.removePage(index);
                 }
-                else if (isSolutionSlide(slideText) && removeSolutionSlides) {
+                else if (solutionSlideContainsKeyword(slideText, removeSolutionSlidesKeyword) && removeSolutionSlides) {
                     document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -129,11 +130,11 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean isBreakSlide(String slideText, String test) {
-        return slideText.contains(test);
+    private boolean breakSlideContainsKeyword(String slideText, String keyword) {
+        return slideText.contains(keyword);
     }
 
-    private boolean isSolutionSlide(String slideText) {
+    private boolean solutionSlideContainsKeyword(String slideText, String keyword) {
         return slideText.contains("Example solution");
     }
 
@@ -155,7 +156,7 @@ public class LectureUnitProcessingService {
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
             // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
-            return new LectureUnitInformationDTO(units, numberOfPages, false, "", false);
+            return new LectureUnitInformationDTO(units, numberOfPages, false, "", false, "");
         }
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);

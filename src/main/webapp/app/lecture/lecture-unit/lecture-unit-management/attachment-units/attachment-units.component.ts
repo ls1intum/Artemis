@@ -21,8 +21,9 @@ type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeBreakSlides: boolean;
-    removeBreakSlidesName: string;
+    removeBreakSlidesKeyword: string;
     removeSolutionSlides: boolean;
+    removeSolutionSlidesKeyword: string;
 };
 
 @Component({
@@ -50,8 +51,9 @@ export class AttachmentUnitsComponent implements OnInit {
     fileName: string;
     invalidUnitTableMessage?: string;
     removeBreakSlides: boolean;
-    removeBreakSlidesName: string;
+    removeBreakSlidesKeyword: string;
     removeSolutionSlides: boolean;
+    removeSolutionSlidesKeyword: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -71,7 +73,9 @@ export class AttachmentUnitsComponent implements OnInit {
 
     ngOnInit(): void {
         this.removeBreakSlides = false;
+        this.removeBreakSlidesKeyword = 'Break';
         this.removeSolutionSlides = false;
+        this.removeSolutionSlidesKeyword = 'Example solution';
         this.isLoading = true;
         this.isProcessingMode = true;
 
@@ -104,8 +108,9 @@ export class AttachmentUnitsComponent implements OnInit {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
                 removeBreakSlides: this.removeBreakSlides,
-                removeBreakSlidesName: this.removeBreakSlidesName,
+                removeBreakSlidesKeyword: this.removeBreakSlidesKeyword,
                 removeSolutionSlides: this.removeSolutionSlides,
+                removeSolutionSlidesKeyword: this.removeSolutionSlidesKeyword,
             };
             const formData: FormData = new FormData();
             formData.append('file', this.file);
