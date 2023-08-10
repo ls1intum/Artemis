@@ -89,71 +89,32 @@ public class ExamSessionService {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-        Set<ExamSession> examSessionsProcessed = new HashSet<>();
         // first step find all sessions that have matching browser fingerprint and ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
-                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
-        // second step find all sessions that have only matching browser fingerprint
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
-                examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
-        // third step find all sessions that have only matching ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
                 suspiciousExamSessions);
-        // checkExamSessionsForEachStudentExam(examId, suspiciousExamSessions);
+        // second step find all sessions that have only matching browser fingerprint
+        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
+                suspiciousExamSessions);
+        // third step find all sessions that have only matching ip address
+        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession, suspiciousExamSessions);
 
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
-    }
-
-    private void checkExamSessionsForEachStudentExam(long examId, Set<SuspiciousExamSessions> suspiciousExamSessions) {
-        Set<ExamSession> examSessions;
-        var studentExams = studentExamRepository.findByExamId(examId);
-
-        for (var studentExam : studentExams) {
-            examSessions = examSessionRepository.findExamSessionByStudentExamId(studentExam.getId());
-            var relatedExamSessions = new HashSet<ExamSession>();
-            for (var examSession : examSessions) {
-
-                for (var examSession2 : examSessions) {
-                    if (examSession.equals(examSession2)) {
-                        continue;
-                    }
-                    if (!examSession.hasSameBrowserFingerprint(examSession2)) {
-                        relatedExamSessions.add(examSession2);
-                    }
-                    if (!examSession.hasSameIpAddress(examSession2)) {
-                        relatedExamSessions.add(examSession2);
-                    }
-                }
-                if (!relatedExamSessions.isEmpty()) {
-                    addSuspiciousReasons(examSession, relatedExamSessions);
-                    relatedExamSessions.add(examSession);
-                    suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
-                }
-            }
-        }
     }
 
     /**
      * Finds suspicious exam sessions according to the criteria given and adds them to the set of suspicious exam sessions
      *
      * @param examSessions           set of exam sessions to be processed
-     * @param examSessionsProcessed  set of exam sessions that have already been processed to avoid processing them again
      * @param examId                 id of the exam for which suspicious exam sessions shall be retrieved
      * @param criteriaFilter         function that returns a set of exam sessions that match the given criteria
      * @param suspiciousExamSessions set of suspicious exam sessions to which the found suspicious exam sessions shall be added
      */
-    private void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, Set<ExamSession> examSessionsProcessed, long examId,
-            BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, long examId, BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter,
+            Set<SuspiciousExamSessions> suspiciousExamSessions) {
 
         for (var examSession : examSessions) {
-            // this avoids including any subsets already included in a previous iteration
-            // if (examSessionsProcessed.contains(examSession)) {
-            // continue;
-            // }
-            examSessionsProcessed.add(examSession);
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
-            examSessionsProcessed.addAll(relatedExamSessions);
-            relatedExamSessions = filterEqualExamSessionsForSameStudentExam(relatedExamSessions);
+            relatedExamSessions = filterEqualRelatedExamSessionsOfSameStudentExam(relatedExamSessions);
 
             if (!relatedExamSessions.isEmpty() && !isSubset(relatedExamSessions, suspiciousExamSessions)) {
                 addSuspiciousReasons(examSession, relatedExamSessions);
@@ -197,6 +158,29 @@ public class ExamSessionService {
         return filteredSessions;
     }
 
+    /**
+     * Filters out exam sessions that have the same student exam id, only used if they are flagged as suspicious in comparison to another exam session
+     *
+     * @param examSessions exam sessions to filter
+     * @return filtered exam sessions
+     */
+    private Set<ExamSession> filterEqualRelatedExamSessionsOfSameStudentExam(Set<ExamSession> examSessions) {
+        Set<ExamSession> filteredSessions = new HashSet<>();
+        Set<Long> processedSessionsStudentExamIds = new HashSet<>();
+
+        for (ExamSession session : examSessions) {
+            // calculating this key avoids using a second loop. We cannot rely on equals as the standard equals method inherited from DomainObject just takes the id into account
+            // and overriding the equals method to only use the fields we are interested in leads to an unintuitive equals method we want to avoid
+            long sessionKey = session.getStudentExam().getId();
+
+            if (!processedSessionsStudentExamIds.contains(sessionKey)) {
+                filteredSessions.add(session);
+                processedSessionsStudentExamIds.add(sessionKey);
+            }
+        }
+        return filteredSessions;
+    }
+
     private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
         Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
         for (var suspiciousExamSession : suspiciousExamSessions) {
@@ -230,15 +214,6 @@ public class ExamSessionService {
             if (relatedExamSession.hasSameIpAddress(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
-            }
-
-            if (!relatedExamSession.hasSameBrowserFingerprint(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
-                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
-            }
-            if (!relatedExamSession.hasSameIpAddress(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
-                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
             }
 
         }

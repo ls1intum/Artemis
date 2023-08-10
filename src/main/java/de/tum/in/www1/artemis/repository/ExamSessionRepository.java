@@ -28,18 +28,6 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                 WHERE es.studentExam.exam.id = :examId
                     AND es.id <> :#{#examSession.id}
                     AND es.studentExam.id <> :#{#examSession.studentExam.id}
-                    AND (es.ipAddress = :#{#examSession.ipAddress}
-                        AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
-                        AND es.userAgent = :#{#examSession.userAgent})
-            """)
-    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
-
-    @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.exam.id = :examId
-                    AND es.id <> :#{#examSession.id}
-                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
                     AND es.ipAddress = :#{#examSession.ipAddress}
                     AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
             """)
@@ -51,28 +39,6 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                 WHERE es.studentExam.exam.id = :examId
             """)
     Set<ExamSession> findAllExamSessionsByExamId(long examId);
-
-    @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.exam.id = :examId
-                    AND es.id <> :#{#examSession.id}
-                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
-                    AND es.userAgent = :#{#examSession.userAgent}
-                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
-            """)
-    Set<ExamSession> findAllExamSessionsWithTheSameBrowserFingerprintAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
-
-    @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.exam.id = :examId
-                    AND es.id <> :#{#examSession.id}
-                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
-                    AND es.ipAddress = :#{#examSession.ipAddress}
-                    AND es.userAgent = :#{#examSession.userAgent}
-            """)
-    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
 
     @Query("""
                 SELECT es
@@ -94,20 +60,4 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
             """)
     Set<ExamSession> findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
 
-    @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.exam.id = :examId
-                    AND es.id <> :#{#examSession.id}
-                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
-                    AND es.userAgent = :#{#examSession.userAgent}
-            """)
-    Set<ExamSession> findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession(long examId, ExamSession examSession);
-
-    @Query("""
-                SELECT es
-                FROM ExamSession es
-                WHERE es.studentExam.id = :studentExamId
-            """)
-    Set<ExamSession> findExamSessionByStudentExamId(long studentExamId);
 }
