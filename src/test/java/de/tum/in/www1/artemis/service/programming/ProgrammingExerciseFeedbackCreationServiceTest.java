@@ -52,6 +52,11 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
 
+    private String createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful) {
+        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, activeTestCases).getDetailText();
+    }
+
     @Test
     void createFeedbackFromTestCaseCombineMultiple() {
         String msg1 = """
@@ -70,7 +75,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                   to contain:
                     ["Java"]""";
 
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false);
 
         assertThat(actualFeedback).isEqualTo("""
                 expected:
@@ -101,7 +106,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
                 expected:
                     4
@@ -114,7 +119,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test3", List.of(msgUnchanged), false);
         assertThat(actualFeedback).isEqualTo(msgUnchanged);
 
     }
@@ -126,7 +131,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 \tat test.MethodTest.checkMethods(MethodTest.java:129)
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
                 \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
         assertThat(actualFeedback).isEqualTo("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.");
     }
 
@@ -146,7 +151,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
         assertThat(actualFeedback).isEqualTo(
                 "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
     }
@@ -176,7 +181,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 \tat java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:500)
                 \tat de.tum.in.www1.artemis.FeedbackServiceTest.createFeedbackFromTestCaseMatchMultiple(FeedbackServiceTest.java:66)
                 """;
-        String actualFeedback = feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, programmingExercise).getDetailText();
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
         assertThat(actualFeedback).isEqualTo("""
                 Expecting:
                  <"expected:
@@ -198,12 +203,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void createFeedbackFromTestCaseSuccessfulWithMessage() {
         String msg = "success\nmessage";
-        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(msg), true, programmingExercise).getDetailText()).isEqualTo("success\nmessage");
+        assertThat(createFeedbackFromTestCase("test1", List.of(msg), true)).isEqualTo("success\nmessage");
     }
 
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
-        assertThat(feedbackCreationService.createFeedbackFromTestCase("test1", List.of(), true, programmingExercise).getDetailText()).isEqualTo(null);
+        assertThat(createFeedbackFromTestCase("test1", List.of(), true)).isNull();
     }
 
     private AbstractBuildResultNotificationDTO generateResult(List<String> successfulTests, List<String> failedTests) {
