@@ -29,7 +29,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    private final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
+    protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     protected AbstractContinuousIntegrationResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             ProgrammingExerciseTestCaseRepository testCaseRepository, BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,

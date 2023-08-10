@@ -291,7 +291,7 @@ public class ProgrammingExerciseFeedbackCreationService {
 
         // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
         // Just using the uniqueness property of the set is not enough, as the equals/hash functions
-        // consider more attributes of the TestCase rather than only the testName.
+        // compares test cases by their id.
         testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
 
         if (!testCasesToSave.isEmpty()) {
