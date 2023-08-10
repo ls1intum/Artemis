@@ -622,8 +622,11 @@
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",
                     "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
-                    "reasons": "Gründe",
-                    "case": "Fall"
+                    "reasons": "Verdächtig aufgrund von:",
+                    "case": "Fall",
+                    "sameIpAddress": "Gleiche IP-Adresse",
+                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck",
+                    "sameUserAgent": "Gleicher User Agent"
                 }
             },
             "plagiarismCasesOverview": {

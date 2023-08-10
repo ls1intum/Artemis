@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
 
@@ -75,7 +76,7 @@ public class ExamSessionService {
 
     /**
      * Retrieves all suspicious exam sessions for given exam id
-     * For a more detailed explanation see {@link ExamSessionRepository#findAllSuspiciousExamSessionsByExamIdAndExamSession(long, ExamSession)}
+     * An exam session is suspicious if it has the same browser fingerprint or ip address or user agent and belongs to a different student exam
      *
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
@@ -83,43 +84,82 @@ public class ExamSessionService {
     public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
-        examSessions = filterSameExamSessionsForSameStudentExam(examSessions);
+        examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+        Set<ExamSession> examSessionProcessed = new HashSet<>();
+        // first step find all sessions that have matching browser fingerprint, ip address and user agent
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
+        // second step find all sessions that have only matching browser fingerprint and ip address
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
+        // third step find all sessions that have only matching browser fingerprint and user agent
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+                examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
+        // fourth step find all sessions that have only matching ip address and user agent
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+                examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
+        // fifth step find all sessions that have only matching browser fingerprint
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+                examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
+        // sixth step find all sessions that have only matching ip address
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+                suspiciousExamSessions);
+        // seventh step find all sessions that have only matching user agent
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession,
+                suspiciousExamSessions);
+
+        return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
+    }
+
+    /**
+     * Finds suspicious exam sessions according to the criteria given and adds them to the set of suspicious exam sessions
+     *
+     * @param examSessions           set of exam sessions to be processed
+     * @param examSessionsProcessed  set of exam sessions that have already been processed to avoid processing them again
+     * @param examId                 id of the exam for which suspicious exam sessions shall be retrieved
+     * @param criteriaFilter         function that returns a set of exam sessions that match the given criteria
+     * @param suspiciousExamSessions set of suspicious exam sessions to which the found suspicious exam sessions shall be added
+     */
+    private void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, Set<ExamSession> examSessionsProcessed, long examId,
+            BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter, Set<SuspiciousExamSessions> suspiciousExamSessions) {
 
         for (var examSession : examSessions) {
-            boolean alreadyContained = false;
-            for (var suspiciousExamSession : suspiciousExamSessions) {
-
-                if (suspiciousExamSession.examSessions().contains(examSession)) {
-                    alreadyContained = true;
-                    break;
-                }
-            }
-            if (alreadyContained) {
+            // this avoids including any subsets already included in a previous iteration
+            if (examSessionsProcessed.contains(examSession)) {
                 continue;
             }
-            Set<ExamSession> relatedExamSessions = examSessionRepository.findAllSuspiciousExamSessionsByExamIdAndExamSession(examId, examSession);
+            examSessionsProcessed.add(examSession);
+            Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
+            examSessionsProcessed.addAll(relatedExamSessions);
+            relatedExamSessions = filterEqualExamSessionsForSameStudentExam(relatedExamSessions);
             if (!relatedExamSessions.isEmpty()) {
                 addSuspiciousReasons(examSession, relatedExamSessions);
                 relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         }
-
-        return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
 
-    private Set<ExamSession> filterSameExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
+    /**
+     * Filters out exam sessions that have the same student exam id and the same browser fingerprint, ip address and user agent
+     * This is necessary as the same student exam can have multiple exam sessions (e.g. if the student has to re-enter the exam)
+     * As they are the same for parameters we compare, they only need to be included once and lead to duplicate results otherwise
+     *
+     * @param examSessions exam sessions to filter
+     * @return filtered exam sessions
+     */
+    private Set<ExamSession> filterEqualExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
         Set<ExamSession> filteredSessions = new HashSet<>();
-        for (var examSession1 : examSessions) {
-            for (var examSession2 : examSessions) {
-                if (examSession1.equals(examSession2)) {
-                    continue;
-                }
-                if (examSession1.hasSameBrowserFingerprint(examSession2) && examSession1.hasSameIpAddress(examSession2) && examSession1.hasSameUserAgent(examSession2)
-                        && examSession1.hasSameStudentExam(examSession2)) {
-                    continue;
-                }
-                filteredSessions.add(examSession1);
+        Set<String> processedSessionKeys = new HashSet<>();
+
+        for (ExamSession session : examSessions) {
+            // calculating this key avoids using a second loop. We cannot rely on equals as the standard equals method inherited from DomainObject just takes the id into account
+            // and overriding the equals method to only use the fields we are interested in leads to an unintuitive equals method we want to avoid
+            String sessionKey = session.getBrowserFingerprintHash() + "_" + session.getIpAddress() + "_" + session.getUserAgent() + "_" + session.getStudentExam().getId();
+
+            if (!processedSessionKeys.contains(sessionKey)) {
+                filteredSessions.add(session);
+                processedSessionKeys.add(sessionKey);
             }
         }
         return filteredSessions;

@@ -624,8 +624,11 @@
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
                     "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
-                    "reasons": "Reasons",
-                    "case": "Case"
+                    "reasons": "Suspicious because of:",
+                    "case": "Case",
+                    "sameIpAddress": "Same IP address",
+                    "sameBrowserFingerprint": "Same browser fingerprint",
+                    "sameUserAgent": "Same user agent"
                 }
             },
             "plagiarismCasesOverview": {

@@ -26,26 +26,81 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                 SELECT es
                 FROM ExamSession es
                 WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND (es.ipAddress = :#{#examSession.ipAddress}
+                        AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
+                        AND es.userAgent = :#{#examSession.userAgent})
             """)
-    Set<ExamSession> findAllExamSessionsByExamId(long examId);
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
 
-    /**
-     * Find all exam sessions for the given exam id that are suspicious. A session is suspicious if it has the same IP address
-     * or same the browser fingerprint or the same user agent as the given one
-     *
-     * @param examId      the id of the exam
-     * @param examSession the exam session to compare with
-     * @return the set of suspicious exam sessions in relation to the given exam session
-     */
     @Query("""
                 SELECT es
                 FROM ExamSession es
                 WHERE es.studentExam.exam.id = :examId
                     AND es.id <> :#{#examSession.id}
                     AND es.studentExam.id <> :#{#examSession.studentExam.id}
-                    AND (es.ipAddress = :#{#examSession.ipAddress}
-                        OR es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
-                        OR es.userAgent = :#{#examSession.userAgent})
+                    AND es.ipAddress = :#{#examSession.ipAddress}
+                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
             """)
-    Set<ExamSession> findAllSuspiciousExamSessionsByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+            """)
+    Set<ExamSession> findAllExamSessionsByExamId(long examId);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.userAgent = :#{#examSession.userAgent}
+                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameBrowserFingerprintAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.ipAddress = :#{#examSession.ipAddress}
+                    AND es.userAgent = :#{#examSession.userAgent}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndUserAgentByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.ipAddress = :#{#examSession.ipAddress}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.userAgent = :#{#examSession.userAgent}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession(long examId, ExamSession examSession);
 }

@@ -155,12 +155,4 @@ public class ExamSession extends AbstractAuditingEntity {
         return getUserAgent() != null && getUserAgent().equals(other.getUserAgent());
     }
 
-    @JsonIgnore
-    public boolean hasSameStudentExam(ExamSession other) {
-        if (other == null) {
-            return false;
-        }
-        return getStudentExam() != null && getStudentExam().getId().equals(other.getStudentExam().getId());
-
-    }
 }
