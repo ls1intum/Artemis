@@ -85,6 +85,10 @@
         </div>
     </div>
 
+    <div>
+        <input type="text" class="form-control" name="removeBreakSlideName" placeholder="Break" autocomplete="off" [defaultValue]="'Break'" [(ngModel)]="removeBreakSlidesName" />
+    </div>
+
     <div class="mt-3 mb-3">
         <input class="form-check-input" type="checkbox" name="processUnit" [disabled]="units.length < 1" (change)="onSelectRemoveSolutionSlides()" />
         <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlide' | artemisTranslate }}</span>

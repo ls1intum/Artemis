@@ -21,6 +21,7 @@ type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeBreakSlides: boolean;
+    removeBreakSlidesName: string;
     removeSolutionSlides: boolean;
 };
 
@@ -49,6 +50,7 @@ export class AttachmentUnitsComponent implements OnInit {
     fileName: string;
     invalidUnitTableMessage?: string;
     removeBreakSlides: boolean;
+    removeBreakSlidesName: string;
     removeSolutionSlides: boolean;
 
     constructor(
@@ -102,6 +104,7 @@ export class AttachmentUnitsComponent implements OnInit {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
                 removeBreakSlides: this.removeBreakSlides,
+                removeBreakSlidesName: this.removeBreakSlidesName,
                 removeSolutionSlides: this.removeSolutionSlides,
             };
             const formData: FormData = new FormData();
