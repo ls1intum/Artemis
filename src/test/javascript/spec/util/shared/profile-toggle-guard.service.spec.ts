@@ -18,7 +18,6 @@ import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-gua
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 describe('ProfileToggleGuard', () => {
-    const routeStateMock: any = { snapshot: {}, url: '/courses/20/lectures' };
     const route = 'courses/:courseId/lectures';
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: ProfileToggleGuard;
@@ -63,7 +62,7 @@ describe('ProfileToggleGuard', () => {
         routeConfig.path = route;
         snapshot.data = { profile: ProfileToggle.LECTURE };
 
-        await expect(service.canActivate(snapshot, routeStateMock).toPromise()).resolves.toBeFalse();
+        await expect(service.canActivate(snapshot).toPromise()).resolves.toBeFalse();
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
@@ -76,7 +75,7 @@ describe('ProfileToggleGuard', () => {
         routeConfig.path = route;
         snapshot.data = { profile: ProfileToggle.LECTURE };
 
-        await expect(service.canActivate(snapshot, routeStateMock).toPromise()).resolves.toBeTrue();
+        await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();
     });
 
@@ -89,7 +88,7 @@ describe('ProfileToggleGuard', () => {
         routeConfig.path = route;
         snapshot.data = { profile: ProfileToggle.LECTURE };
 
-        await expect(service.canActivate(snapshot, routeStateMock).toPromise()).resolves.toBeTrue();
+        await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();
     });
 });
