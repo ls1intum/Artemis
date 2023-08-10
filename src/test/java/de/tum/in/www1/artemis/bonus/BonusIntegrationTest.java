@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.bonus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,12 +19,11 @@ import de.tum.in.www1.artemis.assessment.GradingScaleFactory;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
@@ -55,6 +55,12 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
 
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
     private Bonus courseBonus;
 
     private Bonus examBonus;
@@ -78,8 +84,15 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         course = courseUtilService.addEmptyCourse();
-        course.setMaxPoints(200);
+        course.setMaxPoints(100);
         courseRepository.save(course);
+
+        // Sets the achievable points for the course to 200, even though the course's max points are set to 100.
+        Exercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2),
+                ZonedDateTime.now().minusHours(1));
+        exercise.setMaxPoints(200.0);
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exerciseRepository.save(exercise);
 
         Exam targetExam = examUtilService.addExamWithExerciseGroup(course, true);
         targetExam.setExamMaxPoints(200);
