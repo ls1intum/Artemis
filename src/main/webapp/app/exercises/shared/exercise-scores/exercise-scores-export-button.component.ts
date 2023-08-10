@@ -50,7 +50,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @param exercise for which the results should be exported.
      * @param withTestCases optional parameter that includes test cases info in the exported CSV file
      * @param withFeedback optional parameter including the feedback's full text in case of failed test case
-     * @private
      */
     private constructCSV(exercise: Exercise, withTestCases?: boolean, withFeedback?: boolean) {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
@@ -96,7 +95,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @param keys The column names in the CSV.
      * @param rows The actual data rows in the CSV.
      * @param fieldSeparator Optional parameter for exporting the CSV file using a custom separator symbol
-     * @private
      */
     private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator = ';') {
         const options = {
@@ -118,7 +116,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     /**
      * Sorts the list of grading criteria for the given exercise by title ascending.
      * @param exercise which has a list of grading criteria.
-     * @private
      */
     private static sortedGradingCriteria(exercise: Exercise): GradingCriterion[] {
         return (
@@ -197,7 +194,6 @@ class ExerciseScoresRowBuilder {
 
     /**
      * Sets the student or team name information in the row.
-     * @private
      */
     private setName() {
         if (this.participation.team) {
@@ -211,7 +207,6 @@ class ExerciseScoresRowBuilder {
 
     /**
      * Sets the points for each grading criterion in the row.
-     * @private
      */
     private setGradingCriteriaPoints() {
         let unnamedCriterionIndex = 1;
@@ -228,7 +223,6 @@ class ExerciseScoresRowBuilder {
 
     /**
      * Adds information specific to programming exercises to the row.
-     * @private
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -239,7 +233,6 @@ class ExerciseScoresRowBuilder {
 
     /**
      * Adds information specific to a team participation to the row.
-     * @private
      */
     private setTeamInformation() {
         if (this.participation.team) {
@@ -250,7 +243,6 @@ class ExerciseScoresRowBuilder {
 
     /**
      * Adds information about each exercise's test case result.
-     * @private
      */
     private setTestCaseResults() {
         this.testCaseResults!.forEach((testResult) => {
