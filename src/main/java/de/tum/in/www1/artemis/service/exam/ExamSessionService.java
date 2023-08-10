@@ -159,9 +159,9 @@ public class ExamSessionService {
 
         for (var examSession : examSessions) {
             // this avoids including any subsets already included in a previous iteration
-            if (examSessionsProcessed.contains(examSession)) {
-                continue;
-            }
+            // if (examSessionsProcessed.contains(examSession)) {
+            // continue;
+            // }
             examSessionsProcessed.add(examSession);
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
             examSessionsProcessed.addAll(relatedExamSessions);
