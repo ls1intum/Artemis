@@ -29,7 +29,7 @@ public class ProgrammingExerciseTaskService {
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
-     *
+     * <p>
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
@@ -203,9 +203,8 @@ public class ProgrammingExerciseTaskService {
     private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
         var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-        return testCaseNames.stream()
-                .map(testName -> testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).orElse(testName))
-                .collect(Collectors.joining(","));
+        return testCaseNames.stream().map(testName -> testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString())
+                .map(id -> "<testid>" + id + "</testid>").orElse(testName)).collect(Collectors.joining(","));
     }
 
     /**
@@ -254,6 +253,10 @@ public class ProgrammingExerciseTaskService {
     /**
      * Replaces the test names embedded into the problem statement with their corresponding id.
      * The result does not get saved yet.
+     * <p>
+     * Example:
+     * Input: [task][Implement BubbleSort](testBubbleSort, testClass[BubbleSort])
+     * Output: [task][Implement BubbleSort](<testid>15</testid>,<testid>18</testid>)
      *
      * @param exercise the exercise to replaces the test names in the problem statement
      */

@@ -8,13 +8,16 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-public class MigrationEntry20230401_150000 extends MigrationEntry {
+/**
+ * Migration for automatically updating all Programming exercise problem statements, removing their test names and replacing them by test ids.
+ */
+public class MigrationEntry20230810_150000 extends MigrationEntry {
 
     private final transient ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final transient ProgrammingExerciseTaskService taskService;
 
-    public MigrationEntry20230401_150000(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService taskService) {
+    public MigrationEntry20230810_150000(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService taskService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.taskService = taskService;
     }
