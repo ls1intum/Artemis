@@ -794,6 +794,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
      * @param studentExam studentExam with exercises loaded
+     * @param exercises   exercises for which participations should be loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam, List<Exercise> exercises) {
