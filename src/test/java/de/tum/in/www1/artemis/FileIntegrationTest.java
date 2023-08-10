@@ -463,7 +463,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             lecture.getLectureUnits().add(uploadAttachmentUnit(lecture, file3, expectedStatus));
         }
 
-        // Collect unity freshly from the database to prevent issues when persisting the lecture again
+        // Collect units freshly from the database to prevent issues when persisting the lecture again
         lecture.setLectureUnits(attachmentUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
                 .collect(Collectors.toCollection(ArrayList::new)));
 

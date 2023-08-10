@@ -41,7 +41,7 @@ public class LectureFactory {
      * @param withFile Whether to include a placeholder image file on disk
      * @return AttachmentUnit that was created
      */
-    public static AttachmentUnit generateAttachmentUnit(Boolean withFile) {
+    public static AttachmentUnit generateAttachmentUnit(boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
