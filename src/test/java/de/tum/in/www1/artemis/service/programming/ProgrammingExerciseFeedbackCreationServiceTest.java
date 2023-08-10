@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +27,6 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    private static final String TEST_PREFIX = "progexfeedbackcreaiontest";
 
     @Autowired
     private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
@@ -307,6 +307,20 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
 
     @Test
     void staticCodeAnalysisReportNotTruncatedFurther() {
+        final StaticCodeAnalysisReportDTO scaReport = createStaticCodeAnalysisReportDTO();
+
+        final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
+        assertThat(scaFeedbacks).hasSize(1);
+
+        final Feedback scaFeedback = scaFeedbacks.get(0);
+        assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
+        assertThat(scaFeedback.getLongFeedback()).isEmpty();
+        assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
+                .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+    }
+
+    @NotNull
+    private static StaticCodeAnalysisReportDTO createStaticCodeAnalysisReportDTO() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
 
         final var scaIssue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
@@ -319,14 +333,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         final StaticCodeAnalysisReportDTO scaReport = new StaticCodeAnalysisReportDTO();
         scaReport.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
         scaReport.setIssues(List.of(scaIssue));
-
-        final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
-        assertThat(scaFeedbacks).hasSize(1);
-
-        final Feedback scaFeedback = scaFeedbacks.get(0);
-        assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
-        assertThat(scaFeedback.getLongFeedback()).isEmpty();
-        assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
-                .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+        return scaReport;
     }
 }
