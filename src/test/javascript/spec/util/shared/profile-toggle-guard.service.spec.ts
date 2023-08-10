@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Route } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -8,9 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Mutable } from '../../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../../helpers/mocks/activated-route/mock-activated-route-snapshot';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,7 +16,6 @@ import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/p
 
 describe('ProfileToggleGuard', () => {
     const route = 'courses/:courseId/lectures';
-    let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: ProfileToggleGuard;
 
     let alertServiceStub: jest.SpyInstance;
@@ -30,7 +26,6 @@ describe('ProfileToggleGuard', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            declarations: [CourseExerciseDetailsComponent],
             providers: [
                 mockedActivatedRouteSnapshot(route),
                 { provide: AccountService, useClass: MockAccountService },
@@ -40,11 +35,9 @@ describe('ProfileToggleGuard', () => {
                 MockProvider(StateStorageService),
             ],
         })
-            .overrideTemplate(CourseExerciseDetailsComponent, '')
             .compileComponents()
             .then(() => {
                 service = TestBed.inject(ProfileToggleGuard);
-                fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 profileToggleService = TestBed.inject(ProfileToggleService);
             });
 
@@ -57,10 +50,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING]);
 
-        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
-        const routeConfig = snapshot.routeConfig as Route;
-        routeConfig.path = route;
-        snapshot.data = { profile: ProfileToggle.LECTURE };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } };
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeFalse();
         expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -70,10 +60,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING, ProfileToggle.LECTURE]);
 
-        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
-        const routeConfig = snapshot.routeConfig as Route;
-        routeConfig.path = route;
-        snapshot.data = { profile: ProfileToggle.LECTURE };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } };
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();
@@ -83,10 +70,7 @@ describe('ProfileToggleGuard', () => {
         alertServiceStub = jest.spyOn(alertService, 'addErrorAlert');
         profileToggleService.initializeProfileToggles([]);
 
-        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
-        const routeConfig = snapshot.routeConfig as Route;
-        routeConfig.path = route;
-        snapshot.data = { profile: ProfileToggle.LECTURE };
+        const snapshot = { data: { profile: ProfileToggle.LECTURE } };
 
         await expect(service.canActivate(snapshot).toPromise()).resolves.toBeTrue();
         expect(alertServiceStub).not.toHaveBeenCalled();

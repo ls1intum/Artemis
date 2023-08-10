@@ -1,9 +1,7 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -21,12 +19,11 @@ describe('ProfileToggleService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            declarations: [CourseExerciseDetailsComponent],
             providers: [{ provide: Router, useValue: router }],
         })
             .compileComponents()
             .then(() => {
-                service = TestBed.inject(ProfileToggleGuard);
+                service = TestBed.inject(ProfileToggleService);
                 profileToggleService = TestBed.inject(ProfileToggleService);
             });
 
