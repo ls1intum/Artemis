@@ -352,4 +352,21 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
         assertThat(problemStatement).as("All test names got replaced").doesNotContain(allTestNames).contains(allExpectedReplacements);
     }
+
+    @Test
+    void testNameReplacementOnlyWithinTasks() {
+        // Tests that the replacing of test names only addresses test names inside of tasks.
+        // If a test name gets used in the regular problem statement text it gets kept.
+
+        var test1 = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test");
+        var test2 = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "taskTest");
+
+        updateProblemStatement("[task][Taskname](test, taskTest)\nThis description contains the words test and taskTest, which should not be replaced.");
+
+        programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
+        String problemStatement = programmingExercise.getProblemStatement();
+
+        assertThat(problemStatement).contains("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>".formatted(test1.getId(), test2.getId()))
+                .contains("This description contains the words test and taskTest, which should not be replaced.");
+    }
 }
