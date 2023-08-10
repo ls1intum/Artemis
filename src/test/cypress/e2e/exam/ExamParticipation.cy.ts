@@ -83,6 +83,9 @@ describe('Exam participation', () => {
                 examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
             }
             examParticipation.handInEarly();
+            cy.wait(6000);
+            examStartEnd.pressShowSummary();
+            cy.wait(500);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);

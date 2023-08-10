@@ -36,4 +36,8 @@ export class ExamStartEndPage {
         this.enterFirstnameLastname();
         return this.pressFinish();
     }
+
+    pressShowSummary() {
+        cy.get('#showExamSummaryButton').click();
+    }
 }
