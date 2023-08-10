@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 import {
     LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
     NEW_MESSAGE_TITLE,
@@ -41,7 +39,6 @@ export class NotificationPopupComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
@@ -52,14 +49,9 @@ export class NotificationPopupComponent implements OnInit {
         private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
-    /**
-     * Subscribe to notification updates that are received via websocket if the user is logged in.
-     */
     ngOnInit(): void {
-        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
-            if (user) {
-                this.subscribeToNotificationUpdates();
-            }
+        this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {
+            this.addNotification(notification);
         });
     }
 
@@ -148,12 +140,6 @@ export class NotificationPopupComponent implements OnInit {
             }
         }
         return this.router.url;
-    }
-
-    private subscribeToNotificationUpdates(): void {
-        this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {
-            this.addNotification(notification);
-        });
     }
 
     private addNotification(notification: Notification): void {

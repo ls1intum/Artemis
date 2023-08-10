@@ -93,9 +93,7 @@ export class NotificationSettingsService {
 
     private notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
 
-    constructor(private userSettingsService: UserSettingsService) {
-        this.refreshNotificationSettings();
-    }
+    constructor(private userSettingsService: UserSettingsService) {}
 
     public refreshNotificationSettings(): void {
         this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({

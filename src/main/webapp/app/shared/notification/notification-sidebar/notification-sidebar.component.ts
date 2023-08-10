@@ -212,7 +212,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     }
 
     private filterLoadedNotifications(notifications: Notification[]): Notification[] {
-        return notifications.filter((notification) => notification.title && IRRELEVANT_NOTIFICATION_TITLES.includes(notification.title));
+        return notifications.filter((notification) => notification.title && !IRRELEVANT_NOTIFICATION_TITLES.includes(notification.title));
     }
 
     private updateSortedNotifications(notifications: Notification[]): void {
