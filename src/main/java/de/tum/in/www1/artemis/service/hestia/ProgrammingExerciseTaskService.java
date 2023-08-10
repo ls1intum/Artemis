@@ -309,24 +309,5 @@ public class ProgrammingExerciseTaskService {
         });
     }
 
-    // TODO: remove this
     // TODO: Double check the hint integration (both directions)
-    public static void main(String[] args) {
-        String test = """
-                [task][Task](test1)
-                [task][Task](test2)
-                """;
-
-        var pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
-        var matcher = pattern.matcher(test);
-
-        System.out.println(matcher.replaceAll(matchResult -> {
-            System.out.println(matchResult.group());
-            System.out.println(matchResult.group(0));
-            System.out.println(matchResult.group(1));
-            System.out.println(matchResult.group(2));
-            return "rep" + Math.random();
-        }));
-
-    }
 }

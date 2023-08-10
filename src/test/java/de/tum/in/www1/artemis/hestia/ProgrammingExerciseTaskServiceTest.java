@@ -271,7 +271,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         // [task][Task 2](testMethods[Context])
         assertThat(problemStatement).as("no more test case names should be present").doesNotContain(testCases.keySet())
                 .contains("[task][Task 1](<testid>%s</testid>)".formatted(testCases.get("testClass[BubbleSort]")))
-                .contains("[task][Task 2](<testid>%s<testid>)".formatted(testCases.get("testMethods[Context]")));
+                .contains("[task][Task 2](<testid>%s</testid>)".formatted(testCases.get("testMethods[Context]")));
     }
 
     @Test
