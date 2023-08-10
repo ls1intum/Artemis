@@ -103,4 +103,11 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                     AND es.userAgent = :#{#examSession.userAgent}
             """)
     Set<ExamSession> findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession(long examId, ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.id = :studentExamId
+            """)
+    Set<ExamSession> findExamSessionByStudentExamId(long studentExamId);
 }

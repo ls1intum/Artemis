@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import inet.ipaddr.IPAddress;
 
@@ -25,8 +26,11 @@ public class ExamSessionService {
 
     private final ExamSessionRepository examSessionRepository;
 
-    public ExamSessionService(ExamSessionRepository examSessionRepository) {
+    private final StudentExamRepository studentExamRepository;
+
+    public ExamSessionService(ExamSessionRepository examSessionRepository, StudentExamRepository studentExamRepository) {
         this.examSessionRepository = examSessionRepository;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -85,30 +89,63 @@ public class ExamSessionService {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-        Set<ExamSession> examSessionProcessed = new HashSet<>();
+        Set<ExamSession> examSessionsProcessed = new HashSet<>();
         // first step find all sessions that have matching browser fingerprint, ip address and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
         // second step find all sessions that have only matching browser fingerprint and ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
         // third step find all sessions that have only matching browser fingerprint and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
         // fourth step find all sessions that have only matching ip address and user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndUserAgentByExamIdAndExamSession, suspiciousExamSessions);
         // fifth step find all sessions that have only matching browser fingerprint
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId,
                 examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
         // sixth step find all sessions that have only matching ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
                 suspiciousExamSessions);
         // seventh step find all sessions that have only matching user agent
-        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession,
+        findSuspiciousSessionsForGivenCriteria(examSessions, examSessionsProcessed, examId, examSessionRepository::findAllExamSessionsWithTheSameUserAgentByExamIdAndExamSession,
                 suspiciousExamSessions);
+        checkExamSessionsForEachStudentExam(examId, suspiciousExamSessions);
 
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
+    }
+
+    private void checkExamSessionsForEachStudentExam(long examId, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        Set<ExamSession> examSessions;
+        var studentExams = studentExamRepository.findByExamId(examId);
+
+        for (var studentExam : studentExams) {
+            examSessions = examSessionRepository.findExamSessionByStudentExamId(studentExam.getId());
+            var relatedExamSessions = new HashSet<ExamSession>();
+            for (var examSession : examSessions) {
+
+                for (var examSession2 : examSessions) {
+                    if (examSession.equals(examSession2)) {
+                        continue;
+                    }
+                    if (!examSession.hasSameBrowserFingerprint(examSession2)) {
+                        relatedExamSessions.add(examSession2);
+                    }
+                    if (!examSession.hasSameIpAddress(examSession2)) {
+                        relatedExamSessions.add(examSession2);
+                    }
+                    if (!examSession.hasSameUserAgent(examSession2)) {
+                        relatedExamSessions.add(examSession2);
+                    }
+                }
+                if (!relatedExamSessions.isEmpty()) {
+                    addSuspiciousReasons(examSession, relatedExamSessions);
+                    relatedExamSessions.add(examSession);
+                    suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
+                }
+            }
+        }
     }
 
     /**
@@ -202,6 +239,18 @@ public class ExamSessionService {
             if (relatedExamSession.hasSameUserAgent(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_USER_AGENT);
+            }
+            if (!relatedExamSession.hasSameBrowserFingerprint(session)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
+                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_BROWSER_FINGERPRINT);
+            }
+            if (!relatedExamSession.hasSameIpAddress(session)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
+                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_IP_ADDRESS);
+            }
+            if (!relatedExamSession.hasSameUserAgent(session)) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_USER_AGENT);
+                session.addSuspiciousReason(SuspiciousSessionReason.NOT_SAME_USER_AGENT);
             }
         }
     }
