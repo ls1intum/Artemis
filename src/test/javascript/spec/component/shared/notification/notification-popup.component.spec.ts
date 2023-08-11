@@ -89,16 +89,10 @@ describe('Notification Popup Component', () => {
     });
 
     describe('Initialization', () => {
-        it('should get authentication state', () => {
-            jest.spyOn(accountService, 'getAuthenticationState');
-            notificationPopupComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
-        });
-
-        it('should subscribe to notification updates', () => {
+        it('should subscribe to singular notification updates', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
             notificationPopupComponent.ngOnInit();
-            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToSingleIncomingNotifications).toHaveBeenCalledOnce();
         });
     });
 

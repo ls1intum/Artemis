@@ -126,18 +126,16 @@ describe('Notification Sidebar Component', () => {
             expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
         });
 
-        it('should query notifications', () => {
-            jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
-        });
-
         it('should subscribe to notification updates for user', () => {
-            jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(of(notifications));
+            jest.spyOn(notificationService, 'subscribeToTotalNotificationCountUpdates');
+            jest.spyOn(notificationService, 'subscribeToLoadingStateUpdates');
             jest.spyOn(notificationSettingsService, 'isNotificationAllowedBySettings').mockReturnValue(true);
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
-            expect(notificationSettingsService.isNotificationAllowedBySettings).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToTotalNotificationCountUpdates).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToLoadingStateUpdates).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.sortedNotifications).toHaveLength(notifications.length);
         });
     });
 
