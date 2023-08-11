@@ -41,6 +41,13 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }
 
+    /**
+     * Retrieves a list of user-related information for the provided conversations for the given user
+     *
+     * @param conversationIds a list of conversation ids you want to retrieve information for
+     * @param userId          the user id the information is related to
+     * @return a list of user-related conversation info for the provided conversations
+     */
     @Query("""
              SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
                  conv.id,
@@ -61,6 +68,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
 
+    /**
+     * Retrieves a list of general information for the provided conversations
+     *
+     * @param conversationIds a list of conversation ids you want to retrieve information for
+     * @return a list of user-related conversation info for the provided conversations
+     */
     @Query("""
              SELECT new de.tum.in.www1.artemis.domain.metis.conversation.GeneralConversationInfo (
                  conv.id,

@@ -252,10 +252,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return number of users in the course
      */
     @Query("""
-            SELECT count(distinct ug.id)
+            SELECT COUNT(DISTINCT ug.id)
             FROM Course c
             JOIN UserGroup ug
-            ON c.studentGroupName = ug.group or c.teachingAssistantGroupName = ug.group or c.editorGroupName = ug.group or c.instructorGroupName = ug.group
+            ON c.studentGroupName = ug.group OR c.teachingAssistantGroupName = ug.group OR c.editorGroupName = ug.group OR c.instructorGroupName = ug.group
             WHERE c.id = :courseId
             """)
     Integer countCourseMembers(@Param("courseId") Long courseId);
