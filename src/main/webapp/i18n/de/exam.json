@@ -625,8 +625,7 @@
                     "reasons": "Verdächtig aufgrund von:",
                     "case": "Fall",
                     "sameIpAddress": "Gleiche IP-Adresse",
-                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck",
-                    "sameUserAgent": "Gleicher User Agent"
+                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck"
                 }
             },
             "plagiarismCasesOverview": {

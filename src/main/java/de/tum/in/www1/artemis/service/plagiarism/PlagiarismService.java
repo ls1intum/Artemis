@@ -135,9 +135,11 @@ public class PlagiarismService {
      */
     private boolean userForSubmissionDeleted(Submission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            var user = userRepository.findOneByLogin(studentParticipation.getParticipant().getParticipantIdentifier()).orElseThrow();
-            return user.isDeleted();
+            var user = userRepository.findOneByLogin(studentParticipation.getParticipant().getParticipantIdentifier());
+            if (user.isPresent()) {
+                return user.get().isDeleted();
+            }
         }
-        return true;
+        return true; // if the user is not found, we assume that the user has been deleted
     }
 }

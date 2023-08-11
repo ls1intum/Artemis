@@ -627,8 +627,7 @@
                     "reasons": "Suspicious because of:",
                     "case": "Case",
                     "sameIpAddress": "Same IP address",
-                    "sameBrowserFingerprint": "Same browser fingerprint",
-                    "sameUserAgent": "Same user agent"
+                    "sameBrowserFingerprint": "Same browser fingerprint"
                 }
             },
             "plagiarismCasesOverview": {
