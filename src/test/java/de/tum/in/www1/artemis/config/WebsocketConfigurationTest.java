@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 
-public class WebsocketConfigurationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class WebsocketConfigurationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testGetTopicRelayPrefixes() {

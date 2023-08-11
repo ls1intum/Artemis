@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
  * which we can not create inside the testing environment.
  * We can therefor only test static methods right now.
  */
-public class QuizJMSListenerServiceTest {
+class QuizJMSListenerServiceTest {
 
     @Test
     void testExtractQuizExerciseIdFromAddress() throws JMSException {
