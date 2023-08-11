@@ -86,6 +86,9 @@ public class Slide extends DomainObject {
         prevSlideImagePath = slideImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
+    /**
+     * Before persisting the slide, we need to move the file from the temp folder to the actual folder
+     */
     @PrePersist
     public void beforeCreate() {
         if (slideImagePath == null) {

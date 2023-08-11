@@ -242,6 +242,12 @@ public class FileService implements DisposableBean {
         return null;
     }
 
+    /**
+     * Generates a prefix for the filename based on the target folder
+     *
+     * @param targetFolder the target folder
+     * @return the prefix ending with an underscore character as a separator
+     */
     public String generateTargetFilenameBase(Path targetFolder) {
         if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "DragAndDropBackground_";

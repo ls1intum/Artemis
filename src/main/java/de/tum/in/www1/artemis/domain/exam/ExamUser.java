@@ -198,6 +198,10 @@ public class ExamUser extends AbstractAuditingEntity {
         prevStudentImagePath = studentImagePath; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
+    /**
+     * Will be called before the entity is persisted (saved).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PrePersist
     public void beforeCreate() {
         if (signingImagePath != null) {

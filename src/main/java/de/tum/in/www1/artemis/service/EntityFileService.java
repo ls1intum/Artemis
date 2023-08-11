@@ -29,11 +29,29 @@ public class EntityFileService {
         this.filePathService = filePathService;
     }
 
+    /**
+     * Moves a temporary file to the target folder and returns the new path. A placeholder is used as id.
+     * Use {@link #moveTempFileBeforeEntityPersistenceWithId(String, Path, boolean, Long)} to provide an existing id.
+     *
+     * @param entityFilePath the path of the temporary file
+     * @param targetFolder   the target folder to move the file to
+     * @param keepFilename   whether to keep the filename or generate a new one
+     * @return the new file path as string
+     */
     @Nonnull
     public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
         return moveTempFileBeforeEntityPersistenceWithId(entityFilePath, targetFolder, keepFilename, null);
     }
 
+    /**
+     * Moves a temporary file to the target folder and returns the new path.
+     *
+     * @param entityFilePath the path of the temporary file
+     * @param targetFolder   the target folder to move the file to
+     * @param keepFilename   whether to keep the filename or generate a new one
+     * @param entityId       the id of the entity that is being persisted, if null, a placeholder gets used
+     * @return the new file path as string
+     */
     @Nonnull
     public String moveTempFileBeforeEntityPersistenceWithId(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
@@ -60,6 +78,17 @@ public class EntityFileService {
         }
     }
 
+    /**
+     * Handles a potential file update before entity persistence. It thus does nothing if the optional file doesn't change and otherwise moves a temporary file to the target and/or
+     * deletes the old file.
+     *
+     * @param entityId          the id of the entity that is being persisted
+     * @param oldEntityFilePath the old file path of the file that is being updated
+     * @param newEntityFilePath the new file path of the file that is being updated
+     * @param targetFolder      the target folder to move the file to
+     * @param keepFilename      whether to keep the filename or generate a new one
+     * @return the new file path as string, null if no file exists
+     */
     @Nullable
     public String handlePotentialFileUpdateBeforeEntityPersistence(@Nonnull Long entityId, @Nullable String oldEntityFilePath, @Nullable String newEntityFilePath,
             @Nonnull Path targetFolder, boolean keepFilename) {
