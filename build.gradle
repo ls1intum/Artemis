@@ -141,9 +141,9 @@ jacocoTestReport {
         xml.required = true
     }
     // we want to ignore some generated files in the domain folders
-//    afterEvaluate {
-//        excludedClassFilesForReport(classDirectories)
-//    }
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
 }
 
 //jacocoTestCoverageVerification {
@@ -175,7 +175,9 @@ diffCoverageReport {
         git.compareWith 'refs/remotes/origin/develop'
     }
 
-//    classesDirs = jacocoTestReport.classDirectories
+    jacocoExecFiles = files(jacocoTestReport.executionData)
+    classesDirs = files(jacocoTestReport.classDirectories)
+    srcDirs = files(jacocoTestReport.sourceDirectories)
 
     reports {
         html = true
