@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,15 +11,15 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 })
 export class ExerciseNodeDetailsComponent implements OnInit {
     @Input() exerciseId: number;
-
-    exercise: Exercise;
+    @Input() exercise?: Exercise;
+    @Output() exerciseChange = new EventEmitter<Exercise>();
 
     isLoading = false;
 
     constructor(private exerciseService: ExerciseService, private alertService: AlertService) {}
 
     ngOnInit() {
-        if (this.exerciseId) {
+        if (!this.exercise) {
             this.loadData();
         }
     }
@@ -28,6 +28,8 @@ export class ExerciseNodeDetailsComponent implements OnInit {
         this.exerciseService.find(this.exerciseId).subscribe({
             next: (exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
+                this.isLoading = false;
+                this.exerciseChange.emit(this.exercise);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });

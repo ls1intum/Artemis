@@ -50,12 +50,19 @@ describe('CompetencyNodeDetailsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load competency on init', () => {
+    it('should load competency on init if not present', () => {
         fixture.detectChanges();
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(findByIdStub).toHaveBeenCalledWith(competency.id, 1);
         expect(comp.competency).toEqual(competency);
         expect(comp.competencyProgress).toEqual(competencyProgress);
+    });
+
+    it('should not load competency on init if already present', () => {
+        comp.competency = competency;
+        comp.competencyProgress = competencyProgress;
+        fixture.detectChanges();
+        expect(findByIdStub).not.toHaveBeenCalled();
     });
 
     it('should default progress to zero if empty', () => {
