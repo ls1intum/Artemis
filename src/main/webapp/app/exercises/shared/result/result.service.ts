@@ -145,7 +145,6 @@ export class ResultService implements IResultService {
      * @param points the amount of achieved points
      * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
      * @param short flag that indicates if the resultString should use the short format
-     * @private
      */
     private getBaseResultStringProgrammingExercise(
         result: Result,
