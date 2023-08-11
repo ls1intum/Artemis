@@ -230,7 +230,6 @@ public class LocalVCServletService {
 
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCAuthException, LocalVCForbiddenException {
-
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             try {
                 // Only editors and higher are able to push. Teaching assistants can only fetch.
@@ -241,11 +240,19 @@ public class LocalVCServletService {
             }
             return;
         }
-
         ProgrammingExerciseParticipation participation;
 
+        boolean isAuxiliaryRepository = !repositoryTypeOrUserName.equals(user.getLogin()) && !repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
+            if (isAuxiliaryRepository) {
+                participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, RepositoryType.AUXILIARY.toString(), isPracticeRepository, false);
+
+            }
+            else {
+                participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
+            }
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(

@@ -379,7 +379,9 @@ public class ProgrammingExerciseParticipationService {
             boolean withSubmissions) {
 
         // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
-        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+        // Can possibly be used by auxiliary repositories
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
             if (withSubmissions) {
                 return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }

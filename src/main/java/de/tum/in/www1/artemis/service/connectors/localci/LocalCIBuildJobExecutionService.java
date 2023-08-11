@@ -75,7 +75,7 @@ public class LocalCIBuildJobExecutionService {
 
     public enum LocalCIBuildJobRepositoryType {
 
-        ASSIGNMENT("assignment"), TEST("test");
+        ASSIGNMENT("assignment"), TEST("test"), AUXILIARY("auxiliary");
 
         private final String name;
 
@@ -109,9 +109,24 @@ public class LocalCIBuildJobExecutionService {
         // the tests to be executed.
         LocalVCRepositoryUrl assignmentRepositoryUrl;
         LocalVCRepositoryUrl testsRepositoryUrl;
+        LocalVCRepositoryUrl[] auxiliaryRepositoriesUrls;
+
         try {
             assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
             testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+
+            if (participation.getProgrammingExercise().getAuxiliaryRepositories() != null) {
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[participation.getProgrammingExercise().getAuxiliaryRepositories().size()];
+                for (int i = 0; i < participation.getProgrammingExercise().getAuxiliaryRepositories().size(); i++) {
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getAuxiliaryRepositories().get(i).getRepositoryUrl(),
+                            localVCBaseUrl);
+                }
+
+            }
+            else {
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[0];
+            }
+
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
@@ -119,6 +134,11 @@ public class LocalCIBuildJobExecutionService {
 
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+
+        Path[] auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoriesUrls.length];
+        for (int i = 0; i < auxiliaryRepositoriesUrls.length; i++) {
+            auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        }
 
         String branch;
         try {
@@ -128,9 +148,10 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
+        // Create the volume configuration for the container. The assignment repository, the tests repository, the auxiliary repositories and the build script are bound into the
+        // container to be used by
         // the build job.
-        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
+        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths);
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
         // container information about the branch and commit hash to be used.
@@ -169,6 +190,7 @@ public class LocalCIBuildJobExecutionService {
 
         String assignmentRepoCommitHash = commitHash;
         String testRepoCommitHash = "";
+        String[] auxiliaryRepoCommitHashes = new String[0];
 
         try {
             if (commitHash == null) {
@@ -177,6 +199,11 @@ public class LocalCIBuildJobExecutionService {
             }
             // Always use the latest commit from the test repository.
             testRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.TEST, branch);
+
+            // Always use the latest commit from the auxiliary repositories.
+            for (int i = 0; i < auxiliaryRepoCommitHashes.length; i++) {
+                auxiliaryRepoCommitHashes[i] = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.AUXILIARY, i, branch);
+            }
         }
         catch (NotFoundException | IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and

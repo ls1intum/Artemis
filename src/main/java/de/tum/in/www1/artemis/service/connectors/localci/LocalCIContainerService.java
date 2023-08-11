@@ -60,12 +60,19 @@ public class LocalCIContainerService {
      * @param testRepositoryPath       the path to the test repository in the file system
      * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      */
-    public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath) {
+    public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths) {
+        // The binds are used to mount the assignment repository, the test repository, and the build script into the container.
+        Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
+        binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
+        binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(),
+                    new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.AUXILIARY + "-repository-" + i));
+        }
+        binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptFilePath.toString(), new Volume("/script.sh"));
+
         return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(
-                        new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository")),
-                        new Bind(buildScriptFilePath.toString(), new Volume("/script.sh")));
+                .withBinds(binds);
     }
 
     /**
@@ -78,6 +85,7 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
+        log.info("Configuring container {} with branch {} and commit hash {}", containerName, branch, commitHash);
         return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
@@ -156,6 +164,17 @@ public class LocalCIContainerService {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
         TarArchiveInputStream repositoryTarInputStream = getArchiveFromContainer(containerId,
                 "/repositories/" + repositoryType.toString() + "-repository/.git/refs/heads/" + branchName);
+        repositoryTarInputStream.getNextTarEntry();
+        String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
+        repositoryTarInputStream.close();
+        return commitHash;
+    }
+
+    public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, int auxiliaryRepositoryIndex,
+            String branchName) throws IOException {
+        // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
+        TarArchiveInputStream repositoryTarInputStream = getArchiveFromContainer(containerId,
+                "/repositories/" + repositoryType.toString() + "-repository-" + auxiliaryRepositoryIndex + "/.git/refs/heads/" + branchName);
         repositoryTarInputStream.getNextTarEntry();
         String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
         repositoryTarInputStream.close();
