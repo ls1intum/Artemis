@@ -57,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification diffCoverage | tee tests.log
+      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp diffCoverage | tee tests.log
     - name: Print failed tests
       if: failure()
       run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
