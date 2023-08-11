@@ -266,7 +266,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Check if the given exercise fulfills the currently selected filters
      * @param exercise the exercise to check
      * @return true if the given exercise fulfills the currently selected filters; false otherwise
-     * @private
      */
     private fulfillsCurrentFilter(exercise: Exercise): boolean {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);

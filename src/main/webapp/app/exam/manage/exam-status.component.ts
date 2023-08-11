@@ -116,7 +116,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Auxiliary method that determines if all configuration steps for the exam exercises are finished
-     * @private
      * @returns boolean indicating whether configuration is finished
      */
     private areAllExercisesConfigured(): boolean {
@@ -138,7 +137,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Auxiliary method indicating whether all steps of Exam preparation are done
-     * @private
      */
     private isExamPreparationFinished(): boolean {
         if (this.isTestExam) {
@@ -152,7 +150,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     /**
      * Helper method to indicate weather the mandatory preparation steps are performed in order to display a warning in the status.
      * (PrepareExerciseStart is not mandatory, but highly recommended)
-     * @private
      */
     private isMandatoryPreparationFinished(): boolean {
         if (this.isTestExam) {
@@ -164,7 +161,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Sets the conductionState according to the current situation
-     * @private
      */
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
@@ -182,7 +178,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Sets the reviewState according to the current situation
-     * @private
      */
     private setReviewState(): void {
         if (!this.exam.examStudentReviewEnd) {
@@ -198,7 +193,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Auxiliary method that sets the state for the whole Exam correction section
-     * @private
      */
     private setCorrectionState(): void {
         if (this.examReviewState === ExamReviewState.RUNNING) {
@@ -217,7 +211,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     /**
      * Auxiliary method that determines the state of the different sub steps of exam preparation and stores them in a map
      * Finally determines whether every sub step is sufficiently fulfilled and therefore exam preparation is finished
-     * @private
      */
     private setExamPreparation(): void {
         // Step 1.1:
@@ -241,7 +234,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Indicates whether the exam already started
-     * @private
      */
     private examAlreadyStarted(): boolean {
         return this.exam.startDate! && this.exam.startDate.isBefore(dayjs());
@@ -249,7 +241,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Indicates whether the exam is already finished
-     * @private
      */
     private examAlreadyEnded(): boolean {
         return this.exam.endDate! && this.exam.endDate.isBefore(dayjs());
@@ -257,7 +248,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Indicates whether exam review is already running
-     * @private
      */
     private isExamReviewRunning(): boolean {
         return (
@@ -269,7 +259,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Indicates whether exam review is planned
-     * @private
      */
     private isExamReviewPlanned(): boolean {
         return (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isAfter(dayjs())) ?? false;
@@ -277,7 +266,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     /**
      * Indicates whether all complaints are resolved
-     * @private
      */
     private allComplaintsResolved(): boolean {
         return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;

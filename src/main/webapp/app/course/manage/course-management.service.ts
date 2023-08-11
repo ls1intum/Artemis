@@ -263,9 +263,9 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    registerForCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
@@ -279,9 +279,9 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    unenrollFromCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
@@ -502,7 +502,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course EntityResponses.
      * @param courseRes
-     * @private
      */
     processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
@@ -518,7 +517,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
      * @param courseRes
-     * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertTutorialGroupsDatesFromServer(courseRes);
@@ -606,7 +604,6 @@ export class CourseManagementService {
     /**
      * Converts the exercise category json string into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
@@ -618,7 +615,6 @@ export class CourseManagementService {
     /**
      * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {

@@ -87,7 +87,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Initializes this component with a programming exercise submission.
      *
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
-     * @private
      */
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
         this.isProgrammingExercise = true;
@@ -109,7 +108,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
      *
      * @param files An unfiltered list of files.
      * @return A sorted list of files that should be shown for the plagiarism view.
-     * @private
      */
     private programmingExerciseFilesWithMatches(files: FilesWithType): Array<FileWithHasMatch> {
         return this.filterFiles(files)
@@ -126,7 +124,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * @param file1 Some file with information if it has a match.
      * @param file2 Some other file with information if it has a match.
      * @return `-1`, if `file1` is smaller according to the sorting order described above, `1` otherwise.
-     * @private
      */
     private static compareFileWithHasMatch(file1: FileWithHasMatch, file2: FileWithHasMatch): number {
         if (file1.hasMatch === file2.hasMatch) {
@@ -142,7 +139,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Initializes this component with a text exercise submission.
      *
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
-     * @private
      */
     private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
         this.isProgrammingExercise = false;

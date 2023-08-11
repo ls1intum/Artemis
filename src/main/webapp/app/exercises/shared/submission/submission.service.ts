@@ -186,7 +186,6 @@ export class SubmissionService {
      *
      * @param submission
      * @return convertedSubmission with set result and access rights
-     * @private
      */
     public convertSubmissionFromServer<T extends Submission>(submission: T): T {
         const convertedSubmission = this.convert(submission);
@@ -219,7 +218,6 @@ export class SubmissionService {
     /**
      * Converts the participation that is connected to the given submission from server to client format.
      * @param submission to which the conversion should be applied.
-     * @private
      */
     private static convertConnectedParticipationFromServer(submission: Submission): Submission {
         if (submission.participation) {

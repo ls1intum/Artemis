@@ -122,9 +122,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         reset(gitService);
         reset(bambooServer);
+        programmingExerciseTestService.tearDown();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         exerciseRepo.resetLocalRepo();

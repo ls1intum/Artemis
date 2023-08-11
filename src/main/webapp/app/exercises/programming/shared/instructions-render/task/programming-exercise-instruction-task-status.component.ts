@@ -61,7 +61,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     /**
      * Checks if any of the feedbacks have a detailText associated to them.
      * @param tests the feedback names this should be checked for
-     * @private
      */
     private hasTestMessage(tests: string[]): boolean {
         if (!this.latestResult || !this.latestResult.feedbacks) {

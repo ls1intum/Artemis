@@ -70,7 +70,6 @@ export class TextAssessmentAnalytics {
     /**
      * Subscribes to the route parameters and updates the respective id's accordingly.
      * Avoids having to set the id on the component's side.
-     * @private
      */
     private subscribeToRouteParameters() {
         this.route.params.subscribe((params) => {

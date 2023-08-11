@@ -262,7 +262,6 @@ export class ProgrammingExerciseTaskService {
 /**
  * Gets a single value from a list if there is only one unique value. otherwise returns undefined
  * @param values
- * @private
  */
 const getSingleValue = (values: any[]) => {
     const set = new Set(values);
