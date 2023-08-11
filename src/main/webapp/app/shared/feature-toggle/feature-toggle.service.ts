@@ -14,6 +14,7 @@ export enum FeatureToggle {
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
     TutorialGroups = 'TutorialGroups',
+    LearningPaths = 'LearningPaths',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

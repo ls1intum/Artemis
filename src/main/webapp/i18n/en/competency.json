@@ -147,6 +147,29 @@
                 "selfRelation": "You can not create a relation between a competency and itself.",
                 "relationAlreadyExists": "This relation already exists."
             }
+        },
+        "learningPath": {
+            "learningPathButton": "Learning Paths",
+            "manageLearningPaths": {
+                "title": "Learning Path Management",
+                "health": {
+                    "missing": {
+                        "title": "Missing Learning Paths",
+                        "body": "Some students have not generated their learning paths yet. This is not critical. Their learning paths will be created once they request their learning path for the first time.",
+                        "action": "Generate",
+                        "hint": "Generate missing Learning Paths"
+                    }
+                },
+                "isDisabled": "Learning Paths are currently disabled for this course.",
+                "enable": "Enable Learning Paths",
+                "enableHint": "The creation of learning paths for every student may take a moment.",
+                "search": "Search:",
+                "table": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Progress"
+                }
+            }
         }
     }
 }

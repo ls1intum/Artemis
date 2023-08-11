@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -166,6 +167,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<CompetencyProgress> competencyProgresses = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<LearningPath> learningPaths = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -355,6 +360,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setCompetencyProgresses(Set<CompetencyProgress> competencyProgresses) {
         this.competencyProgresses = competencyProgresses;
+    }
+
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
     }
 
     public Set<ExamUser> getExamUsers() {
