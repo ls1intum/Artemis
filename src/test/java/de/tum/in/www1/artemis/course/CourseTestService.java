@@ -3133,6 +3133,7 @@ public class CourseTestService {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
     }
 
+    // Test
     public void testUpdateCourseEnableLearningPaths() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
                 "tutor", "editor", "instructor");
@@ -3148,6 +3149,6 @@ public class CourseTestService {
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
         final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
-        assertThat(learningPath).isPresent();
+        assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }
 }
