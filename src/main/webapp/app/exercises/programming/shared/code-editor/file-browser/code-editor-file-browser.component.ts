@@ -574,7 +574,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * based on their file extension (see {@link shouldDisplayFileBasedOnExtension}).
      * @param fileName The name of the file or folder.
      * @param fileType The type of the file or folder.
-     * @private
      */
     private static shouldDisplayFile(fileName: string, fileType: FileType): boolean {
         if (fileName.startsWith('.')) {
@@ -591,7 +590,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      *
      * E.g., text files like `SomeClass.java` are shown, binary files like `document.pdf` are not.
      * @param fileName
-     * @private
      */
     private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
         const fileSplit = fileName.split('.');
