@@ -148,6 +148,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @AfterEach
     void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
         apollonRequestMockProvider.reset();
     }
 
