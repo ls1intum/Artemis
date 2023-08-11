@@ -151,7 +151,7 @@ def coverage_to_table(covs, exclude_urls=False):
     for cov in covs:
         filename_only = cov[0].rsplit("/", 1)[1]
         class_file = filename_only if exclude_urls or cov[2] is None else f"[{filename_only}]({cov[1]})"
-        line_coverage = "deleted" if cov[2] is None else f"{cov[2]}%"
+        line_coverage = "deleted/not found" if cov[2] is None else f"{cov[2]}%"
         confirmation = "" if cov[2] is None else "✅❌"
         table_data.append(f"| {class_file} | {line_coverage} | {confirmation} |")
 
