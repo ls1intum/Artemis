@@ -22,6 +22,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
+    @Input() examTimeline = false;
 
     // Icons
     faChevronRight = faChevronRight;

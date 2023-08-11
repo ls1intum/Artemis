@@ -12,7 +12,9 @@
 <!--endregion LEFT SIDE-->
 
 <!--region RIGHT SIDE-->
-<ng-container *ngIf="collapsed; then collapsedBody; else expandedBody"></ng-container>
+<ng-container *ngIf="!examTimeline">
+    <ng-container *ngIf="collapsed; then collapsedBody; else expandedBody"></ng-container>
+</ng-container>
 
 <ng-template #expandedBody>
     <div class="expanded right">

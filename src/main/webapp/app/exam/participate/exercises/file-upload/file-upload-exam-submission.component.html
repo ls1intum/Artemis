@@ -1,5 +1,5 @@
 <!--resizable container-->
-<jhi-resizeable-container *ngIf="exercise">
+<jhi-resizeable-container *ngIf="exercise" [examTimeline]="examTimeline">
     <!--region Left Panel-->
     <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
     <!-- prettier-ignore -->
