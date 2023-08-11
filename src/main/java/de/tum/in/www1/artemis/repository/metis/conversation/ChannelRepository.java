@@ -44,7 +44,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-             SELECT channel
+             SELECT DISTINCT channel
              FROM Channel channel
                  LEFT JOIN channel.conversationParticipants cp
              WHERE channel.course.id = :courseId
