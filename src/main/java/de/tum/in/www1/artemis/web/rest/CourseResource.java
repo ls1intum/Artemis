@@ -242,6 +242,14 @@ public class CourseResource {
         courseUpdate.setId(courseId); // Don't persist a wrong ID
         Course result = courseRepository.save(courseUpdate);
 
+        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled()) {
+            // if learning paths got enabled, generate learning paths for students
+            if (courseUpdate.getLearningPathsEnabled()) {
+                Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(result.getId());
+                learningPathService.generateLearningPaths(courseWithCompetencies);
+            }
+        }
+
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
         // users no longer have TA, editor or instructor rights in the related exercise repositories.
