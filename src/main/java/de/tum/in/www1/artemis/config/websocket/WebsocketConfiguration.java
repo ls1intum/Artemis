@@ -92,7 +92,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ExamRepository examRepository;
 
-    private final Environment env;
+    private final Environment environment;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -106,7 +106,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository, Environment env) {
+            UserRepository userRepository, ExamRepository examRepository, Environment environment) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -115,7 +115,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
-        this.env = env;
+        this.environment = environment;
     }
 
     @Override
@@ -125,7 +125,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
-            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
             var relayedDestinations = getTopicRelayPrefixes(activeProfiles);
 
             config
@@ -360,7 +360,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     /**
      * Get the topic-prefixes that should be relayed to the ActiveMQ broker.
-     * This always includes messages sent to '/topic' and also includesmessages sent to '/queue', if this instance of Artemis can not process the message.
+     * This always includes messages sent to '/topic' and also includes messages sent to '/queue', if this instance of Artemis can not process the message.
      *
      * @param activeProfiles a list of active profiles for this Artemis instance
      * @return a list of prefixes that should be relayed to the broker.
