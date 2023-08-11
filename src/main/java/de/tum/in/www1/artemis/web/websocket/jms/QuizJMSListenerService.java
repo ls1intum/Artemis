@@ -3,12 +3,11 @@ package de.tum.in.www1.artemis.web.websocket.jms;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import javax.jms.BytesMessage;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
-import org.apache.activemq.artemis.jms.client.ActiveMQMessage;
+import org.apache.activemq.artemis.jms.client.ActiveMQBytesMessage;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
@@ -34,7 +33,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 @Profile("decoupling && quiz")
 public class QuizJMSListenerService {
 
-    private final Pattern EXERCISE_ID_TOPIC_EXTRACTION_PATTERN = Pattern.compile("/queue/quizExercise/(\\d*)/submission");
+    private static final Pattern EXERCISE_ID_TOPIC_EXTRACTION_PATTERN = Pattern.compile("/queue/quizExercise/(\\d*)/submission");
 
     private final ObjectMapper objectMapper;
 
@@ -78,13 +77,12 @@ public class QuizJMSListenerService {
             @Override
             public void onMessage(javax.jms.@NotNull Message message, Session session) throws JMSException {
                 // Message is of type ActiveMQMessage because we use Apache ActiveMQ as broker
-                ActiveMQMessage activeMQMessage = (ActiveMQMessage) message;
+                ActiveMQBytesMessage activeMQMessage = (ActiveMQBytesMessage) message;
 
-                var bytesMessage = (BytesMessage) message;
-                var messageLength = bytesMessage.getBodyLength();
+                var messageLength = activeMQMessage.getBodyLength();
                 byte[] bytes = new byte[(int) messageLength];
                 // Read message into bytes[]-array
-                bytesMessage.readBytes(bytes);
+                activeMQMessage.readBytes(bytes);
 
                 try {
                     var quizSubmission = objectMapper.readValue(bytes, QuizSubmission.class);
@@ -113,7 +111,7 @@ public class QuizJMSListenerService {
      * @return the exercise id
      * @throws JMSException if the exercise id could not be extracted
      */
-    private Long extractExerciseIdFromAddress(String address) throws JMSException {
+    public static Long extractExerciseIdFromAddress(String address) throws JMSException {
         var matcher = EXERCISE_ID_TOPIC_EXTRACTION_PATTERN.matcher(address);
         if (!matcher.matches()) {
             throw new JMSException("Could not extract exercise id");

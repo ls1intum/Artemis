@@ -126,18 +126,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-
-            var relayedDestinations = new ArrayList<String>();
-            // Relay messages to /topic
-            relayedDestinations.add("/topic");
-            if (!activeProfiles.contains("quiz")) {
-                // Relay messages to /queue/quizExercise only if the quiz functionality is not used
-                relayedDestinations.add("/queue/quizExercise");
-            }
+            var relayedDestinations = getTopicRelayPrefixes(activeProfiles);
 
             config
                     // Enable the relay the specified destinations
-                    .enableStompBrokerRelay(relayedDestinations.toArray(new String[0]))
+                    .enableStompBrokerRelay(relayedDestinations.toArray(String[]::new))
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
@@ -363,5 +356,27 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return Optional.of(Long.valueOf(matcher.group(1)));
         }
         return Optional.empty();
+    }
+
+    /**
+     * Get the topic-prefixes that should be relayed to the ActiveMQ broker.
+     * This always includes messages sent to '/topic' and also includesmessages sent to '/queue', if this instance of Artemis can not process the message.
+     *
+     * @param activeProfiles a list of active profiles for this Artemis instance
+     * @return a list of prefixes that should be relayed to the broker.
+     */
+    public static List<String> getTopicRelayPrefixes(Collection<String> activeProfiles) {
+        var relayedDestinations = new ArrayList<String>();
+        // Relay messages to /topic
+        relayedDestinations.add("/topic");
+        if (activeProfiles.contains("decoupling")) {
+            // Only apply the decoupling logic if the 'decoupling'-profile is present
+            if (!activeProfiles.contains("quiz")) {
+                // Relay messages to /queue/quizExercise only if the quiz functionality is not used
+                relayedDestinations.add("/queue/quizExercise");
+            }
+        }
+
+        return relayedDestinations;
     }
 }
