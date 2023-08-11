@@ -24,6 +24,7 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -522,6 +523,20 @@ export class ProgrammingExerciseService {
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
+    getDiffReportForSubmissions(
+        exerciseId: number,
+        olderSubmission: ProgrammingSubmission,
+        newerSubmission: ProgrammingSubmission,
+    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmission.id}/diff-report/${newerSubmission.id}`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
+    getDiffReportForSubmissionWithTemplate(exerciseId: number, submission: ProgrammingSubmission): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submission.id}/diff-report-with-template`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
 
     /**
      * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
@@ -557,6 +572,15 @@ export class ProgrammingExerciseService {
      */
     getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+    getParticipationRepositoryFilesWithContent(exerciseId: number, participationId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${participationId}/files-content`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

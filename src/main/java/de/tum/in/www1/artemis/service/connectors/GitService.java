@@ -375,6 +375,18 @@ public class GitService {
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
+    public Repository getOrCheckoutRepositoryAtCommit(VcsRepositoryUrl repoUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
+        var repo = getOrCheckoutRepository(repoUrl, pullOnGet);
+        try (Git git = new Git(repo)) {
+            git.checkout().setName(commitHash).call();
+            return repo;
+        }
+        catch (GitAPIException e) {
+            throw new GitException("Could not checkout commit " + commitHash + " in repository " + repoUrl, e);
+        }
+
+    }
+
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
@@ -877,6 +889,12 @@ public class GitService {
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUrl(), ex);
+        }
+    }
+
+    public void checkoutHead(Repository repository) throws GitAPIException {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(defaultBranch).call();
         }
     }
 

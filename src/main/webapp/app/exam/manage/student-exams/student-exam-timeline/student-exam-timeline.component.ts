@@ -14,9 +14,9 @@ import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -100,10 +100,33 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     }
 
     private updateProgrammingExerciseView() {
-        const activeProgrammingComponent = this.activePageComponent as ProgrammingExamSubmissionComponent;
+        const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent;
         if (activeProgrammingComponent) {
-            activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
+            activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
+            activeProgrammingComponent.exercise = this.currentExercise as Exercise;
+            activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
+            activeProgrammingComponent.previousSubmission = this.findPreviousSubmission(this.currentExercise!, this.currentSubmission!);
+            activeProgrammingComponent.loadGitDiffReport();
+            // activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
         }
+    }
+
+    private findPreviousSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
+        const comparisonTimestamp = currentSubmission.submissionDate;
+        let smallestDiff = Number.MAX_VALUE;
+        let correspondingSubmission: ProgrammingSubmission | undefined;
+        for (let i = 0; i < this.programmingSubmissions.length; i++) {
+            const submission = this.programmingSubmissions[i];
+            if (
+                submission.submissionDate!.isBefore(comparisonTimestamp) &&
+                submission.submissionDate!.diff(comparisonTimestamp) < smallestDiff &&
+                submission.participation?.exercise?.id === currentExercise.id
+            ) {
+                smallestDiff = submission.submissionDate!.diff(comparisonTimestamp);
+                correspondingSubmission = submission;
+            }
+        }
+        return correspondingSubmission;
     }
 
     private setupRangeSlider() {
@@ -219,9 +242,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
-        this.activateActiveComponent();
+        //TODO does this work or do we need to set these two properties after activating the component?
         this.currentExercise = exercise;
         this.currentSubmission = submission;
+        this.activateActiveComponent();
         this.updateSubmissionOrSubmissionVersionInView();
     }
 

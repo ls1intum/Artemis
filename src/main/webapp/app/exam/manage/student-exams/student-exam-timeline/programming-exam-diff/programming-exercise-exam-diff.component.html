@@ -1,0 +1,23 @@
+<p>Programming Diff works</p>
+<div *ngIf="exercise?.gitDiffReport">
+    <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
+    <dd>
+        <div class="fw-bold">
+            <jhi-git-diff-line-stat
+                [addedLineCount]="addedLineCount"
+                [removedLineCount]="removedLineCount"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+            ></jhi-git-diff-line-stat>
+            <jhi-button
+                [featureToggle]="FeatureToggle.ProgrammingExercises"
+                [isLoading]="isLoadingDiffReport"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faEye"
+                [title]="'artemisApp.programmingExercise.diffReport.button'"
+                [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
+                (onClick)="showGitDiff()"
+                class="ms-2"
+            ></jhi-button>
+        </div>
+    </dd>
+</div>

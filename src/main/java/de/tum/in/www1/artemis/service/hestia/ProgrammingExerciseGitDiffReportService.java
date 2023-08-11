@@ -13,14 +13,15 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -158,6 +159,26 @@ public class ProgrammingExerciseGitDiffReportService {
         }
     }
 
+    public ProgrammingExerciseGitDiffReport createReportForSubmissions(long submissionId1, long submissionId2) throws GitAPIException, IOException {
+        var submission1 = programmingSubmissionRepository.findById(submissionId1).orElseThrow();
+        var submission2 = programmingSubmissionRepository.findById(submissionId2).orElseThrow();
+        return generateReportForSubmissions(submission1, submission2);
+    }
+
+    public ProgrammingExerciseGitDiffReport createReportForSubmissionWithTemplate(ProgrammingExercise exercise, long submissionId1) throws GitAPIException, IOException {
+        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
+        Repository templateRepo = prepareTemplateRepository(templateParticipation);
+        var submission1 = programmingSubmissionRepository.findById(submissionId1).orElseThrow();
+
+        var repo1 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(),
+                submission1.getCommitHash(), true);
+        var oldTreeParser = new FileTreeIterator(repo1);
+        var newTreeParser = new FileTreeIterator(templateRepo);
+        var report = createReport(templateRepo, oldTreeParser, newTreeParser);
+        gitService.checkoutHead(repo1);
+        return report;
+    }
+
     /**
      * Creates a new ProgrammingExerciseGitDiffReport for an exercise.
      * It will take the git-diff between the template and solution repositories and return all changes.
@@ -169,18 +190,48 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
-        var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
+        Repository templateRepo = prepareTemplateRepository(templateParticipation);
         var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
-
-        gitService.resetToOriginHead(templateRepo);
-        gitService.pullIgnoreConflicts(templateRepo);
         gitService.resetToOriginHead(solutionRepo);
         gitService.pullIgnoreConflicts(solutionRepo);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
 
-        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
+        return createReport(templateRepo, oldTreeParser, newTreeParser);
+    }
+
+    private Repository prepareTemplateRepository(TemplateProgrammingExerciseParticipation templateParticipation) throws GitAPIException {
+        var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
+        gitService.resetToOriginHead(templateRepo);
+        gitService.pullIgnoreConflicts(templateRepo);
+        return templateRepo;
+    }
+
+    private ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2)
+            throws GitAPIException, IOException {
+        var repo1 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(),
+                submission1.getCommitHash(), true);
+        var repo2 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission2.getParticipation()).getVcsRepositoryUrl(),
+                submission2.getCommitHash(), true);
+        return parseFilesAndCreateReport(repo1, repo2);
+
+    }
+
+    @NotNull
+    private ProgrammingExerciseGitDiffReport parseFilesAndCreateReport(Repository repo1, Repository repo2) throws IOException, GitAPIException {
+        var oldTreeParser = new FileTreeIterator(repo1);
+        var newTreeParser = new FileTreeIterator(repo2);
+
+        var report = createReport(repo1, oldTreeParser, newTreeParser);
+        gitService.checkoutHead(repo1);
+        gitService.checkoutHead(repo2);
+        return report;
+    }
+
+    @NotNull
+    private ProgrammingExerciseGitDiffReport createReport(Repository repo1, FileTreeIterator oldTreeParser, FileTreeIterator newTreeParser) throws IOException, GitAPIException {
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(repo1)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
             var programmingExerciseGitDiffEntries = extractDiffEntries(diff);
@@ -189,6 +240,7 @@ public class ProgrammingExerciseGitDiffReportService {
                 gitDiffEntry.setGitDiffReport(report);
             }
             report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
+
             return report;
         }
     }

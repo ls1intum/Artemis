@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
+import java.io.IOException;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
@@ -52,6 +53,34 @@ public class ProgrammingExerciseGitDiffReportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var report = gitDiffReportService.getOrCreateReportOfExercise(exercise);
+
+        return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report/{submissionId2}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ProgrammingExerciseGitDiffReport> getGitDiffReportForSubmissions(@PathVariable long exerciseId, @PathVariable long submissionId1,
+            @PathVariable long submissionId2) throws GitAPIException, IOException {
+        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} and submission {} of exercise {}", submissionId1, submissionId2, exerciseId);
+
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        var report = gitDiffReportService.createReportForSubmissions(submissionId1, submissionId2);
+
+        return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report-with-template")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ProgrammingExerciseGitDiffReport> getGitDiffReportForSubmissionWithTemplate(@PathVariable long exerciseId, @PathVariable long submissionId1)
+            throws GitAPIException, IOException {
+        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} with the template of exercise {}", submissionId1, exerciseId);
+
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submissionId1);
 
         return ResponseEntity.ok(report);
     }
