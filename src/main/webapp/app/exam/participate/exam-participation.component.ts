@@ -23,7 +23,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
