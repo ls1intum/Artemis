@@ -374,6 +374,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLecturePdfAttachmentsMerged_NoAccessToUnreleasedUnits() throws Exception {
+        // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
 
         adjustReleaseDateToFuture(lecture);
@@ -393,6 +394,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLecturePdfAttachmentsMerged_correctOrder() throws Exception {
+        // The test setup needs elevated privileges, we later switch to a student for the test execution
         Lecture lecture = createLectureWithLectureUnits();
 
         // Change order of units
