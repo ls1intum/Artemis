@@ -99,7 +99,11 @@ public class LectureUnitProcessingService {
     /**
      * Removes the break slides or solution slides from the given document.
      *
-     * @param document document to remove break slides from
+     * @param document                    document to remove break slides from
+     * @param removeBreakSlides           true, if the break slides should be removed
+     * @param removeBreakSlidesKeyword    the keyword that identifies a break slide
+     * @param removeSolutionSlides        true, if the example solution slides should be removed
+     * @param removeSolutionSlidesKeyword the keyword that identifies a example solution slide
      */
     private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyword, boolean removeSolutionSlides,
             String removeSolutionSlidesKeyword) {
@@ -115,10 +119,10 @@ public class LectureUnitProcessingService {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (breakSlideContainsKeyword(slideText, removeBreakSlidesKeyword) && removeBreakSlides) {
+                if (slideContainsKeyword(slideText, removeBreakSlidesKeyword) && removeBreakSlides) {
                     document.removePage(index);
                 }
-                else if (solutionSlideContainsKeyword(slideText, removeSolutionSlidesKeyword) && removeSolutionSlides) {
+                else if (slideContainsKeyword(slideText, removeSolutionSlidesKeyword) && removeSolutionSlides) {
                     document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -130,12 +134,8 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean breakSlideContainsKeyword(String slideText, String keyword) {
+    private boolean slideContainsKeyword(String slideText, String keyword) {
         return slideText.contains(keyword);
-    }
-
-    private boolean solutionSlideContainsKeyword(String slideText, String keyword) {
-        return slideText.contains("Example solution");
     }
 
     /**

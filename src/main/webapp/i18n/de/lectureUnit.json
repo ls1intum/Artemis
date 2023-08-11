@@ -126,11 +126,11 @@
                 "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "removeBreakSlide": "Entferne Pausenfolien",
-                "removeBreakSlideTooltip": "Folien, die 'Break' enthalten, werden entfernt.",
-                "removeBreakSlideInfo": "Alle Pausenfolien werden aus allen Einheiten entfernt.",
-                "removeSolutionSlide": "Folien mit Beispiellösungen entfernen",
-                "removeSolutionSlideTooltip": "Folien, die 'Example Solution' enthalten, werden entfernt.",
-                "removeSolutionSlideInfo": "Alle Folien mit Beispiellösungen werden entfernt.",
+                "removeBreakSlideTooltip": "Pausenfolien, die das Stichwort enthalten, werden entfernt.",
+                "removeBreakSlideInfo": "Alle Pausenfolien mit dem folgenden Stichwort werden aus allen Einheiten entfernt.",
+                "removeSolutionSlide": "Entferne Folien mit Beispiellösungen",
+                "removeSolutionSlideTooltip": "Folien mit Beispiellösungen, die das Stichwort enthalten, werden entfernt.",
+                "removeSolutionSlideInfo": "Alle Folien mit Beispiellösungen mit dem folgenden Stichwort werden entfernt.",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
                     "empty": {
