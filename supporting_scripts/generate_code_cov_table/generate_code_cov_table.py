@@ -84,7 +84,7 @@ def get_changed_files(branch_name, base_branch_name="origin/develop"):
             'D': 'deleted',
             'M': 'modified',
             'R': 'renamed'
-        }.get(diff.change_type, 'Unknown')
+        }.get(diff.change_type, 'unknown')
 
     return file_changes
 
