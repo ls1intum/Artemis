@@ -177,7 +177,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 2);
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
