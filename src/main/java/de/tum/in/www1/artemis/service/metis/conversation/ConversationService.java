@@ -128,7 +128,7 @@ public class ConversationService {
         var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
         conversationsOfUser.addAll(filteredChannels);
 
-        var conversationIds = conversationsOfUser.stream().map(Conversation::getId).collect(Collectors.toList());
+        var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
         var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
                 .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
         var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
