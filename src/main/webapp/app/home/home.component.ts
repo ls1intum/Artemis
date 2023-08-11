@@ -100,7 +100,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     /**
      * Initializes the component with the required information received from the server.
      * @param profileInfo The information from the server how logins should be handled.
-     * @private
      */
     private initializeWithProfileInfo(profileInfo: ProfileInfo) {
         this.profileInfo = profileInfo;
@@ -180,7 +179,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     /**
      * Handle a successful user login.
-     * @private
      */
     private handleLoginSuccess() {
         this.authenticationError = false;
@@ -201,7 +199,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     /**
      * Handle special login procedures when inside the Orion plugin.
-     * @private
      */
     private handleOrionLogin() {
         if (!isOrion) {

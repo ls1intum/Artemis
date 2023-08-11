@@ -529,7 +529,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Checks if there is a manual result and the user is the assessor. If there is no manual result, then the user is the assessor.
      * Checks if the user is at least instructor in course.
-     * @private
      */
     private checkPermissions() {
         if (this.manualResult?.assessor) {
