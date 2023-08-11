@@ -599,6 +599,8 @@ export class CourseUpdateComponent implements OnInit {
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
+
+    protected readonly FeatureToggle = FeatureToggle;
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

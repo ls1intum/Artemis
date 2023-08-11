@@ -35,6 +35,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -84,6 +85,7 @@ describe('Course Management Update Component', () => {
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
+        course.learningPathsEnabled = true;
 
         const parentRoute = {
             data: of({ course }),
@@ -111,6 +113,7 @@ describe('Course Management Update Component', () => {
                 MockComponent(ColorSelectorComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
+                MockDirective(FeatureToggleHideDirective),
                 MockPipe(RemoveKeysPipe),
             ],
         })
@@ -182,6 +185,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
+            expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
         }));
     });
 
