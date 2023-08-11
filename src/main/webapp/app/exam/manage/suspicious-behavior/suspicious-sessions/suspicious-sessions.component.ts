@@ -11,9 +11,6 @@ export class SuspiciousSessionsComponent implements OnInit {
     @Input() suspiciousSessions: SuspiciousExamSessions;
     suspiciousFingerprint = false;
     suspiciousIpAddress = false;
-    suspiciousUserAgent = false;
-    suspiciousReasonsString: string;
-
     ngOnInit(): void {
         this.suspiciousFingerprint = this.isSuspiciousFor(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
         this.suspiciousIpAddress = this.isSuspiciousFor(SuspiciousSessionReason.SAME_IP_ADDRESS);

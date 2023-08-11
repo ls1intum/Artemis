@@ -118,10 +118,10 @@ public class PlagiarismService {
         var plagiarismSubmissionB = comparison.getSubmissionB();
         var submissionA = submissionRepository.findById(plagiarismSubmissionA.getSubmissionId()).orElseThrow();
         var submissionB = submissionRepository.findById(plagiarismSubmissionB.getSubmissionId()).orElseThrow();
-        if (userForSubmissionNotDeleted(submissionA)) {
+        if (!userForSubmissionDeleted(submissionA)) {
             submissionsWithoutDeletedUsers.add(plagiarismSubmissionA);
         }
-        if (userForSubmissionNotDeleted(submissionB)) {
+        if (!userForSubmissionDeleted(submissionB)) {
             submissionsWithoutDeletedUsers.add(plagiarismSubmissionB);
 
         }
@@ -133,11 +133,11 @@ public class PlagiarismService {
      * @param submission the submission to check
      * @return true if the user is NOT deleted, false otherwise
      */
-    private boolean userForSubmissionNotDeleted(Submission submission) {
+    private boolean userForSubmissionDeleted(Submission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             var user = userRepository.findOneByLogin(studentParticipation.getParticipant().getParticipantIdentifier()).orElseThrow();
-            return !user.isDeleted();
+            return user.isDeleted();
         }
-        return false;
+        return true;
     }
 }

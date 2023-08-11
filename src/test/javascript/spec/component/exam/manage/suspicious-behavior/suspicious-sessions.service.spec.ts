@@ -11,7 +11,6 @@ describe('SuspiciousSessionsService', () => {
         examSessions: [
             {
                 id: 1,
-                userAgent: 'user-agent',
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
                 suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
@@ -19,7 +18,6 @@ describe('SuspiciousSessionsService', () => {
             {
                 id: 2,
                 suspiciousReasons: [SuspiciousSessionReason, SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
-                userAgent: 'user-agent',
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
             },

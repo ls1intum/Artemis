@@ -47,12 +47,10 @@ describe('SuspiciousSessionsComponent', () => {
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeTrue();
         expect(component.suspiciousIpAddress).toBeTrue();
-        expect(component.suspiciousUserAgent).toBeTrue();
 
         component.suspiciousSessions = suspiciousSessions2;
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeFalse();
-        expect(component.suspiciousUserAgent).toBeFalse();
     });
 });

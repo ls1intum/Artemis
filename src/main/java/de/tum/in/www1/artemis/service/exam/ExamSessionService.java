@@ -80,7 +80,7 @@ public class ExamSessionService {
 
     /**
      * Retrieves all suspicious exam sessions for given exam id
-     * An exam session is suspicious if it has the same browser fingerprint or ip address or user agent and belongs to a different student exam
+     * An exam session is suspicious if it has the same browser fingerprint or ip address and belongs to a different student exam
      *
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
@@ -190,8 +190,8 @@ public class ExamSessionService {
                 var courseDTO = new CourseWithIdDTO(examSession.getStudentExam().getExam().getCourse().getId());
                 var examDTO = new ExamWithIdAndCourseDTO(examSession.getStudentExam().getExam().getId(), courseDTO);
                 var studentExamDTO = new StudentExamWithIdAndExamAndUserDTO(examSession.getStudentExam().getId(), examDTO, userDTO);
-                examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getBrowserFingerprintHash(), examSession.getUserAgent(), examSession.getIpAddress(),
-                        examSession.getSuspiciousReasons(), examSession.getCreatedDate(), studentExamDTO));
+                examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getBrowserFingerprintHash(), examSession.getIpAddress(), examSession.getSuspiciousReasons(),
+                        examSession.getCreatedDate(), studentExamDTO));
             }
             suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
         }

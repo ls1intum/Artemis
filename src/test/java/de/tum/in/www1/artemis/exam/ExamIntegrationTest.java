@@ -3426,10 +3426,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var secondStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session2.getStudentExam().getId(),
                 new ExamWithIdAndCourseDTO(session2.getStudentExam().getExam().getId(), new CourseWithIdDTO(session2.getStudentExam().getExam().getCourse().getId())),
                 new UserWithIdAndLoginDTO(session2.getStudentExam().getUser().getId(), session2.getStudentExam().getUser().getLogin()));
-        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getBrowserFingerprintHash(), session1.getUserAgent(), session1.getIpAddress(),
-                session1.getSuspiciousReasons(), session1.getCreatedDate(), firstStudentExamDTO);
-        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getBrowserFingerprintHash(), session2.getUserAgent(), session2.getIpAddress(),
-                session2.getSuspiciousReasons(), session2.getCreatedDate(), secondStudentExamDTO);
+        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getBrowserFingerprintHash(), session1.getIpAddress(), session1.getSuspiciousReasons(),
+                session1.getCreatedDate(), firstStudentExamDTO);
+        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getBrowserFingerprintHash(), session2.getIpAddress(), session2.getSuspiciousReasons(),
+                session2.getCreatedDate(), secondStudentExamDTO);
         expectedDTOs.add(firstExamSessionDTO);
         expectedDTOs.add(secondExamSessionDTO);
         return expectedDTOs;
