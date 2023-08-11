@@ -136,15 +136,15 @@ private excludedClassFilesForReport(classDirectories) {
     }))
 }
 
-//jacocoTestReport {
-//    reports {
-//        xml.required = true
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+    // we want to ignore some generated files in the domain folders
+//    afterEvaluate {
+//        excludedClassFilesForReport(classDirectories)
 //    }
-//    // we want to ignore some generated files in the domain folders
-////    afterEvaluate {
-////        excludedClassFilesForReport(classDirectories)
-////    }
-//}
+}
 
 //jacocoTestCoverageVerification {
 //    violationRules {
