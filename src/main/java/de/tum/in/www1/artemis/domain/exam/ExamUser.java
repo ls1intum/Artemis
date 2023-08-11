@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam;
 
+import java.nio.file.Path;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -27,7 +30,13 @@ import de.tum.in.www1.artemis.service.FileService;
 public class ExamUser extends AbstractAuditingEntity {
 
     @Transient
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
     private final transient FileService fileService = new FileService();
+
+    @Transient
+    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevSigningImagePath;
@@ -191,9 +200,12 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        signingImagePath = fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, signingImagePath, FilePathService.getExamUserSignatureFilePath(), getId());
-        studentImagePath = fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, studentImagePath, FilePathService.getStudentImageFilePath(), getId());
+        if (signingImagePath != null) {
+            signingImagePath = entityFileService.moveTempFileBeforeEntityPersistence(signingImagePath, FilePathService.getExamUserSignatureFilePath(), false);
+        }
+        if (studentImagePath != null) {
+            studentImagePath = entityFileService.moveTempFileBeforeEntityPersistence(studentImagePath, FilePathService.getStudentImageFilePath(), false);
+        }
     }
 
     /**
@@ -214,15 +226,15 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @PreUpdate
     public void onUpdate() {
-        // move file and delete old file if necessary
-        signingImagePath = fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, signingImagePath, FilePathService.getExamUserSignatureFilePath(), getId());
-        studentImagePath = fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, studentImagePath, FilePathService.getStudentImageFilePath(), getId());
+        signingImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevSigningImagePath, signingImagePath,
+                FilePathService.getExamUserSignatureFilePath(), false);
+        studentImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevStudentImagePath, studentImagePath,
+                FilePathService.getStudentImageFilePath(), false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevSigningImagePath, null, FilePathService.getExamUserSignatureFilePath(), getId());
-        fileService.manageFilesForUpdatedFilePath(prevStudentImagePath, null, FilePathService.getStudentImageFilePath(), getId());
+        fileService.schedulePathForDeletion(Path.of(prevSigningImagePath), 0);
+        fileService.schedulePathForDeletion(Path.of(prevStudentImagePath), 0);
     }
 }

@@ -488,8 +488,8 @@ public class ProgrammingExerciseTestService {
     void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
-        Path fileSystemPathEmbeddedFile1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
-        Path fileSystemPathEmbeddedFile2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        Path fileSystemPathEmbeddedFile1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
         // clean up to make sure the test doesn't pass because it has passed previously
         if (Files.exists(fileSystemPathEmbeddedFile1)) {
             Files.delete(fileSystemPathEmbeddedFile1);
@@ -505,7 +505,7 @@ public class ProgrammingExerciseTestService {
 
         request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+        assertThat(FilePathService.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
 
     }
@@ -1389,8 +1389,8 @@ public class ProgrammingExerciseTestService {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
-        Path embeddedFilePath1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
-        Path embeddedFilePath2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        Path embeddedFilePath1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path embeddedFilePath2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
         if (Files.exists(embeddedFilePath1)) {
             Files.delete(embeddedFilePath1);
         }
@@ -1495,9 +1495,9 @@ public class ProgrammingExerciseTestService {
                 ![matterhorn.jpg](/api/files/markdown/%s)
                 """, embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
-            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+            Files.write(FilePathService.getMarkdownFilePath().resolve(embeddedFileName1),
                     new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
-            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+            Files.write(FilePathService.getMarkdownFilePath().resolve(embeddedFileName2),
                     new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
         }
         exercise = programmingExerciseRepository.save(exercise);

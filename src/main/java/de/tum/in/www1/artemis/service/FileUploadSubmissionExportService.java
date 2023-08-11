@@ -28,10 +28,10 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         }
 
         // we need to get the 'real' file path here, the submission only has the api url path
-        String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
+        Path filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
         String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
 
-        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+        Path submissionPath = filePath.resolve(apiFilePathParts[apiFilePathParts.length - 1]);
 
         if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
             throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");

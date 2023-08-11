@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -46,7 +48,13 @@ public class Course extends DomainObject {
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
     @Transient
+    private transient FilePathService filePathService = new FilePathService();
+
+    @Transient
     private transient FileService fileService = new FileService();
+
+    @Transient
+    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevCourseIcon;
@@ -663,8 +671,9 @@ public class Course extends DomainObject {
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        if (courseIcon != null) {
+            courseIcon = entityFileService.moveTempFileBeforeEntityPersistence(courseIcon, FilePathService.getCourseIconFilePath(), false);
+        }
     }
 
     @PostPersist
@@ -678,13 +687,15 @@ public class Course extends DomainObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        courseIcon = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, FilePathService.getCourseIconFilePath(), getId());
+        if (prevCourseIcon == null) {
+            return;
+        }
+        fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
     }
 
     @Override

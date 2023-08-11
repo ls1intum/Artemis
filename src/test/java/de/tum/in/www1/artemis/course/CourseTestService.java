@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.DayOfWeek;
@@ -134,6 +135,9 @@ public class CourseTestService {
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -1494,8 +1498,8 @@ public class CourseTestService {
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
-            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "numberOfInstructorsTransient", "numberOfStudentsTransient",
-                    "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
+            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "filePathService", "entityFileService", "numberOfInstructorsTransient",
+                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
@@ -3106,21 +3110,18 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
 
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course savedCourse = courseRepo.save(course);
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
-        String iconPath = fileService.handleSaveFile(iconFile, false, false);
-        iconPath = fileService.manageFilesForUpdatedFilePath(null, iconPath, FilePathService.getCourseIconFilePath(), course.getId());
-        course.setCourseIcon(iconPath);
-        course = courseRepo.save(course);
-        iconPath = iconPath.replace(Constants.FILEPATH_ID_PLACEHOLDER, course.getId().toString());
-        assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
+        Course savedCourseWithFile = request.putWithMultipartFile("/api/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
+        Path path = filePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
 
-        course.setCourseIcon(null);
-        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK, null);
+        savedCourseWithFile.setCourseIcon(null);
+        request.putWithMultipartFile("/api/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
 
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
-        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
+        assertThat(path.toFile()).as("course icon file was deleted correctly").doesNotExist();
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {

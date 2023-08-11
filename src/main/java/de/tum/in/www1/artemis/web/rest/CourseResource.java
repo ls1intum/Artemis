@@ -222,7 +222,7 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
+            String pathString = fileService.handleSaveFile(file, false, false).toString();
             courseUpdate.setCourseIcon(pathString);
         }
 

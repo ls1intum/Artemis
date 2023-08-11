@@ -122,7 +122,7 @@ public class AdminCourseResource {
         courseService.createOrValidateGroups(course);
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
+            String pathString = fileService.handleSaveFile(file, false, false).toString();
             course.setCourseIcon(pathString);
         }
 

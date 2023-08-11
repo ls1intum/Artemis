@@ -285,7 +285,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
         var dataExport = initDataExport(state);
-        doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyInt());
+        doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyInt());
         dataExportService.deleteDataExportAndSetDataExportState(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         if (state == DataExportState.DOWNLOADED) {
@@ -294,7 +294,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         else {
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
         }
-        verify(fileService).scheduleForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+        verify(fileService).schedulePathForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
     }
 
     @Test

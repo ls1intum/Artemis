@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.dataexport;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -137,14 +136,14 @@ public class DataExportExerciseCreationService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
         List<String> exportRepoErrors = new ArrayList<>();
+
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
         // --> we can delete it after use
-        var tempRepoWorkingDir = fileService.getTemporaryUniquePath(repoClonePath, 10);
+        var tempRepoWorkingDir = fileService.getTemporaryUniqueSubfolderPath(repoClonePath, 10);
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
-
     }
 
     /**
@@ -331,9 +330,9 @@ public class DataExportExerciseCreationService {
         }
     }
 
-    private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
+    private void copyFileUploadSubmissionFile(Path submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         try {
-            FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
+            FileUtils.copyDirectory(submissionFilePath.toFile(), outputDir.toFile());
         }
         catch (IOException exception) {
             log.info("Cannot include submission for file upload exercise stored at {}", submissionFilePath);

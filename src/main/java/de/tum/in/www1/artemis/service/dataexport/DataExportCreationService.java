@@ -155,7 +155,7 @@ public class DataExportCreationService {
         }
         dataExport = dataExportRepository.save(dataExport);
         Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
-        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
+        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 30);
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);
         return workingDirectory;

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -28,7 +29,13 @@ import de.tum.in.www1.artemis.service.FileService;
 public class Attachment extends DomainObject implements Serializable {
 
     @Transient
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
     private final transient FileService fileService = new FileService();
+
+    @Transient
+    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevLink;
@@ -97,7 +104,17 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PrePersist
     public void beforeCreate() {
-        handleFileChange();
+        if (link == null) {
+            return;
+        }
+        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
+            Path targetFolder = FilePathService.getLectureAttachmentFilePath().resolve(getLecture().getId().toString());
+            link = entityFileService.moveTempFileBeforeEntityPersistenceWithId(link, targetFolder, true, getLecture().getId());
+        }
+        else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
+            Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(getAttachmentUnit().getId().toString());
+            link = entityFileService.moveTempFileBeforeEntityPersistenceWithId(link, targetFolder, true, getAttachmentUnit().getId());
+        }
     }
 
     /**
@@ -121,19 +138,13 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PreUpdate
     public void onUpdate() {
-        handleFileChange();
-    }
-
-    private void handleFileChange() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
-            // move file and delete old file if necessary
-            var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), getLecture().getId().toString()).toString();
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, targetFolder, getLecture().getId(), true);
+            Path targetFolder = FilePathService.getLectureAttachmentFilePath().resolve(getLecture().getId().toString());
+            link = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getLecture().getId(), prevLink, link, targetFolder, true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
-            // move file and delete old file if necessary
-            var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString()).toString();
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, targetFolder, getAttachmentUnit().getId(), true);
+            Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(getAttachmentUnit().getId().toString());
+            link = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getAttachmentUnit().getId(), prevLink, link, targetFolder, true);
         }
     }
 
@@ -143,16 +154,10 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PostRemove
     public void onDelete() {
-        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
-            // delete old file if necessary
-            var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), getLecture().getId().toString()).toString();
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, targetFolder, getLecture().getId(), true);
+        if (prevLink == null || attachmentType != AttachmentType.FILE) {
+            return;
         }
-        else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
-            // delete old file if necessary
-            var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString()).toString();
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, targetFolder, getAttachmentUnit().getId(), true);
-        }
+        fileService.schedulePathForDeletion(Path.of(prevLink), 0);
     }
 
     public String getName() {

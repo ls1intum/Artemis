@@ -96,7 +96,8 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
 
         assertThat(actualAttachment.getName()).isEqualTo("new name");
-        var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course", "lecture.attachments" };
+        var ignoringFields = new String[] { "name", "fileService", "filePathService", "entityFileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course",
+                "lecture.attachments" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
     }

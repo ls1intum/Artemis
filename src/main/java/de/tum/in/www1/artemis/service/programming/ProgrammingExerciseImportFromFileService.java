@@ -88,7 +88,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
-            fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
+            fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return importedProgrammingExercise;
     }
@@ -105,8 +105,8 @@ public class ProgrammingExerciseImportFromFileService {
             return;
         }
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
-            for (var file : embeddedFiles.toList()) {
-                var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
+            for (Path file : embeddedFiles.toList()) {
+                Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
                 // we need this check because the detection if a file exists of Files.copy seems not to work properly
                 if (!Files.exists(targetPath)) {
                     Files.copy(file, targetPath);
@@ -133,7 +133,7 @@ public class ProgrammingExerciseImportFromFileService {
 
     private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
         for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
     }
 

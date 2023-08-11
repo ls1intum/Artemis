@@ -71,19 +71,19 @@ public abstract class SubmissionExportService {
      * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = fileService.getTemporaryUniquePath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         try {
             return exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
         }
         catch (IOException e) {
-            log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e);
+            log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e.toString());
             return Optional.empty();
         }
     }
 
     /**
      * Exports student submissions to a zip file for an exercise.
-     *
+     * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -138,7 +138,7 @@ public abstract class SubmissionExportService {
 
     /**
      * Creates a zip file from a list of participations for an exercise.
-     *
+     * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *

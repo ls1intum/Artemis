@@ -138,7 +138,7 @@ public class DataExportService {
         if (dataExport.getFilePath() == null) {
             return;
         }
-        fileService.scheduleForDeletion(Path.of(dataExport.getFilePath()), 2);
+        fileService.schedulePathForDeletion(Path.of(dataExport.getFilePath()), 2);
         if (dataExport.getDataExportState().hasBeenDownloaded()) {
             dataExport.setDataExportState(DataExportState.DOWNLOADED_DELETED);
         }

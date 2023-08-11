@@ -111,7 +111,7 @@ public class FileResource {
     @EnforceAtLeastTutor
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, false);
+        String responsePath = fileService.handleSaveFile(file, keepFileName, false).toString();
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -147,7 +147,7 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, true);
+        String responsePath = fileService.handleSaveFile(file, keepFileName, true).toString();
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -346,7 +346,7 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
+        return buildFileResponse(FilePathService.getLectureAttachmentFilePath().resolve(lecture.getId().toString()), filename);
     }
 
     /**
@@ -371,8 +371,8 @@ public class FileResource {
 
         List<String> attachmentLinks = lectureAttachments.stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .map(unit -> Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
-                        .toString())
+                .map(unit -> FilePathService.getAttachmentUnitFilePath()
+                        .resolve(Path.of(String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))).toString())
                 .toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
@@ -407,7 +407,7 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()), filename);
     }
 
     /**
@@ -439,8 +439,8 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(),
-                    fileName, true);
+                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
+                    true);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
@@ -454,7 +454,7 @@ public class FileResource {
      * @param filename the name of the file
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename) {
         return buildFileResponse(path, filename, false);
     }
 
@@ -466,9 +466,9 @@ public class FileResource {
      * @param cache    true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(String path, String filename, boolean cache) {
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
         try {
-            var actualPath = Path.of(path, filename).toString();
+            var actualPath = path.resolve(filename);
             var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
@@ -527,10 +527,10 @@ public class FileResource {
      * @param path the path for the file to read
      * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
-    private ResponseEntity<byte[]> responseEntityForFilePath(String path, String filename) {
+    private ResponseEntity<byte[]> responseEntityForFilePath(Path path, String filename) {
         sanitizeFilenameElseThrow(filename);
         try {
-            var actualPath = Path.of(path, filename).toString();
+            var actualPath = path.resolve(filename);
             var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();

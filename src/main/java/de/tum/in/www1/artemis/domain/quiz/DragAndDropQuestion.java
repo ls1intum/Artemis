@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.nio.file.Path;
 import java.util.*;
 
 import javax.persistence.*;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -26,7 +28,13 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
     private transient FileService fileService = new FileService();
+
+    @Transient
+    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevBackgroundFilePath;
@@ -162,8 +170,9 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+        if (backgroundFilePath != null) {
+            backgroundFilePath = entityFileService.moveTempFileBeforeEntityPersistence(backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), false);
+        }
     }
 
     @PostPersist
@@ -176,14 +185,13 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     @PreUpdate
     public void onUpdate() {
-        // move file and delete old file if necessary
-        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+        backgroundFilePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevBackgroundFilePath, backgroundFilePath,
+                FilePathService.getDragAndDropBackgroundFilePath(), false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, FilePathService.getDragAndDropBackgroundFilePath(), getId());
+        fileService.schedulePathForDeletion(Path.of(prevBackgroundFilePath), 0);
     }
 
     /**

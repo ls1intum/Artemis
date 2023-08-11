@@ -406,7 +406,7 @@ public class ProgrammingExerciseRepositoryService {
             projectFileFileName = POM_XML;
         }
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath().toString(), activeFeatures);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -467,7 +467,7 @@ public class ProgrammingExerciseRepositoryService {
 
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath().toString(), sectionsMap);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -566,8 +566,7 @@ public class ProgrammingExerciseRepositoryService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository).toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
-                        programmingExercise.getPackageFolderName());
+                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
@@ -580,7 +579,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 
     /**
@@ -592,18 +591,18 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException Thrown if accessing repository files fails.
      */
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
-        final String repositoryLocalPath = getRepoAbsoluteLocalPath(repository).toString();
+        final Path repositoryLocalPath = getRepoAbsoluteLocalPath(repository);
         final String packageName = programmingExercise.getPackageName();
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
 
             replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
             fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
 
             replacements.put(APP_NAME_PLACEHOLDER, packageName);
         }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -24,14 +26,18 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     private final ChannelService channelService;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+            FilePathService filePathService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
         this.channelService = channelService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -100,8 +106,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                dndQuestion
-                        .setBackgroundFilePath(fileService.copyExistingFileToTarget(dndQuestion.getBackgroundFilePath(), FilePathService.getDragAndDropBackgroundFilePath(), null));
+                Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
+                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+                dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
 
                 for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
                     dropLocation.setId(null);
@@ -112,7 +119,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     dragItem.setQuestion(dndQuestion);
                     if (dragItem.getPictureFilePath() != null) {
                         // Need to copy the file and get a new path, same as above
-                        dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
+                        Path oldDragItemPath = filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()));
+                        Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
+                        dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
                     }
                 }
                 for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {

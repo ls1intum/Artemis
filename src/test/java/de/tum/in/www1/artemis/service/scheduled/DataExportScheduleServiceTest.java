@@ -75,7 +75,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
         createDataExportWithState(DataExportState.REQUESTED);
         createDataExportWithState(DataExportState.REQUESTED);
         // first data export creation should fail, the subsequent ones should succeed
-        doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
         verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
@@ -91,7 +91,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     @MethodSource("provideCreationDatesAndExpectedToDelete")
     void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
         var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
-        doNothing().when(fileService).scheduleForDeletion(any(), anyLong());
+        doNothing().when(fileService).schedulePathForDeletion(any(), anyLong());
         var dataExportId = dataExport.getId();
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExportId);

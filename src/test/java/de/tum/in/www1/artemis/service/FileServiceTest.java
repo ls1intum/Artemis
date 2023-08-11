@@ -24,7 +24,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
 class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -104,7 +103,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java").toString());
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java"));
         size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
     }
@@ -122,7 +121,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(136);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java").toString());
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java"));
         size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(129);
     }
@@ -140,7 +139,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Charset charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
-        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java").toString());
+        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java"));
         charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
@@ -156,7 +155,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements);
+        fileService.replaceVariablesInFileRecursive(Path.of(pomXml.getParent()), replacements);
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).doesNotContain("${exerciseName}").contains("SomeCoolExerciseName");
@@ -173,7 +172,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements, List.of("pom.xml"));
+        fileService.replaceVariablesInFileRecursive(Path.of(pomXml.getParent()), replacements, List.of("pom.xml"));
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -223,84 +222,20 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testManageFilesForUpdatedFilePath_shouldNotThrowException() {
-        assertThatNoException().isThrownBy(() -> fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true));
-    }
-
-    @Test
-    void testActualPathForPublicPath() {
-        String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
-    }
-
-    @Test
-    void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
-        String path = fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises");
-        assertThat(path).isNull();
-    }
-
-    @Test
-    void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-upload-exercises"))
-                .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
-
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-asd-exercises"))
-                .withMessageStartingWith("Unknown Filepath:");
-    }
-
-    @Test
-    void testPublicPathForActualTempFilePath() {
-        Path actualPath = Path.of(FilePathService.getTempFilePath(), "test");
-        String publicPath = fileService.publicPathForActualPath(actualPath.toString(), 1L);
-        assertThat(publicPath).isEqualTo(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName());
-    }
-
-    @Test
-    void testPublicPathForActualPath_shouldReturnNull() {
-        String otherPath = fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L);
-        assertThat(otherPath).isNull();
-    }
-
-    @Test
-    void testPublicPathForActualPathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
-            Path actualFileUploadPath = Path.of(FilePathService.getFileUploadExercisesFilePath());
-            fileService.publicPathForActualPathOrThrow(actualFileUploadPath.toString(), 1L);
-
-        }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
-
-        assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> fileService.publicPathForActualPathOrThrow(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L))
-                .withMessageStartingWith("Unknown Filepath:");
-    }
-
-    @Test
     void testReplaceVariablesInFileRecursive_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()))
+        assertThatRuntimeException().isThrownBy(() -> fileService.replaceVariablesInFileRecursive(Path.of("some-path"), new HashMap<>()))
                 .withMessageEndingWith("should be replaced but the directory does not exist.");
     }
 
     @Test
     void testNormalizeLineEndingsDirectory_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.normalizeLineEndingsDirectory("some-path"))
+        assertThatRuntimeException().isThrownBy(() -> fileService.normalizeLineEndingsDirectory(Path.of("some-path")))
                 .withMessageEndingWith("should be normalized but the directory does not exist.");
     }
 
     @Test
     void testConvertToUTF8Directory_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.convertToUTF8Directory("some-path"))
+        assertThatRuntimeException().isThrownBy(() -> fileService.convertFilesInDirectoryToUtf8(Path.of("some-path")))
                 .withMessageEndingWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
@@ -308,16 +243,10 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testGetUniqueTemporaryPath_shouldNotThrowException() {
         assertThatNoException().isThrownBy(() -> {
-            var uniquePath = fileService.getTemporaryUniquePath(Path.of("some-random-path-which-does-not-exist"), 1);
+            var uniquePath = fileService.getTemporaryUniqueSubfolderPath(Path.of("some-random-path-which-does-not-exist"), 1);
             assertThat(uniquePath.toString()).isNotEmpty();
-            verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(1L));
+            verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(1L));
         });
-    }
-
-    @Test
-    void testCreateDirectory_shouldNotThrowException() {
-        Path path = Path.of("some-random-path-which-does-not-exist");
-        assertThatNoException().isThrownBy(() -> fileService.createDirectory(path));
     }
 
     @Test

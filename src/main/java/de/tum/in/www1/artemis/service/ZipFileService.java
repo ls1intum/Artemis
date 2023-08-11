@@ -62,7 +62,7 @@ public class ZipFileService {
      */
     public void createTemporaryZipFile(Path zipFilePath, List<Path> paths, long deleteDelayInMinutes) throws IOException {
         createZipFile(zipFilePath, paths);
-        fileService.scheduleForDeletion(zipFilePath, deleteDelayInMinutes);
+        fileService.schedulePathForDeletion(zipFilePath, deleteDelayInMinutes);
     }
 
     /**

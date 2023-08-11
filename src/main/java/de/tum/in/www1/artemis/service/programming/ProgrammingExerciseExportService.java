@@ -116,7 +116,7 @@ public class ProgrammingExerciseExportService {
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
-        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path exportDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -194,7 +194,7 @@ public class ProgrammingExerciseExportService {
             String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
             String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
             String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-            Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
+            Path imageFilePath = FilePathService.getMarkdownFilePath().resolve(fileName);
             Path imageExportPath = embeddedFilesDir.resolve(fileName);
             // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
             if (!Files.exists(imageExportPath)) {
@@ -251,9 +251,8 @@ public class ProgrammingExerciseExportService {
         List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
 
         // Export the auxiliary repositories and add them to list
-        auxiliaryRepositories.forEach(auxiliaryRepository -> {
-            pathsToBeZipped.add(exportInstructorAuxiliaryRepositoryForExercise(exercise.getId(), auxiliaryRepository, outputDir, exportErrors).map(File::toPath).orElse(null));
-        });
+        auxiliaryRepositories.forEach(auxiliaryRepository -> pathsToBeZipped
+                .add(exportInstructorAuxiliaryRepositoryForExercise(exercise.getId(), auxiliaryRepository, outputDir, exportErrors).map(File::toPath).orElse(null)));
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
@@ -301,7 +300,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
 
@@ -316,7 +315,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
-        Path uniquePath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path uniquePath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
         return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
@@ -331,7 +330,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
         return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, exportErrors);
     }
 
@@ -500,7 +499,7 @@ public class ProgrammingExerciseExportService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow();
 
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 10);
+        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 10);
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
@@ -565,7 +564,7 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getTemporaryUniquePath(outputDir, 5);
+        var repositoryDir = fileService.getTemporaryUniqueSubfolderPath(outputDir, 5);
         Path localRepoPath;
 
         // Checkout the repository
@@ -657,8 +656,8 @@ public class ProgrammingExerciseExportService {
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
-                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
-                    fileService.convertToUTF8Directory(repository.getLocalPath().toString());
+                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
+                    fileService.convertFilesInDirectoryToUtf8(repository.getLocalPath());
                 }
                 catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());

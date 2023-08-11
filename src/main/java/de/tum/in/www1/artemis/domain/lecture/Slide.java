@@ -7,7 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
 import javax.persistence.PostRemove;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -19,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -28,7 +28,13 @@ import de.tum.in.www1.artemis.service.FileService;
 public class Slide extends DomainObject {
 
     @Transient
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
     private final transient FileService fileService = new FileService();
+
+    @Transient
+    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevSlideImagePath;
@@ -82,33 +88,21 @@ public class Slide extends DomainObject {
 
     @PrePersist
     public void beforeCreate() {
-        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), false);
-    }
-
-    /**
-     * Will be called after the entity is persisted (saved).
-     * Manages files by taking care of file system changes for this entity.
-     */
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (slideImagePath != null && slideImagePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            slideImagePath = slideImagePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getAttachmentUnit().getId().toString());
+        if (slideImagePath == null) {
+            return;
         }
+        Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
+        slideImagePath = entityFileService.moveTempFileBeforeEntityPersistenceWithId(slideImagePath, targetFolder, false, (long) getSlideNumber());
     }
 
     @PreUpdate
     public void onUpdate() {
-        // move file and delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), false);
+        Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
+        slideImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence((long) getSlideNumber(), prevSlideImagePath, slideImagePath, targetFolder, false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
-        fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, (long) getSlideNumber(), false);
+        fileService.schedulePathForDeletion(Path.of(prevSlideImagePath), 0);
     }
 }

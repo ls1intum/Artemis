@@ -126,7 +126,7 @@ public class CourseExamExportService {
         var exportedCourse = createCourseZipFile(courseZip, filesToZip, tmpDir, exportErrors);
 
         // Delete temporary directory used for zipping
-        fileService.scheduleForDirectoryDeletion(tmpDir, 1);
+        fileService.scheduleDirectoryPathForRecursiveDeletion(tmpDir, 1);
 
         var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
         notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -322,8 +321,8 @@ public class QuizExerciseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
-        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "drag_and_drop_background.jpg");
-        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "drag_item.jpg");
+        var backgroundPathInFileSystem = FilePathService.getDragAndDropBackgroundFilePath().resolve("drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = FilePathService.getDragItemFilePath().resolve("drag_item.jpg");
         if (Files.exists(backgroundPathInFileSystem)) {
             Files.delete(backgroundPathInFileSystem);
         }
