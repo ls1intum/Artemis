@@ -55,9 +55,8 @@ public class QuizSubmissionWebsocketService {
             // log.info("WS.Inbound: Sent quiz submission (async) back to user {} in quiz {} after {} µs ", principal.getName(), exerciseId, (System.nanoTime() - start) / 1000);
         }
         catch (QuizSubmissionException ex) {
-            // send error message over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
-            new Thread(() -> websocketMessagingService.sendMessageToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission",
-                    new WebsocketError(ex.getMessage()))).start();
+            // send error message over websocket (use Async to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
+            websocketMessagingService.sendMessageToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage()));
         }
     }
 
