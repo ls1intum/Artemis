@@ -141,9 +141,9 @@ jacocoTestReport {
         xml.required = true
     }
     // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
+//    afterEvaluate {
+//        excludedClassFilesForReport(classDirectories)
+//    }
 }
 
 //jacocoTestCoverageVerification {
