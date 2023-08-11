@@ -7,6 +7,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { NgModel } from '@angular/forms';
+import { ProfileToggleDirective } from 'app/shared/profile-toggle/profile-toggle.directive';
 
 describe('Course Management Exercises Search Component', () => {
     let comp: CourseManagementExercisesSearchComponent;
@@ -21,6 +22,7 @@ describe('Course Management Exercises Search Component', () => {
                 MockComponent(CourseExerciseCardComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(NgModel),
+                MockDirective(ProfileToggleDirective),
             ],
             providers: [],
         }).compileComponents();
