@@ -10,7 +10,6 @@ export abstract class ActiveStudentsChart {
      * sets values for the offset attributes of this directive
      * @param course the corresponding course
      * @param normalTimeSpan the amount of weeks a view of a chart normally contains
-     * @protected
      */
     protected determineDisplayedPeriod(course: Course, normalTimeSpan: number): void {
         const now = dayjs();
@@ -28,7 +27,6 @@ export abstract class ActiveStudentsChart {
      * @param courseStartDate the start date of a course
      * @param currentDate the current date
      * @param normalTimeSpan the normal time span an active students line chart displays
-     * @private
      */
     private handleCourseStartDate(courseStartDate: dayjs.Dayjs, currentDate: dayjs.Dayjs, normalTimeSpan: number): void {
         if (currentDate.isBefore(courseStartDate)) {
@@ -42,7 +40,6 @@ export abstract class ActiveStudentsChart {
      * Helper method that handles the existence of a course end date and its side effects if a start date exists as well
      * @param course the corresponding course
      * @param currentDate the current date
-     * @private
      */
     private handleCourseEndDate(course: Course, currentDate: dayjs.Dayjs): void {
         this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), currentDate);
@@ -56,7 +53,6 @@ export abstract class ActiveStudentsChart {
      * Note: The week of the most recent date is not included, e.g. date1: 01.05.22, date2: 9.05.22 returns 1
      * @param date1 the date that is assumed to be before date 2
      * @param date2 the date that is assumed to be the most recent date
-     * @protected
      */
     protected determineDifferenceBetweenIsoWeeks(date1: dayjs.Dayjs, date2: dayjs.Dayjs): number {
         const normalizedDate1 = date1.isoWeekday(1).hour(2).minute(0).second(0).millisecond(0);

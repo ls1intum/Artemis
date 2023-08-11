@@ -84,7 +84,6 @@ export class CreateTestRunModalComponent implements OnInit {
 
     /**
      * Removes the exerciseGroups from the exam which do not contain exercises
-     * @private
      */
     private ignoreEmptyExerciseGroups() {
         const exerciseGroupWithExercises: ExerciseGroup[] = [];
@@ -98,7 +97,6 @@ export class CreateTestRunModalComponent implements OnInit {
 
     /**
      * Sets up the working time form to display the default working time based on the exam dates
-     * @private
      */
     private initWorkingTimeForm() {
         const defaultWorkingTime = this.exam.endDate?.diff(this.exam.startDate, 'seconds');
