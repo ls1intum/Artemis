@@ -73,7 +73,6 @@ export class CourseExerciseService {
     /**
      * This method bundles recurring conversion steps for Course Exercise HttpResponses.
      * @param exercisesRes
-     * @private
      */
     private processExercisesHttpResponses(exercisesRes: HttpResponse<Exercise[]>): HttpResponse<Exercise[]> {
         this.convertExerciseResponseArrayDatesFromServer(exercisesRes);
