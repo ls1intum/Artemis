@@ -96,11 +96,11 @@ def filter_file_changes(file_changes):
     for file_name, change_type in file_changes.items():
         if file_name.startswith("src/main/webapp/app"):
             if file_name.endswith(".ts") and "module.ts" not in file_name:
-                client_file_changes[file_name[len("src/main/webapp/"):]]= change_type
+                client_file_changes[file_name[len("src/main/webapp/"):]] = change_type
                 continue
         elif file_name.startswith("src/main/java/de/tum/in/www1/artemis"):
             if file_name.endswith(".java"):
-                server_file_changes[file_name[len("src/main/java/"):]]= change_type
+                server_file_changes[file_name[len("src/main/java/"):]] = change_type
                 continue
         logging.debug(f"Skipping {file_name}")
     return client_file_changes, server_file_changes
