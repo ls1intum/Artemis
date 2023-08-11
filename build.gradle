@@ -178,6 +178,8 @@ diffCoverageReport {
         git.compareWith 'refs/remotes/origin/develop'
     }
 
+    classesDirs = jacocoTestReport.classDirectories
+
     reports {
         html = true
     }
