@@ -222,7 +222,7 @@ class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
+        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -459,7 +459,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
         localGit.add().addFilepattern(".").call();
-        localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
+        GitService.commit(localGit).setMessage("commit").setAuthor("user1", "email1").call();
 
         // Rest call
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
