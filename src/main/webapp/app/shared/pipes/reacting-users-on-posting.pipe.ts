@@ -32,9 +32,8 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * Manipulates the `reactingUsersString` variable taking into account the language, if the string has to be stripped,
      * and if the currently logged-in user is addressed directly ('you' instead of name)
      * @param {string[]} reactingUsers
-     * @private
      */
-    updateReactingUsersString(reactingUsers: string[]): string {
+    private updateReactingUsersString(reactingUsers: string[]): string {
         // determine if the list includes the currently logged-in user
         if (reactingUsers.includes(PLACEHOLDER_USER_REACTED)) {
             if (reactingUsers.length === 1) {
