@@ -22,7 +22,7 @@ class WebsocketConfigurationTest extends AbstractSpringIntegrationBambooBitbucke
         // Only quiz profile -> Do not forward quiz messages (because decoupling profile is not enabled)
         assertThat(WebsocketConfiguration.getTopicRelayPrefixes(Set.of("quiz"))).containsExactlyInAnyOrder("/topic");
 
-        // Quiz & lecture profile -> Do not forward quiz messages
+        // Quiz & decoupling profile -> Do not forward quiz messages
         assertThat(WebsocketConfiguration.getTopicRelayPrefixes(Set.of("decoupling", "quiz"))).containsExactlyInAnyOrder("/topic");
     }
 
