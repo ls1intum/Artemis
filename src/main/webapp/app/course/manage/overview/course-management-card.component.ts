@@ -18,6 +18,7 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
+    faNetworkWired,
     faPersonChalkboard,
     faSpinner,
     faTable,
@@ -66,6 +67,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faTable = faTable;
     faUserCheck = faUserCheck;
     faFlag = faFlag;
+    faNetworkWired = faNetworkWired;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
