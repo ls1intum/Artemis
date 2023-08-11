@@ -57,7 +57,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification diffCoverage | tee tests.log
     - name: Print failed tests
       if: failure()
       run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
@@ -66,6 +66,12 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
+      if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
+    - name: "Jacoco: Coverage Diff"
+      uses: actions/upload-artifact@v3
+      with:
+          path: build/reports/jacoco/diffCoverage/html
+          name: Server Test Coverage Difference
       if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
       uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac

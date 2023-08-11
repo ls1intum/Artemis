@@ -5,6 +5,10 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'com.github.form-com.diff-coverage-gradle:diff-coverage:0.9.4'
     }
 }
 
@@ -49,6 +53,7 @@ if (project.hasProperty("war")) {
 }
 
 apply plugin: "jacoco"
+apply plugin: "com.form.diff-coverage"
 
 idea {
     module {
@@ -166,6 +171,18 @@ jacocoTestCoverageVerification {
     }
 }
 check.dependsOn jacocoTestCoverageVerification
+
+diffCoverageReport {
+
+    diffSource {
+        git.compareWith 'refs/remotes/origin/develop'
+    }
+
+    reports {
+        html = true
+    }
+}
+diffCoverage.dependsOn += check
 
 configurations {
     providedRuntime
