@@ -124,7 +124,7 @@ def get_client_line_coverage(username, password, build_id, file_name, change_typ
         logging.error(f"Error accessing {file_report_url} with status code {response.status_code}")
         sys.exit(1)
 
-    return file_name, file_report_url, f"not found ({change_type})" if line_coverage is None else line_coverage
+    return file_name, file_report_url if line_coverage else None, f"not found ({change_type})" if line_coverage is None else line_coverage
 
 
 def get_server_line_coverage(username, password, build_id, file_name, change_type):
