@@ -21,7 +21,6 @@ describe('ProfileToggleService', () => {
         })
             .compileComponents()
             .then(() => {
-                service = TestBed.inject(ProfileToggleService);
                 profileToggleService = TestBed.inject(ProfileToggleService);
             });
 
