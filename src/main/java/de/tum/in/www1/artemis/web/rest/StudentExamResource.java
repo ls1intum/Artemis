@@ -242,7 +242,7 @@ public class StudentExamResource {
 
         // 2. DB Call: read
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
-        checkExamConfigElseThrow(studentExamFromClient, examId, courseId);
+        validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
 
         if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
@@ -299,7 +299,7 @@ public class StudentExamResource {
         }
         else {
             // those checks are good enough and less expensive, because they do not involve additional database queries
-            checkExamConfigElseThrow(studentExam, examId, courseId);
+            validateExamRequestParametersElseThrow(studentExam, examId, courseId);
         }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
@@ -318,7 +318,7 @@ public class StudentExamResource {
         return ResponseEntity.ok(studentExam);
     }
 
-    private void checkExamConfigElseThrow(StudentExam studentExam, Long examId, Long courseId) {
+    private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
         var exam = studentExam.getExam();
         if (!Objects.equals(exam.getId(), examId)) {
             log.error("examId of studentExam {} does not match the path variable {}", studentExam.getExam().getId(), examId);
@@ -635,11 +635,6 @@ public class StudentExamResource {
 
                 // Set up new participations for the Exercises and set initialisationDate to the startedDate
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
-
-                // Mark the student exam as started and save it
-                studentExam.setStarted(true);
-                studentExam.setStartedDate(startedDate);
-                studentExamRepository.save(studentExam);
             }
         }
         else {
@@ -648,11 +643,14 @@ public class StudentExamResource {
             if (studentExam.getStartedDate() == null) {
                 studentExam.setStartedDate(ZonedDateTime.now());
             }
-            var now = ZonedDateTime.now();
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(now);
-            studentExamRepository.startStudentExam(studentExam.getId(), now);
         }
+
+        // Mark the student exam as started with now as the start date
+        var now = ZonedDateTime.now();
+        studentExam.setStarted(true);
+        studentExam.setStartedDate(now);
+        // send those changes in a modifying query to the database
+        studentExamRepository.startStudentExam(studentExam.getId(), now);
 
         // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
