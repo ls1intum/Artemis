@@ -80,7 +80,7 @@
             "accessGroups": "Zugriffsrechte",
             "learningPaths": {
                 "label": "Lernpfade aktiviert",
-                "tooltip": "Ermöglicht es aus Kompetenzen und deren Aufgaben einen individuellen Lernpfad für Studierende zu generieren."
+                "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
             "onlineCourse": {
                 "title": "Onlinekurs",
