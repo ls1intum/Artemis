@@ -17,8 +17,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipationIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO.ParticipationIdDTO;
 
 /**
  * A ProgrammingSubmission.

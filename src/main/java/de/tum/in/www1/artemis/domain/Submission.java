@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipationIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO.ParticipationIdDTO;
 
 /**
  * A Submission.
