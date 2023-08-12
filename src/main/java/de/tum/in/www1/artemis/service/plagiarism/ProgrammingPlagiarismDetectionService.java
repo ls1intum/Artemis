@@ -19,16 +19,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.jplag.JPlag;
-import de.jplag.JPlagResult;
-import de.jplag.Language;
+import de.jplag.*;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
-import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
@@ -72,12 +68,14 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UrlService urlService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    private final TextPlagiarismResultConverter plagiarismResultConverter;
+
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+            PlagiarismResultRepository plagiarismResultRepository, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
+            UrlService urlService, TextPlagiarismResultConverter plagiarismResultConverter) {
         this.fileService = fileService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -85,6 +83,7 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
+        this.plagiarismResultConverter = plagiarismResultConverter;
     }
 
     /**
@@ -127,8 +126,7 @@ public class ProgrammingPlagiarismDetectionService {
             }
 
             log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
+            var textPlagiarismResult = plagiarismResultConverter.fromJplagResult(jPlagResult, programmingExercise);
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());

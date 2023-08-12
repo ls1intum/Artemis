@@ -334,17 +334,27 @@ public class GitService {
      */
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, InvalidPathException {
         var repoUrl = participation.getVcsRepositoryUrl();
-        String repoFolderName = repoUrl.folderNameForRepositoryUrl();
-
-        // Replace the exercise name in the repository folder name with the participation ID.
-        // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
-        String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
-        Path localPath = Path.of(targetPath, updatedRepoFolderName);
+        var updatedRepoFolderName = buildRepoFolderName(participation, repoUrl);
+        var localPath = Path.of(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
         repository.setParticipation(participation);
 
         return repository;
+    }
+
+    /**
+     * Replace the exercise name in the repository folder name with the participation ID and submission ID.
+     * This is necessary to be able to refer back to the correct participation after the JPlag detection run.
+     *
+     * @param participation Participation the remote repository belongs to.
+     * @param repoUrl       url of the remote repository
+     * @return name of the folder to check out the repository to
+     */
+    private static String buildRepoFolderName(ProgrammingExerciseParticipation participation, VcsRepositoryUrl repoUrl) {
+        var repoName = repoUrl.folderNameForRepositoryUrl();
+        var updatedName = "/" + participation.getId() + "-" + participation.findLatestSubmission().get().getId() + "-";
+        return repoName.replaceAll("/[a-zA-Z0-9]*-", updatedName);
     }
 
     /**
