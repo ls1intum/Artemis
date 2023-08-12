@@ -93,7 +93,7 @@ public class NotificationResource {
                     deactivatedTitles, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        log.info("Load notifications done in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("Load notifications for user {} done in {}", currentUser.getLogin(), TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }
