@@ -125,8 +125,8 @@
                                 min="0"
                                 max="100"
                                 id="plagiarism-minimum-size"
-                                name="textExercise.plagiarismChecksConfig.minimumSize"
-                                #textExercise.plagiarismChecksConfig.minimumSize="ngModel"
+                                name="programmingExercise.plagiarismChecksConfig.minimumSize"
+                                #programmingExercise.plagiarismChecksConfig.minimumSize="ngModel"
                                 [(ngModel)]="programmingExercise.plagiarismChecksConfig!.minimumSize"
                             />
                         </div>
@@ -135,38 +135,70 @@
             </div>
             <div class="form-group col-auto border border-warning p-3">
                 <div class="row">
-                    <div>
-                        <label jhiTranslate="artemisApp.exercise.continuousPlagiarismControl">Continuous Plagiarism Control</label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            placement="bottom auto"
-                            [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate"
-                        ></fa-icon>
-                        <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                    </div>
-                    <div class="plagiarism-option">
-                        <input
-                            type="checkbox"
-                            id="continuous_plagiarism_control_enabled"
-                            class="plagiarism-option-checkbox form-check-input"
-                            name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
-                            #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
-                            [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
-                        />
-                        <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
-                    </div>
-                    <div class="plagiarism-option">
-                        <input
-                            type="checkbox"
-                            id="continuous_plagiarism_control_post_due_date_checks_enabled"
-                            class="plagiarism-option-checkbox form-check-input"
-                            name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
-                            [disabled]="!programmingExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
-                            #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
-                            [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
-                        />
-                        <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlPostDueDateChecksEnabled">
-                            Run additional checks during the night after exercise's due date.
+                    <div class="row">
+                        <div class="col">
+                            <div>
+                                <label jhiTranslate="artemisApp.exercise.continuousPlagiarismControl">Continuous Plagiarism Control</label>
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    placement="bottom auto"
+                                    [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate"
+                                ></fa-icon>
+                                <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                            </div>
+                            <div class="plagiarism-option">
+                                <input
+                                    type="checkbox"
+                                    id="continuous_plagiarism_control_enabled"
+                                    class="plagiarism-option-checkbox form-check-input"
+                                    name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
+                                    #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
+                                    [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
+                                />
+                                <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">
+                                    Enabled Continuous Plagiarism Control
+                                </div>
+                            </div>
+                            <div class="plagiarism-option">
+                                <input
+                                    type="checkbox"
+                                    id="continuous_plagiarism_control_post_due_date_checks_enabled"
+                                    class="plagiarism-option-checkbox form-check-input"
+                                    name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
+                                    [disabled]="!programmingExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
+                                    #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
+                                    [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
+                                />
+                                <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlPostDueDateChecksEnabled">
+                                    Run additional checks during the night after exercise's due date.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <div>
+                                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetections"
+                                        >Minimum Size</label
+                                    >
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        placement="bottom auto"
+                                        [ngbTooltip]="'artemisApp.exercise.continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetectionsTooltip' | artemisTranslate"
+                                    ></fa-icon>
+                                </div>
+                                <input
+                                    type="number"
+                                    required
+                                    class="form-control"
+                                    min="0"
+                                    max="100"
+                                    id="continuous_plagiarism_control_detections_limit"
+                                    name="programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlDetectionsLimit"
+                                    [disabled]="!programmingExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
+                                    #programmingExercise.plagiarismChecksConfig.continuousPlagiarismControlDetectionsLimit="ngModel"
+                                    [(ngModel)]="programmingExercise.plagiarismChecksConfig!.continuousPlagiarismControlDetectionsLimit"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

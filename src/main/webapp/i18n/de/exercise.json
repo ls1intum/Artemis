@@ -53,6 +53,8 @@
             "continuousPlagiarismControl": "Kontinuierliche Plagiatskontrolle",
             "continuousPlagiarismControlEnabled": "Aktivieren Kontinuierliche Plagiatskontrolle",
             "continuousPlagiarismControlPostDueDateChecksEnabled": "Lasse die Abgaben in der Nacht nach der Einreichungsfrist auf Plaugiate überprüfen.",
+            "continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetections": "Continuous Plagiarism Control: Maximal number of plagiarism detections",
+            "continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetectionsTooltip": "TBA",
             "plagiarismChecks": "Plagiatskontrolle",
             "problemStatement": "Aufgabenstellung",
             "emptyProblemStatement": "(Keine Aufgabenstellung)",
