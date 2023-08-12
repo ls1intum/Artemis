@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipationIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
@@ -604,7 +605,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             submissionDTO = getSubmission().toSubmissionDTO();
         }
         var feedbackDTOs = filteredFeedback.stream().map(Feedback::toFeedbackDTO).toList();
-        return new ResultDTO(getId(), getCompletionDate(), isSuccessful(), getScore(), isRated(), submissionDTO, getParticipation().getId(), feedbackDTOs, getAssessmentType(),
-                hasComplaint(), isExampleResult(), getTestCaseCount(), getPassedTestCaseCount(), getCodeIssueCount());
+        return new ResultDTO(getId(), getCompletionDate(), isSuccessful(), getScore(), isRated(), submissionDTO, new ParticipationIdDTO(getParticipation()), feedbackDTOs,
+                getAssessmentType(), hasComplaint(), isExampleResult(), getTestCaseCount(), getPassedTestCaseCount(), getCodeIssueCount());
     }
 }
