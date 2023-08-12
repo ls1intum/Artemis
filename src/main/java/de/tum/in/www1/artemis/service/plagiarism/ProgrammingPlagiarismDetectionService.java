@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
+    private Path repoDownloadClonePath;
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
 
@@ -167,7 +167,7 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -175,11 +175,11 @@ public class ProgrammingPlagiarismDetectionService {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString());
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
-        final var repoFolder = Path.of(targetPath, projectKey).toFile();
+        final var repoFolder = targetPath.resolve(projectKey).toFile();
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
@@ -187,7 +187,7 @@ public class ProgrammingPlagiarismDetectionService {
                 // JPlag expects a value between 0.0 and 1.0
                 .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
         if (templateRepoName != null) {
-            var templateFolder = Path.of(targetPath, projectKey, templateRepoName).toFile();
+            var templateFolder = targetPath.resolve(projectKey).resolve(templateRepoName).toFile();
             options = options.withBaseCodeSubmissionDirectory(templateFolder);
         }
 
@@ -215,8 +215,9 @@ public class ProgrammingPlagiarismDetectionService {
                 throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
             }
         }
-
-        cleanupResourcesAsync(programmingExercise, repositories, targetPath);
+        finally {
+            cleanupResourcesAsync(programmingExercise, repositories, targetPath);
+        }
         return result;
     }
 
@@ -241,8 +242,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        final var reportFolder = Path.of(targetPath, programmingExercise.getProjectKey() + " JPlag Report").toString();
+        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report").toString();
         final var reportFolderFile = new File(reportFolder);
 
         // Create directories.
@@ -259,11 +260,10 @@ public class ProgrammingPlagiarismDetectionService {
 
         var zipFile = new File(reportFolder + ".zip");
         fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
-        fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 2);
         return zipFile;
     }
 
-    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
+    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
         executor.schedule(() -> {
             log.info("Will delete local repositories for programming exercise {}", programmingExercise.getId());
             deleteLocalRepositories(repositories);

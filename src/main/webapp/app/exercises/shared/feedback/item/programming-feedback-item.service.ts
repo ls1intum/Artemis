@@ -53,7 +53,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     /**
      * Creates a feedback item from a submission policy feedback.
      * @param feedback The submission policy feedback.
-     * @private
      */
     private createSubmissionPolicyFeedbackItem(feedback: Feedback): FeedbackItem {
         const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
@@ -74,7 +73,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item from a feedback generated from static code analysis.
      * @param feedback A static code analysis feedback.
      * @param showTestDetails
-     * @private
      */
     private createScaFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
@@ -106,7 +104,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item from a feedback generated from an automatic test case result.
      * @param feedback A feedback received from an automatic test case.
      * @param showTestDetails
-     * @private
      */
     private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         let title = undefined;
@@ -135,7 +132,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
      * @param feedback The manual feedback where a grading instruction was used.
      * @param showTestDetails
-     * @private
      */
     private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const gradingInstruction = feedback.gradingInstruction!;
@@ -155,7 +151,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item for a regular reviewer feedback not using a grading instruction.
      * @param feedback The manual feedback from which the feedback item should be created.
      * @param showTestDetails
-     * @private
      */
     private createReviewerFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {

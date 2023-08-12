@@ -2,9 +2,9 @@ import { BASE_API, GET, POST } from '../constants';
 import { UserRole } from '../users';
 
 /**
- * A class which encapsulates all cypress requests related to course management.
+ * A class which encapsulates all API requests related to user management.
  */
-export class UserManagementRequests {
+export class UserManagementAPIRequests {
     /**
      * Creates a new user
      * @param username the username of the new user

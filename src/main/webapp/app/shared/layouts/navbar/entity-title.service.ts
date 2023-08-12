@@ -93,7 +93,6 @@ export class EntityTitleService {
      *
      * @param type the type of the entity
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
-     * @private
      */
     private fetchTitle(type: EntityType, ids: number[]): void {
         let resourceUrl = 'api/';
@@ -139,7 +138,6 @@ export class EntityTitleService {
      *
      * @param type the type of the entity
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
-     * @private
      */
     private static createMapKey(type: EntityType, ids: number[]) {
         return `${type}-${ids.join('-')}`;

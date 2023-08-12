@@ -8,11 +8,11 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.4",
-        "@types/node": "20.4.4",
-        "cypress": "12.17.2",
-        "cypress-cloud": "1.9.2",
+        "@types/node": "20.4.10",
+        "cypress": "12.17.3",
+        "cypress-cloud": "1.9.3",
         "cypress-file-upload": "5.0.8",
-        "cypress-wait-until": "2.0.0",
+        "cypress-wait-until": "2.0.1",
         "typescript": "5.1.6",
         "uuid": "9.0.0",
         "wait-on": "7.0.1"
@@ -27,8 +27,8 @@
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
         "cypress:setup": "cypress install && cypress run --quiet --spec init/ImportUsers.cy.ts",
-        "cypress:record:mysql": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} (MySQL)\"",
-        "cypress:record:postgres": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} (Postgres)\"",
+        "cypress:record:mysql": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (MySQL)\"",
+        "cypress:record:postgres": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (Postgres)\"",
         "update": "npm-upgrade"
     }
 }
