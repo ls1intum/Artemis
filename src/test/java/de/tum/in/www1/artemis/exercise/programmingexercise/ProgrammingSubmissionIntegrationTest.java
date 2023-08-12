@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.TestConstants;
-import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -380,7 +380,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         final Long submissionId = submission.getId();
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC,
-                argThat(arg -> arg instanceof ResultDTO.SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
         request.postWithoutLocation(url, null, HttpStatus.OK, null);

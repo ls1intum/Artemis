@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
 /**
  * A Result.
@@ -598,7 +599,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     public ResultDTO toResultDTO(List<Feedback> filteredFeedback) {
-        ResultDTO.SubmissionDTO submissionDTO = null;
+        SubmissionDTO submissionDTO = null;
         if (Hibernate.isInitialized(getSubmission())) {
             submissionDTO = getSubmission().toSubmissionDTO();
         }

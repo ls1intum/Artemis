@@ -12,10 +12,6 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
         Integer codeIssueCount) {
 
-    public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
-            Boolean buildArtifact) {
-    }
-
     public record FeedbackDTO(String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility) {
     }
