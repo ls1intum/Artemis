@@ -39,6 +39,8 @@ import de.tum.in.www1.artemis.bonus.BonusFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -54,6 +56,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -757,6 +760,56 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
         verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitStudentExam_alreadySubmitted() throws Exception {
+        // Set up an exercise
+        exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+        var exercise = exam1.getExerciseGroups().get(0).getExercises().iterator().next();
+        var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, studentExam1.getUser());
+        var submission = ParticipationFactory.generateTextSubmission("Test1", Language.ENGLISH, true);
+        studentExam1.addExercise(exercise);
+        exercise.addParticipation(participation);
+        participation.addSubmission(submission);
+        studentParticipationRepository.save(participation);
+        submissionRepository.save(submission);
+        exerciseRepository.save(exercise);
+        studentExamRepository.save(studentExam1);
+
+        // Change our submission
+        submission.setText("Test2");
+        submission.setSubmitted(false);
+
+        // if the submitted exam has the submitted flag set to true, the request should be ignored, but still return OK
+        studentExam1.setSubmitted(true);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+
+        // Check that submission change is not saved
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", null);
+
+        // if the submitted exam has the submitted flag set to false, and the studentExam is not yet submitted, the request should be accepted ...
+        studentExam1.setSubmitted(false);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+        // ... and the exam actually be submitted and the change be saved
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
+
+        // Change submission again
+        submission.setText("Test3");
+        submission.setSubmitted(false);
+
+        // Subsequent calls should still return OK, but not persist my new submission change
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
+    }
+
+    private void assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted(String content, Boolean submitted) {
+        var fromDB = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExam1.getId(), false).orElseThrow();
+        assertThat(fromDB.isSubmitted()).isEqualTo(submitted);
+        assertThat(fromDB.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
+        assertThat(fromDB.getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().size()).isEqualTo(1);
+        assertThat(((TextSubmission) fromDB.getExercises().get(0).getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow()).getText()).isEqualTo(content);
     }
 
     @Test
@@ -2270,8 +2323,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        studentExam.setStarted(true);
-        studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(8));
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(8));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(5));
         exam2 = examRepository.save(exam2);
         studentExam = studentExamRepository.save(studentExam);
@@ -2539,7 +2591,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipation.getInitializationDate())).isTrue();
             // Compare started date and initialization Date
             studentExamForConduction
-                    .setStartedDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+                    .setStartedAndStartDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             studentParticipation
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isEqualToIgnoringSeconds(studentExamForConduction.getStartedDate());

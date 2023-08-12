@@ -641,8 +641,7 @@ public class StudentExamResource {
         if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
             // Mark the student exam as started with now as the start date if it was not started before
             var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(startDate);
+            studentExam.setStartedAndStartDate(startDate);
             // send those changes in a modifying query to the database
             studentExamRepository.startStudentExam(studentExam.getId(), startDate);
         }

@@ -135,12 +135,13 @@
             <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
             <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
             <button
-                *ngIf="showExamSummaryButton"
                 type="button"
                 id="showExamSummaryButton"
                 class="btn btn-primary"
+                [disabled]="examSummaryButtonSecondsLeft"
                 (click)="loadAndDisplaySummary()"
                 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
+                [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
             >
                 Show Summary
             </button>

@@ -81,7 +81,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInPossible = true;
     submitInProgress = false;
 
-    showExamSummaryButton = false;
+    examSummaryButtonSecondsLeft = 10;
+    examSummaryButtonTimer: ReturnType<typeof setInterval>;
     showExamSummary = false;
 
     exerciseIndex = 0;
@@ -377,7 +378,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
 
-                    setTimeout(() => (this.showExamSummaryButton = true), 5000);
+                    this.examSummaryButtonTimer = setInterval(() => {
+                        this.examSummaryButtonSecondsLeft -= 1;
+                        if (this.examSummaryButtonSecondsLeft === 0) {
+                            clearInterval(this.examSummaryButtonTimer);
+                        }
+                    }, 1000);
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible

@@ -271,7 +271,7 @@
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
-                "button": "Zusammenfassung der Klausur anzeigen"
+                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             }
         },
         "exerciseGroup": {

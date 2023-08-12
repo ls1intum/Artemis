@@ -274,7 +274,7 @@
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
-                "button": "Show exam summary"
+                "button": "Show exam summary{{countdown}}"
             }
         },
         "exerciseGroup": {
