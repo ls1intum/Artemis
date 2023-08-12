@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationIdDTO participation,
+public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, DomainObjectIdDTO participation,
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
         Integer codeIssueCount) {
 

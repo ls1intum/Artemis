@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.web.rest.dto.ParticipationIdDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DomainObjectIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
 /**
@@ -348,7 +348,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     public SubmissionDTO toSubmissionDTO() {
-        return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new ParticipationIdDTO(participation),
+        return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new DomainObjectIdDTO(participation),
                 getSubmissionExerciseType());
     }
 }
