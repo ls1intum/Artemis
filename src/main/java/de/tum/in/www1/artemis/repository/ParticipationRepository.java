@@ -97,6 +97,13 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     Set<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT participation.id
+            FROM Submission
+            WHERE id = :submissionId
+            """)
+    Optional<Integer> findParticipationIdBySubmissionId(@Param("submissionId") long submissionId);
+
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.
      *

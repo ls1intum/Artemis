@@ -41,11 +41,14 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
+    private final TextPlagiarismResultConverter plagiarismResultConverter;
+
     public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
-            PlagiarismCacheService plagiarismCacheService) {
+            PlagiarismCacheService plagiarismCacheService, TextPlagiarismResultConverter plagiarismResultConverter) {
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
+        this.plagiarismResultConverter = plagiarismResultConverter;
     }
 
     /**
@@ -148,8 +151,7 @@ public class TextPlagiarismDetectionService {
                 FileSystemUtils.deleteRecursively(submissionFolderFile);
             }
 
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
+            var textPlagiarismResult = plagiarismResultConverter.fromJplagResult(jPlagResult, textExercise);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());

@@ -129,7 +129,7 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
 
-        const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
+        const expectedDomain: DomainChange = [DomainType.SUBMISSION, { id: submissionId }];
         expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
         expect(comp.fileContent).toBe('if(current&gt;max)');

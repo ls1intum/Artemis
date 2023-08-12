@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -13,13 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.jplag.Submission;
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -80,43 +74,6 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      */
     @Column(name = "score")
     private Double score;
-
-    /**
-     * Create a new PlagiarismSubmission instance from an existing JPlag Submission
-     *
-     * @param jplagSubmission     the JPlag Submission to create the PlagiarismSubmission from
-     * @param exercise            the exercise to which the comparison belongs, either Text or Programming
-     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
-     * @return a new PlagiarismSubmission instance
-     */
-    public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission, Exercise exercise, File submissionDirectory) {
-        PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
-
-        String[] submissionIdAndStudentLogin = jplagSubmission.getName().split("[-.]");
-
-        long submissionId = 0;
-        String studentLogin = "unknown";
-
-        if (submissionIdAndStudentLogin.length >= 2) {
-            try {
-                submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
-            }
-            catch (NumberFormatException e) {
-                logger.error("Invalid submissionId: {}", e.getMessage());
-            }
-
-            studentLogin = submissionIdAndStudentLogin[1];
-        }
-
-        submission.setStudentLogin(studentLogin);
-        submission.setElements(jplagSubmission.getTokenList().stream().filter(Objects::nonNull)
-                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission, exercise, submissionDirectory)).collect(Collectors.toCollection(ArrayList::new)));
-        submission.setSubmissionId(submissionId);
-        submission.setSize(jplagSubmission.getNumberOfTokens());
-        submission.setScore(null); // TODO
-
-        return submission;
-    }
 
     /**
      * Create a new PlagiarismSubmission instance from an existing Modeling Submission
