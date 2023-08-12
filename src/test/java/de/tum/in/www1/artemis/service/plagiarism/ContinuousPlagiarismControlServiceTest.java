@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Set;
@@ -14,6 +18,8 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 
@@ -23,24 +29,38 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismChecksService plagiarismChecksService = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService);
+    private final ContinuousPlagiarismControlResultsService continuousPlagiarismControlResultsService = mock();
+
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService,
+            continuousPlagiarismControlResultsService);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismChecksException {
-        // given
+        // given: exercises with cpc enabled
         var textExercise = new TextExercise();
         var modelingExercise = new ModelingExercise();
         var programmingExercise = new ProgrammingExercise();
         var exercises = Set.of(textExercise, modelingExercise, programmingExercise);
         when(exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
 
+        // and: results of plagiarism checks
+        var textPlagiarismResult = new TextPlagiarismResult();
+        when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
+        var modelingPlagiarismResult = new ModelingPlagiarismResult();
+        when(plagiarismChecksService.checkModelingExercise(modelingExercise)).thenReturn(modelingPlagiarismResult);
+        var programmingPlagiarismResult = new TextPlagiarismResult();
+        when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
+
         // when
         service.executeChecks();
 
         // then
         verify(plagiarismChecksService).checkTextExercise(textExercise);
+        verify(continuousPlagiarismControlResultsService).handleCpcResult(textPlagiarismResult);
         verify(plagiarismChecksService).checkModelingExercise(modelingExercise);
+        verify(continuousPlagiarismControlResultsService).handleCpcResult(modelingPlagiarismResult);
         verify(plagiarismChecksService).checkProgrammingExercise(programmingExercise);
+        verify(continuousPlagiarismControlResultsService, never()).handleCpcResult(programmingPlagiarismResult);
     }
 
     @Test
@@ -53,7 +73,7 @@ class ContinuousPlagiarismControlServiceTest {
         service.executeChecks();
 
         // then
-        verifyNoInteractions(plagiarismChecksService);
+        verifyNoInteractions(plagiarismChecksService, continuousPlagiarismControlResultsService);
     }
 
     @Test

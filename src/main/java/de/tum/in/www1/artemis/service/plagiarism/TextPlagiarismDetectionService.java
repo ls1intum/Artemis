@@ -113,8 +113,6 @@ public class TextPlagiarismDetectionService {
                 submission.setResults(new ArrayList<>());
 
                 StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-                participation.setExercise(null);
-                participation.setSubmissions(null);
 
                 String participantIdentifier = participation.getParticipantIdentifier();
                 if (participantIdentifier == null) {

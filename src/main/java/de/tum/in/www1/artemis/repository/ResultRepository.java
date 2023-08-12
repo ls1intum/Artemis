@@ -102,6 +102,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT r FROM Result r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.submission
+            WHERE r.submission.id = :submissionId
+            """)
+    List<Result> findAllWithFeedbackBySubmissionId(@Param("submissionId") Long submissionId);
+
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
      *

@@ -41,7 +41,7 @@
                     </span>
                 </div>
 
-                <ng-container *ngIf="!result; else hasResult">
+                <ng-container *ngIf="!result || (result && isLastResultByCpc && isActive); else hasResult">
                     <textarea
                         id="text-editor"
                         #textEditor
@@ -100,7 +100,7 @@
                 </ng-template>
 
                 <jhi-complaint-student-view
-                    *ngIf="textExercise && result && participation && !examMode"
+                    *ngIf="textExercise && result && participation && !examMode && !(isLastResultByCpc && isActive)"
                     [exercise]="textExercise"
                     [result]="resultWithComplaint ? resultWithComplaint : result"
                     [participation]="participation"

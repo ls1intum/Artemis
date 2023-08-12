@@ -34,6 +34,10 @@
                             class="ms-1"
                             [includedInOverallScore]="exercise.includedInOverallScore"
                         ></jhi-included-in-score-badge>
+                        <ng-container *ngIf="plagiarismDetected && achievedPoints === 0">
+                            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                            <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismDetected' | artemisTranslate }}</span>
+                        </ng-container>
                     </td>
                 </tr>
                 <tr *ngIf="exercise.assessmentDueDate">

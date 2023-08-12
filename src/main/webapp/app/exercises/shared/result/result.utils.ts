@@ -132,7 +132,9 @@ export const evaluateTemplateStatus = (
         const dueDate = getExerciseDueDate(exercise, participation);
         const assessmentDueDate = exercise.assessmentDueDate;
 
-        if (inDueTime && initializedResultWithScore(result)) {
+        if (Feedback.isContinuousPlagiarismControlFeedback(result?.feedbacks?.[0])) {
+            return ResultTemplateStatus.HAS_RESULT;
+        } else if (inDueTime && initializedResultWithScore(result)) {
             // Submission is in due time of exercise and has a result with score
             if (!assessmentDueDate || assessmentDueDate.isBefore(dayjs())) {
                 // the assessment due date has passed (or there was none)
