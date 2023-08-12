@@ -23,7 +23,12 @@ export class RatingListComponent implements OnInit {
     faSort = faSort;
     faFolderOpen = faFolderOpen;
 
-    constructor(private ratingService: RatingService, private route: ActivatedRoute, private sortService: SortService, private router: Router) {}
+    constructor(
+        private ratingService: RatingService,
+        private route: ActivatedRoute,
+        private sortService: SortService,
+        private router: Router,
+    ) {}
 
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {

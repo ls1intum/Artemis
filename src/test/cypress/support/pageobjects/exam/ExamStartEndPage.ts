@@ -1,6 +1,5 @@
-import { COURSE_BASE } from '../../requests/CourseManagementRequests';
+import { COURSE_BASE, POST } from '../../constants';
 import { users } from '../../users';
-import { POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {

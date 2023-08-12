@@ -45,42 +45,42 @@ enum ScaChartBarTitle {
                         <div [ngSwitch]="model.series">
                             <div *ngSwitchCase="scaChartBarTitle.PENALTY">
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
                                 </span>
                                 <br />
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate : { percentage: model.issues.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
                                 </span>
                                 <br />
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate : { percentage: model.points.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
                             <div *ngSwitchCase="scaChartBarTitle.ISSUES">
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate : { percentage: model.penalty.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
                                 </span>
                                 <br />
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
                                 </span>
                                 <br />
                                 <span>
-                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate : { percentage: model.points.toFixed(2) } }}
+                                    {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.points.toFixed(2) } }}
                                 </span>
                             </div>
                         </div>
                         <div *ngIf="[scaChartBarTitle.DEDUCTIONS_EN, scaChartBarTitle.DEDUCTIONS_DE].includes(model.series)">
                             <span>
-                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate : { percentage: model.penalty.toFixed(2) } }}
+                                {{ 'artemisApp.programmingAssessment.penaltyTooltip' | artemisTranslate: { percentage: model.penalty.toFixed(2) } }}
                             </span>
                             <br />
                             <span>
-                                {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate : { percentage: model.issues.toFixed(2) } }}
+                                {{ 'artemisApp.programmingAssessment.issuesTooltip' | artemisTranslate: { percentage: model.issues.toFixed(2) } }}
                             </span>
                             <br />
                             <span>
-                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
+                                {{ 'artemisApp.programmingAssessment.deductionsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
                             </span>
                         </div>
                     </ng-template>
@@ -102,7 +102,10 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     // ngx
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
 
-    constructor(private translateService: TranslateService, private navigationUtilsService: ArtemisNavigationUtilService) {
+    constructor(
+        private translateService: TranslateService,
+        private navigationUtilsService: ArtemisNavigationUtilService,
+    ) {
         super();
         translateService.onLangChange.subscribe(() => {
             this.updateTranslations();
