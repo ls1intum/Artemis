@@ -14,10 +14,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 export class ModelingSubmissionService {
     public resourceUrl = 'api';
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     /**
      * Create a new modeling submission

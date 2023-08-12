@@ -65,10 +65,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     binaryFile?: boolean;
 
-    constructor(
-        private repositoryService: CodeEditorRepositoryFileService,
-        private textSubmissionService: TextSubmissionService,
-    ) {}
+    constructor(private repositoryService: CodeEditorRepositoryFileService, private textSubmissionService: TextSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {

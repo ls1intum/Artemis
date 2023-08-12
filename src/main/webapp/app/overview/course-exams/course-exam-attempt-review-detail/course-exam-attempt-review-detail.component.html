@@ -19,12 +19,12 @@
                 <div class="row">
                     <div class="col">
                         <h5 class="text-start">
-                            {{ 'artemisApp.exam.overview.testExam.' + (withinWorkingTime ? 'resumeAttempt' : 'reviewAttempt') | artemisTranslate: { attempt: index } }}
+                            {{ 'artemisApp.exam.overview.testExam.' + (withinWorkingTime ? 'resumeAttempt' : 'reviewAttempt') | artemisTranslate : { attempt: index } }}
                         </h5>
                     </div>
                     <div class="col-auto">
                         <div *ngIf="withinWorkingTime" class="text-end">
-                            {{ 'artemisApp.exam.overview.testExam.workingTimeLeft' | artemisTranslate }} {{ workingTimeLeftInSeconds() | artemisDurationFromSeconds: true }}
+                            {{ 'artemisApp.exam.overview.testExam.workingTimeLeft' | artemisTranslate }} {{ workingTimeLeftInSeconds() | artemisDurationFromSeconds : true }}
                         </div>
                         <div *ngIf="studentExam.submitted">
                             <div *ngIf="studentExam.submissionDate" class="text-end">

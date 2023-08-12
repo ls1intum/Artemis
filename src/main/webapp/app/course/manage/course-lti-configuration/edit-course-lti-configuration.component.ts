@@ -24,11 +24,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private router: Router,
-    ) {}
+    constructor(private route: ActivatedRoute, private courseService: CourseManagementService, private router: Router) {}
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form

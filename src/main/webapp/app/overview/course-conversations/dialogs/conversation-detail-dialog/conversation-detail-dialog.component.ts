@@ -36,10 +36,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    constructor(
-        activeModal: NgbActiveModal,
-        public conversationService: ConversationService,
-    ) {
+    constructor(activeModal: NgbActiveModal, public conversationService: ConversationService) {
         super(activeModal);
     }
 

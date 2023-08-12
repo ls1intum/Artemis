@@ -40,10 +40,7 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     // Icons
     faTrashAlt = faTrashAlt;
 
-    constructor(
-        private alertService: AlertService,
-        private teamService: TeamService,
-    ) {}
+    constructor(private alertService: AlertService, private teamService: TeamService) {}
 
     /**
      * Life cycle hook to indicate component creation is done

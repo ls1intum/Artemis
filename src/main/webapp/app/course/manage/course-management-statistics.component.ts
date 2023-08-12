@@ -51,10 +51,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
 
     courseStatistics: CourseManagementStatisticsDTO;
 
-    constructor(
-        private service: StatisticsService,
-        private route: ActivatedRoute,
-    ) {}
+    constructor(private service: StatisticsService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {

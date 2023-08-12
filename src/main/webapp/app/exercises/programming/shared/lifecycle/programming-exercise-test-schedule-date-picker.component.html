@@ -33,8 +33,8 @@
         <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x"></fa-icon>
     </button>
     <div *ngIf="selectedDate" class="mt-2">
-        {{ selectedDate | artemisDate: 'long-date' }}<br />
-        {{ selectedDate | artemisDate: 'time' }}
+        {{ selectedDate | artemisDate : 'long-date' }}<br />
+        {{ selectedDate | artemisDate : 'time' }}
     </div>
     <div *ngIf="!selectedDate" class="mt-2 text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">not set</div>
     <owl-date-time [startAt]="startAt" #dt></owl-date-time>

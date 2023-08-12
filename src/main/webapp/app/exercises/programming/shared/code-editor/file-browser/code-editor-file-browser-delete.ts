@@ -23,10 +23,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     faBan = faBan;
     faTrashAlt = faTrashAlt;
 
-    constructor(
-        public activeModal: NgbActiveModal,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-    ) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
      * @function ngOnInit

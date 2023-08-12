@@ -40,10 +40,7 @@ export class TextResultComponent {
     @Input()
     course?: Course;
 
-    constructor(
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-    ) {}
+    constructor(private translateService: TranslateService, private localeConversionService: LocaleConversionService) {}
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         checkSubsequentFeedbackInAssessment(feedbacks);

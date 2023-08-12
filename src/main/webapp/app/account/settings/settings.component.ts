@@ -18,12 +18,7 @@ export class SettingsComponent implements OnInit {
     settingsForm: FormGroup;
     isRegistrationEnabled = false;
 
-    constructor(
-        private accountService: AccountService,
-        private fb: FormBuilder,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-    ) {}
+    constructor(private accountService: AccountService, private fb: FormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

@@ -16,10 +16,7 @@ export class SolutionEntryDetailsModalComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private solutionEntryService: ProgrammingExerciseSolutionEntryService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private solutionEntryService: ProgrammingExerciseSolutionEntryService) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

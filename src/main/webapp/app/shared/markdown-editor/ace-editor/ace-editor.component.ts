@@ -55,11 +55,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
 
     private themeSubscription: Subscription;
 
-    constructor(
-        elementRef: ElementRef,
-        private zone: NgZone,
-        private themeService: ThemeService,
-    ) {
+    constructor(elementRef: ElementRef, private zone: NgZone, private themeService: ThemeService) {
         const el = elementRef.nativeElement;
         this.zone.runOutsideAngular(() => {
             this._editor = ace['edit'](el);

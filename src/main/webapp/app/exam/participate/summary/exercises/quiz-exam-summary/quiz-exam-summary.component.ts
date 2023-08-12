@@ -42,10 +42,7 @@ export class QuizExamSummaryComponent implements OnInit {
 
     result?: Result;
 
-    constructor(
-        private exerciseService: QuizExerciseService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
+    constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.updateViewFromSubmission();

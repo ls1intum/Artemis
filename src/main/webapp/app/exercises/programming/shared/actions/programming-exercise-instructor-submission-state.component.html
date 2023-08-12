@@ -3,7 +3,7 @@
         <fa-icon [icon]="faClock"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
-            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | duration }"
+            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate : { eta: resultEtaInMs | duration }"
             >Result ETA: {{ resultEtaInMs | duration }}</span
         >
     </div>
@@ -12,7 +12,8 @@
             id="build-state-building"
             class="badge bg-primary flex-grow-0"
             [innerHTML]="
-                'artemisApp.programmingExercise.buildingSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
+                'artemisApp.programmingExercise.buildingSubmissions'
+                    | artemisTranslate : { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
             "
         >
             Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
@@ -20,7 +21,7 @@
         <span
             id="build-state-failed"
             [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'bg-danger' : 'bg-success', 'flex-grow-0']"
-            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
+            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate : { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
         >
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
         </span>

@@ -59,11 +59,7 @@ export class ExerciseImportComponent implements OnInit {
 
     titleKey: string;
 
-    constructor(
-        private sortService: SortService,
-        private activeModal: NgbActiveModal,
-        private injector: Injector,
-    ) {}
+    constructor(private sortService: SortService, private activeModal: NgbActiveModal, private injector: Injector) {}
 
     ngOnInit(): void {
         if (!this.exerciseType) {

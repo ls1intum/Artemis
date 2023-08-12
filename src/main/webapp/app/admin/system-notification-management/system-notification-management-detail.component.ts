@@ -13,11 +13,7 @@ export class SystemNotificationManagementDetailComponent implements OnInit {
     // Icons
     faWrench = faWrench;
 
-    constructor(
-        private systemNotificationService: SystemNotificationService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
+    constructor(private systemNotificationService: SystemNotificationService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * Assigns the subscription to system notification service

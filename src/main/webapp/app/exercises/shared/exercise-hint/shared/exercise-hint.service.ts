@@ -75,10 +75,7 @@ export interface IExerciseHintService {
 export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = 'api/programming-exercises';
 
-    constructor(
-        protected http: HttpClient,
-        private entityTitleService: EntityTitleService,
-    ) {}
+    constructor(protected http: HttpClient, private entityTitleService: EntityTitleService) {}
 
     /**
      * Creates an exercise hint

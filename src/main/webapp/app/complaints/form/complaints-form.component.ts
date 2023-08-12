@@ -29,10 +29,7 @@ export class ComplaintsFormComponent implements OnInit {
 
     readonly ComplaintType = ComplaintType;
 
-    constructor(
-        private complaintService: ComplaintService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise);

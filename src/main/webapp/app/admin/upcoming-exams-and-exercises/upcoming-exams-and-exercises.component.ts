@@ -18,11 +18,7 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
     predicate: string;
     reverse: boolean;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private sortService: SortService,
-    ) {}
+    constructor(private exerciseService: ExerciseService, private examManagementService: ExamManagementService, private sortService: SortService) {}
 
     ngOnInit(): void {
         this.exerciseService.getUpcomingExercises().subscribe((res: ExerciseEntityArrayResponseType) => {

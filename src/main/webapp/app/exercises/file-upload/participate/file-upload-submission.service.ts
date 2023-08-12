@@ -12,10 +12,7 @@ export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-    ) {}
+    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
 
     /**
      * Updates File Upload submission on the server

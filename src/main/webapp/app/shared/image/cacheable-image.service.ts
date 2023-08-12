@@ -31,10 +31,7 @@ export interface ICacheableImageService {
 export class CacheableImageService implements ICacheableImageService, OnDestroy {
     private userChangeSubscription: Subscription;
 
-    constructor(
-        private accountService: AccountService,
-        private httpClient: HttpClient,
-    ) {
+    constructor(private accountService: AccountService, private httpClient: HttpClient) {
         this.init();
     }
 

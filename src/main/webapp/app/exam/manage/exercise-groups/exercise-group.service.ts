@@ -11,10 +11,7 @@ type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 export class ExerciseGroupService {
     public resourceUrl = 'api/courses';
 
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-    ) {}
+    constructor(private router: Router, private http: HttpClient) {}
 
     /**
      * Create an exercise group on the server using a POST request.

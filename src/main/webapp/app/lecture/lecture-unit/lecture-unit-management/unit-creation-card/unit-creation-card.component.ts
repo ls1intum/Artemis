@@ -26,11 +26,7 @@ export class UnitCreationCardComponent {
     faScroll = faScroll;
     faLink = faLink;
 
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-    ) {}
+    constructor(protected activatedRoute: ActivatedRoute, private navigationUtilService: ArtemisNavigationUtilService, private router: Router) {}
 
     onButtonClicked(type: LectureUnitType) {
         if (this.emitEvents) {

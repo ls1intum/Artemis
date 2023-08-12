@@ -97,10 +97,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     screenHeight: any;
     windowScrollTop: any;
 
-    constructor(
-        private renderer: Renderer2,
-        private router: Router,
-    ) {
+    constructor(private renderer: Renderer2, private router: Router) {
         this.getScreenSize();
     }
 

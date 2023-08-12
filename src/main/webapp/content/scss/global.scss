@@ -13,9 +13,7 @@
 
 // Smooth transition between themes
 * {
-    transition:
-        background-color 0.2s,
-        background 0.2s;
+    transition: background-color 0.2s, background 0.2s;
 }
 
 /* ==============================================================
@@ -504,12 +502,7 @@ bold {
 .positive {
     padding: 2px 4px;
     border-radius: 4px;
-    font-family:
-        Menlo,
-        Monaco,
-        Consolas,
-        Courier New,
-        monospace;
+    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
 }
 
 .negative {
@@ -561,12 +554,7 @@ pre {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
-    font-family:
-        Menlo,
-        Monaco,
-        Consolas,
-        Courier New,
-        monospace;
+    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
 }
 
 .code-success {

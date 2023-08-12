@@ -26,10 +26,7 @@ export class TutorLeaderboardComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private accountService: AccountService,
-        private sortService: SortService,
-    ) {}
+    constructor(private accountService: AccountService, private sortService: SortService) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

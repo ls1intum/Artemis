@@ -59,12 +59,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
 
-    constructor(
-        public conversationService: ConversationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
+    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal, private cdr: ChangeDetectorRef) {}
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;

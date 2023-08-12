@@ -17,10 +17,7 @@ export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
     backgroundColorClass: string;
     themeSubscription: Subscription;
 
-    constructor(
-        private themeService: ThemeService,
-        private ref: ChangeDetectorRef,
-    ) {}
+    constructor(private themeService: ThemeService, private ref: ChangeDetectorRef) {}
 
     ngOnInit() {
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(() => {

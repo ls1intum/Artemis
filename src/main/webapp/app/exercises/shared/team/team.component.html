@@ -101,7 +101,7 @@
 
     <ng-container *ngIf="exercise && team">
         <h4 class="mt-4 d-flex align-items-baseline">
-            {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
+            {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate : { courseTitle: exercise.course!.title } }}
             <code class="ms-2 team-short-name">{{ team.shortName }}</code>
         </h4>
         <jhi-team-participation-table

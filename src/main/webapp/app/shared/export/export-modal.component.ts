@@ -45,10 +45,7 @@ export class ExportModalComponent implements OnInit {
     faBan = faBan;
     faDownload = faDownload;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private translateService: TranslateService) {}
 
     ngOnInit(): void {
         // set default csv export options based on the current language

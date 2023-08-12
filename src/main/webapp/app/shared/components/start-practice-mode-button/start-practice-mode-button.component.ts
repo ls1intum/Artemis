@@ -31,11 +31,7 @@ export class StartPracticeModeButtonComponent implements OnInit {
     // Icons
     faRedo = faRedo;
 
-    constructor(
-        private courseExerciseService: CourseExerciseService,
-        private alertService: AlertService,
-        private participationService: ParticipationService,
-    ) {}
+    constructor(private courseExerciseService: CourseExerciseService, private alertService: AlertService, private participationService: ParticipationService) {}
 
     ngOnInit() {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);

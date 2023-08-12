@@ -26,11 +26,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     course: Course;
     exerciseStatistics: ExerciseManagementStatisticsDto;
 
-    constructor(
-        private service: StatisticsService,
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-    ) {}
+    constructor(private service: StatisticsService, private route: ActivatedRoute, private exerciseService: ExerciseService) {}
 
     ngOnInit() {
         let exerciseId = 0;

@@ -13,11 +13,7 @@ type EntityArrayResponseType = HttpResponse<StudentExam[]>;
 export class StudentExamService {
     public resourceUrl = 'api/courses';
 
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Find a student exam on the server using a GET request.

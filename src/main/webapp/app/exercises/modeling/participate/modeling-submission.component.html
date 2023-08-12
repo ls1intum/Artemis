@@ -9,7 +9,7 @@
             class="guided-tour submission-button"
             id="submit-modeling-submission"
             *ngIf="isOwnerOfParticipation"
-            [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
+            [disabled]="(!isActive && !isLate) || !submission || (!!result && isLastResultByCpc && !isActive) || (isLate && !!submission.submitted)"
             [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
             (onClick)="submit()"
             [isLoading]="isSaving"
@@ -34,9 +34,9 @@
 
             <jhi-fullscreen>
                 <div class="row flex-grow-1">
-                    <div *ngIf="submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)" class="col-12 editor-large">
+                    <div *ngIf="submission && (isActive || isLate) && (!result || (result && isLastResultByCpc)) && (!isLate || !submission.submitted)" class="col-12 editor-large">
                         <jhi-modeling-editor
-                            [readOnly]="!isOwnerOfParticipation"
+                            [readOnly]="!(isActive && isLastResultByCpc) && !isOwnerOfParticipation"
                             [umlModel]="umlModel"
                             [diagramType]="modelingExercise.diagramType!"
                             [withExplanation]="true"
@@ -71,7 +71,7 @@
                         </div>
                     </div>
 
-                    <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
+                    <div class="col-3 pt-5" *ngIf="!(isActive && isLastResultByCpc) && submission?.submitted && (!isActive || result)">
                         <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
                         <p
                             *ngIf="!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0"
@@ -105,7 +105,7 @@
                                             ></span>
                                         </td>
                                         <td class="text-center">
-                                            {{ feedback.credits | number: '1.0-1' }}
+                                            {{ feedback.credits | number : '1.0-1' }}
                                             <fa-icon
                                                 *ngIf="feedback.isSubsequent"
                                                 class="text-secondary"
@@ -122,7 +122,7 @@
             </jhi-fullscreen>
             <div class="row">
                 <jhi-additional-feedback
-                    *ngIf="unreferencedFeedback && unreferencedFeedback!.length > 0"
+                    *ngIf="!(isActive && isLastResultByCpc) && unreferencedFeedback && unreferencedFeedback!.length > 0"
                     class="col-xl-8 mt-3 alert unreferencedFeedback"
                     [feedback]="unreferencedFeedback || []"
                     [additional]="true"
@@ -130,11 +130,11 @@
                 >
                 </jhi-additional-feedback>
             </div>
-            <div class="row" *ngIf="result">
+            <div class="row" *ngIf="!(isActive && isLastResultByCpc) && result">
                 <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
             </div>
             <jhi-complaint-student-view
-                *ngIf="result && !examMode"
+                *ngIf="!(isActive && isLastResultByCpc) && result && !examMode"
                 [exercise]="modelingExercise"
                 [participation]="participation"
                 [result]="resultWithComplaint ? resultWithComplaint : result"

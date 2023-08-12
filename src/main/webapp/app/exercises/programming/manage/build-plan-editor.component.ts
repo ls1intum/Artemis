@@ -28,11 +28,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     programmingExercise: ProgrammingExercise;
     buildPlan: BuildPlan | undefined;
 
-    constructor(
-        private buildPlanService: BuildPlanService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
+    constructor(private buildPlanService: BuildPlanService, private programmingExerciseService: ProgrammingExerciseService, private activatedRoute: ActivatedRoute) {}
 
     /**
      * @function ngOnInit

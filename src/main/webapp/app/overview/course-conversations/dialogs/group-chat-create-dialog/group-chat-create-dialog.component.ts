@@ -13,10 +13,7 @@ export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     course: Course;
     form: FormGroup;
 
-    constructor(
-        activeModal: NgbActiveModal,
-        private fb: FormBuilder,
-    ) {
+    constructor(activeModal: NgbActiveModal, private fb: FormBuilder) {
         super(activeModal);
     }
 

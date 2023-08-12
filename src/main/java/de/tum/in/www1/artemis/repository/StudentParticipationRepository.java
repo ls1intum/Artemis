@@ -299,7 +299,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("""
             select distinct p from StudentParticipation p
-            left join fetch p.results
+            left join fetch p.results r
+            left join fetch r.feedbacks
             left join fetch p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 and p.student.id = :#{#studentId}

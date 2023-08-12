@@ -36,12 +36,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     allowedEmailPattern?: string;
     allowedEmailPatternReadable?: string;
 
-    constructor(
-        private translateService: TranslateService,
-        private registerService: RegisterService,
-        private fb: FormBuilder,
-        private profileService: ProfileService,
-    ) {}
+    constructor(private translateService: TranslateService, private registerService: RegisterService, private fb: FormBuilder, private profileService: ProfileService) {}
 
     ngAfterViewInit(): void {
         if (this.login) {

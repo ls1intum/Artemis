@@ -68,10 +68,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     isSearching = false;
     searchFailed = false;
 
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private cdr: ChangeDetectorRef,
-    ) {}
+    constructor(private courseManagementService: CourseManagementService, private cdr: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         if (this.rolesToAllowSearchingIn.includes('students')) {

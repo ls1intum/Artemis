@@ -6,7 +6,8 @@
     <div *ngIf="availableExerciseHints?.length" class="mb-3">
         <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle">New available hints</h2>
         <span class="mb-5">{{
-            'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription' | artemisTranslate: { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
+            'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription'
+                | artemisTranslate : { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
         }}</span>
         <div *ngFor="let hint of availableExerciseHints" class="mb-3">
             <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)"></jhi-exercise-hint-expandable>

@@ -39,10 +39,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
     // Icons
     faRedo = faRedo;
 
-    constructor(
-        private testCaseService: ProgrammingExerciseGradingService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private testCaseService: ProgrammingExerciseGradingService, private alertService: AlertService) {}
 
     /**
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.

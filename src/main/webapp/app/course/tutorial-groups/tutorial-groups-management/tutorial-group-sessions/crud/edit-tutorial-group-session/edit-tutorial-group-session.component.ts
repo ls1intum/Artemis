@@ -32,11 +32,7 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
 
     initialize() {
         if (!this.tutorialGroupSession || !this.course || !this.tutorialGroup) {

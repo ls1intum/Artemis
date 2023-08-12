@@ -40,10 +40,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    constructor(
-        private artemisMarkdownService: ArtemisMarkdownService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
+    constructor(private artemisMarkdownService: ArtemisMarkdownService, private changeDetectorRef: ChangeDetectorRef) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {

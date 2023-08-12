@@ -86,6 +86,9 @@ public class PlagiarismChecksService {
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+
+        // make sure that participation is included in the exercise
+        plagiarismResult.setExercise(exercise);
         return plagiarismResult;
     }
 

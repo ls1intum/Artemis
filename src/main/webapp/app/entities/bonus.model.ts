@@ -25,10 +25,7 @@ export class BonusExample {
     public finalGrade?: number | string;
     public exceedsMax = false;
 
-    constructor(
-        public studentPointsOfBonusTo: number,
-        public studentPointsOfBonusSource: number | undefined,
-    ) {}
+    constructor(public studentPointsOfBonusTo: number, public studentPointsOfBonusSource: number | undefined) {}
 }
 
 export class BonusResult {

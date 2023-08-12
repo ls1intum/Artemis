@@ -26,11 +26,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
 
-    constructor(
-        private route: ActivatedRoute,
-        private sortService: SortService,
-        private courseManagementService: CourseManagementService,
-    ) {}
+    constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises

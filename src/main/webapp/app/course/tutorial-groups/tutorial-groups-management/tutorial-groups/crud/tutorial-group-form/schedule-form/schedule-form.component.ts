@@ -87,11 +87,7 @@ export class ScheduleFormComponent implements OnInit {
         return sessions;
     }
 
-    constructor(
-        private fb: FormBuilder,
-        public formatter: NgbDateParserFormatter,
-        public cdr: ChangeDetectorRef,
-    ) {}
+    constructor(private fb: FormBuilder, public formatter: NgbDateParserFormatter, public cdr: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         if (this.course.tutorialGroupsConfiguration) {

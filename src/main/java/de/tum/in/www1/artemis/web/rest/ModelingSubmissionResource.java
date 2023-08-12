@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import static java.util.Collections.emptyList;
+
+import java.util.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlFeedbackHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -320,8 +321,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getLatestResult() != null
+        // do not send the result to the client if the assessment is not finished and plagiarism is not detected
+        var containsCpcResult = Optional.ofNullable(modelingSubmission.getLatestResult()).map(Result::getFeedbacks).orElse(emptyList()).stream()
+                .anyMatch(ContinuousPlagiarismControlFeedbackHelper::isCpcFeedback);
+        if (!containsCpcResult && modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
         }

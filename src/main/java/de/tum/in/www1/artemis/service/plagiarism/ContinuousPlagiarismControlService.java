@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.lang.String.format;
+
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +13,9 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
@@ -29,9 +33,13 @@ public class ContinuousPlagiarismControlService {
 
     private final PlagiarismChecksService plagiarismChecksService;
 
-    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismChecksService plagiarismChecksService) {
+    private final ContinuousPlagiarismControlResultsService resultsService;
+
+    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismChecksService plagiarismChecksService,
+            ContinuousPlagiarismControlResultsService resultsService) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismChecksService = plagiarismChecksService;
+        this.resultsService = resultsService;
     }
 
     /**
@@ -49,7 +57,10 @@ public class ContinuousPlagiarismControlService {
             PlagiarismChecksConfigHelper.createAndSaveDefaultIfNull(exercise, exerciseRepository);
 
             try {
-                executeChecksForExercise(exercise);
+                var result = executeChecksForExercise(exercise);
+                if (exercise.getExerciseType() != ExerciseType.PROGRAMMING) {
+                    resultsService.handleCpcResult(result);
+                }
             }
             catch (ExitException e) {
                 log.error("Cannot check plagiarism due to Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
@@ -64,12 +75,13 @@ public class ContinuousPlagiarismControlService {
         log.debug("Continuous plagiarism control done.");
     }
 
-    private void executeChecksForExercise(Exercise exercise) throws Exception {
-        switch (exercise.getExerciseType()) {
+    private PlagiarismResult<?> executeChecksForExercise(Exercise exercise) throws Exception {
+        return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismChecksService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismChecksService.checkProgrammingExercise((ProgrammingExercise) exercise);
             case MODELING -> plagiarismChecksService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> log.error("Cannot check plagiarism for exercise: type={}, id={}.", exercise.getExerciseType(), exercise.getId());
-        }
+            case FILE_UPLOAD, QUIZ -> throw new IllegalStateException(
+                    format("Cannot check plagiarism for exercise: type=%s, id=%s.", exercise.getExerciseType(), exercise.getId()));
+        };
     }
 }

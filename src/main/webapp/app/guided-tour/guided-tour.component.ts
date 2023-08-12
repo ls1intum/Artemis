@@ -82,11 +82,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     faHandPointUp = faHandPointUp;
     faPlayCircle = faPlayCircle;
 
-    constructor(
-        public guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-        private renderer: Renderer2,
-    ) {}
+    constructor(public guidedTourService: GuidedTourService, private accountService: AccountService, private renderer: Renderer2) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key

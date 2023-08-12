@@ -12,11 +12,7 @@ import { of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
-    constructor(
-        private modelingExerciseService: ModelingExerciseService,
-        private courseService: CourseManagementService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
+    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {

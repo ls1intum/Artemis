@@ -18,10 +18,7 @@ export class HealthComponent implements OnInit {
     faSync = faSync;
     faEye = faEye;
 
-    constructor(
-        private modalService: NgbModal,
-        private healthService: HealthService,
-    ) {}
+    constructor(private modalService: NgbModal, private healthService: HealthService) {}
 
     ngOnInit() {
         this.refresh();

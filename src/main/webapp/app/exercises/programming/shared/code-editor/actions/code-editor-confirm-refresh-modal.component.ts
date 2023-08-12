@@ -16,11 +16,7 @@ export class CodeEditorConfirmRefreshModalComponent {
     faBan = faBan;
     faTimes = faTimes;
 
-    constructor(
-        public activeModal: NgbActiveModal,
-        private repositoryService: CodeEditorRepositoryService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: CodeEditorConflictStateService) {}
 
     shouldRefresh: EventEmitter<void> = new EventEmitter<void>();
 

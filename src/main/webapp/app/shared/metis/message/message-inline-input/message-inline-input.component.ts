@@ -16,12 +16,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected localStorageService: LocalStorageService,
-    ) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
         super(metisService, modalService, formBuilder);
     }
 

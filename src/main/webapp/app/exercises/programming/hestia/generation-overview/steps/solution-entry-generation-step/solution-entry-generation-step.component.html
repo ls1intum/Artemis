@@ -68,7 +68,7 @@
                 <td class="text-left">
                     {{
                         (entry.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.lineOfCode' : 'artemisApp.codeHint.linesOfCode')
-                            | artemisTranslate: { lines: entry.code?.split('\n')?.length! }
+                            | artemisTranslate : { lines: entry.code?.split('\n')?.length! }
                     }}
                 </td>
                 <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + entry.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
