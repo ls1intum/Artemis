@@ -1,13 +1,15 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import dayjs from 'dayjs/esm';
+
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { courseManagementAPIRequest, examAPIRequests, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from '../../../support/artemis';
 import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { Interception } from 'cypress/types/net-stubbing';
-import dayjs from 'dayjs/esm';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
