@@ -87,13 +87,11 @@
             "d3-interpolate": "^3.0.1",
             "d3-brush": "^3.0.0"
         },
+        "critters": "0.0.20",
         "semver": "7.5.4",
-        "word-wrap": "1.2.3",
+        "word-wrap": "1.2.5",
         "debug": "4.3.4",
-        "tough-cookie": "4.1.3",
-        "@babel/generator": "7.22.5",
-        "@babel/parser": "7.22.5",
-        "@babel/traverse": "7.22.5"
+        "tough-cookie": "4.1.3"
     },
     "devDependencies": {
         "@angular-builders/jest": "16.0.0",
@@ -110,7 +108,7 @@
         "@types/dompurify": "3.0.2",
         "@types/jest": "29.5.3",
         "@types/lodash-es": "4.17.8",
-        "@types/node": "20.4.9",
+        "@types/node": "20.4.10",
         "@types/papaparse": "5.3.7",
         "@types/showdown": "2.0.1",
         "@types/smoothscroll-polyfill": "0.3.1",
