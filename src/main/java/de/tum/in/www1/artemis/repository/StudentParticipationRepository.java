@@ -661,7 +661,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
-            UPDATE StudentParticipation sp set sp.numberOfCpcPlagiarismDetections = sp.numberOfCpcPlagiarismDetections + 1 WHERE sp.id = :studentParticipationId
+            UPDATE StudentParticipation sp set sp.numberOfCpcPlagiarismDetections = coalesce(sp.numberOfCpcPlagiarismDetections, 0) + 1 WHERE sp.id = :studentParticipationId
             """)
     void incrementPlagiarismDetected(long studentParticipationId);
 
