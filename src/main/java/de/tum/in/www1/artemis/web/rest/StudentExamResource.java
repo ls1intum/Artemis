@@ -638,7 +638,7 @@ public class StudentExamResource {
             }
         }
 
-        if (!studentExam.isStarted() || studentExam.getStartedDate() == null) {
+        if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
             // Mark the student exam as started with now as the start date if it was not started before
             var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
             studentExam.setStarted(true);
