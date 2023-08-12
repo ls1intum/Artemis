@@ -89,7 +89,7 @@ export class NotificationService {
                     }
                 });
                 this.notificationSettingsService.refreshNotificationSettings();
-            }, 5000);
+            }, 15 * 1000);
 
             this.initialized = true;
         } else if (!user && this.initialized) {
