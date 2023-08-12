@@ -93,6 +93,7 @@ describe('Exam participation', () => {
                 examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
             }
             examParticipation.handInEarly();
+            examStartEnd.pressShowSummary();
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.exerciseGroup!.title!);
@@ -195,6 +196,7 @@ describe('Exam participation', () => {
             examParticipation.clickSaveAndContinue();
 
             examParticipation.handInEarly();
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
             examParticipation.checkExamTitle(examTitle);
 
@@ -216,7 +218,7 @@ describe('Exam participation', () => {
             textExerciseEditor.checkCurrentContent(textExercise.id, textExercise.additionalData!.textFixture!);
             examParticipation.clickSaveAndContinue();
             examParticipation.handInEarly();
-
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
@@ -232,7 +234,7 @@ describe('Exam participation', () => {
             examParticipation.makeTextExerciseSubmission(textExercise.id, textExercise.additionalData!.textFixture!);
             examParticipation.clickSaveAndContinue();
             examParticipation.handInEarly();
-
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
@@ -292,6 +294,7 @@ describe('Exam participation', () => {
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
+            examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
 
