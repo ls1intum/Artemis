@@ -138,6 +138,6 @@ public class ProgrammingSubmission extends Submission {
     @Override
     public SubmissionDTO toSubmissionDTO() {
         return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), getCommitHash(), isBuildFailed(), isBuildArtifact(),
-                new ParticipationIdDTO(getParticipation()));
+                new ParticipationIdDTO(getParticipation()), getSubmissionExerciseType());
     }
 }

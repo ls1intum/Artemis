@@ -309,6 +309,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     public abstract boolean isEmpty();
 
+    public abstract String getSubmissionExerciseType();
+
     /**
      * In case user calls for correctionRound 0, but more manual results already exists
      * and he has not requested a specific result, remove any other results
@@ -346,6 +348,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     public SubmissionDTO toSubmissionDTO() {
-        return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new ParticipationIdDTO(participation));
+        return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new ParticipationIdDTO(participation),
+                getSubmissionExerciseType());
     }
 }
