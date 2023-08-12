@@ -637,20 +637,15 @@ public class StudentExamResource {
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
             }
         }
-        else {
-            // Mark the student exam as started and save it
-            studentExam.setStarted(true);
-            if (studentExam.getStartedDate() == null) {
-                studentExam.setStartedDate(ZonedDateTime.now());
-            }
-        }
 
-        // Mark the student exam as started with now as the start date
-        var now = ZonedDateTime.now();
-        studentExam.setStarted(true);
-        studentExam.setStartedDate(now);
-        // send those changes in a modifying query to the database
-        studentExamRepository.startStudentExam(studentExam.getId(), now);
+        if (!studentExam.isStarted() || studentExam.getStartedDate() == null) {
+            // Mark the student exam as started with now as the start date if it was not started before
+            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
+            studentExam.setStarted(true);
+            studentExam.setStartedDate(startDate);
+            // send those changes in a modifying query to the database
+            studentExamRepository.startStudentExam(studentExam.getId(), startDate);
+        }
 
         // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
