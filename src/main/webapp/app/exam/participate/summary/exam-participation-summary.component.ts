@@ -123,7 +123,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // If the exam has not yet ended, or we're only a few minutes after the end, we can assume that there are no plagiarism cases yet.
         // We should avoid trying to load them to reduce server load.
         if (this.studentExam?.exam?.endDate) {
-            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(15, 'minutes');
+            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(2, 'hours');
             if (dayjs().isBefore(endDateWithTimeExtension)) {
                 return;
             }
