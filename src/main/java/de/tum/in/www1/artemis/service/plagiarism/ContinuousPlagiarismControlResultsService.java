@@ -70,19 +70,20 @@ class ContinuousPlagiarismControlResultsService {
             var submission = participation.findLatestSubmission().get();
 
             boolean plagiarismDetected = submissionsIdsWithPlagiarism.contains(submission.getId());
-            boolean plagiarismDetectedBefore = resultRepository.findAllWithFeedbackBySubmissionId(submission.getId()).stream().anyMatch(isPlagiarismResult);
+            boolean plagiarismDetectedBefore = resultRepository.findAllWithFeedbackBySubmissionId(submission.getId()).stream()
+                    .filter(it -> it.getSubmission().getId().equals(submission.getId())).anyMatch(isPlagiarismResult);
             boolean plagiarismDetectionLimitExceeded = Objects.requireNonNullElse(participation.getNumberOfCpcPlagiarismDetections(), 0) >= participation.getExercise()
                     .getPlagiarismChecksConfig().getContinuousPlagiarismControlDetectionsLimit();
 
-            if (plagiarismDetected && plagiarismDetectionLimitExceeded) {
+            if (plagiarismDetectionLimitExceeded) {
                 addResultWithLimitExceededFeedback(submission, participation);
             }
-            else if (plagiarismDetected) {
-                incrementPlagiarismDetectionCounterIfNeeded(participation);
+            else if (plagiarismDetected && plagiarismDetectedBefore) {
                 addResultWithPlagiarismFeedback(submission, participation);
             }
-            else if (plagiarismDetectedBefore && plagiarismDetectionLimitExceeded) {
-                addResultWithLimitExceededFeedback(submission, participation);
+            else if (plagiarismDetected) {
+                incrementPlagiarismDetectionCounter(participation);
+                addResultWithPlagiarismFeedback(submission, participation);
             }
             else {
                 deletePastResultsWithPlagiarismFeedback(submission.getId());
@@ -90,7 +91,7 @@ class ContinuousPlagiarismControlResultsService {
         });
     }
 
-    private void incrementPlagiarismDetectionCounterIfNeeded(StudentParticipation participation) {
+    private void incrementPlagiarismDetectionCounter(StudentParticipation participation) {
         participationRepository.incrementPlagiarismDetected(participation.getId());
     }
 
