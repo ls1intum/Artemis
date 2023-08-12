@@ -19,7 +19,12 @@ export class CourseUnenrollmentModalComponent implements OnInit {
     // Icons
     faXmark = faXmark;
 
-    constructor(private activeModal: NgbActiveModal, private courseService: CourseManagementService, private alertService: AlertService, private router: Router) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private courseService: CourseManagementService,
+        private alertService: AlertService,
+        private router: Router,
+    ) {}
 
     ngOnInit(): void {
         this.confirmationForm = new FormGroup({
