@@ -71,10 +71,10 @@ public class NotificationResource {
     @GetMapping("notifications")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
-        log.info("Load notifications");
         long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(), currentUser);
+        log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
+                currentUser.getLogin());
         var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
         var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         var deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP, notificationSettings);
