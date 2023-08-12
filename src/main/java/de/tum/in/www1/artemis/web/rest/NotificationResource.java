@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.N
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.*;
@@ -75,7 +73,7 @@ public class NotificationResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
                 currentUser.getLogin());
-        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
+        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser);
         var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         var deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP, notificationSettings);
         var deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
