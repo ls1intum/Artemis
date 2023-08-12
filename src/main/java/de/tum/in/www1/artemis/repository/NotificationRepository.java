@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.repository;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,8 +26,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
-                WHERE notification.notificationDate IS NOT NULL
-                    AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
+                WHERE notification.notificationDate > :hideUntil
                     AND (
                         (type(notification) = GroupNotification
                             AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
@@ -42,7 +43,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 
     @Query("""
@@ -50,8 +51,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 FROM Notification notification
                     LEFT JOIN notification.course
                     LEFT JOIN notification.recipient
-                WHERE notification.notificationDate IS NOT NULL
-                    AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
+                WHERE notification.notificationDate > :hideUntil
                     AND (
                          (type(notification) = GroupNotification
                             AND (notification.title NOT IN :#{#deactivatedTitles}
@@ -79,6 +79,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 )
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            @NotNull @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
 }

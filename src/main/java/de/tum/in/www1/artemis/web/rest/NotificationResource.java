@@ -84,7 +84,12 @@ public class NotificationResource {
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
                 notificationSettings);
         Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
-        final ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+        // Note: at the moment, we only support to show notifications from the last month, because without a proper date the query below becomes too slow
+        var hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+        var notificationDateLimit = ZonedDateTime.now().minusMonths(3);
+        if (hideNotificationsUntilDate == null || hideNotificationsUntilDate.isBefore(notificationDateLimit)) {
+            hideNotificationsUntilDate = notificationDateLimit;
+        }
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
             page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, tutorialGroupIds,
