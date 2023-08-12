@@ -8,7 +8,10 @@ import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupManagementResolve implements Resolve<Course> {
-    constructor(private service: CourseManagementService, private router: Router) {}
+    constructor(
+        private service: CourseManagementService,
+        private router: Router,
+    ) {}
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         return this.service.find(route.params['courseId']).pipe(

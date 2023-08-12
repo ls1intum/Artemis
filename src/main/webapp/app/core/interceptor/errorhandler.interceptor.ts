@@ -7,7 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable()
 export class ErrorHandlerInterceptor implements HttpInterceptor {
-    constructor(private eventManager: EventManager, private accountService: AccountService) {}
+    constructor(
+        private eventManager: EventManager,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is not 401 while the user is not

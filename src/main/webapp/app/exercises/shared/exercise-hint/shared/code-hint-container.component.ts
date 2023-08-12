@@ -29,7 +29,10 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
 
     faTimes = faTimes;
 
-    constructor(protected route: ActivatedRoute, private codeHintService: CodeHintService) {}
+    constructor(
+        protected route: ActivatedRoute,
+        private codeHintService: CodeHintService,
+    ) {}
 
     ngOnInit() {
         this.setSortedSolutionEntriesForCodeHint();
