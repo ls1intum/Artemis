@@ -8,7 +8,7 @@
         </addColumn>
 
         <addColumn tableName="participation">
-            <column name="number_of_cpc_plagiarism_detections" type="integer" defaultValue="0"/>
+            <column name="number_of_cpc_plagiarism_detections" type="integer" defaultValueNumeric="0"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
