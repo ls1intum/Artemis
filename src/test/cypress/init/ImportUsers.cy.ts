@@ -1,4 +1,4 @@
-import { userManagementRequest } from '../support/requests/ArtemisRequests';
+import { userManagementAPIRequest } from '../support/artemis';
 import { USER_ID, USER_ROLE, admin, instructor, studentOne, studentThree, studentTwo, tutor, users } from '../support/users';
 
 describe('Setup users', () => {
@@ -7,9 +7,9 @@ describe('Setup users', () => {
             cy.login(admin);
             for (const userKey in USER_ID) {
                 const user = users.getUserWithId(USER_ID[userKey]);
-                userManagementRequest.getUser(user.username).then((response) => {
+                userManagementAPIRequest.getUser(user.username).then((response) => {
                     if (!response.isOkStatusCode) {
-                        userManagementRequest.createUser(user.username, user.password, USER_ROLE[userKey]);
+                        userManagementAPIRequest.createUser(user.username, user.password, USER_ROLE[userKey]);
                     }
                 });
             }
