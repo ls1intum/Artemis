@@ -13,7 +13,10 @@ export class UserSettingsService {
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
 
-    constructor(private accountService: AccountService, private http: HttpClient) {}
+    constructor(
+        private accountService: AccountService,
+        private http: HttpClient,
+    ) {}
 
     // load methods
 
