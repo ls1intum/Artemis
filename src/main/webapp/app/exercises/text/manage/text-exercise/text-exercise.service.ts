@@ -17,7 +17,10 @@ export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
     private resourceUrl = 'api/text-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * Store a new text exercise on the server.

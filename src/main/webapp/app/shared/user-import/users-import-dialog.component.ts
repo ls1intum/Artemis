@@ -142,7 +142,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                         lastName: users[lastNameHeader]?.trim() || '',
                         room: users[roomHeader]?.trim() || '',
                         seat: users[seatHeader]?.trim() || '',
-                    } as ExamUserDTO),
+                    }) as ExamUserDTO,
             );
         } else {
             return csvUsers.map(
@@ -153,7 +153,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                         email: users[emailHeader]?.trim() || '',
                         firstName: users[firstNameHeader]?.trim() || '',
                         lastName: users[lastNameHeader]?.trim() || '',
-                    } as StudentDTO),
+                    }) as StudentDTO,
             );
         }
     }
