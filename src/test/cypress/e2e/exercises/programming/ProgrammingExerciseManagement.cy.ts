@@ -1,17 +1,18 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
-import { generateUUID } from '../../../support/utils';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
+import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Programming Exercise Management', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -43,7 +44,7 @@ describe('Programming Exercise Management', () => {
 
         before(() => {
             cy.login(admin, '/');
-            courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
+            exerciseAPIRequest.createProgrammingExercise({ course }).then((response) => {
                 exercise = response.body;
             });
         });
@@ -58,6 +59,6 @@ describe('Programming Exercise Management', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

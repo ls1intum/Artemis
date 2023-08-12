@@ -125,7 +125,7 @@ public class DataExportService {
         if (dataExport.getFilePath() == null) {
             return;
         }
-        fileService.scheduleForDirectoryDeletion(Path.of(dataExport.getFilePath()), 2);
+        fileService.scheduleForDeletion(Path.of(dataExport.getFilePath()), 2);
         if (dataExport.getDataExportState().hasBeenDownloaded()) {
             dataExport.setDataExportState(DataExportState.DOWNLOADED_DELETED);
         }

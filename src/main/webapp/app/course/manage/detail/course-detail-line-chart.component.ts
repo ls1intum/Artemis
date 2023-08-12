@@ -233,7 +233,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Auxiliary method reducing the complexity of {@link CourseDetailLineChartComponent#createLabels}
      * Assigns the correct calendar week numbers to the corresponding data objects as string
      * Note: the conversion to strings is important as ngx-charts increases the tick steps of on the x axis otherwise
-     * @private
      */
     private assignLabelsToDataObjects(): void {
         let currentWeek;
@@ -251,7 +250,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
 
     /**
      * Fetches and caches the data for the lifetime overview from the server and creates the chart
-     * @private
      */
     private fetchLifetimeOverviewData(): void {
         this.service.getStatisticsForLifetimeOverview(this.course.id!).subscribe((res: number[]) => {
@@ -263,7 +261,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
 
     /**
      * Auxiliary method handles the translation sensitivity of the x axis label
-     * @private
      */
     private updateXAxisLabel() {
         this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');

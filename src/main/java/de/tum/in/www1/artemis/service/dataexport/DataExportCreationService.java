@@ -94,7 +94,6 @@ public class DataExportCreationService {
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
-        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
         return finishDataExportCreation(dataExport, dataExportPath);
     }
 
@@ -156,6 +155,7 @@ public class DataExportCreationService {
         }
         dataExport = dataExportRepository.save(dataExport);
         Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
+        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);
         return workingDirectory;
