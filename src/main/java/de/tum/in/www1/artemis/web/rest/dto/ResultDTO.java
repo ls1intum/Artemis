@@ -12,6 +12,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
         Integer codeIssueCount) {
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility) {
     }

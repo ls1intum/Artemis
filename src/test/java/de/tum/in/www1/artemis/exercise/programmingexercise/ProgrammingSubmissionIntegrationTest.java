@@ -379,7 +379,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC,
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_SUBMISSION_TOPIC),
                 argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
