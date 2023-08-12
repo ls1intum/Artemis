@@ -6,11 +6,9 @@ import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.notification.Notification;
 
@@ -83,13 +81,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
             @Param("titlesToNotLoadNotification") Set<String> titlesToNotLoadNotification, Pageable pageable);
-
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Notification n
-            SET n.author = null
-            WHERE n.author.id = :userId
-            """)
-    void removeAuthor(@Param("userId") long userId);
 }
