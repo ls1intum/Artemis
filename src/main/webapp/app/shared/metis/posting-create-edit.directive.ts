@@ -23,7 +23,11 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     formGroup: FormGroup;
     readonly EditType = PostingEditType;
 
-    protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
+    protected constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+    ) {}
 
     get editType(): PostingEditType {
         return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
