@@ -122,7 +122,7 @@ result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmi
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
   -e PROGRAMMING_LANGUAGE="$programmingLanguage" -e ENABLE_SCA="$enableStaticCodeAnalysis" -e USER_OFFSET="$userOffset" -e COURSE_ID="$courseId" -e EXERCISE_ID="$exerciseId" \
   -e WAIT_QUIZ_START="$waitQuizStart" -e ONLY_PREPARE="$onlyPrepare" \
-  loadimpact/k6 run --address localhost:0 /src/"$tests".js 2>&1)
+  grafana/k6 run --address localhost:0 /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"
