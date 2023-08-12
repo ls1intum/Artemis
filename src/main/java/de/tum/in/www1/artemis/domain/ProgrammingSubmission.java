@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * A ProgrammingSubmission.
@@ -131,5 +132,10 @@ public class ProgrammingSubmission extends Submission {
             return getId().compareTo(other.getId());
         }
         return getSubmissionDate().compareTo(other.getSubmissionDate());
+    }
+
+    @Override
+    public ResultDTO.SubmissionDTO toSubmissionDTO() {
+        return new ResultDTO.SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), getCommitHash(), isBuildFailed(), isBuildArtifact());
     }
 }

@@ -11,7 +11,6 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,7 +19,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -114,19 +112,6 @@ public class WebsocketMessagingService {
 
     /**
      * Broadcast a new result to the client.
-     * Waits until all notifications are sent and the result properties are restored.
-     * This allows the caller to reuse the passed result object again after calling.
-     *
-     * @param participation used to find the receivers of the notification
-     * @param result        the result object to publish
-     */
-    public void awaitBroadcastNewResult(Participation participation, Result result) {
-        // Wait until all notifications got send and the objects were reconnected.
-        broadcastNewResult(participation, result).join();
-    }
-
-    /**
-     * Broadcast a new result to the client.
      *
      * @param participation the id is used in the destination (so that only clients who have subscribed the specific participation will receive the result)
      * @param result        the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
@@ -134,53 +119,17 @@ public class WebsocketMessagingService {
      *                          problem statement and the course with all potential attributes
      * @return a CompletableFuture allowing to wait until all messages got send.
      */
-    public CompletableFuture<Void> broadcastNewResult(Participation participation, Result result) {
-        // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
-        var originalParticipation = result.getParticipation();
-        result.setParticipation(originalParticipation.copyParticipationId());
-        List<Result> originalResults = null;
-        if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
-            var submission = result.getSubmission();
-            submission.setParticipation(null);
-            if (Hibernate.isInitialized(submission.getResults())) {
-                originalResults = submission.getResults();
-                submission.setResults(null);
-            }
-            if (submission instanceof ProgrammingSubmission programmingSubmission && programmingSubmission.isBuildFailed()) {
-                programmingSubmission.setBuildLogEntries(null);
-            }
-        }
-
-        final var originalAssessor = result.getAssessor();
-        final var originalFeedback = new ArrayList<>(result.getFeedbacks());
-
-        CompletableFuture<?>[] allFutures = new CompletableFuture[0];
-
+    public void broadcastNewResult(Participation participation, Result result) {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation studentParticipation) {
-            allFutures = broadcastNewResultToParticipants(studentParticipation, result);
+            broadcastNewResultToParticipants(studentParticipation, result);
         }
 
-        final List<Result> finalOriginalResults = originalResults;
-        return CompletableFuture.allOf(allFutures).thenCompose(v -> {
-            // Restore information that should not go to students but tutors, instructors, and admins should still see
-            // only add these values after the async broadcast is done to not publish it mistakenly
-            result.setAssessor(originalAssessor);
-            result.setFeedbacks(originalFeedback);
-
-            // Send to tutors, instructors and admins
-            return sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result).thenAccept(v2 -> {
-                // recover the participation and submission because we might want to use this result object again
-                result.setParticipation(originalParticipation);
-                if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
-                    result.getSubmission().setParticipation(originalParticipation);
-                    result.getSubmission().setResults(finalOriginalResults);
-                }
-            });
-        });
+        // Send to tutors, instructors and admins
+        sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result.toResultDTO());
     }
 
-    private CompletableFuture<Void>[] broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
+    private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
         final Exercise exercise = studentParticipation.getExercise();
         boolean isWorkingPeriodOver;
         if (exercise.isExamExercise()) {
@@ -199,17 +148,19 @@ public class WebsocketMessagingService {
         if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
             var students = studentParticipation.getStudents();
 
-            result.filterSensitiveInformation();
-
+            var resultDTO = result.toResultDTO();
             allFutures.addAll(students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
+                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO)).toList());
 
+            // TODO don't replace the result feedback, create a new list instead
+            var originalFeedback = new ArrayList<>(result.getFeedbacks());
             result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+            var filteredFeedbackResultDTO = result.toResultDTO();
+            result.setFeedbacks(originalFeedback);
 
             allFutures.addAll(students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
+                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO)).toList());
         }
-        return allFutures.toArray(CompletableFuture[]::new);
     }
 
     /**

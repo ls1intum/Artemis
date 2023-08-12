@@ -10,6 +10,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * A Result.
@@ -589,5 +591,19 @@ public class Result extends DomainObject implements Comparable<Result> {
             return getId().compareTo(other.getId());
         }
         return getCompletionDate().compareTo(other.getCompletionDate());
+    }
+
+    public ResultDTO toResultDTO() {
+        return toResultDTO(getFeedbacks());
+    }
+
+    public ResultDTO toResultDTO(List<Feedback> filteredFeedback) {
+        ResultDTO.SubmissionDTO submissionDTO = null;
+        if (Hibernate.isInitialized(getSubmission())) {
+            submissionDTO = getSubmission().toSubmissionDTO();
+        }
+        var feedbackDTOs = filteredFeedback.stream().map(Feedback::toFeedbackDTO).toList();
+        return new ResultDTO(getId(), getCompletionDate(), isSuccessful(), getScore(), isRated(), submissionDTO, getParticipation().getId(), feedbackDTOs, getAssessmentType(),
+                hasComplaint(), isExampleResult(), getTestCaseCount(), getPassedTestCaseCount(), getCodeIssueCount());
     }
 }
