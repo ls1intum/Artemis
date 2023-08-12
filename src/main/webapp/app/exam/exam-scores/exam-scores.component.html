@@ -455,7 +455,7 @@
                         </th>
                         <ng-container *ngIf="hasBonus">
                             <th *ngIf="presentationScoreThreshold !== undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
-                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate : { threshold: presentationScoreThreshold } }}</span>
+                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="gradeWithBonus.bonusGrade">
