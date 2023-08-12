@@ -22,7 +22,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
@@ -47,6 +47,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    plagiarismChecksSimilarityThresholdPercentage: number;
+
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     examCourseId?: number;
@@ -59,6 +61,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     // Icons
     faSave = faSave;
+    faQuestionCircle = faQuestionCircle;
     faBan = faBan;
 
     constructor(
@@ -102,6 +105,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
             this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
+            this.plagiarismChecksSimilarityThresholdPercentage = this.modelingExercise!.plagiarismChecksConfig!.similarityThreshold! * 100;
         });
 
         this.activatedRoute.url
@@ -193,6 +197,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
+        this.modelingExercise.plagiarismChecksConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)

@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -108,9 +107,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private PlagiarismUtilService plagiarismUtilService;
 
     private ModelingExercise classExercise;
 
@@ -1595,7 +1591,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, new LinkedMultiValueMap<>());
         assertThat(result.getComparisons()).hasSize(1);
         assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
 

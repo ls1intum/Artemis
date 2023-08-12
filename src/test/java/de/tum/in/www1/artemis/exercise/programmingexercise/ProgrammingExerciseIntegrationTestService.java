@@ -59,7 +59,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -143,9 +142,6 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    @Autowired
-    private PlagiarismUtilService plagiarismUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -1679,7 +1675,7 @@ class ProgrammingExerciseIntegrationTestService {
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, new LinkedMultiValueMap<>());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
@@ -1690,7 +1686,7 @@ class ProgrammingExerciseIntegrationTestService {
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM_JPLAG_REPORT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var jplagZipArchive = request.getFile(path, HttpStatus.OK, plagiarismUtilService.getDefaultPlagiarismOptions());
+        var jplagZipArchive = request.getFile(path, HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
 

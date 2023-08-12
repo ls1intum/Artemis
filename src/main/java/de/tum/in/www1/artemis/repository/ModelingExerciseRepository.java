@@ -31,8 +31,9 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results",
+            "plagiarismChecksConfig" })
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismChecksConfigById(@Param("exerciseId") Long exerciseId);
 
     @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
@@ -65,14 +66,19 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results",
+            "plagiarismChecksConfig" })
+    Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsAndPlagiarismChecksConfigById(Long exerciseId);
+
     @NotNull
     default ModelingExercise findByIdElseThrow(long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
     @NotNull
-    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismChecksConfigByIdElseThrow(long exerciseId) {
+        return findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismChecksConfigById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
     @NotNull
@@ -83,5 +89,11 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @NotNull
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    }
+
+    @NotNull
+    default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsAndPlagiarismChecksConfigElseThrow(long exerciseId) {
+        return findWithStudentParticipationsSubmissionsResultsAndPlagiarismChecksConfigById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 }

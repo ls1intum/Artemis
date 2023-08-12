@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.repository.*;
 
 public abstract class ExerciseImportService {
@@ -63,6 +64,22 @@ public abstract class ExerciseImportService {
                 newExercise.setTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
             }
         }
+
+        if (importedExercise.getPlagiarismChecksConfig() != null) {
+            var plagiarismChecksConfig = new PlagiarismChecksConfig();
+
+            var importedPlagiarismChecksConfig = importedExercise.getPlagiarismChecksConfig();
+            plagiarismChecksConfig.setContinuousPlagiarismControlEnabled(importedPlagiarismChecksConfig.isContinuousPlagiarismControlEnabled());
+            plagiarismChecksConfig.setSimilarityThreshold(importedPlagiarismChecksConfig.getSimilarityThreshold());
+            plagiarismChecksConfig.setMinimumSize(importedPlagiarismChecksConfig.getMinimumSize());
+            plagiarismChecksConfig.setMinimumScore(importedPlagiarismChecksConfig.getMinimumScore());
+
+            newExercise.setPlagiarismChecksConfig(plagiarismChecksConfig);
+        }
+        else {
+            newExercise.setPlagiarismChecksConfig(null);
+        }
+
     }
 
     /**

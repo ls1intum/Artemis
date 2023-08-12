@@ -4,11 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
@@ -115,18 +112,4 @@ public class PlagiarismUtilService {
         return course;
     }
 
-    @NotNull
-    public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
-        return getPlagiarismOptions(50D, 0, 0);
-    }
-
-    @NotNull
-    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", String.valueOf(similarityThreshold));
-        params.add("minimumScore", String.valueOf(minimumScore));
-        params.add("minimumSize", String.valueOf(minimumSize));
-        return params;
-    }
 }

@@ -71,6 +71,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
+    plagiarismChecksSimilarityThresholdPercentage: number;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -371,6 +372,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             } else {
                 this.selectedProjectTypeValue = this.programmingExercise.projectType!;
             }
+            this.plagiarismChecksSimilarityThresholdPercentage = this.programmingExercise.plagiarismChecksConfig!.similarityThreshold! * 100;
         });
 
         // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
@@ -570,6 +572,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving = true;
+        this.programmingExercise.plagiarismChecksConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
             this.alertService.addAlert({

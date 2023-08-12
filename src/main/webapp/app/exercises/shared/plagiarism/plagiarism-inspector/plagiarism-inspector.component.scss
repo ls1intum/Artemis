@@ -28,7 +28,7 @@ $footer-height: 31px;
             }
 
             &-right {
-                display: flex;
+                display: contents;
 
                 .check-plagiarism {
                     margin-right: 1rem;
@@ -42,11 +42,6 @@ $footer-height: 31px;
             margin: 0 1rem 0 0;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
-            cursor: pointer;
-
-            &:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-            }
 
             .plagiarism-options-toggle {
                 font-size: 1.1rem;
@@ -128,8 +123,10 @@ $footer-height: 31px;
     }
 
     .plagiarism-checkbox {
-        margin: 0;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
 
         #generateJPlagReport {
             margin-right: 0.5rem;
