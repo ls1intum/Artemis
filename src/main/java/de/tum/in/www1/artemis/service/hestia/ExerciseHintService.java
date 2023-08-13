@@ -7,9 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
@@ -215,9 +213,14 @@ public class ExerciseHintService {
         }
         var testCasesInTask = task.getTestCases();
         var feedbacks = result.getFeedbacks();
-        // the feedback can either not exist (e.g. for skipped test cases), or the attribute positive may not be set
-        return feedbacks.stream().filter(Objects::nonNull).filter(feedback -> testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase, feedback.getTestCase())))
-                .allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
+        // a task is successful if feedback for all in the task linked tests exist and if these tests all passed.
+        var feedbackForTask = testCasesInTask.stream().map(testCase -> feedbacks.stream().filter(feedback -> testCase.equals(feedback.getTestCase())).findAny().orElse(null))
+                .filter(Objects::nonNull).toList();
+        if (feedbackForTask.size() != testCasesInTask.size()) {
+            // some expected test cases were not executed in the student's result
+            return false;
+        }
+        return feedbackForTask.stream().allMatch(Feedback::isPositive);
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
