@@ -27,13 +27,15 @@ export function submitRandomModelingAnswerExam(artemis, exercise, submissionId, 
 }
 
 export function newModelingExercise(artemis, exerciseGroup, courseId) {
+    const exerciseName = nextAlphanumeric(5);
     const exercise = {
         maxPoints: 1,
-        title: 'Modeling K6 ' + nextAlphanumeric(5),
+        title: 'Modeling K6 ' + exerciseName,
         type: 'modeling',
         mode: 'INDIVIDUAL',
         assessmentType: 'SEMI_AUTOMATIC',
         diagramType: 'ClassDiagram',
+        channelName: 'exercise-' + exerciseName,
     };
 
     if (courseId) {

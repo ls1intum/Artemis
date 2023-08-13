@@ -20,6 +20,8 @@ export function newExam(artemis, course) {
     const startDate = new Date(currentDate.getTime() + 60000); // Starting in 60 secs
     const endDate = new Date(currentDate.getTime() + 600000); // Ending in 600 secs
 
+    const examName = nextAlphanumeric(5);
+
     const exam = {
         course: course,
         visibleDate: visibleDate,
@@ -29,9 +31,10 @@ export function newExam(artemis, course) {
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,
-        title: 'Exam K6 ' + nextAlphanumeric(5),
+        title: 'Exam K6 ' + examName,
         visible: false,
         gracePeriod: 180,
+        channelName: 'exam-' + examName,
     };
 
     const res = artemis.post(EXAMS(course.id), exam);
