@@ -634,7 +634,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
             var failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
             failedStashOperations.thenAccept(failures -> {
-                long numberOfFailedStashOperations = failedStashOperations.size();
+                long numberOfFailedStashOperations = failures.size();
                 String notificationText;
                 if (numberOfFailedStashOperations > 0) {
                     notificationText = Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations;
