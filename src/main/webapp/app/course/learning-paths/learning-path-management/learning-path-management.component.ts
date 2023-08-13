@@ -202,6 +202,7 @@ export class LearningPathManagementComponent implements OnInit {
             this.page = pageNumber;
         }
     }
+
     viewLearningPath(learningPath: LearningPathPageableSearchDTO) {
         const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
             size: 'xl',
