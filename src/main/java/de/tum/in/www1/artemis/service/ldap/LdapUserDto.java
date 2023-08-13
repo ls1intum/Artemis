@@ -84,4 +84,8 @@ public final class LdapUserDto {
     public Name getUid() {
         return uid;
     }
+
+    public void setUid(Name uid) {
+        this.uid = uid;
+    }
 }

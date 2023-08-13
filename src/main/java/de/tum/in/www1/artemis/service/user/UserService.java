@@ -714,7 +714,7 @@ public class UserService {
      */
     public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName,
             Role courseGroupRole) {
-        if (!StringUtils.hasText(login) || !StringUtils.hasText(email) || !StringUtils.hasText(registrationNumber)) {
+        if (!StringUtils.hasText(login) && !StringUtils.hasText(email) && !StringUtils.hasText(registrationNumber)) {
             // if none of the three values is specified, the user cannot be found
             return Optional.empty();
         }

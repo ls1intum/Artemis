@@ -344,7 +344,6 @@ public class ProgrammingExerciseTestService {
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 

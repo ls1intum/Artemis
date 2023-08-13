@@ -1,19 +1,23 @@
 package de.tum.in.www1.artemis.localvcci;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -27,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -57,8 +62,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private String teamRepositorySlug;
 
+    @Value("${artemis.version-control.user}")
+    private String localVCBaseUsername;
+
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
         templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
         templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
 
@@ -76,6 +84,24 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         teamShortName = "team1";
         teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
+
+        // TODO: mock the authorization properly, potentially in each test differently
+
+        var instructor1 = new LdapUserDto();
+        instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
+        var tutor1 = new LdapUserDto();
+        tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
+        var student1 = new LdapUserDto();
+        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(TEST_PREFIX + "instructor1");
+        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(TEST_PREFIX + "tutor1");
+        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(TEST_PREFIX + "student1");
+
+        var fakeUser = new LdapUserDto();
+        fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+
+        doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
     }
 
     @AfterEach

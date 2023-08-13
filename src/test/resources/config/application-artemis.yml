@@ -13,14 +13,14 @@ artemis:
         use-external: true
         external:
             url: https://user-management.fake.fake
-            user: fake-username
+            user: fake-username-um
             password: fake-password
             admin-group-name: admins
         ldap:
-            url: <url>
-            user-dn: <user-dn>
-            password: <password>
-            base: <base>
+            url: https://ldap.fake.fake
+            user-dn: fake-username-ldap
+            password: fake-password
+            base: ou=users,ou=data,ou=prod,ou=iauth,dc=tum,dc=de
         internal-admin:
             username: artemis_admin
             password: artemis_admin
@@ -32,7 +32,7 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
     version-control:
-        user: fake-username
+        user: fake-username-vc
         password: fake-password
         url: https://version-control.fake.fake
         token: fake-token
@@ -42,7 +42,7 @@ artemis:
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
         default-branch: main
     continuous-integration:
-        user: fake-username
+        user: fake-username-ci
         password: fake-password
         token: fake-token
         url: https://continuous-integration.fake.fake

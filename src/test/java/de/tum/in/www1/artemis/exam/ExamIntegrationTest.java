@@ -353,8 +353,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // the last two mocked calls are expected to add student 111 to the course student group{
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student3.getLogin(), student3.getEmail(), student3.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
+        // bitbucketRequestMockProvider.mockUpdateUserDetails(student3.getLogin(), student3.getEmail(), student3.getName());
+        // bitbucketRequestMockProvider.mockAddUserToGroups();
 
         User student99 = userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
@@ -380,12 +380,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         var studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber(student1.getRegistrationNumber());
         var studentDto2 = UserFactory.generateStudentDTOWithRegistrationNumber(student2.getRegistrationNumber());
-        var studentDto3 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure later
+        var studentDto3 = new StudentDTO(student3.getLogin(), null, null, registrationNumber3WithTypo, null); // explicit typo, should be a registration failure later
         var studentDto4 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber4WithTypo); // explicit typo, should fall back to login name later
         var studentDto10 = UserFactory.generateStudentDTOWithRegistrationNumber(null); // completely empty
 
-        var studentDto99 = new StudentDTO(null, null, null, registrationNumber99, null).registrationNumber();
-        var studentDto111 = new StudentDTO(null, null, null, registrationNumber111, null).registrationNumber();
+        var studentDto99 = new StudentDTO(student99.getLogin(), null, null, registrationNumber99, null);
+        var studentDto111 = new StudentDTO(null, null, null, registrationNumber111, null);
 
         // Add a student with login but empty registration number
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto4, studentDto99, studentDto111, studentDto10);
@@ -393,7 +393,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 studentsToRegister, StudentDTO.class, HttpStatus.OK);
+        // all students get registered if they can be found in the LDAP
         assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto4, studentDto10);
+
+        // TODO check audit events stored properly
+
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
 
         // now a new user student101 should exist
