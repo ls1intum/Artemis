@@ -5,10 +5,7 @@ import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
     exportAs: 'jhiHasAnyAuthority',
 })
 export class MockHasAnyAuthorityDirective {
-    constructor(
-        private templateRef: TemplateRef<any>,
-        private viewContainerRef: ViewContainerRef,
-    ) {}
+    constructor(private templateRef: TemplateRef<any>, private viewContainerRef: ViewContainerRef) {}
 
     @Input()
     set jhiHasAnyAuthority(value: string | string[]) {

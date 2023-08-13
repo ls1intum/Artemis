@@ -15,10 +15,7 @@ export class CourseRegistrationComponent implements OnInit {
     // Icons
     faCheckCircle = faCheckCircle;
 
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-    ) {}
+    constructor(private accountService: AccountService, private courseService: CourseManagementService) {}
 
     ngOnInit(): void {
         this.loadRegistrableCourses();

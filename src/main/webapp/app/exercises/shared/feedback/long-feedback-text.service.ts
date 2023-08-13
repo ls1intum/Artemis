@@ -13,10 +13,7 @@ const logoutSubject = new Subject<void>();
 export class LongFeedbackTextService implements OnDestroy {
     private userChangeSubscription: Subscription;
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    constructor(private http: HttpClient, private accountService: AccountService) {}
 
     init() {
         this.userChangeSubscription = this.accountService

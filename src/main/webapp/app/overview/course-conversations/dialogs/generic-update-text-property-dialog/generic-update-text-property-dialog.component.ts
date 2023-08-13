@@ -55,10 +55,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
     get control() {
         return this.form.get(this.propertyName);
     }
-    constructor(
-        private fb: FormBuilder,
-        activeModal: NgbActiveModal,
-    ) {
+    constructor(private fb: FormBuilder, activeModal: NgbActiveModal) {
         super(activeModal);
     }
     private initializeForm() {

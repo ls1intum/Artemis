@@ -35,10 +35,7 @@ export class ComplaintService implements IComplaintService {
     private apiUrl = 'api';
     private resourceUrl = this.apiUrl + '/complaints';
 
-    constructor(
-        private http: HttpClient,
-        private complaintResponseService: ComplaintResponseService,
-    ) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
     /**
      * Checks if a complaint is locked for the currently logged-in user

@@ -17,11 +17,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     isLoading = false;
     prerequisites: Competency[] = [];
 
-    constructor(
-        private alertService: AlertService,
-        private activeModal: NgbActiveModal,
-        private competencyService: CompetencyService,
-    ) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private competencyService: CompetencyService) {}
 
     ngOnInit(): void {
         if (this.courseId) {

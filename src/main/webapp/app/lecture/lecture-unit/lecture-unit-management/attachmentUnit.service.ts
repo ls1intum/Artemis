@@ -13,10 +13,7 @@ type EntityResponseType = HttpResponse<AttachmentUnit>;
 export class AttachmentUnitService {
     private resourceURL = 'api';
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient

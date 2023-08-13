@@ -62,11 +62,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
 
-    constructor(
-        private teamService: TeamService,
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
+    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
     /**
      * Life cycle hook to indicate component creation is done

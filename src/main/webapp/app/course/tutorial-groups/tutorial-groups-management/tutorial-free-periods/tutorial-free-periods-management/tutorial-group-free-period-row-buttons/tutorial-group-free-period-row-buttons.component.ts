@@ -31,10 +31,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     faUsers = faUsers;
     faTimes = faTimes;
 
-    constructor(
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private modalService: NgbModal,
-    ) {}
+    constructor(private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private modalService: NgbModal) {}
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService

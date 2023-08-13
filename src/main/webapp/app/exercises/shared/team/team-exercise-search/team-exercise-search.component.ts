@@ -33,10 +33,7 @@ export class TeamExerciseSearchComponent {
 
     inputDisplayValue: string;
 
-    constructor(
-        private courseService: CourseManagementService,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private courseService: CourseManagementService, private translateService: TranslateService) {}
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);

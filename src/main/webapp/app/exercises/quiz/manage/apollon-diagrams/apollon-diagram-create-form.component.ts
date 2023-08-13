@@ -20,12 +20,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     faBan = faBan;
     faSave = faSave;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private apollonDiagramService: ApollonDiagramService,
-        private router: Router,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private alertService: AlertService) {}
 
     /**
      * Adds focus on the title input field

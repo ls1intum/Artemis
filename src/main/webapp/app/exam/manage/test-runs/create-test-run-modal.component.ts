@@ -18,10 +18,7 @@ export class CreateTestRunModalComponent implements OnInit {
     workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
 
     ngOnInit(): void {
         this.initWorkingTimeForm();

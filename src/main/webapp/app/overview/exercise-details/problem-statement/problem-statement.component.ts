@@ -18,11 +18,7 @@ export class ProblemStatementComponent implements OnInit {
     @Input()
     participation?: StudentParticipation;
 
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        private participationService: ParticipationService,
-    ) {}
+    constructor(private route: ActivatedRoute, private exerciseService: ExerciseService, private participationService: ParticipationService) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

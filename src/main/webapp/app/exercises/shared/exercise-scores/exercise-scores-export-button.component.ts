@@ -26,10 +26,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     // Icons
     faDownload = faDownload;
 
-    constructor(
-        private resultService: ResultService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private resultService: ResultService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);

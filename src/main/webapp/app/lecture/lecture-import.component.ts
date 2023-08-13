@@ -38,12 +38,7 @@ export class LectureImportComponent implements OnInit {
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
-    constructor(
-        private router: Router,
-        private pagingService: LecturePagingService,
-        private sortService: SortService,
-        private activeModal: NgbActiveModal,
-    ) {}
+    constructor(private router: Router, private pagingService: LecturePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     get page(): number {
         return this.state.page;

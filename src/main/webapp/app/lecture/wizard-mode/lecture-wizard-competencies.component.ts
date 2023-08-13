@@ -185,8 +185,8 @@ export class LectureUpdateWizardCompetenciesComponent implements OnInit {
                     // need the unit to show it in the table as connected. Since it's only for showing it, as a
                     // workaround we take the unit from the lecture which is the same one.
                     const editedCompetency = response.body!;
-                    const exerciseUnits = this.lecture.lectureUnits?.filter(
-                        (unit: ExerciseUnit) => editedCompetency.exercises?.find((exercise) => exercise.id === unit.exercise?.id),
+                    const exerciseUnits = this.lecture.lectureUnits?.filter((unit: ExerciseUnit) =>
+                        editedCompetency.exercises?.find((exercise) => exercise.id === unit.exercise?.id),
                     );
                     editedCompetency.lectureUnits = editedCompetency.lectureUnits?.concat(exerciseUnits ?? []);
 

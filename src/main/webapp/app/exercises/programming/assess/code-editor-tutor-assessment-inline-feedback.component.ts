@@ -60,11 +60,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private translateService: TranslateService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        elementRef: ElementRef,
-    ) {
+    constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService, elementRef: ElementRef) {
         this.elementRef = elementRef;
     }
 

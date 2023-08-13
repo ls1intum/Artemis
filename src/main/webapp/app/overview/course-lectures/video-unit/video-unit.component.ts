@@ -47,12 +47,9 @@ export class VideoUnitComponent implements OnInit {
 
         if (!this.isCollapsed) {
             // Mark the unit as completed when the user has it open for at least 5 minutes
-            this.completionTimeout = setTimeout(
-                () => {
-                    this.onCompletion.emit({ lectureUnit: this.videoUnit, completed: true });
-                },
-                1000 * 60 * 5,
-            );
+            this.completionTimeout = setTimeout(() => {
+                this.onCompletion.emit({ lectureUnit: this.videoUnit, completed: true });
+            }, 1000 * 60 * 5);
         } else {
             clearTimeout(this.completionTimeout);
         }

@@ -23,12 +23,7 @@ export class TextAssessmentAnalytics {
     private route: ActivatedRoute;
     public analyticsEnabled = false;
 
-    constructor(
-        protected assessmentsService: TextAssessmentService,
-        protected accountService: AccountService,
-        private profileService: ProfileService,
-        public location: Location,
-    ) {
+    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService, public location: Location) {
         // retrieve the analytics enabled status from the profile info and set to current property
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.analyticsEnabled = profileInfo.textAssessmentAnalyticsEnabled || false;

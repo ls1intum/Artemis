@@ -64,10 +64,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileInputTouched = false;
     isFileTooBig: boolean;
 
-    constructor(
-        private translateService: TranslateService,
-        private fb: FormBuilder,
-    ) {}
+    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();

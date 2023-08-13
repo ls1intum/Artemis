@@ -20,10 +20,7 @@ export class CoverageGenerationStepComponent implements OnInit {
     coverageReport?: CoverageReport;
     fileContentByPath = new Map<string, string>();
 
-    constructor(
-        private exerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

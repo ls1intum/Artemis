@@ -17,11 +17,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private lastText: string;
     private formatFn: (m: dayjs.Dayjs) => string;
 
-    constructor(
-        private cdRef: ChangeDetectorRef,
-        private ngZone: NgZone,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private cdRef: ChangeDetectorRef, private ngZone: NgZone, private translateService: TranslateService) {}
 
     format(date: dayjs.Dayjs) {
         return date.locale(this.lastLocale).from(dayjs(), this.lastOmitSuffix);

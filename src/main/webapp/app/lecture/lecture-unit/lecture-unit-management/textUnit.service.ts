@@ -13,10 +13,7 @@ type EntityResponseType = HttpResponse<TextUnit>;
 export class TextUnitService {
     private resourceURL = 'api';
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
     create(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient

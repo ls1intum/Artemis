@@ -30,10 +30,7 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     // Icons
     faTimes = faTimes;
 
-    constructor(
-        private metisService: MetisService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
+    constructor(private metisService: MetisService, private changeDetector: ChangeDetectorRef) {}
 
     /**
      * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),

@@ -23,10 +23,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faWifi = faWifi;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private router: Router,
-    ) {
+    constructor(private websocketService: JhiWebsocketService, private router: Router) {
         this.routerSubscription = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
             .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));

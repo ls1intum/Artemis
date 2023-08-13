@@ -10,11 +10,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> extends
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     modalTitle: string;
 
-    protected constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-    ) {
+    protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
 

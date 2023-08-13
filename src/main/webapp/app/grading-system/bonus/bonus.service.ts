@@ -13,10 +13,7 @@ export type EntityResponseType = HttpResponse<Bonus>;
 export class BonusService {
     public resourceUrl = 'api';
 
-    constructor(
-        private http: HttpClient,
-        private gradingSystemService: GradingSystemService,
-    ) {}
+    constructor(private http: HttpClient, private gradingSystemService: GradingSystemService) {}
 
     /**
      * Deletes the bonus.

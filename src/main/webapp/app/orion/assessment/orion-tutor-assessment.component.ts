@@ -12,11 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 export class OrionTutorAssessmentComponent {
     @ViewChild(CodeEditorTutorAssessmentContainerComponent) container: CodeEditorTutorAssessmentContainerComponent;
 
-    constructor(
-        private orionConnectorService: OrionConnectorService,
-        private alertService: AlertService,
-        private orionAssessmentService: OrionAssessmentService,
-    ) {
+    constructor(private orionConnectorService: OrionConnectorService, private alertService: AlertService, private orionAssessmentService: OrionAssessmentService) {
         // Register this component as receiver of updates from Orion
         orionConnectorService.activeAssessmentComponent = this;
     }

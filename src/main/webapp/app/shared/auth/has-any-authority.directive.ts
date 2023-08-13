@@ -18,11 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 export class HasAnyAuthorityDirective {
     private authorities: string[];
 
-    constructor(
-        private accountService: AccountService,
-        private templateRef: TemplateRef<any>,
-        private viewContainerRef: ViewContainerRef,
-    ) {}
+    constructor(private accountService: AccountService, private templateRef: TemplateRef<any>, private viewContainerRef: ViewContainerRef) {}
 
     @Input()
     set jhiHasAnyAuthority(value: string | string[]) {

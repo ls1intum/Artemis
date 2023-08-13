@@ -20,10 +20,7 @@ export class QuizExerciseCreateButtonsComponent {
     faFileImport = faFileImport;
     faFileExport = faFileExport;
 
-    constructor(
-        private router: Router,
-        private modalService: NgbModal,
-    ) {}
+    constructor(private router: Router, private modalService: NgbModal) {}
 
     /**
      * Opens the import modal for a quiz exercise
