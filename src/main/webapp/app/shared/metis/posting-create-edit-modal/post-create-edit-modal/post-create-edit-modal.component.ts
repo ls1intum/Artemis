@@ -49,7 +49,12 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, private router: Router) {
+    constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+        private router: Router,
+    ) {
         super(metisService, modalService, formBuilder);
     }
 
