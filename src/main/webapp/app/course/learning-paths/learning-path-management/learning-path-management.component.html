@@ -76,7 +76,7 @@
                         <ngb-progressbar type="primary" [showValue]="true" [value]="learningPath.progress ?? 0" [max]="100"></ngb-progressbar>
                     </td>
                     <td class="col-1">
-                        <jhi-button (onClick)="viewLearningPath()" [title]="'entity.action.view'"></jhi-button>
+                        <jhi-button (onClick)="viewLearningPath(learningPath)" [title]="'entity.action.view'"></jhi-button>
                     </td>
                 </tr>
             </tbody>
