@@ -14,6 +14,7 @@ public enum MessageTopic {
     TEXT_EXERCISE_SCHEDULE("text-exercise-schedule"),
     TEXT_EXERCISE_SCHEDULE_CANCEL("text-exercise-schedule-cancel"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES("programming-exercise-unlock-repositories"),
+    PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS("programming-exercise-unlock-repositories-and-participations"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-repositories-and-participations-with-earlier-start-date-and-later-due-date"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-repositories-with-earlier-start-date-and-later-due-date"),
     PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-participations-with-earlier-start-date-and-later-due-date"),
