@@ -47,7 +47,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: ProgrammingSubmissionService,
+    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.

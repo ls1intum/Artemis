@@ -1,10 +1,12 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
-import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
-import { courseManagement, courseManagementRequest, examCreation, examDetails, examManagement, navigationBar } from '../../support/artemis';
+
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+
+import { courseManagement, courseManagementAPIRequest, examAPIRequests, examCreation, examDetails, examManagement, navigationBar } from '../../support/artemis';
 import { admin } from '../../support/users';
+import { convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Common primitives
 const examData = {
@@ -12,8 +14,8 @@ const examData = {
     visibleDate: dayjs(),
     startDate: dayjs().add(1, 'day'),
     endDate: dayjs().add(2, 'day'),
-    numberOfExercises: 4,
-    maxPoints: 40,
+    numberOfExercisesInExam: 4,
+    examMaxPoints: 40,
     startText: 'Exam start text',
     endText: 'Exam end text',
     confirmationStartText: 'Exam confirmation start text',
@@ -25,8 +27,8 @@ const editedExamData = {
     visibleDate: dayjs(),
     startDate: dayjs().add(2, 'day'),
     endDate: dayjs().add(4, 'day'),
-    numberOfExercises: 3,
-    maxPoints: 30,
+    numberOfExercisesInExam: 3,
+    examMaxPoints: 30,
     startText: 'Edited exam start text',
     endText: 'Edited exam end text',
     confirmationStartText: 'Edited exam confirmation start text',
@@ -41,7 +43,7 @@ describe('Exam creation/deletion', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -59,8 +61,8 @@ describe('Exam creation/deletion', () => {
         examCreation.setVisibleDate(examData.visibleDate);
         examCreation.setStartDate(examData.startDate);
         examCreation.setEndDate(examData.endDate);
-        examCreation.setNumberOfExercises(examData.numberOfExercises);
-        examCreation.setExamMaxPoints(examData.maxPoints);
+        examCreation.setNumberOfExercises(examData.numberOfExercisesInExam);
+        examCreation.setExamMaxPoints(examData.examMaxPoints);
 
         examCreation.setStartText(examData.startText);
         examCreation.setEndText(examData.endText);
@@ -74,8 +76,8 @@ describe('Exam creation/deletion', () => {
             expect(trimDate(examBody.visibleDate)).to.eq(trimDate(dayjsToString(examData.visibleDate)));
             expect(trimDate(examBody.startDate)).to.eq(trimDate(dayjsToString(examData.startDate)));
             expect(trimDate(examBody.endDate)).to.eq(trimDate(dayjsToString(examData.endDate)));
-            expect(examBody.numberOfExercisesInExam).to.eq(examData.numberOfExercises);
-            expect(examBody.examMaxPoints).to.eq(examData.maxPoints);
+            expect(examBody.numberOfExercisesInExam).to.eq(examData.numberOfExercisesInExam);
+            expect(examBody.examMaxPoints).to.eq(examData.examMaxPoints);
             expect(examBody.startText).to.eq(examData.startText);
             expect(examBody.endText).to.eq(examData.endText);
             expect(examBody.confirmationStartText).to.eq(examData.confirmationStartText);
@@ -86,8 +88,8 @@ describe('Exam creation/deletion', () => {
         examManagement.getExamVisibleDate().contains(examData.visibleDate.format(dateFormat));
         examManagement.getExamStartDate().contains(examData.startDate.format(dateFormat));
         examManagement.getExamEndDate().contains(examData.endDate.format(dateFormat));
-        examManagement.getExamNumberOfExercises().contains(examData.numberOfExercises);
-        examManagement.getExamMaxPoints().contains(examData.maxPoints);
+        examManagement.getExamNumberOfExercises().contains(examData.numberOfExercisesInExam);
+        examManagement.getExamMaxPoints().contains(examData.examMaxPoints);
         examManagement.getExamStartText().contains(examData.startText);
         examManagement.getExamEndText().contains(examData.endText);
         examManagement.getExamConfirmationStartText().contains(examData.confirmationStartText);
@@ -96,11 +98,14 @@ describe('Exam creation/deletion', () => {
     });
 
     describe('Exam deletion', () => {
-        beforeEach(() => {
+        before('Create exam', () => {
             examData.title = 'exam' + generateUUID();
-            const exam = new ExamBuilder(course).title(examData.title).build();
-            courseManagementRequest.createExam(exam).then((examResponse) => {
-                examId = examResponse.body.id;
+            const examConfig: Exam = {
+                course,
+                title: examData.title,
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
+                examId = examResponse.body.id!;
             });
         });
 
@@ -114,11 +119,14 @@ describe('Exam creation/deletion', () => {
     });
 
     describe('Edits an exam', () => {
-        beforeEach(() => {
+        before('Create exam', () => {
             examData.title = 'exam' + generateUUID();
-            const exam = new ExamBuilder(course).title(examData.title).build();
-            courseManagementRequest.createExam(exam).then((examResponse) => {
-                examId = examResponse.body.id;
+            const examConfig: Exam = {
+                course,
+                title: examData.title,
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
+                examId = examResponse.body.id!;
             });
         });
 
@@ -133,8 +141,8 @@ describe('Exam creation/deletion', () => {
             examCreation.setVisibleDate(editedExamData.visibleDate);
             examCreation.setStartDate(editedExamData.startDate);
             examCreation.setEndDate(editedExamData.endDate);
-            examCreation.setNumberOfExercises(editedExamData.numberOfExercises);
-            examCreation.setExamMaxPoints(editedExamData.maxPoints);
+            examCreation.setNumberOfExercises(editedExamData.numberOfExercisesInExam);
+            examCreation.setExamMaxPoints(editedExamData.examMaxPoints);
 
             examCreation.setStartText(editedExamData.startText);
             examCreation.setEndText(editedExamData.endText);
@@ -148,8 +156,8 @@ describe('Exam creation/deletion', () => {
                 expect(trimDate(examBody.visibleDate)).to.eq(trimDate(dayjsToString(editedExamData.visibleDate)));
                 expect(trimDate(examBody.startDate)).to.eq(trimDate(dayjsToString(editedExamData.startDate)));
                 expect(trimDate(examBody.endDate)).to.eq(trimDate(dayjsToString(editedExamData.endDate)));
-                expect(examBody.numberOfExercisesInExam).to.eq(editedExamData.numberOfExercises);
-                expect(examBody.examMaxPoints).to.eq(editedExamData.maxPoints);
+                expect(examBody.numberOfExercisesInExam).to.eq(editedExamData.numberOfExercisesInExam);
+                expect(examBody.examMaxPoints).to.eq(editedExamData.examMaxPoints);
                 expect(examBody.startText).to.eq(editedExamData.startText);
                 expect(examBody.endText).to.eq(editedExamData.endText);
                 expect(examBody.confirmationStartText).to.eq(editedExamData.confirmationStartText);
@@ -160,8 +168,8 @@ describe('Exam creation/deletion', () => {
             examManagement.getExamVisibleDate().contains(editedExamData.visibleDate.format(dateFormat));
             examManagement.getExamStartDate().contains(editedExamData.startDate.format(dateFormat));
             examManagement.getExamEndDate().contains(editedExamData.endDate.format(dateFormat));
-            examManagement.getExamNumberOfExercises().contains(editedExamData.numberOfExercises);
-            examManagement.getExamMaxPoints().contains(editedExamData.maxPoints);
+            examManagement.getExamNumberOfExercises().contains(editedExamData.numberOfExercisesInExam);
+            examManagement.getExamMaxPoints().contains(editedExamData.examMaxPoints);
             examManagement.getExamStartText().contains(editedExamData.startText);
             examManagement.getExamEndText().contains(editedExamData.endText);
             examManagement.getExamConfirmationStartText().contains(editedExamData.confirmationStartText);
@@ -171,6 +179,6 @@ describe('Exam creation/deletion', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

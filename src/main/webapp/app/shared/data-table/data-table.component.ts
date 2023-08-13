@@ -143,7 +143,10 @@ export class DataTableComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
 
-    constructor(private sortService: SortService, private localStorage: LocalStorageService) {
+    constructor(
+        private sortService: SortService,
+        private localStorage: LocalStorageService,
+    ) {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],
