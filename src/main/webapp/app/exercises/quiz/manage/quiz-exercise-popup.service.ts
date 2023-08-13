@@ -8,7 +8,11 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 export class QuizExercisePopupService {
     private ngbModalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal, private router: Router, private quizExerciseService: QuizExerciseService) {
+    constructor(
+        private modalService: NgbModal,
+        private router: Router,
+        private quizExerciseService: QuizExerciseService,
+    ) {
         this.ngbModalRef = null;
     }
 

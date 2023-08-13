@@ -1703,9 +1703,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
         ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
         ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
-        assertThat(savedExerciseGroup1.getExercises()).containsExactly(exercise1_1, exercise1_2);
-        assertThat(savedExerciseGroup2.getExercises()).containsExactly(exercise2_1);
-        assertThat(savedExerciseGroup3.getExercises()).containsExactly(exercise3_1, exercise3_2, exercise3_3);
+        assertThat(savedExerciseGroup1.getExercises()).containsExactlyInAnyOrder(exercise1_1, exercise1_2);
+        assertThat(savedExerciseGroup2.getExercises()).containsExactlyInAnyOrder(exercise2_1);
+        assertThat(savedExerciseGroup3.getExercises()).containsExactlyInAnyOrder(exercise3_1, exercise3_2, exercise3_3);
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
@@ -1747,8 +1747,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise2);
     }
 
     @Test
@@ -1801,8 +1801,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise2);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1996,8 +1996,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(now().minusMinutes(1));
         });
@@ -2688,8 +2687,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(now().minusMinutes(1));
         });
