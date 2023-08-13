@@ -25,7 +25,11 @@ export type BuildArtifact = {
 export class ParticipationService {
     public resourceUrl = 'api/participations';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+        private accountService: AccountService,
+    ) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);
@@ -254,7 +258,6 @@ export class ParticipationService {
     /**
      * This method bundles recurring conversion steps for Participation EntityArrayResponses.
      * @param participationRes
-     * @private
      */
     private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertParticipationResponseArrayDatesFromServer(participationRes);
@@ -265,7 +268,6 @@ export class ParticipationService {
     /**
      * This method bundles recurring conversion steps for Participation EntityResponses.
      * @param participationRes
-     * @private
      */
     private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
         this.convertParticipationResponseDatesFromServer(participationRes);

@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,6 +118,11 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
     }
 
     @Test

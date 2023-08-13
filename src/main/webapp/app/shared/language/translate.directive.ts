@@ -16,7 +16,10 @@ export class TranslateDirective implements OnChanges, OnInit, OnDestroy {
 
     private readonly directiveDestroyed = new Subject<void>();
 
-    constructor(private el: ElementRef, private translateService: TranslateService) {}
+    constructor(
+        private el: ElementRef,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit(): void {
         this.translateService.onLangChange.pipe(takeUntil(this.directiveDestroyed)).subscribe(() => {

@@ -13,7 +13,11 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     imprint: string;
     private languageChangeSubscription?: Subscription;
 
-    constructor(private route: ActivatedRoute, private legalDocumentService: LegalDocumentService, private languageHelper: JhiLanguageHelper) {}
+    constructor(
+        private route: ActivatedRoute,
+        private legalDocumentService: LegalDocumentService,
+        private languageHelper: JhiLanguageHelper,
+    ) {}
 
     /**
      * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.

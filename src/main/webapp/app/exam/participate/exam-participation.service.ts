@@ -28,7 +28,11 @@ export class ExamParticipationService {
         return `api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private localStorageService: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+    ) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -80,6 +84,9 @@ export class ExamParticipationService {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
                 return ExamParticipationService.convertStudentExamFromServer(studentExam);
+            }),
+            tap((studentExam: StudentExam) => {
+                this.currentlyLoadedStudentExam.next(studentExam);
             }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
@@ -156,18 +163,13 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExam: the student exam to submit
-     * @return returns the studentExam version of the server
      */
-    public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
+    public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
-        return this.httpClient.post<StudentExam>(url, studentExamCopy).pipe(
-            map((submittedStudentExam: StudentExam) => {
-                return ExamParticipationService.convertStudentExamFromServer(submittedStudentExam);
-            }),
-            tap((submittedStudentExam: StudentExam) => this.currentlyLoadedStudentExam.next(submittedStudentExam)),
+        return this.httpClient.post<void>(url, studentExamCopy).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
