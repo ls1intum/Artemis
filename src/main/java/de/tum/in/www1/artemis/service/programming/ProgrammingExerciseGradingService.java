@@ -595,7 +595,7 @@ public class ProgrammingExerciseGradingService {
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
         if (!relevantTestCases.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
             filterAutomaticFeedbacksWithoutTestCase(result, testCases);
-            setVisibilityForFeedbacksWithTestCase(result, testCases);
+            setVisibilityForFeedbacksWithTestCase(result);
 
             createFeedbackForNotExecutedTests(result, relevantTestCases);
             boolean hasDuplicateTestCases = createFeedbacksForDuplicateTests(result, exercise);
@@ -663,10 +663,9 @@ public class ProgrammingExerciseGradingService {
     /**
      * Sets the visibility on all feedbacks associated with a test case with the same name.
      *
-     * @param result    of the build run.
-     * @param testCases of the given programming exercise.
+     * @param result of the build run.
      */
-    private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
+    private void setVisibilityForFeedbacksWithTestCase(Result result) {
         for (Feedback feedback : result.getFeedbacks()) {
             if (feedback.getTestCase() != null) {
                 feedback.setVisibility(feedback.getTestCase().getVisibility());

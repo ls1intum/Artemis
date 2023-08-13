@@ -80,7 +80,7 @@ export class ProgrammingExerciseInstructionService {
     }
 
     public convertTestListToIds(testList: string): number[] {
-        // If there are test names (preview case) map the test to its corresponding id. Else use the id directly provided in the text.
+        // If there are test names (preview case), map the test to its corresponding id. Otherwise, use the id directly provided in the text.
         // split the names by "," only when there is not a closing bracket without a previous opening bracket
         return testList
             .split(/,(?![^(]*?\))/)
@@ -91,6 +91,7 @@ export class ProgrammingExerciseInstructionService {
     }
 
     public convertTestToId(test: string) {
+        // TODO use <testid>
         const asId = parseInt(test);
         if (!isNaN(asId)) {
             // If there already is an id, return it directly

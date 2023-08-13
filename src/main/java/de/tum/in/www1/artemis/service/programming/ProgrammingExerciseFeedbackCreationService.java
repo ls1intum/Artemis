@@ -308,7 +308,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         return existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
             // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
-            return matchingTestCase.isEmpty() && existing.isActive() || matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive();
+            return (matchingTestCase.isEmpty() && existing.isActive()) || (matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive());
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
     }
 
