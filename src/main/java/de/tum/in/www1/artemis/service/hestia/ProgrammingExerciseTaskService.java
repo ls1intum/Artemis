@@ -203,8 +203,12 @@ public class ProgrammingExerciseTaskService {
     private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
         var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-        return testCaseNames.stream().map(testName -> testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString())
-                .map(id -> "<testid>" + id + "</testid>").orElse(testName)).collect(Collectors.joining(","));
+        return testCaseNames.stream().map(testName -> convertTestNameToTestIdInProblemStatement(testCases, testName)).collect(Collectors.joining(","));
+    }
+
+    private String convertTestNameToTestIdInProblemStatement(Set<ProgrammingExerciseTestCase> testCases, String testName) {
+        return testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).map(id -> "<testid>" + id + "</testid>")
+                .orElse(testName);
     }
 
     /**
