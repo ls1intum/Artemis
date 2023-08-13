@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -71,16 +70,6 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
             LEFT JOIN FETCH tutorialGroup.registrations
-            LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
-            WHERE tutorialGroup.course.id = :#{#courseId}
-                ORDER BY tutorialGroup.title""")
-    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT tutorialGroup
-            FROM TutorialGroup tutorialGroup
-            LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.registrations
             WHERE tutorialGroup.course.id = :#{#courseId}
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrations(@Param("courseId") Long courseId);
@@ -118,8 +107,6 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId);
 
     boolean existsByTitleAndCourseId(String title, Long courseId);
-
-    Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
     @Transactional
     @Modifying

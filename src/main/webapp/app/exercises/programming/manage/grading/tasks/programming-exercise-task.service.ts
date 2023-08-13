@@ -28,7 +28,11 @@ export class ProgrammingExerciseTaskService {
 
     public resourceUrl = 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
+    constructor(
+        private http: HttpClient,
+        private alertService: AlertService,
+        private gradingService: ProgrammingExerciseGradingService,
+    ) {}
 
     get totalWeights() {
         return sum(this.testCases.map(({ weight }) => weight ?? 0));

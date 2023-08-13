@@ -8,7 +8,10 @@ import { filter, skip, take } from 'rxjs/operators';
 export class ArtemisNavigationUtilService {
     private onFirstPage = true;
 
-    constructor(private router: Router, private location: Location) {
+    constructor(
+        private router: Router,
+        private location: Location,
+    ) {
         router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),

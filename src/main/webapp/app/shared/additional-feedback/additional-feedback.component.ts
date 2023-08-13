@@ -28,7 +28,10 @@ export class AdditionalFeedbackComponent {
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
-    constructor(private translateService: TranslateService, private localeConversionService: LocaleConversionService) {}
+    constructor(
+        private translateService: TranslateService,
+        private localeConversionService: LocaleConversionService,
+    ) {}
 
     /**
      * Translates the points string based on the singularity of the given points.

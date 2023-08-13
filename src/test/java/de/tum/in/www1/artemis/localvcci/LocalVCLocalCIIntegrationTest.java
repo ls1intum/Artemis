@@ -575,7 +575,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Start test run
-        instructorExam.setStarted(true);
+        instructorExam.setStartedAndStartDate(ZonedDateTime.now());
         studentExamRepository.save(instructorExam);
 
         // Student should not able to fetch or push.
