@@ -23,7 +23,12 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
 
-    constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private alertService: AlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private exerciseGroupService: ExerciseGroupService,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and exerciseGroup

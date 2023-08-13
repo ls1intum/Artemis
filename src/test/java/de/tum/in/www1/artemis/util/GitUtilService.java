@@ -31,7 +31,7 @@ public class GitUtilService {
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
     private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
-    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
+    private final Path remotePath = Path.of(System.getProperty("java.io.tmpdir")).resolve("remotegittest/scm/test-repository");
 
     public GitUtilService() throws IOException {
     }
@@ -68,6 +68,7 @@ public class GitUtilService {
         try {
             deleteRepos();
 
+            Files.createDirectories(remotePath);
             remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
