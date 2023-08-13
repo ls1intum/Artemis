@@ -352,7 +352,7 @@ describe('Exam Exercise Import Component', () => {
                     programmingExercise3.shortName = programmingExercise.shortName;
                 }
 
-                component.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(programmingExercise, exerciseGroup3, duplicatedTitles);
+                component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise, exerciseGroup3, duplicatedTitles);
 
                 expect(duplicatesToCheck.size).toBe(3);
                 expect(duplicatesToCheck.has(programmingExercise.id!)).toBeTrue();
@@ -383,7 +383,7 @@ describe('Exam Exercise Import Component', () => {
                 programmingExercise2.shortName = 'new short name';
             }
 
-            component.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(programmingExercise2, exerciseGroup6, duplicatedTitles);
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise2, exerciseGroup6, duplicatedTitles);
             expect(duplicatesToCheck.size).toBe(threeDuplicates ? 2 : 0);
         });
 
@@ -424,10 +424,10 @@ describe('Exam Exercise Import Component', () => {
                 programmingExercise3.shortName = programmingExercise.shortName;
             }
 
-            component.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(programmingExercise3, exerciseGroup6, duplicatedTitles);
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise3, exerciseGroup6, duplicatedTitles);
             expect(duplicatesToCheck.size).toBe(0);
 
-            component.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(programmingExercise, exerciseGroup6, duplicatedTitles);
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise, exerciseGroup6, duplicatedTitles);
             expect(duplicatesToCheck.size).toBe(0);
         });
     });

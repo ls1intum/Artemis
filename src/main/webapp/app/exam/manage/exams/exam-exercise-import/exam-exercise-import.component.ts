@@ -20,10 +20,10 @@ export class ExamExerciseImportComponent implements OnInit {
     // or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
 
-    //Map of programming exercise ids with duplicated titles and their corresponding title
+    // Map of programming exercise ids with duplicated titles and their corresponding title
     exercisesWithDuplicatedTitles = new Map<number, string>();
 
-    //Map of programming exercise ids with duplicated short names and their corresponding short name
+    // Map of programming exercise ids with duplicated short names and their corresponding short name
     exercisesWithDuplicatedShortNames = new Map<number, string>();
 
     // Expose enums to the template
@@ -136,17 +136,17 @@ export class ExamExerciseImportComponent implements OnInit {
             // The title or short name of the exercise is not considered to be duplicated. In case it was duplicated
             // before, the set with duplicates has to be updated (checked again if any objects can be removed from the map).
             if (this.exercisesWithDuplicatedTitles.delete(exercise.id!)) {
-                this.removeExerciseFromDuplicates(exercise.title!, true);
+                this.removeProgrammingExerciseFromDuplicates(exercise.title!, true);
             }
 
             if (this.exercisesWithDuplicatedShortNames.delete(exercise.id!)) {
-                this.removeExerciseFromDuplicates(exercise.shortName!, false);
+                this.removeProgrammingExerciseFromDuplicates(exercise.shortName!, false);
             }
         } else {
             this.selectedExercises!.get(exerciseGroup)!.add(exercise);
             if (exercise.type === ExerciseType.PROGRAMMING) {
-                this.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
-                this.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true);
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false);
             }
         }
     }
@@ -246,7 +246,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup exercise group of the exercise
      * @param checkForTitle true if the title should be checked, otherwise the short name is checked
      */
-    checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
+    checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
         if (!this.exerciseIsSelected(exercise, exerciseGroup)) {
             return;
         }
@@ -267,7 +267,7 @@ export class ExamExerciseImportComponent implements OnInit {
         // check if the exercise was a duplicate before
         const titleOrShortName = duplicatesToCheck.get(exercise.id!);
         if (duplicatesToCheck.delete(exercise.id!)) {
-            this.removeExerciseFromDuplicates(titleOrShortName!, checkForTitle);
+            this.removeProgrammingExerciseFromDuplicates(titleOrShortName!, checkForTitle);
         }
 
         if (hasDuplicate) {
@@ -282,7 +282,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param titleOrShortName title / short name of the exercise that was a duplicate before
      * @param checkForTitle   true if the exercise title duplication should be checked, otherwise short name duplication is checked
      */
-    removeExerciseFromDuplicates(titleOrShortName: string, checkForTitle: boolean) {
+    removeProgrammingExerciseFromDuplicates(titleOrShortName: string, checkForTitle: boolean) {
         const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
         const filteredKeys = Array.from(setToCheck.keys()).filter((key) => setToCheck.get(key) === titleOrShortName);
 
