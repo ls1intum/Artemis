@@ -199,7 +199,7 @@ export class LearningPathManagementComponent implements OnInit {
             this.page = pageNumber;
         }
     }
-    viewLearningPath(learningPath: LearningPathPageableSearchDTO) {
+    viewLearningPath() {
         // todo: part of future pr
     }
 
