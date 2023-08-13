@@ -287,12 +287,15 @@ public class ProgrammingExerciseTaskService {
         Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
+            // matchResult is fa full task, e.g. [task][Bubble Sort](testBubbleSort,testClass[BubbleSort])
             String fullMatch = matchResult.group();
-            // group 1: task name, group 2: test names
+            // group 1: task name, group 2: test names. e.g testBubbleSort,testClass[BubbleSort]
             String testNames = matchResult.group(2);
 
+            // converted testids, e.g. <testid>10</testid>,<testid>12</testid>
             String testIds = extractTestCaseIdsFromNames(testNames, testCases);
 
+            // replace the names with their ids
             return fullMatch.replace(testNames, testIds);
         });
     }
@@ -301,12 +304,15 @@ public class ProgrammingExerciseTaskService {
         Matcher matcher = PLANTUML_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
+            // matchResult: Full UML diagramg (everything between @startuml and @enduml)
             String diagram = matchResult.group();
             Matcher tests = TESTSCOLOR_PATTERN.matcher(diagram);
             return tests.replaceAll(testsMatchResult -> {
+                // testsMatchResult: one testscolor instance, e.g. testsColor(testAttributes[BubbleSort])
                 String fullMatch = testsMatchResult.group();
-                // group 1: test names
+                // group 1: test names, e.g testAttributes[BubbleSort]
                 String testNames = testsMatchResult.group(1);
+                // ids to insert, e.g. <testid>15</testid>
                 String testIds = extractTestCaseIdsFromNames(testNames, testCases);
                 return fullMatch.replace(testNames, testIds);
             });
