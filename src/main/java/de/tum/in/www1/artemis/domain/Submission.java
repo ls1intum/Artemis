@@ -311,6 +311,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+     *
+     * @return the exercise type (e.g. programming, text)
      */
     public abstract String getSubmissionExerciseType();
 
@@ -350,6 +352,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         return getSubmissionDate().compareTo(other.getSubmissionDate());
     }
 
+    /**
+     * Converts this entity into a {{@link SubmissionDTO}} object
+     *
+     * @return the converted DTO
+     */
     public SubmissionDTO toSubmissionDTO() {
         return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new DomainObjectIdDTO(participation),
                 getSubmissionExerciseType());

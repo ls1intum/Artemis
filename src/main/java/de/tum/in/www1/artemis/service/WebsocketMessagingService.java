@@ -115,7 +115,6 @@ public class WebsocketMessagingService {
      * @param result        the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
      *                          As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
      *                          problem statement and the course with all potential attributes
-     * @return a CompletableFuture allowing to wait until all messages got send.
      */
     public void broadcastNewResult(Participation participation, Result result) {
         // TODO: Are there other cases that must be handled here?

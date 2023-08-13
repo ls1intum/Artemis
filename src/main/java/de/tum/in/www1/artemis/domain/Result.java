@@ -611,10 +611,24 @@ public class Result extends DomainObject implements Comparable<Result> {
         return getCompletionDate().compareTo(other.getCompletionDate());
     }
 
+    /**
+     * Converts this entity into a {{@link ResultDTO}} object.
+     * This will contain all feedback elements.
+     *
+     * @return the converted DTO
+     */
     public ResultDTO toResultDTO() {
         return toResultDTO(getFeedbacks());
     }
 
+    /**
+     * Converts this entity into a {{@link ResultDTO}} object.
+     * This will contain ony the provided feedback using the parameter.
+     *
+     * @see Result#createFilteredFeedbacks(boolean)
+     * @param filteredFeedback the feedback to include in the DTO.
+     * @return the converted DTO
+     */
     public ResultDTO toResultDTO(List<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
         if (Hibernate.isInitialized(getSubmission()) && getSubmission() != null) {
