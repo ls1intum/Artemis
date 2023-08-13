@@ -20,10 +20,10 @@ export class ExamExerciseImportComponent implements OnInit {
     // or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
 
-    //Map of programming exercises with duplicated titles with the corresponding title
+    //Map of programming exercise ids with duplicated titles and their corresponding title
     exercisesWithDuplicatedTitles = new Map<number, string>();
 
-    //Map of programming exercises with duplicated short names with the corresponding short name
+    //Map of programming exercise ids with duplicated short names and their corresponding short name
     exercisesWithDuplicatedShortNames = new Map<number, string>();
 
     // Expose enums to the template
@@ -97,7 +97,7 @@ export class ExamExerciseImportComponent implements OnInit {
                         duplicated.add(exercise.title);
                         this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
                     } else {
-                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, ``]);
+                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, '']);
                         exercise.title = '';
                     }
                 }
@@ -133,8 +133,8 @@ export class ExamExerciseImportComponent implements OnInit {
         if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
             // Case Exercise is already selected -> delete
             this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
-            //the title, short name of the exercise is no longer considered to be duplicated. In case it was duplicated
-            //before, the set with duplicates has to be updated (checked again if any objects can be removed from the map)
+            // The title or short name of the exercise is not considered to be duplicated. In case it was duplicated
+            // before, the set with duplicates has to be updated (checked again if any objects can be removed from the map).
             if (this.exercisesWithDuplicatedTitles.delete(exercise.id!)) {
                 this.removeExerciseFromDuplicates(exercise.title!, true);
             }
@@ -145,8 +145,8 @@ export class ExamExerciseImportComponent implements OnInit {
         } else {
             this.selectedExercises!.get(exerciseGroup)!.add(exercise);
             if (exercise.type === ExerciseType.PROGRAMMING) {
-                this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
-                this.checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
+                this.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true);
+                this.checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false);
             }
         }
     }
@@ -241,12 +241,12 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     /**
-     * checks if there are any selected exercises with the same title or short name as the passed exercise
-     * @param exercise     exercise we want to use to check for duplications
+     * checks if there are any selected programming exercises with the same title or short name as the passed exercise
+     * @param exercise      exercise we want to use to check for duplications
      * @param exerciseGroup exercise group of the exercise
      * @param checkForTitle true if the title should be checked, otherwise the short name is checked
      */
-    checkForDuplicatedTitlesOrShortNames(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
+    checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
         if (!this.exerciseIsSelected(exercise, exerciseGroup)) {
             return;
         }
@@ -264,7 +264,7 @@ export class ExamExerciseImportComponent implements OnInit {
             });
         });
 
-        //check if the exercise was a duplicate before
+        // check if the exercise was a duplicate before
         const titleOrShortName = duplicatesToCheck.get(exercise.id!);
         if (duplicatesToCheck.delete(exercise.id!)) {
             this.removeExerciseFromDuplicates(titleOrShortName!, checkForTitle);
@@ -276,31 +276,18 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     /**
-     * after a duplicate programming exercise's title / short name has been edited or a programming exercise has been unselected,
-     * other duplicates need to be checked if they can be removed from the map. I case there is only one exercise with the same title / short name
+     * After a duplicate programming exercise's title / short name of programming exercise has been edited or a programming exercise has been unselected,
+     * other duplicates need to be checked if they can be removed from the map. In case there is only one exercise with the same title / short name
      * it is no longer considered a duplicate and is removed
      * @param titleOrShortName title / short name of the exercise that was a duplicate before
      * @param checkForTitle   true if the exercise title duplication should be checked, otherwise short name duplication is checked
-     *
      */
     removeExerciseFromDuplicates(titleOrShortName: string, checkForTitle: boolean) {
         const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
-        let stillADuplicate = false;
-        const map = new Map<string, number>();
+        const filteredKeys = Array.from(setToCheck.keys()).filter((key) => setToCheck.get(key) === titleOrShortName);
 
-        setToCheck.forEach((value, key) => {
-            if (value === titleOrShortName) {
-                if (!map.has(titleOrShortName)) {
-                    map.set(titleOrShortName, key);
-                } else {
-                    // more than one duplicate has been found
-                    stillADuplicate = true;
-                    return;
-                }
-            }
-        });
-        if (!stillADuplicate) {
-            map.forEach((element) => setToCheck.delete(element));
+        if (filteredKeys.length <= 1) {
+            filteredKeys.forEach((key) => setToCheck.delete(key));
         }
     }
 

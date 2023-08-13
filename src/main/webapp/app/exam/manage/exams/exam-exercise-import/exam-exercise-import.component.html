@@ -109,7 +109,7 @@
                                     [name]="'exercise-' + exercise.id + '-title'"
                                     [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
-                                    (change)="checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true)"
+                                    (change)="checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, true)"
                                 />
                             </td>
                             <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
@@ -120,7 +120,7 @@
                                     [name]="'programming-exercise-' + exercise.id + '-shortName'"
                                     [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.shortName"
-                                    (change)="checkForDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false)"
+                                    (change)="checkForProgrammingExerciseDuplicatedTitlesOrShortNames(exercise, exerciseGroup, false)"
                                 />
                             </td>
                             <td>
