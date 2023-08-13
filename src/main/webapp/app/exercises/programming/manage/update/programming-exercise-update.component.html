@@ -1,18 +1,5 @@
 <div>
-    <jhi-programming-exercise-update-wizard
-        *ngIf="isShowingWizardMode"
-        (onNextStep)="nextWizardStep()"
-        [currentStep]="currentWizardModeStep"
-        [toggleMode]="toggleMode"
-        [isSaving]="isSaving"
-        [getInvalidReasons]="getInvalidReasonsForWizard"
-        [isImportFromExistingExercise]="isImportFromExistingExercise"
-        [isExamMode]="isExamMode"
-        [(exercise)]="programmingExercise"
-        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-    ></jhi-programming-exercise-update-wizard>
-
-    <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
+    <div class="mb-5">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
             <div class="d-flex flex flex-row align-items-center">
                 <h2
@@ -34,13 +21,29 @@
                 </div>
             </div>
         </div>
-        <h4 *ngIf="!isImportFromExistingExercise && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
+        <h2 *ngIf="!isImportFromExistingExercise && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
             Edit Programming Exercise
-        </h4>
-        <h4 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
+        </h2>
+        <h2 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
             Import Programming Exercise
-        </h4>
-        <div class="update-programming-exercise mt-5">
+        </h2>
+    </div>
+
+    <jhi-programming-exercise-update-wizard
+        *ngIf="isShowingWizardMode"
+        (onNextStep)="nextWizardStep()"
+        [currentStep]="currentWizardModeStep"
+        [toggleMode]="toggleMode"
+        [isSaving]="isSaving"
+        [getInvalidReasons]="getInvalidReasonsForWizard"
+        [isImportFromExistingExercise]="isImportFromExistingExercise"
+        [isExamMode]="isExamMode"
+        [(exercise)]="programmingExercise"
+        [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+    ></jhi-programming-exercise-update-wizard>
+
+    <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
+        <div class="update-programming-exercise">
             <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
