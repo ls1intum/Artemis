@@ -204,7 +204,7 @@ public class WebsocketMessagingService {
             allFutures.addAll(students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
 
-            result.filterSensitiveFeedbacks(!isWorkingPeriodOver, originalParticipation.getExercise());
+            result.filterSensitiveFeedbacks(!isWorkingPeriodOver, studentParticipation.getExercise());
 
             allFutures.addAll(students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, result)).toList());
