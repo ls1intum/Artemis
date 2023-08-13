@@ -44,7 +44,7 @@
         </ng-container>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="programmingExercise.shortName && !shortName.invalid">
         <div>
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
@@ -116,7 +116,6 @@
                     'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
                 }}</span>
             </ngb-alert>
-            <!--        TODO Check if ngif below is correct-->
             <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="programmingExerciseCreationConfig">
                 <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
             </ngb-alert>
