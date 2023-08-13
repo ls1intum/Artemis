@@ -706,14 +706,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         notificationText = Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION;
                     }
                     groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
+
+                    // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
+                    // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
+                    // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
+                    // one use case is to unlock all operation is invoked directly after exam start
+                    Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
+                            .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
+                    scheduleIndividualRepositoryAndParticipationLockTasks(exercise, futureIndividualDueDates);
                 });
-                // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
-                // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
-                // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
-                // one use case is to unlock all operation is invoked directly after exam start
-                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
-                        .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
-                scheduleIndividualRepositoryAndParticipationLockTasks(exercise, futureIndividualDueDates);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
