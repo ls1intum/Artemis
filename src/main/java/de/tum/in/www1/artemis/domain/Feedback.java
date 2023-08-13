@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO.FeedbackDTO;
 
 /**
  * A Feedback.
@@ -453,8 +453,13 @@ public class Feedback extends DomainObject {
         return totalScore;
     }
 
-    public ResultDTO.FeedbackDTO toFeedbackDTO() {
-        return new ResultDTO.FeedbackDTO(getText(), getDetailText(), getHasLongFeedbackText(), getReference(), getCredits(), isPositive(), getType(), getVisibility());
+    /**
+     * Converts this entity into a {{@link FeedbackDTO}} object
+     *
+     * @return the converted DTO
+     */
+    public FeedbackDTO toFeedbackDTO() {
+        return new FeedbackDTO(getText(), getDetailText(), getHasLongFeedbackText(), getReference(), getCredits(), isPositive(), getType(), getVisibility());
     }
 
     @Override
