@@ -1,18 +1,20 @@
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+
 import {
     courseAssessment,
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
     courseOverview,
+    exerciseAPIRequest,
     exerciseAssessment,
     exerciseResult,
     fileUploadExerciseAssessment,
     fileUploadExerciseEditor,
     fileUploadExerciseFeedback,
-} from 'src/test/cypress/support/artemis';
-import { admin, instructor, studentOne, tutor } from 'src/test/cypress/support/users';
-import { convertModelAfterMultiPart } from 'src/test/cypress/support/requests/CourseManagementRequests';
+} from '../../../support/artemis';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 // Common primitives
 const tutorFeedback = 'Try to use some newlines next time!';
@@ -25,12 +27,12 @@ describe('File upload exercise assessment', () => {
 
     before('Creates a file upload exercise and makes a student submission', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createFileUploadExercise({ course }).then((textResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createFileUploadExercise({ course }).then((textResponse) => {
                 exercise = textResponse.body;
                 cy.login(studentOne, `/courses/${course.id}/exercises`);
                 courseOverview.startExercise(exercise.id!);
@@ -75,6 +77,6 @@ describe('File upload exercise assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

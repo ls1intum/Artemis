@@ -12,7 +12,10 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+    ) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(textSubmission);
