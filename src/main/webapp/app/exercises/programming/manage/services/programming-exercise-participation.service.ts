@@ -18,7 +18,11 @@ export interface IProgrammingExerciseParticipationService {
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
     public resourceUrl = 'api/programming-exercise-participations/';
 
-    constructor(private http: HttpClient, private entityTitleService: EntityTitleService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private entityTitleService: EntityTitleService,
+        private accountService: AccountService,
+    ) {}
 
     getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });

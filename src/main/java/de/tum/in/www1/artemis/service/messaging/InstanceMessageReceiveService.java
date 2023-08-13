@@ -99,6 +99,10 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processUnlockAllRepositories((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processUnlockAllRepositoriesAndParticipations((message.getMessageObject()));
+        });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
                 .addMessageListener(message -> {
                     SecurityUtils.setAuthorizationObject();
@@ -205,11 +209,18 @@ public class InstanceMessageReceiveService {
         atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
     }
 
-    public void processUnlockAllRepositories(Long exerciseId) {
+    public void processUnlockAllRepositoriesAndParticipations(Long exerciseId) {
         log.info("Received unlock all repositories for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
         programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipations(programmingExercise).run();
+    }
+
+    public void processUnlockAllRepositories(Long exerciseId) {
+        log.info("Received unlock all repositories for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {

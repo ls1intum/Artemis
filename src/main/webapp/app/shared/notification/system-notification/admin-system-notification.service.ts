@@ -12,7 +12,11 @@ type EntityResponseType = HttpResponse<SystemNotification>;
 export class AdminSystemNotificationService {
     public resourceUrl = 'api/admin/system-notifications';
 
-    constructor(private router: Router, private http: HttpClient, private systemNotificationService: SystemNotificationService) {}
+    constructor(
+        private router: Router,
+        private http: HttpClient,
+        private systemNotificationService: SystemNotificationService,
+    ) {}
 
     /**
      * Create a notification on the server using a POST request.
