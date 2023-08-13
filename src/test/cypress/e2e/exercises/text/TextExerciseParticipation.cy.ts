@@ -1,9 +1,11 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { TextExercise } from 'app/entities/text-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, courseOverview, textExerciseEditor } from '../../../support/artemis';
+import { TextExercise } from 'app/entities/text-exercise.model';
+
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, textExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Text exercise participation', () => {
     let course: Course;
@@ -11,10 +13,10 @@ describe('Text exercise participation', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            exerciseAPIRequest.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -45,6 +47,6 @@ describe('Text exercise participation', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

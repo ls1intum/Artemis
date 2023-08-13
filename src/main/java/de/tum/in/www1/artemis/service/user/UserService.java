@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -488,6 +487,19 @@ public class UserService {
     }
 
     /**
+     * Trys to find a user by the internal admin username
+     *
+     * @return an Optional.emtpy() if no internal admin user is found, otherwise an optional with the internal admin user
+     */
+    public Optional<User> findInternalAdminUser() {
+        if (artemisInternalAdminUsername.isEmpty()) {
+            log.warn("The internal admin username is not configured and no internal admin user can be retrieved.");
+            return Optional.empty();
+        }
+        return userRepository.findOneByLogin(artemisInternalAdminUsername.get());
+    }
+
+    /**
      * Change password of current user
      *
      * @param currentClearTextPassword cleartext password
@@ -608,7 +620,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
+        Set<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
@@ -683,12 +695,12 @@ public class UserService {
 
     /**
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the connected LDAP in case it is configured properly.
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      * <p>
      * Steps:
      * <p>
-     * 1) it uses the registration number and tries to find the student in the Artemis user database
-     * 2) if it cannot find the student, it uses the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
+     * 1) we use the registration number and try to find the student in the Artemis user database
+     * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
      * management system
      * 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
      * 4) if we still cannot find the user, we try again using the email

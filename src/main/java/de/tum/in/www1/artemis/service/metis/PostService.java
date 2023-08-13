@@ -104,7 +104,7 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             sendNotification(savedPost, course);
-            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course, null);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
@@ -114,7 +114,7 @@ public class PostService extends PostingService {
             plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
         }
         else {
-            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course, null);
             sendNotification(savedPost, course);
         }
 
@@ -149,7 +149,7 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
-            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course);
+            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course, null);
         }
 
         boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
@@ -184,11 +184,11 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as newly created post in the new context
-            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course, null);
         }
         else {
             // in case the context did not change we emit with trigger a post update via websocket
-            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
         }
         return updatedPost;
     }
@@ -219,7 +219,7 @@ public class PostService extends PostingService {
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
@@ -317,7 +317,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course, null);
     }
 
     /**

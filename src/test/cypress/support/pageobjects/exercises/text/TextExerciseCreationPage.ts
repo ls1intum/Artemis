@@ -1,7 +1,9 @@
-import { BASE_API } from '../../../constants';
 import { Dayjs } from 'dayjs/esm';
+
+import { BASE_API } from '../../../constants';
 import { POST } from '../../../constants';
 import { enterDate } from '../../../utils';
+
 /**
  * A class which encapsulates UI selectors and actions for the text exercise creation page.
  */

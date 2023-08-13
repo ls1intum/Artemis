@@ -307,9 +307,8 @@ public class ExamRegistrationService {
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
 
         var students = userRepository.getStudents(exam.getCourse());
-        Set<User> studentSet = new HashSet<>(students);
 
-        channelService.deregisterUsersFromExamChannel(studentSet, exam.getId());
+        channelService.deregisterUsersFromExamChannel(students, exam.getId());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
@@ -330,7 +329,7 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = userRepository.getStudents(course);
+        var students = new ArrayList<>(userRepository.getStudents(course));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

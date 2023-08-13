@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.L
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -329,7 +330,7 @@ public class GroupNotificationService {
 
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {
-            List<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
+            Set<User> groupNotificationReceivers = findGroupNotificationReceivers(notification, author);
 
             if (!groupNotificationReceivers.isEmpty()) {
                 notificationService.sendNotification(notification, groupNotificationReceivers, notificationSubject);
@@ -357,23 +358,23 @@ public class GroupNotificationService {
      * @param notification which information should also be propagated via email
      * @param author       the author will be excluded if not null
      */
-    private List<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
+    private Set<User> findGroupNotificationReceivers(GroupNotification notification, User author) {
         Course course = notification.getCourse();
         GroupNotificationType groupType = notification.getType();
-        List<User> foundUsers;
+        Set<User> foundUsers;
         switch (groupType) {
             case STUDENT -> foundUsers = userRepository.getStudents(course);
             case INSTRUCTOR -> foundUsers = userRepository.getInstructors(course);
             case EDITOR -> foundUsers = userRepository.getEditors(course);
             case TA -> foundUsers = userRepository.getTutors(course);
-            default -> foundUsers = Collections.emptyList();
+            default -> foundUsers = Collections.emptySet();
         }
 
         if (author == null) {
             return foundUsers;
         }
         else {
-            return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).toList();
+            return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
         }
     }
 }

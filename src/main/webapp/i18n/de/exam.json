@@ -266,7 +266,13 @@
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}."
+            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
+            "submissionSuccessful": {
+                "title": "Deine Klausur wurde erfolgreich abgegeben!",
+                "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
+                "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
+                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
+            }
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -291,7 +297,7 @@
             "assessUnsubmittedStudentExams": "Nicht eingereichte Klausuren bewerten",
             "unlockAllRepositories": "Alle Repositories entsperren",
             "lockAllRepositories": "Alle Repositories sperren",
-            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studierende können sofort klonen & pushen, auch wenn die Klausur noch nicht gestartet wurde!\n\nDiese Operation wird automatisch mit dem Sichtbar-Setzen der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Entsperren nicht korrekt ausgeführt wurde!",
+            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studierende können sofort klonen & pushen, auch wenn die Klausur noch nicht gestartet wurde!\n\nDiese Operation wird automatisch 5 Minuten vor Beginn der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Entsperren nicht korrekt ausgeführt wurde!",
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studierende mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
             "student": "Studierende:r",
@@ -635,7 +641,6 @@
             "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
-            "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"

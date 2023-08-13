@@ -30,9 +30,6 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
         if (this.gradingScale?.gradeSteps?.length === 0) {
             // Add sticky grade step at the end.
             super.createGradeStep();
-
-            // This is to ensure 100 percent is not a part of the sticky grade step.
-            this.gradingScale.gradeSteps.first()!.lowerBoundInclusive = false;
         }
 
         // Remove sticky grade step, add the new step and re-add the sticky grade step.
@@ -43,24 +40,6 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
 
         const selectedIndex = this.gradingScale.gradeSteps.length - 2;
         this.setPercentageInterval(selectedIndex);
-    }
-
-    getDefaultGradingScale() {
-        const defaultGradingScale = super.getDefaultGradingScale();
-        const stickyGradeStep = {
-            gradeName: '1.0+',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 200,
-            lowerBoundInclusive: false,
-            upperBoundInclusive: true,
-            isPassingGrade: true,
-        };
-        defaultGradingScale.gradeSteps.push(stickyGradeStep);
-
-        this.setPoints(stickyGradeStep, true);
-        this.setPoints(stickyGradeStep, false);
-
-        return defaultGradingScale;
     }
 
     /**
@@ -82,14 +61,7 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
 
         // Always true
         gradeSteps.first()!.lowerBoundInclusive = true;
-
-        if (gradeSteps.length > 1) {
-            // Ensure 100 percent is not a part of the sticky grade step.
-            gradeSteps[gradeSteps.length - 2].upperBoundInclusive = true;
-            const stickyGradeStep = gradeSteps.last()!;
-            stickyGradeStep.lowerBoundInclusive = false;
-            stickyGradeStep.upperBoundInclusive = true;
-        }
+        gradeSteps.last()!.upperBoundInclusive = true;
     }
 
     /**
@@ -159,9 +131,18 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
         this.setPercentageInterval(index, 0);
         super.deleteGradeStep(index);
         const gradeSteps = this.gradingScale.gradeSteps;
-        if (gradeSteps.length === 1) {
-            // Only sticky grade step remains, prevent total percentage is less than 100.
-            this.setPercentageInterval(0, 100);
+
+        if (gradeSteps.length > 0) {
+            // Prevent the total percentage from becoming less than 100.
+            if (gradeSteps.last()!.upperBoundPercentage < 100) {
+                gradeSteps.last()!.upperBoundPercentage = 100;
+            }
+
+            // If the first grade step is deleted, make sure the new first grade step's lower bound inclusivity is true.
+            gradeSteps.first()!.lowerBoundInclusive = true;
+
+            // If the last grade step is deleted, make sure the new last grade step's upper bound inclusivity is true.
+            gradeSteps.last()!.upperBoundInclusive = true;
         }
     }
 

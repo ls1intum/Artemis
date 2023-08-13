@@ -132,6 +132,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Channel channel;
 
+    private DataExport dataExport;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -223,6 +225,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         channel.setCreator(userTwo);
         channel.setCreationDate(ZonedDateTime.now());
         channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        dataExport = new DataExport();
+        dataExport.setUser(user);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -543,6 +548,22 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         verifyPush(1);
     }
 
+    @Test
+    void testDataExportNotification_dataExportCreated() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+        singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_CREATED_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testDataExportNotification_dataExportFailed() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
+        singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_FAILED_TITLE);
+        verifyEmail();
+    }
+
     /**
      * Checks if an email was created and send
      */
@@ -556,8 +577,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      * @param times how often the email should have been sent
      */
     private void verifyPush(int times) {
-        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anyList(), any(Object.class));
-        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anyList(), any(Object.class));
+        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
+        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
     }
 
     private static Stream<Arguments> getNotificationTypesAndTitlesParametersForGroupChat() {

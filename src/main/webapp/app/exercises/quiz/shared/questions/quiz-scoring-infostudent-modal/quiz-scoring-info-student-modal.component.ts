@@ -69,7 +69,10 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     // Icons
     farQuestionCircle = faQuestionCircle;
 
-    constructor(private modalService: NgbModal, private translateService: TranslateService) {}
+    constructor(
+        private modalService: NgbModal,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Count the variables depending on the quiz question type
