@@ -366,14 +366,14 @@ describe('Exam Exercise Import Component', () => {
             ['exercisesWithDuplicatedShortNames', true],
             ['exercisesWithDuplicatedTitles', false],
             ['exercisesWithDuplicatedTitles', true],
-        ])('should remove exercise from duplicates when title / short name is changed', (attrToCheck, threeDuplicates) => {
+        ])('should remove exercise from duplicates when title / short name is changed', (attrToCheck, additionalDuplicate) => {
             const duplicatesToCheck = component[attrToCheck];
             const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
 
             // setup duplicates
             duplicatesToCheck.set(programmingExercise.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
             duplicatesToCheck.set(programmingExercise2.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
-            if (threeDuplicates) {
+            if (additionalDuplicate) {
                 duplicatesToCheck.set(programmingExercise3.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
             }
 
@@ -384,7 +384,7 @@ describe('Exam Exercise Import Component', () => {
             }
 
             component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise2, exerciseGroup6, duplicatedTitles);
-            expect(duplicatesToCheck.size).toBe(threeDuplicates ? 2 : 0);
+            expect(duplicatesToCheck.size).toBe(additionalDuplicate ? 2 : 0);
         });
 
         it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
