@@ -21,7 +21,11 @@ export class ConsistencyCheckComponent implements OnInit {
     faTimes = faTimes;
     faCheck = faCheck;
 
-    constructor(private activeModal: NgbActiveModal, private consistencyCheckService: ConsistencyCheckService, private alertService: AlertService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private consistencyCheckService: ConsistencyCheckService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

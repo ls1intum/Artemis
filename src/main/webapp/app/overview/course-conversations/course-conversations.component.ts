@@ -25,7 +25,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
     // MetisConversationService is created in course overview, so we can use it here
-    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService, public metisService: MetisService) {}
+    constructor(
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        public metisConversationService: MetisConversationService,
+        public metisService: MetisService,
+    ) {}
 
     getAsChannel = getAsChannelDto;
 
