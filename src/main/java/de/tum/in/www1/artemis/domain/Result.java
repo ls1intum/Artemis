@@ -479,16 +479,32 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
-        feedbacks.removeIf(Feedback::isInvisible);
-
-        if (isBeforeDueDate) {
-            feedbacks.removeIf(Feedback::isAfterDueDate);
-        }
+        var filteredFeedback = createFilteredFeedbacks(isBeforeDueDate);
+        setFeedbacks(filteredFeedback);
 
         // TODO: this is not good code!
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
         setTestCaseCount(testCaseFeedback.size());
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+    }
+
+    /**
+     * Returns a new list that only contains feedback that should be passed to the student.
+     * Does not change the feedbacks attribute of this entity.
+     *
+     * @see Result#toResultDTO(List)
+     *
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     * @return the new filtered list
+     */
+    public List<Feedback> createFilteredFeedbacks(boolean isBeforeDueDate) {
+        List<Feedback> filteredFeedback = new ArrayList<>(feedbacks);
+        filteredFeedback.removeIf(Feedback::isInvisible);
+
+        if (isBeforeDueDate) {
+            filteredFeedback.removeIf(Feedback::isAfterDueDate);
+        }
+        return filteredFeedback;
     }
 
     /**

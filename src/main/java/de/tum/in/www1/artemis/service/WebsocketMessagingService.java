@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -144,22 +142,18 @@ public class WebsocketMessagingService {
         boolean isAutomaticAssessmentOrDueDateOver = AssessmentType.AUTOMATIC == result.getAssessmentType() || exercise.getAssessmentDueDate() == null
                 || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
-        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
         if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
             var students = studentParticipation.getStudents();
 
             var resultDTO = result.toResultDTO();
-            allFutures.addAll(students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO)).toList());
+            students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO));
 
-            // TODO don't replace the result feedback, create a new list instead
-            var originalFeedback = new ArrayList<>(result.getFeedbacks());
-            result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
-            var filteredFeedbackResultDTO = result.toResultDTO();
-            result.setFeedbacks(originalFeedback);
+            var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver);
+            var filteredFeedbackResultDTO = result.toResultDTO(filteredFeedback);
 
-            allFutures.addAll(students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .map(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO)).toList());
+            students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+                    .forEach(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO));
         }
     }
 
