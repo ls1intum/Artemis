@@ -73,7 +73,7 @@ def get_changed_files(branch_name, base_branch_name="origin/develop"):
             branch_head = repo.commit(branch_name)
 
     branch_base = repo.merge_base(branch_name, base_branch_name)[0]
-    diff_index = branch_head.diff(branch_base, create_patch=False)
+    diff_index = branch_head.diff(branch_base, create_patch=False, R=True)
 
     # File changes with change type
     file_changes = {}
