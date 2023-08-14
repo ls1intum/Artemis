@@ -11,11 +11,11 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
-    problemStatement,
     problemStatementBubbleSortFailsHtml,
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
     problemStatementEmptySecondTaskNotExecutedHtml,
+    problemStatementWithIds,
 } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 // eslint-disable-next-line max-len
@@ -326,7 +326,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             showTestNamesToStudents: true,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -344,15 +344,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](1)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: [1],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](2)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: [2],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -403,7 +403,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
@@ -420,15 +420,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](1)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: [1],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](2)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: [2],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -497,15 +497,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Bubble Sort](1)',
+            completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
-            tests: [1],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
-            tests: [],
+            testIds: [],
         });
         fixture.detectChanges();
 
