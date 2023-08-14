@@ -142,6 +142,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             }),
         );
     }
+
     checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
