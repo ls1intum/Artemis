@@ -18,8 +18,8 @@
             [entityTitle]="currentLogin!"
             deleteQuestion="artemisApp.dataExport.confirmationQuestion"
             [additionalChecks]="{
-                                    dataExportForAnotherUser: 'artemisApp.dataExport.requestForAnotherUser',
-                                }"
+                dataExportForAnotherUser: 'artemisApp.dataExport.requestForAnotherUser'
+            }"
             (delete)="requestExport()"
             (dataExportForAnotherUser)="requestExportForAnotherUser($event)"
             [dialogError]="dialogError$"
