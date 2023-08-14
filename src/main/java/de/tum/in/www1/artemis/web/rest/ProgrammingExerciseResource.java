@@ -255,10 +255,10 @@ public class ProgrammingExerciseResource {
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
+        if (!Objects.equals(programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled(), updatedProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        if (programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled() != updatedProgrammingExercise.isTestwiseCoverageEnabled()) {
+        if (!Objects.equals(programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled(), updatedProgrammingExercise.isTestwiseCoverageEnabled())) {
             throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
@@ -339,6 +339,8 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
+        programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
@@ -416,6 +418,8 @@ public class ProgrammingExerciseResource {
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
         programmingExercise.setStudentParticipations(participations);
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
         return ResponseEntity.ok(programmingExercise);
     }
 

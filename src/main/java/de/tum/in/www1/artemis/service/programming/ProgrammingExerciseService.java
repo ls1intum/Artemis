@@ -428,7 +428,10 @@ public class ProgrammingExerciseService {
 
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
+        programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+        // The returned value should use names since it gets send back to the client
+        programmingExerciseTaskService.replaceTestIdsWithNames(savedProgrammingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -507,6 +510,7 @@ public class ProgrammingExerciseService {
             throws EntityNotFoundException {
 
         programmingExercise.setProblemStatement(problemStatement);
+        programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
