@@ -22,7 +22,6 @@ describe('CompetencyNodeDetailsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [CompetencyNodeDetailsComponent, MockComponent(CompetencyRingsComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {
