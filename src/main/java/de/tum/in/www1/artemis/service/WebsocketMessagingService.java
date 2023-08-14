@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * This service sends out websocket messages.
@@ -123,7 +124,7 @@ public class WebsocketMessagingService {
         }
 
         // Send to tutors, instructors and admins
-        sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result.toResultDTO());
+        sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), ResultDTO.of(result));
     }
 
     private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
@@ -144,12 +145,12 @@ public class WebsocketMessagingService {
         if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
             var students = studentParticipation.getStudents();
 
-            var resultDTO = result.toResultDTO();
+            var resultDTO = ResultDTO.of(result);
             students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO));
 
             var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver);
-            var filteredFeedbackResultDTO = result.toResultDTO(filteredFeedback);
+            var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
 
             students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO));

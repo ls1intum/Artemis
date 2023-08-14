@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.web.rest.dto.DomainObjectIdDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
 /**
  * A Submission.
@@ -350,15 +348,5 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
             return getId().compareTo(other.getId());
         }
         return getSubmissionDate().compareTo(other.getSubmissionDate());
-    }
-
-    /**
-     * Converts this entity into a {{@link SubmissionDTO}} object
-     *
-     * @return the converted DTO
-     */
-    public SubmissionDTO toSubmissionDTO() {
-        return new SubmissionDTO(getId(), isSubmitted(), getType(), isExampleSubmission(), getSubmissionDate(), null, null, null, new DomainObjectIdDTO(participation),
-                getSubmissionExerciseType());
     }
 }

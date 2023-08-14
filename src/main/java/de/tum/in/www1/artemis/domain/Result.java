@@ -10,7 +10,6 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -29,9 +28,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
-import de.tum.in.www1.artemis.web.rest.dto.DomainObjectIdDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 
 /**
  * A Result.
@@ -492,7 +489,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Returns a new list that only contains feedback that should be passed to the student.
      * Does not change the feedbacks attribute of this entity.
      *
-     * @see Result#toResultDTO(List)
+     * @see ResultDTO
      *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      * @return the new filtered list
@@ -609,33 +606,5 @@ public class Result extends DomainObject implements Comparable<Result> {
             return getId().compareTo(other.getId());
         }
         return getCompletionDate().compareTo(other.getCompletionDate());
-    }
-
-    /**
-     * Converts this entity into a {{@link ResultDTO}} object.
-     * This will contain all feedback elements.
-     *
-     * @return the converted DTO
-     */
-    public ResultDTO toResultDTO() {
-        return toResultDTO(getFeedbacks());
-    }
-
-    /**
-     * Converts this entity into a {{@link ResultDTO}} object.
-     * This will contain ony the provided feedback using the parameter.
-     *
-     * @see Result#createFilteredFeedbacks(boolean)
-     * @param filteredFeedback the feedback to include in the DTO.
-     * @return the converted DTO
-     */
-    public ResultDTO toResultDTO(List<Feedback> filteredFeedback) {
-        SubmissionDTO submissionDTO = null;
-        if (Hibernate.isInitialized(getSubmission()) && getSubmission() != null) {
-            submissionDTO = getSubmission().toSubmissionDTO();
-        }
-        var feedbackDTOs = filteredFeedback.stream().map(Feedback::toFeedbackDTO).toList();
-        return new ResultDTO(getId(), getCompletionDate(), isSuccessful(), getScore(), isRated(), submissionDTO, new DomainObjectIdDTO(getParticipation()), feedbackDTOs,
-                getAssessmentType(), hasComplaint(), isExampleResult(), getTestCaseCount(), getPassedTestCaseCount(), getCodeIssueCount());
     }
 }

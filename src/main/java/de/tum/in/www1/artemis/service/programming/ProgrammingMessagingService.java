@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
@@ -49,7 +50,7 @@ public class ProgrammingMessagingService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        var submissionDTO = submission.toSubmissionDTO();
+        var submissionDTO = SubmissionDTO.of(submission);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
         }
