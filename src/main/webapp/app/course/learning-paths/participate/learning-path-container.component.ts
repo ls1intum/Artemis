@@ -66,16 +66,7 @@ export class LearningPathContainerComponent implements OnInit {
             this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
         }
         this.undefineAll();
-        /*this.learningPathService.getRecommendation(this.learningPathId).subscribe((recommendationResponse) => {
-            const recommendation = recommendationResponse.body!;
-            this.learningObjectId = recommendation.learningObjectId;
-            this.lectureId = recommendation.lectureId;
-            if (recommendation.type == RecommendationType.LECTURE_UNIT) {
-                this.loadLectureUnit();
-            } else if (recommendation.type === RecommendationType.EXERCISE) {
-                this.loadExercise();
-            }
-        });*/
+        // todo: load recommendation, part of next pr
     }
 
     undefineAll() {

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule } from 'ng-mocks';
-import { By } from '@angular/platform-browser';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -26,7 +25,6 @@ describe('LearningPathContainerComponent', () => {
     let learningPathService: LearningPathService;
     let getLearningPathIdStub: jest.SpyInstance;
     const learningPathId = 1337;
-    //let getRecommendationStub: jest.SpyInstance;
     let lectureService: LectureService;
     let lecture: Lecture;
     let lectureUnit: LectureUnit;
@@ -65,7 +63,6 @@ describe('LearningPathContainerComponent', () => {
                 comp = fixture.componentInstance;
                 learningPathService = TestBed.inject(LearningPathService);
                 getLearningPathIdStub = jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
-                // getRecommendationStub = jest.spyOn(learningPathService, 'getRecommendation');
 
                 lectureUnit = new AttachmentUnit();
                 lectureUnit.id = 3;
@@ -99,37 +96,6 @@ describe('LearningPathContainerComponent', () => {
         expect(getLearningPathIdStub).toHaveBeenCalled();
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
     });
-
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*it('should request recommendation on next button click', () => {
-        const button = fixture.debugElement.query(By.css('.next-button'));
-        expect(button).not.toBeNull();
-        button.nativeElement.click();
-        expect(getRecommendationStub).toHaveBeenCalledWith(learningPathId);
-    });
-
-    it('should load lecture unit on recommendation', () => {
-        const recommendation = new LearningPathRecommendationDTO();
-        recommendation.learningObjectId = lectureUnit.id!;
-        recommendation.lectureId = lecture.id;
-        recommendation.type = RecommendationType.LECTURE_UNIT;
-        getRecommendationStub.mockReturnValue(of(new HttpResponse({ body: recommendation })));
-        comp.onNextTask();
-        expect(findWithDetailsStub).toHaveBeenCalled();
-        expect(findWithDetailsStub).toHaveBeenCalledWith(lecture.id);
-        expect(getExerciseDetailsStub).not.toHaveBeenCalled();
-    });
-
-    it('should load exercise on recommendation', () => {
-        const recommendation = new LearningPathRecommendationDTO();
-        recommendation.learningObjectId = exercise.id!;
-        recommendation.type = RecommendationType.EXERCISE;
-        getRecommendationStub.mockReturnValue(of(new HttpResponse({ body: recommendation })));
-        comp.onNextTask();
-        expect(findWithDetailsStub).not.toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalledWith(exercise.id);
-    });*/
 
     it('should store current lecture unit in history', () => {
         comp.learningObjectId = lectureUnit.id!;

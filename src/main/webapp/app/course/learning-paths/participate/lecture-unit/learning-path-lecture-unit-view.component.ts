@@ -24,7 +24,10 @@ export class LearningPathLectureUnitViewComponent {
 
     discussionComponent?: DiscussionSectionComponent;
 
-    constructor(private lectureUnitService: LectureUnitService, private alertService: AlertService) {}
+    constructor(
+        private lectureUnitService: LectureUnitService,
+        private alertService: AlertService,
+    ) {}
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         if (this.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
