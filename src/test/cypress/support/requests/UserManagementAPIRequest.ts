@@ -1,10 +1,10 @@
-import { BASE_API, POST } from '../constants';
+import { BASE_API, GET, POST } from '../constants';
 import { UserRole } from '../users';
 
 /**
- * A class which encapsulates all cypress requests related to course management.
+ * A class which encapsulates all API requests related to user management.
  */
-export class UserManagementRequests {
+export class UserManagementAPIRequests {
     /**
      * Creates a new user
      * @param username the username of the new user
@@ -24,6 +24,14 @@ export class UserManagementRequests {
             url: BASE_API + 'admin/users',
             method: POST,
             body: user,
+        });
+    }
+
+    getUser(username: string) {
+        return cy.request({
+            url: BASE_API + `users/${username}`,
+            method: GET,
+            failOnStatusCode: false,
         });
     }
 }
