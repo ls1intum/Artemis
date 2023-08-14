@@ -14,9 +14,9 @@
             <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
                 <div class="guided-mode-button">
                     <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
-                        <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel"
-                            >Switch to guided mode</span
-                        >
+                        <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;
+                        <span *ngIf="!isShowingWizardMode" jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                        <span *ngIf="isShowingWizardMode" jhiTranslate="artemisApp.programmingExercise.home.switchToTraditionalModeLabel">Switch to normal mode</span>
                     </button>
                 </div>
             </div>
