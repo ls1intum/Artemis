@@ -42,7 +42,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
-        private learningPathHistoryStorageService: LearningPathHistoryStorageService,
+        public learningPathHistoryStorageService: LearningPathHistoryStorageService,
     ) {}
 
     ngOnInit() {
@@ -53,6 +53,9 @@ export class LearningPathContainerComponent implements OnInit {
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {
             this.learningPathId = learningPathIdResponse.body!;
+
+            // load latest lecture unit or exercise that was accessed
+            this.onPrevTask();
         });
     }
 
@@ -147,10 +150,6 @@ export class LearningPathContainerComponent implements OnInit {
         }
     }
 
-    hasPrevious() {
-        return this.learningPathHistoryStorageService.hasPrevious(this.learningPathId);
-    }
-
     onNodeClicked(node: NgxLearningPathNode) {
         if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
             if (this.lectureUnit?.id) {
@@ -158,6 +157,7 @@ export class LearningPathContainerComponent implements OnInit {
             } else if (this.exercise?.id) {
                 this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
             }
+            console.log(this.learningPathHistoryStorageService.hasPrevious(this.learningPathId));
             this.undefineAll();
             this.learningObjectId = node.linkedResource!;
             this.lectureId = node.linkedResourceParent;
