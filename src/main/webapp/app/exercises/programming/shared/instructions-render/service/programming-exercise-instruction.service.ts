@@ -80,24 +80,26 @@ export class ProgrammingExerciseInstructionService {
     }
 
     public convertTestListToIds(testList: string): number[] {
+        // TODO how to deal with invalid names (typos)
         // If there are test names (preview case), map the test to its corresponding id. Otherwise, use the id directly provided in the text.
         // split the names by "," only when there is not a closing bracket without a previous opening bracket
         return testList
             .split(/,(?![^(]*?\))/)
             .map((text) => text.trim())
             .map((text) => {
-                return this.convertTestToId(text);
+                // use 0 to indicate a non-found test (TODO improve)
+                return this.convertTestToId(text) ?? 0;
             });
     }
 
-    public convertTestToId(test: string) {
-        // TODO use <testid>
-        const asId = parseInt(test);
-        if (!isNaN(asId)) {
+    public convertTestToId(test: string): number | undefined {
+        // If the text contains <testid> and </testid>, directly use the number inside
+        const match = test.match('<testid>(\\d+)</testid>');
+        if (match) {
             // If there already is an id, return it directly
-            return asId;
+            return parseInt(match[1]);
         }
         // TODO otherwise find its corresponding id by the test case name (markdown preview case)
-        return 2;
+        return undefined;
     }
 }

@@ -40,6 +40,12 @@ public class ProgrammingExerciseTaskService {
 
     private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]+\\))*[^()]*)\\)");
 
+    private static final String TESTID_START = "<testid>";
+
+    private static final String TESTID_END = "</testid>";
+
+    private static final Pattern TESTID_PATTERN = Pattern.compile(TESTID_START + "(\\d+)" + TESTID_END);
+
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
@@ -208,7 +214,7 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String convertTestNameToTestId(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        return testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).map(id -> "<testid>" + id + "</testid>")
+        return testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).map(id -> TESTID_START + id + TESTID_END)
                 .orElse(testName);
     }
 
@@ -219,15 +225,15 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String convertTestIdToTestName(String testId, Set<ProgrammingExerciseTestCase> testCases) {
-        // TODO move '<testId>' to a constant
-        if (!testId.startsWith("<testid>") || !testId.endsWith("</testid>")) {
+        var matcher = TESTID_PATTERN.matcher(testId);
+        if (!matcher.find()) {
             // This not a test id but a name that got not replaced previously (e.g. due to a typo)
             // Just leave this as it is
             return testId;
         }
         long id;
         try {
-            id = Long.parseLong(testId.substring("<testid>".length(), testId.length() - "</testid>".length()));
+            id = Long.parseLong(matcher.group(1));
         }
         catch (NumberFormatException ignore) {
             return testId;
