@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, POST, PUT } from '../../constants';
-import { COURSE_BASE } from '../../requests/CourseManagementRequests';
+
+import { BASE_API, COURSE_BASE, DELETE, POST, PUT } from '../../constants';
 import { CypressCredentials } from '../../users';
 
 /**
