@@ -220,7 +220,7 @@ public class ExerciseHintService {
             // some expected test cases were not executed in the student's result
             return false;
         }
-        return feedbackForTask.stream().allMatch(Feedback::isPositive);
+        return feedbackForTask.stream().allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
