@@ -492,7 +492,13 @@ export class ExerciseService {
     }
 
     public sendExerciseTitleToTitleService(exercise: Exercise | undefined | null) {
-        this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        // we only want to show the exercise group name as exercise name to the student for exam exercises.
+        // for tutors and more privileged users, we want to show the exercise title
+        if (exercise?.exerciseGroup && !exercise?.isAtLeastTutor) {
+            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.exerciseGroup.title);
+        } else {
+            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        }
         if (exercise?.course) {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
         }

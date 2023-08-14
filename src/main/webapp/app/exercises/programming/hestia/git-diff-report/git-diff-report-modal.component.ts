@@ -15,7 +15,10 @@ export class GitDiffReportModalComponent implements OnInit {
     templateFileContentByPath: Map<string, string>;
     solutionFileContentByPath: Map<string, string>;
 
-    constructor(protected activeModal: NgbActiveModal, private programmingExerciseService: ProgrammingExerciseService) {}
+    constructor(
+        protected activeModal: NgbActiveModal,
+        private programmingExerciseService: ProgrammingExerciseService,
+    ) {}
 
     ngOnInit(): void {
         this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({

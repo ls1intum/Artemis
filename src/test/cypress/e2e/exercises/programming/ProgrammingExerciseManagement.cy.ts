@@ -1,17 +1,18 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
-import { generateUUID } from '../../../support/utils';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
+import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, navigationBar, programmingExerciseCreation } from '../../../support/artemis';
 import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Programming Exercise Management', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -39,12 +40,12 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise deletion', () => {
-        let programmingExercise: ProgrammingExercise;
+        let exercise: ProgrammingExercise;
 
         before(() => {
             cy.login(admin, '/');
-            courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
-                programmingExercise = response.body;
+            exerciseAPIRequest.createProgrammingExercise({ course }).then((response) => {
+                exercise = response.body;
             });
         });
 
@@ -52,12 +53,12 @@ describe('Programming Exercise Management', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagement.openExercisesOfCourse(course.id!);
-            courseManagementExercises.deleteProgrammingExercise(programmingExercise);
-            courseManagementExercises.getExercise(programmingExercise.id!).should('not.exist');
+            courseManagementExercises.deleteProgrammingExercise(exercise);
+            courseManagementExercises.getExercise(exercise.id!).should('not.exist');
         });
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

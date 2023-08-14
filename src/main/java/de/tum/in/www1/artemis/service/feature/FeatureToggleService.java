@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 @Service
 public class FeatureToggleService {
@@ -17,14 +16,10 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, ExamMonitoringScheduleService examMonitoringScheduleService,
-            HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
 
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
@@ -54,10 +49,6 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
-        if (feature == Feature.ExamLiveStatistics) {
-            // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
-        }
         features.put(feature, false);
         sendUpdate();
     }
@@ -69,11 +60,6 @@ public class FeatureToggleService {
      * @param features A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
-        var examLiveStatistics = features.get(Feature.ExamLiveStatistics);
-        if (Boolean.FALSE.equals(examLiveStatistics)) {
-            // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
-        }
         this.features.putAll(features);
         sendUpdate();
     }

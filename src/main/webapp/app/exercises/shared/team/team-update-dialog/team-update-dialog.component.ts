@@ -55,7 +55,11 @@ export class TeamUpdateDialogComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faTrashAlt = faTrashAlt;
 
-    constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal) {}
+    constructor(
+        private participationService: ParticipationService,
+        private teamService: TeamService,
+        private activeModal: NgbActiveModal,
+    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

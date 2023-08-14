@@ -325,4 +325,19 @@ public class ModelingExerciseUtilService {
         result.setDuration(4);
         return plagiarismResultRepo.save(result);
     }
+
+    public Course addModelingExerciseToCourse(Course course) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
+        modelingExercise.setGradingInstructions("Grading instructions");
+        modelingExercise.getCategories().add("Modeling");
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
+        course.addExercises(modelingExercise);
+        return courseRepo.save(course);
+
+    }
 }

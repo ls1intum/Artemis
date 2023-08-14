@@ -1,19 +1,23 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseAssessmentType, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
+
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
 import {
     courseAssessment,
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    exerciseAPIRequest,
     exerciseAssessment,
     exerciseResult,
     programmingExerciseAssessment,
     programmingExerciseEditor,
     programmingExerciseFeedback,
 } from '../../../support/artemis';
+import { ProgrammingExerciseAssessmentType } from '../../../support/constants';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 // Common primitives
 const tutorFeedback = 'You are missing some classes! The classes, which you implemented look good though.';
@@ -30,34 +34,30 @@ describe('Programming exercise assessment', () => {
 
     before('Creates a programming exercise and makes a student submission', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
-            courseManagementRequest
-                .createProgrammingExercise(
-                    { course },
-                    undefined,
-                    false,
-                    dayjs(),
-                    dueDate,
-                    undefined,
-                    undefined,
-                    undefined,
-                    assessmentDueDate,
-                    ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
-                )
+            exerciseAPIRequest
+                .createProgrammingExercise({
+                    course,
+                    recordTestwiseCoverage: false,
+                    releaseDate: dayjs(),
+                    dueDate: dueDate,
+                    assessmentDate: assessmentDueDate,
+                    assessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                })
                 .then((programmingResponse) => {
                     exercise = programmingResponse.body;
                     cy.login(studentOne);
-                    courseManagementRequest
+                    exerciseAPIRequest
                         .startExerciseParticipation(exercise.id!)
                         .its('body.id')
                         .then((participationId) => {
-                            courseManagementRequest.makeProgrammingExerciseSubmission(participationId);
+                            exerciseAPIRequest.makeProgrammingExerciseSubmission(participationId);
                             // Wait until the due date is in the past
                             const now = dayjs();
                             if (now.isBefore(dueDate)) {
@@ -107,6 +107,6 @@ describe('Programming exercise assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
