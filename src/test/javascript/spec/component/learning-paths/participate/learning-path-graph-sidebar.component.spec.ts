@@ -15,7 +15,6 @@ describe('LearningPathGraphSidebarComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(LearningPathGraphComponent), MockPipe(ArtemisTranslatePipe), NgbTooltipMocksModule],
             declarations: [LearningPathGraphSidebarComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

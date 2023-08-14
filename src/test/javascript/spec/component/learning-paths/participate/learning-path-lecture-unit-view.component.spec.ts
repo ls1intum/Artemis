@@ -23,7 +23,6 @@ describe('LearningPathLectureUnitViewComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule), MockModule(ArtemisLectureUnitsModule)],
             declarations: [LearningPathLectureUnitViewComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {
