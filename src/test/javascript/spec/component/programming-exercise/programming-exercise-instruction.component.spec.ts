@@ -16,6 +16,7 @@ import {
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
     problemStatementEmptySecondTaskNotExecutedHtml,
+    problemStatementPlantUMLWithTest,
 } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 // eslint-disable-next-line max-len
@@ -537,6 +538,45 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
         // Should not get called another time
         expect(openModalStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should create the correct colors in problem statement plantuml diagram with inserted tests', fakeAsync(() => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [
+                { text: 'testMethods[Policy]', positive: true },
+                { text: 'testPolicy()', positive: false },
+            ],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemStatementPlantUMLWithTest,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+
+        comp.problemStatement = exercise.problemStatement!;
+        comp.exercise = exercise;
+        comp.latestResult = result;
+        // @ts-ignore
+        comp.setupMarkdownSubscriptions();
+
+        const plantUMLExtension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+        const injectSpy = jest.spyOn(plantUMLExtension as any, 'loadAndInjectPlantUml');
+
+        comp.updateMarkdown();
+
+        fixture.detectChanges();
+
+        tick(20);
+
+        // first test should be green (successful), second red (failed)
+        const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
+        expect(injectSpy).toHaveBeenCalledWith(expectedUML, 0);
     }));
 
     const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
