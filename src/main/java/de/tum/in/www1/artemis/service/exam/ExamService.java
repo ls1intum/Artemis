@@ -1063,7 +1063,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendUnlockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1095,7 +1095,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendLockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();

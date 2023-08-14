@@ -269,8 +269,23 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Modifying
     @Transactional // ok because of modifying query
-    @Query("UPDATE StudentExam s SET s.submitted = true, s.submissionDate = :submissionDate WHERE s.id = :studentExamId")
+    @Query("""
+            UPDATE StudentExam s
+            SET s.submitted = true,
+                s.submissionDate = :submissionDate
+            WHERE s.id = :studentExamId
+            """)
     void submitStudentExam(@Param("studentExamId") Long studentExamId, @Param("submissionDate") ZonedDateTime submissionDate);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentExam s
+            SET s.started = true,
+                s.startedDate = :startedDate
+            WHERE s.id = :studentExamId
+            """)
+    void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
     @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
