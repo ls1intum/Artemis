@@ -9,8 +9,8 @@ export class LearningPathHealthStatusWarningComponent {
     @Input() status: HealthStatus;
     @Output() onButtonClicked: EventEmitter<void> = new EventEmitter();
 
-    protected readonly getWarningTitle = getWarningTitle;
-    protected readonly getWarningBody = getWarningBody;
-    protected readonly getWarningHint = getWarningHint;
-    protected readonly getWarningAction = getWarningAction;
+    readonly getWarningTitle = getWarningTitle;
+    readonly getWarningBody = getWarningBody;
+    readonly getWarningHint = getWarningHint;
+    readonly getWarningAction = getWarningAction;
 }
