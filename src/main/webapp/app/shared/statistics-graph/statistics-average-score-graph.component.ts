@@ -110,7 +110,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Determines the color of the bar given the score
      * @param score that is represented by the bar
      * @returns string rgba representation of the color
-     * @private
      */
     private determineColor(score: number): string {
         if (score > this.bestThirdLowerBoundary) {
@@ -146,7 +145,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Determines the entry in the chart for a mouse event
      * @param name name of the exercise
      * @param value average score of the exercise
-     * @private
      */
     private determineChartEntry(name: string, value: number): ExerciseStatisticsEntry | undefined {
         let counter = 0;
@@ -188,7 +186,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     /**
      * Sets up chart labels, the dedicated objects in order to represent the exercises by ngx-charts and the bar coloring
      * @param exerciseModels the models representing the course exercises
-     * @private
      */
     private setupChart(exerciseModels: CourseManagementStatisticsModel[]): void {
         this.barChartLabels = exerciseModels.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
@@ -199,7 +196,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                     value: exercise.averageScore,
                     exerciseType: exercise.exerciseType,
                     exerciseId: exercise.exerciseId,
-                } as ExerciseStatisticsEntry),
+                }) as ExerciseStatisticsEntry,
         );
         this.ngxColor.domain = this.ngxData.map((exercise) => this.determineColor(exercise.value));
     }
@@ -211,7 +208,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * The 33% best performing exercises are colored green.
      * This method only identifies the threshold scores for the lowest and highest performing exercises.
      * These are exclusive, which means that both boundary values are excluded by the lowest and best third accordingly
-     * @private
      */
     private setUpColorDistribution(): void {
         if (!this.exerciseAverageScores || this.exerciseAverageScores.length === 0) {
@@ -285,7 +281,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     /**
      * Auxiliary method that identifies the exercises contained by the passed interval
      * @param interval the interval the exercises should be filtered against
-     * @private
      */
     private filterForPerformanceInterval(interval: PerformanceInterval) {
         let filterFunction;
@@ -309,7 +304,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     /**
      * Auxiliary method reducing code duplication for sorting the model array ascending in its averageScores
      * @param exerciseModels the array that should be ordered
-     * @private
      */
     private orderAverageScores(exerciseModels: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         return exerciseModels.sort((exercise1, exercise2) => exercise1.averageScore - exercise2.averageScore);
@@ -317,7 +311,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     /**
      * Auxiliary method reducing code duplication for initializing the chart after a performance interval has been selected
-     * @private
      */
     private initializeFilterOptionsAndSetupChartWithCurrentVisibleScores(): void {
         this.exerciseTypeFilter.initializeFilterOptions(this.exerciseScoresFilteredByPerformanceInterval);
@@ -329,7 +322,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     /**
      * Sets all performance intervals to visible
-     * @private
      */
     private includeAllIntervals(): void {
         this.displayColorMap.set(PerformanceInterval.LOWEST, this.CRITICAL_CLASS);
@@ -341,7 +333,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     /**
      * Deselects all performance intervals except the passed one
      * @param interval the interval that should not be deselected
-     * @private
      */
     private deselectAllOtherIntervals(interval: PerformanceInterval): void {
         this.performanceIntervals.forEach((pi) => {
@@ -386,7 +377,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Sets the currentPeriod to zero, determines the number of displayable bars and updates the chart.
      * @param filteredAgainstCategory the scores filtered against the current category filter setting
      * @param filteredAgainstType the scores filtered against the current type filter setting
-     * @private
      */
     private initializeChartWithFilter(filteredAgainstCategory: CourseManagementStatisticsModel[], filteredAgainstType: CourseManagementStatisticsModel[]): void {
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
