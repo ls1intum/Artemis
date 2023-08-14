@@ -221,7 +221,7 @@ class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
+        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -458,7 +458,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
         localGit.add().addFilepattern(".").call();
-        localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
+        GitService.commit(localGit).setMessage("commit").setAuthor("user1", "email1").call();
 
         // Rest call
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
@@ -1724,7 +1724,7 @@ class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
 
-        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
+        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();
 
         var exampleProgram = """
@@ -1760,13 +1760,13 @@ class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(Path.of(jPlagReposDir, projectKey));
-        Path file1 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-1.java"));
+        Files.createDirectories(jPlagReposDir.resolve(projectKey));
+        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
         Files.writeString(file1, exampleProgram);
-        Path file2 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-2.java"));
+        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
         Files.writeString(file2, exampleProgram);
 
-        doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
+        doReturn(jPlagReposDir).when(fileService).getTemporaryUniquePath(any(Path.class), eq(60L));
         doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);

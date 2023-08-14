@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
@@ -12,15 +12,20 @@ import { AlertService } from 'app/core/util/alert.service';
 export class CompetencyNodeDetailsComponent implements OnInit {
     @Input() courseId: number;
     @Input() competencyId: number;
-    competency: Competency;
-    competencyProgress: CompetencyProgress;
+    @Input() competency?: Competency;
+    @Output() competencyChange = new EventEmitter<Competency>();
+    @Input() competencyProgress?: CompetencyProgress;
+    @Output() competencyProgressChange = new EventEmitter<CompetencyProgress>();
 
     isLoading = false;
 
-    constructor(private competencyService: CompetencyService, private alertService: AlertService) {}
+    constructor(
+        private competencyService: CompetencyService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
-        if (this.competencyId && this.courseId) {
+        if (!this.competency || !this.competencyProgress) {
             this.loadData();
         }
     }
@@ -35,17 +40,19 @@ export class CompetencyNodeDetailsComponent implements OnInit {
                     this.competencyProgress = { progress: 0, confidence: 0 } as CompetencyProgress;
                 }
                 this.isLoading = false;
+                this.competencyChange.emit(this.competency);
+                this.competencyProgressChange.emit(this.competencyProgress);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
     }
 
     get progress(): number {
-        return Math.round(this.competencyProgress.progress ?? 0);
+        return Math.round(this.competencyProgress?.progress ?? 0);
     }
 
     get confidence(): number {
-        return Math.min(Math.round(((this.competencyProgress.confidence ?? 0) / (this.competency.masteryThreshold ?? 100)) * 100), 100);
+        return Math.min(Math.round(((this.competencyProgress?.confidence ?? 0) / (this.competency?.masteryThreshold ?? 100)) * 100), 100);
     }
 
     get mastery(): number {

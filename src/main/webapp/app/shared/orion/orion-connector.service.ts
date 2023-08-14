@@ -40,7 +40,10 @@ export class OrionConnectorService {
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
-    constructor(private injector: Injector, private alertService: AlertService) {}
+    constructor(
+        private injector: Injector,
+        private alertService: AlertService,
+    ) {}
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;

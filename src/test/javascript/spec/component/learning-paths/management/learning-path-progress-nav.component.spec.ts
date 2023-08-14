@@ -20,7 +20,6 @@ describe('LearningPathProgressNavComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [LearningPathProgressNavComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

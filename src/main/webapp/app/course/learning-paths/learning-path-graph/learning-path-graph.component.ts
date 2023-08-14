@@ -31,7 +31,10 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
-    constructor(private activatedRoute: ActivatedRoute, private learningPathService: LearningPathService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private learningPathService: LearningPathService,
+    ) {}
 
     ngOnInit() {
         if (this.learningPathId) {
@@ -41,7 +44,7 @@ export class LearningPathGraphComponent implements OnInit {
 
     loadData() {
         this.isLoading = true;
-        this.learningPathService.getNgxLearningPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
+        this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxLearningPath = ngxLearningPathResponse.body!;
             this.isLoading = false;
         });

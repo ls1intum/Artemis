@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { Competency } from 'app/entities/competency.model';
-import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
+import { Edge, Node } from '@swimlane/ngx-graph';
 
 export class LearningPath implements BaseEntity {
     public id?: number;
@@ -23,7 +23,6 @@ export class LearningPathPageableSearchDTO {
 export class NgxLearningPathDTO {
     public nodes: NgxLearningPathNode[];
     public edges: NgxLearningPathEdge[];
-    public clusters: NgxLearningPathCluster[];
 }
 
 export class NgxLearningPathNode implements Node {
@@ -41,11 +40,6 @@ export class NgxLearningPathEdge implements Edge {
     public target: string;
 }
 
-export class NgxLearningPathCluster implements ClusterNode {
-    public id: string;
-    public label?: string;
-    public childNodeIds?: string[];
-}
 export enum NodeType {
     COMPETENCY_START = 'COMPETENCY_START',
     COMPETENCY_END = 'COMPETENCY_END',

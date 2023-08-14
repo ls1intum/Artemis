@@ -336,6 +336,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
         competencies: 'artemisApp.courseOverview.menu.competencies',
+        learning_path: 'artemisApp.courseOverview.menu.learningPath',
+        lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',
+        exercise: 'artemisApp.learningPath.breadcrumbs.exercise',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
@@ -635,7 +638,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Adds a link to an exercise to the breadcrumbs array. The link depends on the type of the exercise, so we need to fetch it first
      * @param exerciseId the id of the exercise
      * @param currentPath the initial path for the breadcrumb
-     * @private
      */
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb

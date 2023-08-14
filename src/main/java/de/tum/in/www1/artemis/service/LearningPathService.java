@@ -70,7 +70,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudents(course);
-        students.forEach((student) -> generateLearningPathForUser(course, student));
+        students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
 
@@ -225,23 +225,22 @@ public class LearningPathService {
     }
 
     /**
-     * Generates Ngx representation of the learning path.
+     * Generates Ngx graph representation of the learning path graph.
      *
      * @param learningPath the learning path for which the Ngx representation should be created
-     * @return Ngx representation of the learning path
+     * @return Ngx graph representation of the learning path
      * @see NgxLearningPathDTO
      */
-    public NgxLearningPathDTO generateNgxRepresentation(@NotNull LearningPath learningPath) {
+    public NgxLearningPathDTO generateNgxGraphRepresentation(@NotNull LearningPath learningPath) {
         Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
         Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
-        Set<NgxLearningPathDTO.Cluster> clusters = new HashSet<>();
-        learningPath.getCompetencies().forEach(competency -> generateNgxRepresentationForCompetency(learningPath, competency, nodes, edges, clusters));
-        generateNgxRepresentationForRelations(learningPath, nodes, edges);
-        return new NgxLearningPathDTO(nodes, edges, clusters);
+        learningPath.getCompetencies().forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges));
+        generateNgxGraphRepresentationForRelations(learningPath, nodes, edges);
+        return new NgxLearningPathDTO(nodes, edges);
     }
 
     /**
-     * Generates Ngx representation for competency.
+     * Generates Ngx graph representation for competency.
      * <p>
      * A competency's representation consists of
      * <ul>
@@ -250,17 +249,15 @@ public class LearningPathService {
      * <li>a node for each learning unit (exercises or lecture unit)</li>
      * <li>edges from start node to each learning unit</li>
      * <li>edges from each learning unit to end node</li>
-     * <li>a cluster consisting of all created nodes</li>
      * </ul>
      *
      * @param learningPath the learning path for which the representation should be created
      * @param competency   the competency for which the representation will be created
      * @param nodes        set of nodes to store the new nodes
      * @param edges        set of edges to store the new edges
-     * @param clusters     set of clusters to store the new clusters
      */
-    private void generateNgxRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges,
-            Set<NgxLearningPathDTO.Cluster> clusters) {
+    private void generateNgxGraphRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes,
+            Set<NgxLearningPathDTO.Edge> edges) {
         Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
         // generates start and end node
         final var startNodeId = getCompetencyStartNodeId(competency.getId());
@@ -288,17 +285,12 @@ public class LearningPathService {
         if (currentCluster.size() == 2) {
             edges.add(new NgxLearningPathDTO.Edge(getDirectEdgeId(competency.getId()), startNodeId, endNodeId));
         }
-        // generate cluster for competency
-        var childNodeIds = currentCluster.stream().map(NgxLearningPathDTO.Node::id).collect(Collectors.toSet());
-        childNodeIds.add(startNodeId);
-        childNodeIds.add(endNodeId);
-        clusters.add(new NgxLearningPathDTO.Cluster(String.valueOf(competency.getId()), competency.getTitle(), childNodeIds));
 
         nodes.addAll(currentCluster);
     }
 
     /**
-     * Generates Ngx representations for competency relations.
+     * Generates Ngx graph representations for competency relations.
      * <p>
      * The representation will contain:
      * <ul>
@@ -322,7 +314,7 @@ public class LearningPathService {
      * @param nodes        set of nodes to store the new nodes
      * @param edges        set of edges to store the new edges
      */
-    private void generateNgxRepresentationForRelations(LearningPath learningPath, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges) {
+    private void generateNgxGraphRepresentationForRelations(LearningPath learningPath, Set<NgxLearningPathDTO.Node> nodes, Set<NgxLearningPathDTO.Edge> edges) {
         final var relations = competencyRelationRepository.findAllByCourseId(learningPath.getCourse().getId());
 
         // compute match clusters
@@ -345,8 +337,8 @@ public class LearningPathService {
 
             // generate match cluster start and end nodes
             for (int i = 0; i < matchClusters.numberOfSets(); i++) {
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_START));
-                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.COMPETENCY_END));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterStartNodeId(i), NgxLearningPathDTO.NodeType.MATCH_START));
+                nodes.add(new NgxLearningPathDTO.Node(getMatchingClusterEndNodeId(i), NgxLearningPathDTO.NodeType.MATCH_END));
             }
 
             // generate edges between match cluster nodes and corresponding competencies
@@ -359,18 +351,18 @@ public class LearningPathService {
         // generate edges for remaining relations
         final Set<String> createdRelations = new HashSet<>();
         relations.stream().filter(relation -> !relation.getType().equals(CompetencyRelation.RelationType.MATCHES))
-                .forEach(relation -> generateNgxRepresentationForRelation(relation, competencyToMatchCluster, createdRelations, edges));
+                .forEach(relation -> generateNgxGraphRepresentationForRelation(relation, competencyToMatchCluster, createdRelations, edges));
     }
 
     /**
-     * Generates Ngx representations for competency relation.
+     * Generates Ngx graph representations for competency relation.
      *
      * @param relation                 the relation for which the Ngx representation should be created
      * @param competencyToMatchCluster map from competencies to corresponding cluster
      * @param createdRelations         set of edge ids that have already been created
      * @param edges                    set of edges to store the new edges
      */
-    private void generateNgxRepresentationForRelation(CompetencyRelation relation, Map<Long, Integer> competencyToMatchCluster, Set<String> createdRelations,
+    private void generateNgxGraphRepresentationForRelation(CompetencyRelation relation, Map<Long, Integer> competencyToMatchCluster, Set<String> createdRelations,
             Set<NgxLearningPathDTO.Edge> edges) {
         final var sourceId = relation.getHeadCompetency().getId();
         String sourceNodeId;

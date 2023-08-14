@@ -23,8 +23,8 @@ export class LearningPathService {
         return this.httpClient.get<LearningPathHealthDTO>(`${this.resourceURL}/courses/${courseId}/learning-path-health`, { observe: 'response' });
     }
 
-    getNgxLearningPath(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
-        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' }).pipe(
+    getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
+        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}/graph`, { observe: 'response' }).pipe(
             map((ngxLearningPathResponse) => {
                 if (!ngxLearningPathResponse.body!.nodes) {
                     ngxLearningPathResponse.body!.nodes = [];
@@ -32,11 +32,12 @@ export class LearningPathService {
                 if (!ngxLearningPathResponse.body!.edges) {
                     ngxLearningPathResponse.body!.edges = [];
                 }
-                if (!ngxLearningPathResponse.body!.clusters) {
-                    ngxLearningPathResponse.body!.clusters = [];
-                }
                 return ngxLearningPathResponse;
             }),
         );
+    }
+
+    getLearningPathId(courseId: number) {
+        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/learning-path-id`, { observe: 'response' });
     }
 }

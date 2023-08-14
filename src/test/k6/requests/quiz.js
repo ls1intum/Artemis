@@ -203,15 +203,18 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
-            socket.setTimeout(function () {
-                if (questionCount === 50) {
-                    console.log('Submitting via REST for ' + currentUsername);
-                    submitRandomAnswerREST(10);
-                } else {
-                    console.log('Submitting via WS for ' + currentUsername);
-                    submitRandomAnswer(10);
-                }
-            }, (questionCount - 1) * 500 + 1000);
+            socket.setTimeout(
+                function () {
+                    if (questionCount === 50) {
+                        console.log('Submitting via REST for ' + currentUsername);
+                        submitRandomAnswerREST(10);
+                    } else {
+                        console.log('Submitting via WS for ' + currentUsername);
+                        submitRandomAnswer(10);
+                    }
+                },
+                (questionCount - 1) * 500 + 1000,
+            );
         }
 
         // Stop after timeout
