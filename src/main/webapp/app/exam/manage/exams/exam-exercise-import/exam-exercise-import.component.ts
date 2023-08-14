@@ -218,8 +218,7 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
         return (
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.title?.length! > 0 &&
+            !!exercise.title?.length! &&
             this.titleNamePattern.test(exercise.title!) &&
             !this.exercisesWithDuplicatedTitles.has(exercise.id!) &&
             (exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) || this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) === '')
