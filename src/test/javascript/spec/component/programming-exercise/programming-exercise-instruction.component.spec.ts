@@ -571,8 +571,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.updateMarkdown();
 
         fixture.detectChanges();
-
-        tick(20);
+        tick();
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
