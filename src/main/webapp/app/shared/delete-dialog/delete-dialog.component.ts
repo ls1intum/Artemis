@@ -33,7 +33,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     actionType: ActionType;
     // do not use faTimes icon if it's a confirmation but not a delete dialog
     useFaCheckIcon: boolean;
-    private oldEntityTitle: string;
+    oldEntityTitle: string;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
@@ -125,7 +125,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     }
 
     onRequestDataExportForOtherUserChanged(event: any) {
-        console.log('checkbox status changed');
         if (event.target.checked) {
             this.oldEntityTitle = this.entityTitle;
             this.entityTitle = this.alternativeEntityTitle ?? '';

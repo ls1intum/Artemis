@@ -106,11 +106,11 @@ export class DataExportComponent implements OnInit {
         this.dataExportService.requestDataExportForAnotherUser(login).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.alertService.success('artemisApp.dataExport.requestSuccess');
+                this.alertService.success('artemisApp.dataExport.requestForUserSuccess', { login });
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
-                this.alertService.error('artemisApp.dataExport.requestError');
+                this.alertService.error('artemisApp.dataExport.requestForUserError', { login });
             },
         });
     }

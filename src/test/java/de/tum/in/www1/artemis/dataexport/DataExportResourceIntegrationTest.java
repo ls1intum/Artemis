@@ -53,8 +53,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 1);
     }
 
     @AfterEach
@@ -295,6 +295,39 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
         }
         verify(fileService).scheduleForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRequestForAnotherUserInstructor_forbidden() throws Exception {
+        request.post("/api/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRequestForAnotherUserAsAdmin_success() throws Exception {
+        var usernameToRequest = TEST_PREFIX + "student1";
+        dataExportRepository.deleteAll();
+        var response = request.postWithResponseBody("/api/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
+        assertThat(response.requestedByAdmin()).isTrue();
+        assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(response.createdDate()).isNotNull();
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
+        assertThat(dataExportFromDb.getUser().getLogin()).isEqualTo(usernameToRequest);
+        assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(dataExportFromDb.getCreatedBy()).isEqualTo(TEST_PREFIX + "admin");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRequestForAnotherUser_requestInThePast14Days_forbidden() throws Exception {
+        var usernameToRequest = TEST_PREFIX + "student1";
+        dataExportRepository.deleteAll();
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.DOWNLOADED);
+        dataExport.setUser(userUtilService.getUserByLogin(usernameToRequest));
+        dataExportRepository.save(dataExport);
+        request.postWithResponseBody("/api/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.FORBIDDEN);
     }
 
     private DataExport initDataExport(DataExportState state) {

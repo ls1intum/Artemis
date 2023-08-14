@@ -38,6 +38,7 @@ describe('Delete Dialog Service', () => {
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
             delete: new EventEmitter<any>(),
+            dataExportForAnotherUser: new EventEmitter<string>(),
             requireConfirmationOnlyForAdditionalChecks: false,
         };
         const componentInstance = {};
