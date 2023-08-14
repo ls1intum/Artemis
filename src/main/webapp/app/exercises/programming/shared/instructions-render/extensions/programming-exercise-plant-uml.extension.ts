@@ -16,6 +16,9 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
     private plantUmlIndex = 0;
+
+    // This regex is the same as in the server: ProgrammingExerciseTaskService.java
+    private readonly testsColorRegex = /testsColor\(((?:[^()]+\([^()]*\))*[^()]*)\)/g;
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private plantUmlService: ProgrammingExercisePlantUmlService,
@@ -92,7 +95,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // before we send the plantUml to the server for rendering, we need to inject the current test status so that the colors can be adapted
                 // (green == implemented, red == not yet implemented, grey == unknown)
                 const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
-                    plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(((?:[^()]+\([^()]*\))*[^()]*)\)/g, (match: any, capture: string) => {
+                    plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(this.testsColorRegex, (match: any, capture: string) => {
                         const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture);
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                         if (testCaseState === TestCaseState.SUCCESS) {
