@@ -7,7 +7,11 @@ import { ArtemisRequests } from './requests/ArtemisRequests';
 
 // Requests
 const requests = new ArtemisRequests();
-export const courseManagementRequest = requests.courseManagement;
+export const communicationAPIRequest = requests.communication;
+export const courseManagementAPIRequest = requests.courseManagement;
+export const examAPIRequests = requests.exam;
+export const exerciseAPIRequest = requests.exercise;
+export const userManagementAPIRequest = requests.userManagement;
 
 // PageObjects
 const pageObjects = new ArtemisPageobjects();

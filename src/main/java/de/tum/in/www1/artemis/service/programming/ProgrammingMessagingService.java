@@ -136,7 +136,7 @@ public class ProgrammingMessagingService {
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
         log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
         // notify user via websocket
-        websocketMessagingService.broadcastNewResult((Participation) participation, result);
+        websocketMessagingService.awaitBroadcastNewResult((Participation) participation, result);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
