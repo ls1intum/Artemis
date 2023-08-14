@@ -1,5 +1,5 @@
-import { DELETE } from '../../../constants';
 import { courseList, courseOverview } from '../../../artemis';
+import { DELETE } from '../../../constants';
 import { BASE_API, GET, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';
@@ -17,43 +17,31 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Focuses the code editor content to allow typing into it.
-     * @param exerciseID the ID of the exercise
-     */
-    focusCodeEditor(exerciseID: number) {
-        // The ace editor is an external element, so we can't freely add ids here
-        return getExercise(exerciseID).find('#ace-code-editor').find('.ace_content').click();
-    }
-
-    /**
      * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non-existing files.
      * It only opens existing files and writes the content there!
      * @param exerciseID the ID of the exercise
      * @param submission object which contains the information about which files need to be edited with what content
-     * @param packageName the package name of the project to overwrite it in the submission templates
      */
-    typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, packageName: string) {
+    typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         for (const newFile of submission.files) {
-            this.createFileInRootPackage(exerciseID, newFile.name, packageName);
+            if (submission.createFilesInRootFolder) {
+                this.createFileInRootFolder(exerciseID, newFile.name);
+            } else {
+                this.createFileInRootPackage(exerciseID, newFile.name, submission.packageName!);
+            }
             cy.fixture(newFile.path).then(($fileContent) => {
-                const sanitizedContent = this.sanitizeInput($fileContent, packageName);
-                this.focusCodeEditor(exerciseID).type(sanitizedContent, { delay: 8 });
-                // Delete the remaining content which has been automatically added by the code editor.
-                // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
-                const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
-                cy.focused().type(deleteRemainingContent, { delay: 0 });
+                cy.window().then((win) => {
+                    getExercise(exerciseID)
+                        .find('#ace-code-editor')
+                        .then(($el) => {
+                            // @ts-expect-error ace does not exists on windows, but works without issue
+                            const editor = win.ace.edit($el.get(0));
+                            editor.setValue($fileContent, 1);
+                        });
+                });
             });
         }
-        cy.wait(1000);
-    }
-
-    /**
-     * Makes sure that the input does not contain any characters, which might be recognized by cypress as special characters,
-     * and replaces all newlines with the cypress '{enter}' command.
-     * Apparently this causes issues in the ace code editor if there is no space before a newline, so we add a space there as well.
-     */
-    private sanitizeInput(input: string, packageName: string) {
-        return input.replace(/\${packageName}/g, packageName).replace(/{/g, '{{}');
+        cy.wait(500);
     }
 
     /**
@@ -104,6 +92,28 @@ export class OnlineEditorPage {
     }
 
     /**
+     * Creates a file at root level in the file browser.
+     * @param exerciseID the ID of the exercise
+     * @param fileName the name of the new file (e.g. "Policy.java")
+     */
+    createFileInRootFolder(exerciseID: number, fileName: string) {
+        const postRequestId = 'createFile' + fileName;
+        const getRequestId = 'getFile' + fileName;
+        const requestPath = BASE_API + 'repository/*/file?file=' + fileName;
+        getExercise(exerciseID).find('[id="create_file_root"]').click().wait(500);
+        cy.intercept(POST, requestPath).as(postRequestId);
+        cy.intercept(GET, requestPath).as(getRequestId);
+        getExercise(exerciseID).find('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
+        cy.wait('@' + postRequestId)
+            .its('response.statusCode')
+            .should('eq', 200);
+        cy.wait('@' + getRequestId)
+            .its('response.statusCode')
+            .should('eq', 200);
+        this.findFileBrowser(exerciseID).contains(fileName).should('be.visible').wait(500);
+    }
+
+    /**
      * Creates a file at root level (in the main package) in the file browser.
      * @param exerciseID the ID of the exercise
      * @param fileName the name of the new file (e.g. "Policy.java")
@@ -139,6 +149,7 @@ export class OnlineEditorPage {
      * @returns the element containing the result score percentage.
      */
     getResultScore() {
+        cy.reloadUntilFound('#result-score');
         return cy.get('#result-score');
     }
 
@@ -164,14 +175,14 @@ export class OnlineEditorPage {
     /**
      * General method for entering, submitting and verifying something in the online editor.
      */
-    makeSubmissionAndVerifyResults(exerciseID: number, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    makeSubmissionAndVerifyResults(exerciseID: number, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
         // Decompress the file tree to access the parent folder
         this.toggleCompressFileTree(exerciseID);
         // We delete all existing files, so we can create new files and don't have to delete their already existing content
-        this.deleteFile(exerciseID, 'Client.java');
-        this.deleteFile(exerciseID, 'BubbleSort.java');
-        this.deleteFile(exerciseID, 'MergeSort.java');
-        this.typeSubmission(exerciseID, submission, packageName);
+        for (const deleteFile of submission.deleteFiles) {
+            this.deleteFile(exerciseID, deleteFile);
+        }
+        this.typeSubmission(exerciseID, submission);
         this.submit(exerciseID);
         verifyOutput();
     }
@@ -197,8 +208,11 @@ export class OnlineEditorPage {
  * @param files An array of containers, which contain the file path of the changed file as well as its name.
  */
 export class ProgrammingExerciseSubmission {
+    deleteFiles: string[];
+    createFilesInRootFolder: boolean;
     files: ProgrammingExerciseFile[];
     expectedResult: string;
+    packageName?: string;
 }
 
 class ProgrammingExerciseFile {

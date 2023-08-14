@@ -303,7 +303,6 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
  * Iterates over the array and pushes invalid elements to invalidElements
  * @param array the array containing elements that can be invalid
  * @param invalidElements the array all invalid elements are pushed to
- * @private
  */
 function pushToInvalidElements(array: CanBecomeInvalid[] | undefined, invalidElements: InvalidElement[]): void {
     if (array !== undefined) {

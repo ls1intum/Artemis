@@ -8,7 +8,10 @@ import { filter, skip, take } from 'rxjs/operators';
 export class ArtemisNavigationUtilService {
     private onFirstPage = true;
 
-    constructor(private router: Router, private location: Location) {
+    constructor(
+        private router: Router,
+        private location: Location,
+    ) {
         router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),
@@ -116,59 +119,26 @@ export const getLinkToSubmissionAssessment = (
     resultId?: number,
 ): string[] => {
     if (examId && exerciseGroupId) {
-        let route;
-        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
-            route = [
-                '/course-management',
-                courseId.toString(),
-                'exams',
-                examId.toString(),
-                'exercise-groups',
-                exerciseGroupId.toString(),
-                exerciseType + '-exercises',
-                exerciseId.toString(),
-                'participations',
-                participationId.toString(),
-                'submissions',
-                submissionId.toString(),
-                'assessment',
-            ];
-        } else {
-            route = [
-                '/course-management',
-                courseId.toString(),
-                'exams',
-                examId.toString(),
-                'exercise-groups',
-                exerciseGroupId.toString(),
-                exerciseType + '-exercises',
-                exerciseId.toString(),
-                'submissions',
-                submissionId.toString(),
-                'assessment',
-            ];
-        }
+        const route = [
+            '/course-management',
+            courseId.toString(),
+            'exams',
+            examId.toString(),
+            'exercise-groups',
+            exerciseGroupId.toString(),
+            exerciseType + '-exercises',
+            exerciseId.toString(),
+            'submissions',
+            submissionId.toString(),
+            'assessment',
+        ];
         if (resultId) {
             route[route.length - 1] += 's';
             route.push(resultId.toString());
         }
         return route;
     } else {
-        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
-            return [
-                '/course-management',
-                courseId.toString(),
-                exerciseType + '-exercises',
-                exerciseId.toString(),
-                'participations',
-                participationId.toString(),
-                'submissions',
-                submissionId.toString(),
-                'assessment',
-            ];
-        } else {
-            return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
-        }
+        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
     }
 };
 

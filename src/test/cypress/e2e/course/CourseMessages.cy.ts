@@ -1,31 +1,22 @@
-import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
-import { generateUUID, titleLowercase } from '../../support/utils';
 
-// Common primitives
-let courseName: string;
-let courseShortName: string;
+import { communicationAPIRequest, courseManagementAPIRequest, courseMessages, examAPIRequests, exerciseAPIRequest } from '../../support/artemis';
+import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
+import { convertModelAfterMultiPart, generateUUID, titleLowercase } from '../../support/utils';
 
 describe('Course messages', () => {
     let course: Course;
-    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseId = course.id!;
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
         });
     });
 
@@ -106,7 +97,7 @@ describe('Course messages', () => {
 
             it('check that channel is created, when a lecture is created', () => {
                 cy.login(admin);
-                courseManagementRequest.createLecture(course, 'Test Lecture');
+                courseManagementAPIRequest.createLecture(course, 'Test Lecture');
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseLectureChannelsButton();
                 courseMessages.checkChannelsExists('lecture-test-lecture');
@@ -114,7 +105,7 @@ describe('Course messages', () => {
 
             it('check that channel is created, when an exercise is created', () => {
                 cy.login(admin);
-                courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
+                exerciseAPIRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseExerciseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');
@@ -122,11 +113,11 @@ describe('Course messages', () => {
 
             it('check that channel is created, when an exam is created', () => {
                 cy.login(admin);
-                const examContent = new ExamBuilder(course).build();
-                courseManagementRequest.createExam(examContent);
+                const examTitle = 'exam' + generateUUID();
+                examAPIRequests.createExam({ course, title: examTitle });
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseExamChannelsButton();
-                courseMessages.checkChannelsExists(titleLowercase(examContent.title));
+                courseMessages.checkChannelsExists(titleLowercase(examTitle));
             });
         });
 
@@ -134,9 +125,9 @@ describe('Course messages', () => {
             let channel: Channel;
             before('create channel', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageChannel(course, 'test-channel', 'Test Channel', true, true).then((response) => {
+                communicationAPIRequest.createCourseMessageChannel(course, 'test-channel', 'Test Channel', true, true).then((response) => {
                     channel = response.body;
-                    courseManagementRequest.joinUserIntoChannel(course, channel, instructor);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel, instructor);
                 });
             });
 
@@ -158,7 +149,7 @@ describe('Course messages', () => {
             let channel: Channel;
             before('create channel', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageChannel(course, 'join-test-channel', 'Join Test Channel', true, true).then((response) => {
+                communicationAPIRequest.createCourseMessageChannel(course, 'join-test-channel', 'Join Test Channel', true, true).then((response) => {
                     channel = response.body;
                 });
             });
@@ -203,9 +194,9 @@ describe('Course messages', () => {
             let channel: Channel;
             before('create channel', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageChannel(course, 'write-test-channel', 'Write Test Channel', false, true).then((response) => {
+                communicationAPIRequest.createCourseMessageChannel(course, 'write-test-channel', 'Write Test Channel', false, true).then((response) => {
                     channel = response.body;
-                    courseManagementRequest.joinUserIntoChannel(course, channel, studentOne);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel, studentOne);
                 });
             });
 
@@ -222,7 +213,7 @@ describe('Course messages', () => {
             it('student should be able to edit message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const messageText = 'Student Edit Test Message';
-                courseManagementRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
+                communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
                     const message = response.body;
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
@@ -234,7 +225,7 @@ describe('Course messages', () => {
             it('student should be able to delete his message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
                 const messageText = 'Student Edit Test Message';
-                courseManagementRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
+                communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
                     const message = response.body;
                     courseMessages.checkMessage(message.id, messageText);
                     courseMessages.deleteMessage(message.id);
@@ -314,7 +305,7 @@ describe('Course messages', () => {
             let groupChat: GroupChat;
             before('create group chat', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                communicationAPIRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
                     groupChat = response.body;
                 });
             });
@@ -348,9 +339,9 @@ describe('Course messages', () => {
 
             before('create group chat', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                communicationAPIRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
                     groupChat = response.body;
-                    courseManagementRequest.updateCourseMessageGroupChatName(course, groupChat, groupChatName);
+                    communicationAPIRequest.updateCourseMessageGroupChatName(course, groupChat, groupChatName);
                 });
             });
 
@@ -379,7 +370,7 @@ describe('Course messages', () => {
             let groupChat: GroupChat;
             before('create group chat', () => {
                 cy.login(admin);
-                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                communicationAPIRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
                     groupChat = response.body;
                 });
             });
@@ -397,7 +388,7 @@ describe('Course messages', () => {
             it('student should be able to edit message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
                 const messageText = 'Student Edit Test Message';
-                courseManagementRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
+                communicationAPIRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
                     const message = response.body;
                     const newMessage = 'Edited Text';
                     courseMessages.editMessage(message.id, newMessage);
@@ -409,7 +400,7 @@ describe('Course messages', () => {
             it('student should be able to delete his message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
                 const messageText = 'Student Edit Test Message';
-                courseManagementRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
+                communicationAPIRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
                     const message = response.body;
                     courseMessages.checkMessage(message.id, messageText);
                     courseMessages.deleteMessage(message.id);
@@ -419,10 +410,7 @@ describe('Course messages', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
-        }
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

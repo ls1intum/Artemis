@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -25,12 +26,29 @@ public class LectureFactory {
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
+        lecture.setVisibleDate(startDate);
         lecture.setStartDate(startDate);
         lecture.setDescription("Description");
         lecture.setTitle("Lecture");
         lecture.setEndDate(endDate);
         lecture.setCourse(course);
         return lecture;
+    }
+
+    /**
+     * Create a dummy attachment unit for testing. Includes a dummy attachment with optional placeholder image file on disk
+     *
+     * @param withFile Whether to include a placeholder image file on disk
+     * @return AttachmentUnit that was created
+     */
+    public static AttachmentUnit generateAttachmentUnit(boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnit;
     }
 
     /**

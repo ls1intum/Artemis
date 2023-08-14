@@ -32,7 +32,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     faCircle = faCircle;
     faHistory = faHistory;
 
-    constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
+    constructor(
+        private accountService: AccountService,
+        private jhiWebsocketService: JhiWebsocketService,
+    ) {}
 
     /**
      * Subscribes to the websocket topic "team" for the given participation
@@ -134,9 +137,12 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         });
         if (this.typingTeamStudents.length > 0) {
             const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
-            const earliestExpiration = dayjs.min(lastTypingDates).add(this.showTypingDuration, 'ms');
-            const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
-            setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
+            const minTypingDate = dayjs.min(lastTypingDates);
+            if (minTypingDate) {
+                const earliestExpiration = minTypingDate.add(this.showTypingDuration, 'ms');
+                const timeToExpirationInMilliseconds = earliestExpiration.diff(dayjs());
+                setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
+            }
         }
     }
 

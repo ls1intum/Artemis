@@ -1,5 +1,6 @@
-import { BASE_API, POST } from '../../constants';
 import { Dayjs } from 'dayjs/esm';
+
+import { BASE_API, POST } from '../../constants';
 
 export class LectureCreationPage {
     setTitle(title: string) {
@@ -14,6 +15,10 @@ export class LectureCreationPage {
 
     typeDescription(description: string) {
         cy.get('.ace_content').type(description, { parseSpecialCharSequences: false });
+    }
+
+    setVisibleDate(date: Dayjs) {
+        cy.get('#visible-date').find('#date-input-field').type(date.toString());
     }
 
     setStartDate(date: Dayjs) {

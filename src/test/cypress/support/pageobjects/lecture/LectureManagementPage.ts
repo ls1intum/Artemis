@@ -1,6 +1,8 @@
+import dayjs from 'dayjs/esm';
+
 import { Lecture } from 'app/entities/lecture.model';
+
 import { BASE_API, DELETE, POST } from '../../constants';
-import day from 'dayjs/esm';
 
 export class LectureManagementPage {
     clickCreateLecture() {
@@ -8,7 +10,7 @@ export class LectureManagementPage {
     }
 
     deleteLecture(lecture: Lecture) {
-        cy.get(`#lecture-${lecture.id}`).find('#delete-lecture').click();
+        this.getLecture(lecture.id!).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
         cy.get('#confirm-exercise-name').type(lecture.title!);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
@@ -16,12 +18,20 @@ export class LectureManagementPage {
         return cy.wait('@deleteLecture');
     }
 
-    getLecture(lecture: Lecture) {
-        return cy.get(`#lecture-${lecture.id}`);
+    getLectures() {
+        return cy.get('#lectures');
     }
 
-    openUnitsPage(lectureID: number) {
-        cy.get(`#lecture-${lectureID}`).find('#units').click();
+    getLecture(lectureId: number) {
+        return cy.get(`#lecture-${lectureId}`);
+    }
+
+    getLectureContainer() {
+        return cy.get('#lecture-preview');
+    }
+
+    openUnitsPage(lectureId: number) {
+        this.getLecture(lectureId).find('#units').click();
     }
 
     openCreateUnit(type: UnitType) {
@@ -32,7 +42,7 @@ export class LectureManagementPage {
         return cy.get('#unit-creation');
     }
 
-    addTextUnit(name: string, text: string, releaseDate = day()) {
+    addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         this.openCreateUnit(UnitType.TEXT);
         cy.get('#name').type(name);
         cy.get('#pick-releaseDate').find('#date-input-field').type(releaseDate.toString());

@@ -1,32 +1,38 @@
 import dayjs from 'dayjs/esm';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { MODELING_EDITOR_CANVAS } from 'src/test/cypress/support/constants';
+
 import { Course } from 'app/entities/course.model';
-import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementExercises, courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
+import {
+    courseManagement,
+    courseManagementAPIRequest,
+    courseManagementExercises,
+    exerciseAPIRequest,
+    modelingExerciseAssessment,
+    modelingExerciseCreation,
+    modelingExerciseEditor,
+    navigationBar,
+} from '../../../support/artemis';
 import { admin, instructor, studentOne } from '../../../support/users';
-import { generateUUID } from 'src/test/cypress/support/utils';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
-// Common primitives
-let course: Course;
-let modelingExercise: ModelingExercise;
+describe('Modeling Exercise Management', () => {
+    let course: Course;
+    let modelingExercise: ModelingExercise;
 
-describe('Modeling Exercise Management Spec', () => {
-    before('Create a course', () => {
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
+        courseManagementAPIRequest.createCourse().then((response: Cypress.Response<Course>) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
         });
     });
 
     describe('Create Modeling Exercise', () => {
-        before('Login as instructor', () => {
-            cy.login(instructor);
-        });
-
         it('Create a new modeling exercise', () => {
+            cy.login(instructor);
             cy.visit(`/course-management/${course.id}/exercises`);
             courseManagementExercises.createModelingExercise();
             modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
@@ -60,26 +66,29 @@ describe('Modeling Exercise Management Spec', () => {
                     modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
                     modelingExerciseAssessment.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    cy.get('#modeling-editor-canvas').should('exist');
+                    modelingExerciseEditor.getModelingCanvas().should('exist');
                 });
         });
 
-        after('Delete exericse', () => {
-            courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
+        after('Delete modeling exercise', () => {
+            if (modelingExercise) {
+                cy.login(admin);
+                exerciseAPIRequest.deleteModelingExercise(modelingExercise.id!);
+            }
         });
     });
 
     describe('Edit Modeling Exercise', () => {
         before('Create Modeling Exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createModelingExercise({ course }).then((resp) => {
+            exerciseAPIRequest.createModelingExercise({ course }).then((resp) => {
                 modelingExercise = resp.body;
             });
         });
 
         it('Edit Existing Modeling Exercise', () => {
             cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            const newTitle = 'Cypress EDITED ME';
+            const newTitle = 'New Modeling Exercise Title';
             const points = 100;
             modelingExerciseCreation.setTitle(newTitle);
             modelingExerciseCreation.pickDifficulty({ hard: true });
@@ -90,26 +99,38 @@ describe('Modeling Exercise Management Spec', () => {
             modelingExerciseCreation.setPoints(points);
             modelingExerciseCreation.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('#exercise-card-' + modelingExercise.id)
-                .find('#modeling-exercise-' + modelingExercise.id + '-title')
-                .should('contain.text', newTitle);
-            cy.get('#exercise-card-' + modelingExercise.id)
-                .find('#modeling-exercise-' + modelingExercise.id + '-maxPoints')
-                .should('contain.text', points.toString());
+            courseManagementExercises.getModelingExerciseTitle(modelingExercise.id!).contains(newTitle);
+            courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!).contains(points.toString());
         });
 
         after('Delete exericse', () => {
-            courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
+            exerciseAPIRequest.deleteModelingExercise(modelingExercise.id!);
+        });
+    });
+
+    describe('Delete Modeling Exercise', () => {
+        let modelingExercise: ModelingExercise;
+
+        before('Create Modeling exercise', () => {
+            cy.login(admin, '/');
+            exerciseAPIRequest.createModelingExercise({ course }).then((resp) => {
+                modelingExercise = resp.body;
+            });
+        });
+
+        it('Deletes an existing Modeling exercise', () => {
+            cy.login(instructor, '/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExercisesOfCourse(course.id!);
+            courseManagementExercises.deleteModelingExercise(modelingExercise);
+            courseManagementExercises.getExercise(modelingExercise.id!).should('not.exist');
         });
     });
 
     describe('Modeling Exercise Release', () => {
-        beforeEach('Login intructor', () => {
-            cy.login(instructor);
-        });
-
         it('Student can not see unreleased Modeling Exercise', () => {
-            courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
+            cy.login(instructor);
+            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
             cy.login(studentOne, '/courses');
@@ -118,7 +139,8 @@ describe('Modeling Exercise Management Spec', () => {
         });
 
         it('Student can see released Modeling Exercise', () => {
-            courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour')).then((resp) => {
+            cy.login(instructor);
+            exerciseAPIRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
             cy.login(studentOne, '/courses');
@@ -126,8 +148,7 @@ describe('Modeling Exercise Management Spec', () => {
         });
     });
 
-    after('Delete the test course', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id!);
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

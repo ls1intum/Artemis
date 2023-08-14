@@ -1,32 +1,27 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
-import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { DELETE } from '../../../support/constants';
-import { courseManagement, courseManagementExercises, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { admin } from '../../../support/users';
 
-// Common primitives
-let course: Course;
+import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
+import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
+import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, navigationBar, quizExerciseCreation } from '../../../support/artemis';
+import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Quiz Exercise Management', () => {
-    before('Set up course', () => {
-        cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
-        });
-    });
+    let course: Course;
 
-    after('Delete Course', () => {
-        courseManagementRequest.deleteCourse(course.id!);
+    before('Create course', () => {
+        cy.login(admin);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+        });
     });
 
     describe('Quiz Exercise Creation', () => {
         beforeEach(() => {
             cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.shortName!);
+            courseManagement.openExercisesOfCourse(course.id!);
             courseManagementExercises.createQuizExercise();
             quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
         });
@@ -62,23 +57,23 @@ describe('Quiz Exercise Management', () => {
     describe('Quiz Exercise deletion', () => {
         let quizExercise: QuizExercise;
 
-        beforeEach('Create Quiz Exercise', () => {
+        before('Create quiz Exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
 
-        it('Deletes a Quiz Exercise', () => {
-            cy.login(admin, '/course-management/');
-            courseManagement.openExercisesOfCourse(course.shortName!);
-            cy.get('#delete-quiz-' + quizExercise.id).click();
-            cy.get('#confirm-exercise-name').type(quizExercise.title!);
-            cy.intercept(DELETE, '/api/quiz-exercises/*').as('deleteQuizQuery');
-            cy.get('#delete').click();
-            cy.wait('@deleteQuizQuery').then((deleteResponse) => {
-                expect(deleteResponse?.response?.statusCode).to.eq(200);
-            });
+        it('Deletes a quiz exercise', () => {
+            cy.login(admin, '/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExercisesOfCourse(course.id!);
+            courseManagementExercises.deleteQuizExercise(quizExercise);
+            courseManagementExercises.getExercise(quizExercise.id!).should('not.exist');
         });
+    });
+
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

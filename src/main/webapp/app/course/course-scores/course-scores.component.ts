@@ -18,7 +18,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
-import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
@@ -130,6 +130,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faDownload = faDownload;
     faSpinner = faSpinner;
+    faClipboard = faClipboard;
 
     constructor(
         private route: ActivatedRoute,
@@ -182,7 +183,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Initialize the component with the given course.
      * @param course The course which should be displayed.
-     * @private
      */
     private initializeWithCourse(course: Course) {
         this.course = course;
@@ -194,7 +194,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Makes sure the exercise titles are unique.
-     * @private
      */
     private initializeExerciseTitles() {
         if (!this.course.exercises) {
@@ -223,7 +222,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Determines the exercises of the course that are included in the score calculation.
-     * @private
      */
     private determineExercisesIncludedInScore(course: Course): Array<Exercise> {
         return course
@@ -237,7 +235,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Returns all exercise types for which the course has at least one exercise.
-     * @private
      */
     private filterExercisesTypesWithExercises(): Array<ExerciseType> {
         return this.exerciseTypes.filter((exerciseType) => {
@@ -307,7 +304,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Checks that the score calculated on the server for the student matches the score calculated in the client.
      * @param student The student for which the score should be checked.
-     * @private
      */
     private checkStudentScoreCalculation(student: CourseScoresStudentStatistics) {
         const overAllPoints = roundValueSpecifiedByCourseSettings(student.overallPoints, this.course);
@@ -460,7 +456,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Goes through all participations and collects the found students.
      * @return A map of the student`s id to the student.
-     * @private
      */
     private mapStudentIdToStudentStatistics(): Map<number, CourseScoresStudentStatistics> {
         const studentsMap = new Map<number, CourseScoresStudentStatistics>();
@@ -489,7 +484,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Updates the student statistics with their result in the given exercise.
      * @param student The student that should be updated.
      * @param exercise The exercise that should be included in the statistics.
-     * @private
      */
     private updateStudentStatisticsWithExerciseResults(student: CourseScoresStudentStatistics, exercise: Exercise) {
         const relevantMaxPoints = exercise.maxPoints!;
@@ -674,7 +668,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Constructs a new builder for a new CSV row.
      * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
-     * @private
      */
     private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
         if (csvExportOptions) {
@@ -686,7 +679,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates the list of columns that should be part of the exported CSV or Excel file.
-     * @private
      */
     private generateExportColumnNames(): Array<string> {
         const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
@@ -718,7 +710,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row used in the export file consisting of statistics for the given student.
      * @param student The student for which an export row should be created.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateStudentStatisticsExportRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
@@ -767,7 +758,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowMaxValues(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Max', csvExportOptions);
@@ -801,7 +791,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowAverageValues(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Average', csvExportOptions);
@@ -844,7 +833,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported Csv with information about the number of participants.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowParticipation(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Number of Participations', csvExportOptions);
@@ -865,7 +853,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowSuccessfulParticipation(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Number of Successful Participations', csvExportOptions);
@@ -925,7 +912,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Puts the given value into the grading scale column of the Export row.
      * @param exportRow The row in which the value should be stored.
      * @param value The value that should be stored in the row.
-     * @private
      */
     private setExportRowGradeValue(exportRow: ExportRow, value: string | number | undefined) {
         if (this.gradingScaleExists) {
@@ -943,7 +929,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Compares them by due date first, then title.
      * @param e1 Some exercise.
      * @param e2 Another exercise.
-     * @private
      */
     private static compareExercises(e1: Exercise, e2: Exercise): number {
         if (e1.dueDate! > e2.dueDate!) {
@@ -964,7 +949,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Filters the course exercises and returns the exercises that are already released or do not have a release date
      * @param course the course whose exercises are filtered
-     * @private
      */
     private determineReleasedExercises(course: Course): Exercise[] {
         return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
@@ -973,7 +957,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the average of given scores and returns it rounded based on course settings
      * @param scores the scores the average should be computed of
-     * @private
      */
     private calculateAverageScore(scores: number[]): number {
         return roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
@@ -982,7 +965,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the average of given points and returns it rounded based on course settings
      * @param points the points the average should be computed of
-     * @private
      */
     private calculateAveragePoints(points: number[]): number {
         return roundValueSpecifiedByCourseSettings(mean(points), this.course);
@@ -991,7 +973,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the median of given scores and returns it rounded based on course settings
      * @param scores the scores the median should be computed of
-     * @private
      */
     private calculateMedianScore(scores: number[]): number {
         return roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
@@ -1000,7 +981,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the median of given points and returns it rounded based on course settings
      * @param points the points the median should be computed of
-     * @private
      */
     private calculateMedianPoints(points: number[]): number {
         return roundValueSpecifiedByCourseSettings(median(points), this.course);
@@ -1008,7 +988,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Sets the statistical values displayed in the table next to the distribution chart
-     * @private
      */
     private calculateAverageAndMedianScores(): void {
         const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0)) + this.maxNumberOfPresentationPoints;

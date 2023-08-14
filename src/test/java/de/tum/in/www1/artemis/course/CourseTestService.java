@@ -1542,15 +1542,15 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
         assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1597,8 +1597,8 @@ public class CourseTestService {
     }
 
     private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course.getId() + "/unenroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
@@ -2100,7 +2100,7 @@ public class CourseTestService {
         Files.createDirectories(Path.of(courseArchivesDirPath));
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = FileService.removeIllegalCharacters(zipGroupName);
         doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
                 any(Path.class));
 

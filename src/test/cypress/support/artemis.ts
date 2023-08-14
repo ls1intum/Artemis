@@ -7,7 +7,11 @@ import { ArtemisRequests } from './requests/ArtemisRequests';
 
 // Requests
 const requests = new ArtemisRequests();
-export const courseManagementRequest = requests.courseManagement;
+export const communicationAPIRequest = requests.communication;
+export const courseManagementAPIRequest = requests.courseManagement;
+export const examAPIRequests = requests.exam;
+export const exerciseAPIRequest = requests.exercise;
+export const userManagementAPIRequest = requests.userManagement;
 
 // PageObjects
 const pageObjects = new ArtemisPageobjects();
@@ -19,7 +23,6 @@ export const courseList = pageObjects.course.list;
 export const courseOverview = pageObjects.course.overview;
 export const courseManagement = pageObjects.course.management;
 export const courseManagementExercises = pageObjects.course.managementExercises;
-export const courseExercise = pageObjects.course.exercise;
 export const courseCommunication = pageObjects.course.communication;
 export const courseMessages = pageObjects.course.messages;
 export const courseAssessment = pageObjects.assessment.course;
@@ -69,3 +72,8 @@ export const quizExerciseCreation = pageObjects.exercise.quiz.creation;
 export const quizExerciseMultipleChoice = pageObjects.exercise.quiz.multipleChoice;
 export const quizExerciseShortAnswerQuiz = pageObjects.exercise.quiz.shortAnswer;
 export const quizExerciseDragAndDropQuiz = pageObjects.exercise.quiz.dragAndDrop;
+
+export const fileUploadExerciseCreation = pageObjects.exercise.fileUpload.creation;
+export const fileUploadExerciseEditor = pageObjects.exercise.fileUpload.editor;
+export const fileUploadExerciseAssessment = pageObjects.assessment.fileUpload;
+export const fileUploadExerciseFeedback = pageObjects.exercise.fileUpload.feedback;

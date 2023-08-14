@@ -14,7 +14,10 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 export class ModelingSubmissionService {
     public resourceUrl = 'api';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+    ) {}
 
     /**
      * Create a new modeling submission
@@ -72,7 +75,7 @@ export class ModelingSubmissionService {
      * @param {boolean?} lock - True if assessment is locked
      * @param correctionRound correctionRound for which to get the Submissions
      */
-    getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission | undefined> {
         const url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
@@ -81,7 +84,14 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
+        return this.http.get<ModelingSubmission | undefined>(url, { params }).pipe(
+            map((res?: ModelingSubmission) => {
+                if (!res) {
+                    return undefined;
+                }
+                return this.submissionService.convertSubmissionFromServer(res);
+            }),
+        );
     }
 
     /**

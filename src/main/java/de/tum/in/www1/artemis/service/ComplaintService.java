@@ -66,15 +66,16 @@ public class ComplaintService {
         Long courseId = course.getId();
 
         // Check whether the complaint text limit is exceeded
-        if (course.getMaxComplaintTextLimit() < complaint.getComplaintText().length()) {
-            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + course.getMaxComplaintTextLimit() + " characters", ENTITY_NAME,
+        int maxLength = course.getMaxComplaintTextLimitForExercise(studentParticipation.getExercise());
+        if (maxLength < complaint.getComplaintText().length()) {
+            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                     "exceededComplaintTextLimit");
         }
 
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
             final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
-            final List<User> instructors = userRepository.getInstructors(exam.getCourse());
+            final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
                 throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");

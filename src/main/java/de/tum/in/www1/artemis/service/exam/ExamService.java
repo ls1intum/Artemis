@@ -263,14 +263,15 @@ public class ExamService {
      */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
-        var exam = studentExam.getExam();
+        // load again from the database because the exam object of the student exam might not have all the properties we need
+        var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
         Long studentId = studentExam.getUser().getId();
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator);
-        var exercises = studentExam.getExercises();
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
@@ -383,6 +384,25 @@ public class ExamService {
     }
 
     /**
+     * retrieves/calculates all the necessary grade information for the given student exam used in the data export
+     *
+     * @param studentExam the student exam for which the grade should be calculated
+     * @return the student exam result with points and grade
+     */
+    public StudentExamWithGradeDTO getStudentExamGradeForDataExport(StudentExam studentExam) {
+        loadQuizExercisesForStudentExam(studentExam);
+
+        // fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam, studentExam.getUser());
+
+        List<StudentParticipation> participations = studentExam.getExercises().stream().filter(Objects::nonNull).flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .toList();
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        return calculateStudentResultWithGradeAndPoints(studentExam, participations);
+    }
+
+    /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
      * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
@@ -422,7 +442,10 @@ public class ExamService {
         // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            // exercises can be null if multiple student exams exist for the same student/exam combination
+            if (exercise != null) {
+                filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            }
         }
     }
 
@@ -448,7 +471,8 @@ public class ExamService {
         if (!isAtLeastInstructor) {
             // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
             exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
-            exercise.setExerciseGroup(null);
+            exercise.getExerciseGroup().setExercises(null);
+            exercise.getExerciseGroup().setExam(null);
         }
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
@@ -560,6 +584,9 @@ public class ExamService {
         for (StudentParticipation studentParticipation : participationsOfStudent) {
             Exercise exercise = studentParticipation.getExercise();
 
+            if (exercise == null) {
+                continue;
+            }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
@@ -1019,7 +1046,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendUnlockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1051,7 +1078,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendLockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
