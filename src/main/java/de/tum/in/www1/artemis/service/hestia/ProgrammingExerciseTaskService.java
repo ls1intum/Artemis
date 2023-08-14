@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -203,12 +204,36 @@ public class ProgrammingExerciseTaskService {
     private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
         var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-        return testCaseNames.stream().map(testName -> convertTestNameToTestIdInProblemStatement(testCases, testName)).collect(Collectors.joining(","));
+        return testCaseNames.stream().map(testName -> convertTestNameToTestId(testName, testCases)).collect(Collectors.joining(","));
     }
 
-    private String convertTestNameToTestIdInProblemStatement(Set<ProgrammingExerciseTestCase> testCases, String testName) {
+    private String convertTestNameToTestId(String testName, Set<ProgrammingExerciseTestCase> testCases) {
         return testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).map(id -> "<testid>" + id + "</testid>")
                 .orElse(testName);
+    }
+
+    private String extractTestNamesFromIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
+        var capturedTestIds = extractTestCaseNames(capturedTestCaseIds);
+
+        return capturedTestIds.stream().map(tc -> convertTestIdToTestName(tc, testCases)).collect(Collectors.joining(","));
+    }
+
+    private String convertTestIdToTestName(String testId, Set<ProgrammingExerciseTestCase> testCases) {
+        // TODO move '<testId>' to a constant
+        if (!testId.startsWith("<testid>") || !testId.endsWith("</testid>")) {
+            // This not a test id but a name that got not replaced previously (e.g. due to a typo)
+            // Just leave this as it is
+            return testId;
+        }
+        long id;
+        try {
+            id = Long.parseLong(testId.substring("<testid>".length(), testId.length() - "</testid>".length()));
+        }
+        catch (NumberFormatException ignore) {
+            return testId;
+        }
+
+        return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst().map(ProgrammingExerciseTestCase::getTestName).orElse(testId);
     }
 
     /**
@@ -265,6 +290,18 @@ public class ProgrammingExerciseTaskService {
      * @param exercise the exercise to replaces the test names in the problem statement
      */
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
+        replaceInProblemStatement(exercise, this::extractTestCaseIdsFromNames);
+    }
+
+    /**
+     * Prepares a saved problem statement (with test ids) for editors.
+     * Replaces the test ids with test names.
+     */
+    public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
+        replaceInProblemStatement(exercise, this::extractTestNamesFromIds);
+    }
+
+    private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
         var problemStatement = exercise.getProblemStatement();
         if (problemStatement == null || problemStatement.isEmpty()) {
             return;
@@ -277,13 +314,13 @@ public class ProgrammingExerciseTaskService {
             return;
         }
 
-        problemStatement = replaceTaskTestsWithIds(problemStatement, testCases);
-        problemStatement = replacePlantUMLTestCasesWithIds(problemStatement, testCases);
+        problemStatement = replaceTaskTests(problemStatement, testCases, replacer);
+        problemStatement = replacePlantUMLTestCases(problemStatement, testCases, replacer);
 
         exercise.setProblemStatement(problemStatement);
     }
 
-    private String replaceTaskTestsWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
+    private String replaceTaskTests(String problemStatement, Set<ProgrammingExerciseTestCase> testCases, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
         Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
@@ -293,14 +330,15 @@ public class ProgrammingExerciseTaskService {
             String testNames = matchResult.group(2);
 
             // converted testids, e.g. <testid>10</testid>,<testid>12</testid>
-            String testIds = extractTestCaseIdsFromNames(testNames, testCases);
+            String testIds = replacer.apply(testNames, testCases);
 
             // replace the names with their ids
             return fullMatch.replace(testNames, testIds);
         });
     }
 
-    private String replacePlantUMLTestCasesWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
+    private String replacePlantUMLTestCases(String problemStatement, Set<ProgrammingExerciseTestCase> testCases,
+            BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
         Matcher matcher = PLANTUML_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
@@ -313,7 +351,7 @@ public class ProgrammingExerciseTaskService {
                 // group 1: test names, e.g testAttributes[BubbleSort]
                 String testNames = testsMatchResult.group(1);
                 // ids to insert, e.g. <testid>15</testid>
-                String testIds = extractTestCaseIdsFromNames(testNames, testCases);
+                String testIds = replacer.apply(testNames, testCases);
                 return fullMatch.replace(testNames, testIds);
             });
         });
