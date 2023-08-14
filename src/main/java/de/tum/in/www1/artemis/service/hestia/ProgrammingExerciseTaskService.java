@@ -38,7 +38,7 @@ public class ProgrammingExerciseTaskService {
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
-    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]+\\))*[^()]*)\\)");
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]*\\))*[^()]*)\\)");
 
     private static final String TESTID_START = "<testid>";
 
