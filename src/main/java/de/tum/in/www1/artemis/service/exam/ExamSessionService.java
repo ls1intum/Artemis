@@ -116,7 +116,7 @@ public class ExamSessionService {
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
             relatedExamSessions = filterEqualRelatedExamSessionsOfSameStudentExam(relatedExamSessions);
 
-            if (!relatedExamSessions.isEmpty() && !isSubset(relatedExamSessions, suspiciousExamSessions)) {
+            if (!relatedExamSessions.isEmpty() && !isSubsetOfFoundSuspiciousSessions(relatedExamSessions, suspiciousExamSessions)) {
                 addSuspiciousReasons(examSession, relatedExamSessions);
                 relatedExamSessions.add(examSession);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
@@ -124,7 +124,17 @@ public class ExamSessionService {
         }
     }
 
-    private boolean isSubset(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    /**
+     * Checks if the given set of exam sessions is a subset of suspicious exam sessions that have already been found.
+     * This is necessary as we want to avoid duplicate results.
+     * E.g. if we have exam session A,B,C and they are suspicious because of the same browser fingerprint AND the same IP address,
+     * we do not want to include the same tuple of sessions again with only the reason same browser fingerprint or same IP address.
+     *
+     * @param relatedExamSessions    a set of exam sessions that are suspicious
+     * @param suspiciousExamSessions a set of suspicious exam sessions that have already been found
+     * @return true if the given set of exam sessions is a subset of suspicious exam sessions that have already been found, otherwise false.
+     */
+    private boolean isSubsetOfFoundSuspiciousSessions(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
         for (var suspiciousExamSession : suspiciousExamSessions) {
             if (suspiciousExamSession.examSessions().containsAll(relatedExamSessions)) {
                 return true;

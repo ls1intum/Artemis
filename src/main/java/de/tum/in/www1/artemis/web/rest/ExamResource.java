@@ -1173,10 +1173,10 @@ public class ExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
     @EnforceAtLeastInstructor
     public List<ExerciseForPlagiarismCasesOverviewDTO> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request to get all exercises for exam : {}", examId);
+        log.debug("REST request to get all exercises with potential plagiarism cases for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
         List<ExerciseForPlagiarismCasesOverviewDTO> exerciseForPlagiarismCasesOverviewDTOS = new ArrayList<>();
         for (Exercise exercise : exercises) {
             var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());

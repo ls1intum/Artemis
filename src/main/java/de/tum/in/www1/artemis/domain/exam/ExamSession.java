@@ -133,18 +133,14 @@ public class ExamSession extends AbstractAuditingEntity {
 
     @JsonIgnore
     public boolean hasSameIpAddress(ExamSession other) {
-        if (other == null) {
-            return false;
-        }
-        return getIpAddressAsIpAddress() != null && getIpAddressAsIpAddress().equals(other.getIpAddressAsIpAddress());
+
+        return other != null && getIpAddressAsIpAddress() != null && getIpAddressAsIpAddress().equals(other.getIpAddressAsIpAddress());
     }
 
     @JsonIgnore
     public boolean hasSameBrowserFingerprint(ExamSession other) {
-        if (other == null) {
-            return false;
-        }
-        return getBrowserFingerprintHash() != null && getBrowserFingerprintHash().equals(other.getBrowserFingerprintHash());
+
+        return other != null && getBrowserFingerprintHash() != null && getBrowserFingerprintHash().equals(other.getBrowserFingerprintHash());
     }
 
 }

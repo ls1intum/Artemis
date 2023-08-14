@@ -127,7 +127,7 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Counts the number of plagiarism cases for the given exercise.
+     * GET /courses/{courseId}/exercises/{exerciseId}/plagiarism-cases-count : Counts the number of plagiarism cases for the given exercise.
      *
      * @param courseId   the id of the course
      * @param exerciseId the id of the exercise

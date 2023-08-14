@@ -188,7 +188,8 @@ public class PlagiarismResource {
     }
 
     /**
-     * Counts the number of plagiarism results for the given exercise
+     * GET /exercises/:exerciseId/potential-plagiarism-count : get the number of potential plagiarism cases for the given exercise
+     * This endpoint returns the number of plagiarism submissions for the given exercise excluding submissions of deleted users.
      *
      * @param exerciseId the id of the exercise
      * @return the number of plagiarism results

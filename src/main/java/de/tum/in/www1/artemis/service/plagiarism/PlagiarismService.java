@@ -99,7 +99,7 @@ public class PlagiarismService {
      * @return the number of potential plagiarism cases
      */
     public long getNumberOfPotentialPlagiarismCasesForExercise(long exerciseId) {
-        var comparisons = plagiarismComparisonRepository.findAllByExerciseId(exerciseId);
+        var comparisons = plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exerciseId);
         Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers = new HashSet<>();
         for (var comparison : comparisons) {
             addSubmissionsIfUserHasNotBeenDeleted(comparison, submissionsWithoutDeletedUsers);
