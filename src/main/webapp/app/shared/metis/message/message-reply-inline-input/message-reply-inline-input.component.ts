@@ -21,7 +21,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
+    constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+        protected localStorageService: LocalStorageService,
+    ) {
         super(metisService, modalService, formBuilder);
     }
 

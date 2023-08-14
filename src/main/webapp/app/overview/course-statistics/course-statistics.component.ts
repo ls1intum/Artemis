@@ -299,7 +299,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * Sorts exercises into their corresponding exercise groups and creates dedicated objects that
      * can be processed by ngx-charts in order to visualize the students score for each exercise
      * @param exercises the exercises that should be grouped
-     * @private
      */
     private groupExercisesByType(exercises: Exercise[]): void {
         // this reset is now necessary because of the filtering option that triggers the grouping again.
@@ -391,7 +390,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Generates array containing default configuration for every possible part in one stacked bar
-     * @private
      * @returns dedicated object that is requested by ngx-charts in order to visualize one bar in the horizontal bar chart
      */
     private static generateDefaultSeries(): Series[] {
@@ -407,7 +405,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve absolute score for each exercise group in the course from the scores storage service and add it to the doughnut chart
-     * @private
      */
     private calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.QUIZ, ScoreType.ABSOLUTE_SCORE);
@@ -454,7 +451,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieves the maximum of points for the course from the scores storage service.
-     * @private
      */
     private calculateMaxPoints(): void {
         const quizzesTotalMaxPoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.QUIZ, ScoreType.MAX_POINTS);
@@ -472,7 +468,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve the relative score for each exercise group in the course from the scores storage service
-     * @private
      */
     private calculateRelativeScores(): void {
         const quizzesRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.QUIZ, ScoreType.RELATIVE_SCORE);
@@ -490,7 +485,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve the reachable points for the course from the scores storage service.
-     * @private
      */
     private calculateReachablePoints(): void {
         const quizzesReachablePoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.QUIZ, ScoreType.REACHABLE_POINTS);
@@ -508,7 +502,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve the current relative score for the course from the scores storage service.
-     * @private
      */
     private calculateCurrentRelativeScores(): void {
         const quizzesCurrentRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.QUIZ, ScoreType.CURRENT_RELATIVE_SCORE);
@@ -526,7 +519,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve the presentation score for the course from the scores storage service
-     * @private
      */
     private calculatePresentationScores(): void {
         const programmingExercisePresentationScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.PROGRAMMING, ScoreType.PRESENTATION_SCORE);
@@ -543,7 +535,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Retrieve the reachable presentation score for the course from the scores storage service
-     * @private
      */
     private calculateReachablePresentationPoints(): void {
         this.reachablePresentationPoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_PRESENTATION_POINTS);
@@ -554,7 +545,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param exerciseType the exercise type for which the score should be retrieved. Must be an element of {Programming, Modeling, Quiz, Text, File upload}.
      * @param scoreType which type of score should be retrieved from the store. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
      * @returns requested score value
-     * @private
      */
     private retrieveScoreByExerciseTypeAndScoreType(exerciseType: ExerciseType, scoreType: ScoreType): number {
         const scoresPerExerciseTypeForCourse: ScoresPerExerciseType | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
@@ -566,7 +556,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * Retrieves the score for an arbitrary score type for the total scores from the scores storage service. Scores are calculated in the server when fetching all courses.
      * @param scoreType which type of score should be retrieved from the store. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
      * @returns requested score value
-     * @private
      */
     private retrieveTotalScoreByScoreType(scoreType: ScoreType): number {
         const totalScores: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(this.courseId);
@@ -614,7 +603,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * the different scores of the corresponding exercise group of the chart
      * @param exercise an arbitrary exercise of a course
      * @param allSeries an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
-     * @private
      */
     private pushToData(exercise: Exercise, allSeries: Series[]): void {
         const exerciseType = exercise.type!;
@@ -630,7 +618,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Adds some metadata to every non-empty exercise group and pushes it to ngxExerciseGroups
-     * @private
      */
     private pushExerciseGroupsToData(): void {
         Object.values(ExerciseType).forEach((exerciseType) => {
@@ -660,7 +647,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param series the series the students score gets pushed to
      * @param roundedParticipationScore the students relative score
      * @param split the students absolute score
-     * @private
      */
     private identifyBar(exercise: Exercise, series: Series[], roundedParticipationScore: number, split: number): void {
         // the bar on index 0 is only rendered if the exercise has no due date
@@ -678,7 +664,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Sets the maximum scale on the x-axis if there are exercises with > 100%
      * @param exerciseGroup the exercise group
-     * @private
      * @returns maximum value visible on xAxis
      */
     private setXScaleMax(exerciseGroup: NgxExercise[]): number {
@@ -728,7 +713,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Auxiliary method that updates the filtered exercise IDs. These are necessary in order to update the performance in exercises chart below
      * @param included indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
-     * @private
      */
     private filterExerciseIDsForCategorySelection(included: boolean): void {
         if (!included) {
@@ -749,7 +733,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Determines and returns the height of the whole chart depending of the amount of its entries
      * @param chartEntries the amount of chart entries
-     * @private
      */
     private calculateChartHeight(chartEntries: number): number {
         /*
@@ -764,7 +747,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * Auxiliary method to reduce code duplication
      * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
      * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
-     * @private
      */
     private setupFilteredChart(isIncluded: boolean) {
         this.calculateNumberOfAppliedFilters();

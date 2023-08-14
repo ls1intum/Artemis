@@ -12,7 +12,10 @@ export type EntityResponseType = HttpResponse<ApollonDiagram>;
 export class ApollonDiagramService {
     private resourceUrl = 'api';
 
-    constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
+    constructor(
+        private http: HttpClient,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Creates diagram.

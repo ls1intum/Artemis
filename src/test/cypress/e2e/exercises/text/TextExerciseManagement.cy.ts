@@ -1,26 +1,28 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+
 import {
     courseManagement,
+    courseManagementAPIRequest,
     courseManagementExercises,
-    courseManagementRequest,
+    exerciseAPIRequest,
     navigationBar,
     textExerciseCreation,
     textExerciseExampleSubmissionCreation,
     textExerciseExampleSubmissions,
 } from '../../../support/artemis';
-import { generateUUID } from '../../../support/utils';
-import dayjs from 'dayjs/esm';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Text exercise management', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -72,7 +74,7 @@ describe('Text exercise management', () => {
 
         before('Create text exercise', () => {
             cy.login(admin, '/');
-            courseManagementRequest.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
+            exerciseAPIRequest.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
                 exercise = response.body;
             });
         });
@@ -87,6 +89,6 @@ describe('Text exercise management', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
