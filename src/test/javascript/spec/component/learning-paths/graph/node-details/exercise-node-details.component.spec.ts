@@ -21,7 +21,6 @@ describe('ExerciseNodeDetailsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ExerciseNodeDetailsComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

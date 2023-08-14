@@ -20,7 +20,6 @@ describe('LectureUnitNodeDetailsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [LectureUnitNodeDetailsComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

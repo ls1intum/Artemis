@@ -19,7 +19,10 @@ export class CompetencyNodeDetailsComponent implements OnInit {
 
     isLoading = false;
 
-    constructor(private competencyService: CompetencyService, private alertService: AlertService) {}
+    constructor(
+        private competencyService: CompetencyService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         if (!this.competency || !this.competencyProgress) {

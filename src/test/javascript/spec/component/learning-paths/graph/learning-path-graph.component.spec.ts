@@ -13,7 +13,6 @@ describe('LearningPathGraphComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [LearningPathGraphComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

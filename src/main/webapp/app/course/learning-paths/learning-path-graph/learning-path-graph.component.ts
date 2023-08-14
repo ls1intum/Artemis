@@ -31,7 +31,10 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
-    constructor(private activatedRoute: ActivatedRoute, private learningPathService: LearningPathService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private learningPathService: LearningPathService,
+    ) {}
 
     ngOnInit() {
         if (this.learningPathId) {

@@ -83,7 +83,7 @@ public class ExerciseUnit extends LectureUnit {
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
     @Override
-    public String getJsonSubTypeString() {
+    public String getType() {
         return "exercise";
     }
 }

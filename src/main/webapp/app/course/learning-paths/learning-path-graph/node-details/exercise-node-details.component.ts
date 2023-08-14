@@ -16,7 +16,10 @@ export class ExerciseNodeDetailsComponent implements OnInit {
 
     isLoading = false;
 
-    constructor(private exerciseService: ExerciseService, private alertService: AlertService) {}
+    constructor(
+        private exerciseService: ExerciseService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         if (!this.exercise) {

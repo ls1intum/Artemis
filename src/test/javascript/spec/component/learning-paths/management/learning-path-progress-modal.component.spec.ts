@@ -18,7 +18,6 @@ describe('LearningPathProgressModalComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(LearningPathGraphComponent), MockComponent(LearningPathProgressNavComponent)],
             declarations: [LearningPathProgressModalComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {
