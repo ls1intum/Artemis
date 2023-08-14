@@ -18,7 +18,11 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     saml2Profile: Saml2Config;
 
-    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService) {}
+    constructor(
+        private loginService: LoginService,
+        private eventManager: EventManager,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
