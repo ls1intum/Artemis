@@ -24,7 +24,10 @@ export class AssessmentDetailComponent {
     faExclamation = faExclamation;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(
+        private translateService: TranslateService,
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+    ) {}
 
     /**
      * Emits assessment changes to parent component

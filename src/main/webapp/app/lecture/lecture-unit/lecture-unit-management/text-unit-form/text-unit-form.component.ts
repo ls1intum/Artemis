@@ -43,7 +43,11 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
 
-    constructor(private fb: FormBuilder, private router: Router, private translateService: TranslateService) {}
+    constructor(
+        private fb: FormBuilder,
+        private router: Router,
+        private translateService: TranslateService,
+    ) {}
 
     get nameControl() {
         return this.form.get('name');

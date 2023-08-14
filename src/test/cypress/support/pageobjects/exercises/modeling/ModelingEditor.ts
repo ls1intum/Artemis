@@ -1,8 +1,7 @@
-import { BASE_API, PUT } from '../../../constants';
+import { BASE_API, MODELING_EDITOR_CANVAS, PUT } from '../../../constants';
 import { getExercise } from '../../../utils';
-import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
-export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
+import scrollBehaviorOptions = Cypress.scrollBehaviorOptions;
 
 /**
  * This provides functions for interacting with the modeling editor

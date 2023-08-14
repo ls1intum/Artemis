@@ -74,7 +74,7 @@
             #packageName="ngModel"
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
         />
-        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
+        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
             <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
             </div>
@@ -95,7 +95,7 @@
             #packageName="ngModel"
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
         />
-        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
+        <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
             <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
             </div>

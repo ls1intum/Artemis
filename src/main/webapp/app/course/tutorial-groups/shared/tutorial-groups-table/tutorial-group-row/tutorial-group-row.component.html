@@ -25,7 +25,7 @@
     <td>
         <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
             <!-- Only include repetition frequency if not the default of once per week -->
-            {{ tutorialGroup.tutorialGroupSchedule | meetingPattern : tutorialGroup.tutorialGroupSchedule.repetitionFrequency !== 1 }}
+            {{ tutorialGroup.tutorialGroupSchedule | meetingPattern: tutorialGroup.tutorialGroupSchedule.repetitionFrequency !== 1 }}
         </span>
         <ng-template #no_schedule></ng-template>
     </td>
@@ -40,9 +40,9 @@
     </td>
     <td>
         <span *ngIf="tutorialGroup.nextSession; else no_session">
-            {{ tutorialGroup.nextSession.start | artemisDate : 'short-date' : false : timeZone! : true }}
-            {{ tutorialGroup.nextSession.start | artemisDate : 'time' : false : timeZone! }} -
-            {{ tutorialGroup.nextSession.end | artemisDate : 'time' : false : timeZone! }}
+            {{ tutorialGroup.nextSession.start | artemisDate: 'short-date' : false : timeZone! : true }}
+            {{ tutorialGroup.nextSession.start | artemisDate: 'time' : false : timeZone! }} -
+            {{ tutorialGroup.nextSession.end | artemisDate: 'time' : false : timeZone! }}
         </span>
         <ng-template #no_session></ng-template>
     </td>
