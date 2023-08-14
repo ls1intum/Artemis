@@ -21,7 +21,10 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     documentationType = DocumentationType.PlagiarismChecks;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(
+        private plagiarismCasesService: PlagiarismCasesService,
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
