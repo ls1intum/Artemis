@@ -157,7 +157,6 @@ export class LearningPathContainerComponent implements OnInit {
             } else if (this.exercise?.id) {
                 this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
             }
-            console.log(this.learningPathHistoryStorageService.hasPrevious(this.learningPathId));
             this.undefineAll();
             this.learningObjectId = node.linkedResource!;
             this.lectureId = node.linkedResourceParent;
