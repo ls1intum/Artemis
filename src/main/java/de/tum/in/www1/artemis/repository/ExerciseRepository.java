@@ -94,11 +94,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :now
+            	AND e.dueDate >= :time
             	AND c.continuousPlagiarismControlEnabled = TRUE
             ORDER BY e.dueDate ASC
             """)
-    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue(@Param("now") ZonedDateTime now);
+    Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
     @Query("""
             SELECT e FROM Exercise e
@@ -326,8 +326,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      *
      * @return set of exercises
      */
-    default Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue() {
-        return findAllExercisesWithCurrentOrUpcomingDueDateAndContinuousPlagiarismControlEnabledIsTrue(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
+    default Set<Exercise> findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue() {
+        var yesterday = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1);
+        return findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(yesterday);
     }
 
     /**
