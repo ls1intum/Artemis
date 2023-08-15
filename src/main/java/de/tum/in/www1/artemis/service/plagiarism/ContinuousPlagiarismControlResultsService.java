@@ -48,7 +48,7 @@ class ContinuousPlagiarismControlResultsService {
             CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_DE);
 
     private static final String CONTINUOUS_PLAGIARISM_CONTROL_LIMIT_EXCEEDED_FEEDBACK_TEXT_EN = format(
-            "%s Suspicion of plagiarism! Score reduced to 0. You reached maximum number of submissions with plagiarism suspicion. You further submissions will not be graded.",
+            "%s Suspicion of plagiarism! Score reduced to 0. Sie haben die maximale Anzahl an Einreichungen mit Plagiatsverdacht erreicht. Ihre weiteren Einreichungen werden nicht bewertet.",
             CONTINUOUS_PLAGIARISM_CONTROL_FEEDBACK_IDENTIFIER_EN);
 
     private static final String CONTINUOUS_PLAGIARISM_CONTROL_LIMIT_EXCEEDED_FEEDBACK_TEXT_DE = format(
