@@ -54,7 +54,7 @@
             "continuousPlagiarismControlEnabled": "Enable Continuous Plagiarism Control",
             "continuousPlagiarismControlPostDueDateChecksEnabled": "Check the submissions for plagiarism in the night after the due date",
             "continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetections": "Max. number of Continuous Plagiarism Control detections",
-            "continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetectionsTooltip": "After submitting predefined number of different submissions with plagiarism detected the Continuous Plagiarism Control will reduce the score of all further submissions to 0. Student will be able to dispute that after the due date of the exercise.",
+            "continuousPlagiarismControlMaximalNumberOfCpcPlagiarismDetectionsTooltip": "Maximum number of submissions in which plagiarism can be automatically detected until no more points can be reached in all other submissions. The student still will be able to submit new submissions and file a complaint after the due date.",
             "plagiarismChecks": "Plagiarism Checks",
             "problemStatement": "Problem Statement",
             "emptyProblemStatement": "(No problem statement)",
