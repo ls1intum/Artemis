@@ -495,13 +495,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return the new filtered list
      */
     public List<Feedback> createFilteredFeedbacks(boolean isBeforeDueDate) {
-        List<Feedback> filteredFeedback = new ArrayList<>(feedbacks);
-        filteredFeedback.removeIf(Feedback::isInvisible);
-
-        if (isBeforeDueDate) {
-            filteredFeedback.removeIf(Feedback::isAfterDueDate);
-        }
-        return filteredFeedback;
+        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !isBeforeDueDate || !feedback.isAfterDueDate()).toList();
     }
 
     /**
