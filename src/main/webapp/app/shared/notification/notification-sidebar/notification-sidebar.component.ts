@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
@@ -7,12 +6,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, NEW_REPLY_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { Subscription } from 'rxjs';
-import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SessionStorageService } from 'ngx-webstorage';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';

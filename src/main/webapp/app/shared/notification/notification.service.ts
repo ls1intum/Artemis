@@ -65,6 +65,7 @@ export class NotificationService {
         private courseManagementService: CourseManagementService,
         private notificationSettingsService: NotificationSettingsService,
     ) {
+        console.log('Constructor');
         this.initNotificationObserver();
 
         this.notificationSettingsService.getNotificationSettingsUpdates().subscribe(() => {
@@ -82,8 +83,13 @@ export class NotificationService {
 
             // Delay to prevent load if someone spam clicks the refresh button
             this.loadTimeout = setTimeout(() => {
+                console.log('In timeout');
                 this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+                    console.log('In subscribe');
+                    console.log(courses);
+                    console.log(this.initialized);
                     if (courses && this.initialized) {
+                        console.log('In if');
                         this.subscribeToGroupNotificationUpdates(courses);
                         this.subscribeToQuizUpdates(courses);
                     }
@@ -186,7 +192,7 @@ export class NotificationService {
      * @param req request options
      * @return Observable<HttpResponse<Notification[]>>
      */
-    private queryNotificationsFilteredBySettings(req?: any): Observable<HttpResponse<Notification[]>> {
+    queryNotificationsFilteredBySettings(req?: any): Observable<HttpResponse<Notification[]>> {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })

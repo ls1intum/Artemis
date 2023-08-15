@@ -122,7 +122,13 @@ describe('Notification Service', () => {
 
     const conversationCreationNotification = generateConversationsCreationNotification();
 
+    beforeAll(() => {
+        jest.useFakeTimers();
+    });
+
     beforeEach(() => {
+        console.log('Test start');
+
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
             providers: [
@@ -163,6 +169,7 @@ describe('Notification Service', () => {
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.id = 99;
 
+                console.log('Mocking');
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
                 cmGetCoursesForNotificationsStub = jest
@@ -229,24 +236,32 @@ describe('Notification Service', () => {
         }));
 
         it('should subscribe to single user notification updates and receive new single user notification', fakeAsync(() => {
+            console.log('Failing test start');
             notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
-                expect(notification).toEqual(singleUserNotification);
+                expect(notification).toEqual([singleUserNotification]);
             });
 
-            tick(); // position of tick is very important here !
+            tick();
+            jest.advanceTimersByTime(16 * 1000); // simulate setInterval time passing
 
-            const userId = 99; // based on MockAccountService
-            const notificationTopic = `/topic/user/${userId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledTimes(3);
-            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            console.log('Next');
+            cmCoursesSubject.next([course]);
+
+            expect(cmGetCoursesForNotificationsStub).toHaveBeenCalledOnce();
+
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
+            expect(wsSubscribeStub).toHaveBeenCalledWith(`/topic/course/42/TA`);
+            expect(wsSubscribeStub).toHaveBeenCalledWith(`/topic/courses/42/quizExercises`);
             // websocket correctly subscribed to the topic
 
-            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(3);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(2);
             // websocket "receive" called
 
             // add new single user notification
             wsNotificationSubject.next(singleUserNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+
+            httpMock.expectOne({ method: 'GET', url: 'api/notification-settings' });
         }));
 
         it('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
@@ -306,12 +321,12 @@ describe('Notification Service', () => {
         it('should subscribe to quiz notification updates and receive a new quiz exercise and create a new quiz notification from it', fakeAsync(() => {
             const wsReceiveQuizExerciseStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsQuizExerciseSubject);
 
-            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+            notificationService.subscribeToNotificationUpdates().subscribe((notifications) => {
                 // the quiz notification is created after a new quiz exercise has been detected, therefore the time will always be different
-                notification.notificationDate = undefined;
+                notifications.forEach((notification) => (notification.notificationDate = undefined));
                 quizNotification.notificationDate = undefined;
 
-                expect(notification).toEqual(quizNotification);
+                expect(notifications).toEqual([quizNotification]);
             });
 
             tick(); // position of tick is very important here !
