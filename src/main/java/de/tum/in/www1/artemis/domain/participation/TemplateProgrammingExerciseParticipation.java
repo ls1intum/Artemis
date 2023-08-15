@@ -29,6 +29,11 @@ public class TemplateProgrammingExerciseParticipation extends AbstractBaseProgra
     }
 
     @Override
+    public String getType() {
+        return "template";
+    }
+
+    @Override
     public Participation copyParticipationId() {
         var participation = new TemplateProgrammingExerciseParticipation();
         participation.setId(getId());

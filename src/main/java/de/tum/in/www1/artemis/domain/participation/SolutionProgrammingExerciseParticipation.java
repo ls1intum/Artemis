@@ -29,6 +29,11 @@ public class SolutionProgrammingExerciseParticipation extends AbstractBaseProgra
     }
 
     @Override
+    public String getType() {
+        return "solution";
+    }
+
+    @Override
     public Participation copyParticipationId() {
         var participation = new SolutionProgrammingExerciseParticipation();
         participation.setId(getId());

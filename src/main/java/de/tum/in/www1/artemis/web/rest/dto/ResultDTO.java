@@ -10,9 +10,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, DomainObjectIdDTO participation,
+public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationDTO participation,
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
         Integer codeIssueCount) {
 
@@ -27,6 +28,14 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         }
     }
 
+    public record ParticipationDTO(Long id, boolean testRun, String type) {
+
+        public static ParticipationDTO of(Participation participation) {
+            return new ParticipationDTO(participation.getId(), participation.isTestRun(), participation.getType());
+        }
+
+    }
+
     public static ResultDTO of(Result result) {
         return of(result, result.getFeedbacks());
     }
@@ -38,7 +47,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
-                new DomainObjectIdDTO(result.getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
+                ParticipationDTO.of(result.getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
                 result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }
