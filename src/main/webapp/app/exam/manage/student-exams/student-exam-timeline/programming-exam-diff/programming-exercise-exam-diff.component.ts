@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -24,6 +24,8 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     @Input() previousSubmission: ProgrammingSubmission | undefined;
     @Input() currentSubmission: ProgrammingSubmission;
     @Input() studentParticipation: ProgrammingExerciseStudentParticipation;
+    @Input() commits: CommitInfo[];
+
     isLoadingDiffReport: boolean;
     addedLineCount: number;
     removedLineCount: number;

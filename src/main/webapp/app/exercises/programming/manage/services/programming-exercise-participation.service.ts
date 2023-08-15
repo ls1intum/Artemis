@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -6,7 +6,8 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
+import { CommitInfo } from 'app/entities/programming-submission.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -69,5 +70,17 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
                 this.entityTitleService.setTitle(EntityType.COURSE, [course.id], course.title);
             }
         }
+    }
+    getParticipationRepositoryFilesWithContent(exerciseId: number, participationId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${participationId}/files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+    retrieveCommitsInfoForParticipation(exerciseId: number, participationId: number): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}/${participationId}/commits-info`);
     }
 }

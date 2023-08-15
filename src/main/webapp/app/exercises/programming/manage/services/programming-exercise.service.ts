@@ -579,15 +579,6 @@ export class ProgrammingExerciseService {
             }),
         );
     }
-    getParticipationRepositoryFilesWithContent(exerciseId: number, participationId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${participationId}/files-content`).pipe(
-            map((res: HttpResponse<any>) => {
-                // this mapping is required because otherwise the HttpResponse object would be parsed
-                // to an arbitrary object (and not a map)
-                return res && new Map(Object.entries(res));
-            }),
-        );
-    }
 
     getSolutionFileNames(exerciseId: number): Observable<string[]> {
         return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);

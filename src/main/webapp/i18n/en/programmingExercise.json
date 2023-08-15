@@ -554,8 +554,16 @@
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
             },
-            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
+            "commitInfo": {
+                "title": "Commit Information",
+                "commitHash": "Commit Hash",
+                "author": "Author",
+                "date": "Date",
+                "message": "Message"
+            }
         },
+
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."
         }

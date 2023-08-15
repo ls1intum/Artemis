@@ -559,8 +559,16 @@
                 "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
                 "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
             },
-            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen."
+            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
+            "commitInfo": {
+                "title": "Commit-Informationen",
+                "commitHash": "Commit-Hash",
+                "author": "Autor",
+                "date": "Datum",
+                "message": "Nachricht"
+            }
         },
+
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
         }

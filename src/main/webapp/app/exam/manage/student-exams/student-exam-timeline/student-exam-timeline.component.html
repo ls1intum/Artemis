@@ -47,6 +47,7 @@
                         <jhi-programming-exam-diff
                             *ngSwitchCase="ExerciseType.PROGRAMMING"
                             [exercise]="exercise"
+                            [commits]="commitInfosPerExercise.get(exercise) ?? []"
                             [studentParticipation]="exercise.studentParticipations[0]"
                         ></jhi-programming-exam-diff>
                     </div>

@@ -9,7 +9,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
@@ -17,6 +17,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -45,6 +46,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     submissionVersions: SubmissionVersion[] = [];
     programmingSubmissions: ProgrammingSubmission[] = [];
     fileUploadSubmissions: FileUploadSubmission[] = [];
+
+    commitInfosPerExercise: Map<Exercise, CommitInfo[]> = new Map<Exercise, CommitInfo[]>();
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
@@ -56,6 +59,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         private activatedRoute: ActivatedRoute,
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private datePipe: ArtemisDatePipe,
     ) {}
 
@@ -84,6 +88,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
                     this.submissionTimeStamps.push(programmingSubmission.submissionDate!);
                 }
             });
+            this.retrieveCommitInfos();
             this.sortTimeStamps();
             this.setupRangeSlider();
             const firstSubmission = this.findFirstSubmission();
@@ -408,5 +413,21 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             const submission = firstSubmission as FileUploadSubmission | ProgrammingSubmission;
             return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === submission.participation?.exercise?.id);
         }
+    }
+
+    private retrieveCommitInfos() {
+        this.studentExam.exercises?.forEach((exercise) => {
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                const id = exercise.studentParticipations![0].id!;
+                this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(exercise.id!, id).subscribe((commitInfo) => {
+                    const sortedCommitInfo = this.sortCommitsByTimestampAsc(commitInfo);
+                    this.commitInfosPerExercise.set(exercise, sortedCommitInfo!);
+                });
+            }
+        });
+    }
+
+    sortCommitsByTimestampAsc(commitInfos?: CommitInfo[]): CommitInfo[] | undefined {
+        return commitInfos?.sort((a, b) => dayjs(a.timestamp!).unix() - dayjs(b.timestamp!).unix());
     }
 }

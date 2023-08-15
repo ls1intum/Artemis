@@ -42,9 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
 
 /**

@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -1380,5 +1381,23 @@ public class GitService {
 
     public <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
         return command.setTransportConfigCallback(sshCallback);
+    }
+
+    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) {
+        List<CommitInfoDTO> commitInfos = new ArrayList<>();
+        try {
+            var repo = getOrCheckoutRepository(vcsRepositoryUrl, false);
+            var git = new Git(repo);
+            var commits = git.log().call();
+            commits.forEach(commit -> {
+                var commitInfo = CommitInfoDTO.of(commit);
+                commitInfos.add(commitInfo);
+            });
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for repository " + vcsRepositoryUrl, e);
+            return Collections.emptyList();
+        }
+        return commitInfos;
     }
 }
