@@ -145,7 +145,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         // Exclude exam related links from the assessment link highlighting
         // example that should not highlight the assessment link: /course-management/{courseId}/exams/{examId}/grading-system/interval
         const excludeRegex = /exams/;
-        const assessmentLinkRegex = /grading-system|plagiarism-cases/;
+        const assessmentLinkRegex = /grading-system|plagiarism-cases|assessment-dashboard/;
         return assessmentLinkRegex.test(this.router.url) && !excludeRegex.test(this.router.url);
     }
 
