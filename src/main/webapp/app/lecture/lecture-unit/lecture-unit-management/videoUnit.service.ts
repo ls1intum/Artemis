@@ -13,7 +13,10 @@ type EntityResponseType = HttpResponse<VideoUnit>;
 export class VideoUnitService {
     private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private lectureUnitService: LectureUnitService,
+    ) {}
 
     create(videoUnit: VideoUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient

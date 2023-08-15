@@ -20,7 +20,12 @@ export class EditVideoUnitComponent implements OnInit {
     formData: VideoUnitFormData;
     lectureId: number;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private videoUnitService: VideoUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private videoUnitService: VideoUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

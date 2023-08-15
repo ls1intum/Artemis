@@ -27,10 +27,12 @@ export class AssessmentDetailComponent {
     faExclamation = faExclamation;
     faExclamationTriangle = faExclamationTriangle;
 
-    private dialogErrorSource = new Subject<string>();
+
+        private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService,
+    ) {}
 
     /**
      * Emits assessment changes to parent component

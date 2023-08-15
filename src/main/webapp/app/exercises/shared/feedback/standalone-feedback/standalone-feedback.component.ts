@@ -23,7 +23,11 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     latestDueDate?: dayjs.Dayjs;
 
-    constructor(public route: ActivatedRoute, private exerciseService: ExerciseService, @Optional() private exerciseCacheService: ExerciseCacheService) {}
+    constructor(
+        public route: ActivatedRoute,
+        private exerciseService: ExerciseService,
+        @Optional() private exerciseCacheService: ExerciseCacheService,
+    ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
