@@ -75,12 +75,13 @@ class ContinuousPlagiarismControlResultsService {
             var submission = participation.findLatestSubmission().get();
 
             boolean plagiarismDetected = submissionsIdsWithPlagiarism.contains(submission.getId());
-            boolean plagiarismDetectedBefore = resultRepository.findAllWithFeedbackBySubmissionId(submission.getId()).stream()
-                    .filter(it -> it.getSubmission().getId().equals(submission.getId())).anyMatch(isPlagiarismResult);
+            boolean plagiarismDetectedBefore = resultRepository.findAllWithFeedbackBySubmissionId(submission.getId()).stream().filter(isPlagiarismResult)
+                    .anyMatch(it -> it.getCompletionDate().isAfter(submission.getSubmissionDate()));
             boolean plagiarismDetectionLimitExceeded = Objects.requireNonNullElse(participation.getNumberOfCpcPlagiarismDetections(), 0) >= participation.getExercise()
                     .getPlagiarismChecksConfig().getContinuousPlagiarismControlDetectionsLimit();
 
-            if (plagiarismDetectionLimitExceeded) {
+            if ((plagiarismDetected && plagiarismDetectionLimitExceeded && !plagiarismDetectedBefore)
+                    || (!plagiarismDetected && plagiarismDetectionLimitExceeded && !plagiarismDetectedBefore)) {
                 addResultWithLimitExceededFeedback(submission, participation);
             }
             else if (plagiarismDetected && plagiarismDetectedBefore) {

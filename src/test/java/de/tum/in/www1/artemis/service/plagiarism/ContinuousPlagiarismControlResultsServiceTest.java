@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableSet;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,8 +70,10 @@ class ContinuousPlagiarismControlResultsServiceTest {
 
         // and: existing past result for the same submissions
         var pastResult1 = buildResultsWithCpcFeedback(1L);
+        pastResult1.setCompletionDate(ZonedDateTime.now().plusSeconds(60));
         when(resultRepository.findAllWithFeedbackBySubmissionId(1L)).thenReturn(List.of(pastResult1));
         var pastResult2 = buildResultsWithCpcFeedback(2L);
+        pastResult2.setCompletionDate(ZonedDateTime.now().plusSeconds(60));
         when(resultRepository.findAllWithFeedbackBySubmissionId(2L)).thenReturn(List.of(pastResult2));
 
         // when
@@ -92,6 +95,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
         // and: existing past result for the first submission
         var pastResult = buildResultsWithCpcFeedback(1L);
         pastResult.setId(123L);
+        pastResult.setCompletionDate(ZonedDateTime.now().minusSeconds(60));
         when(resultRepository.findAllWithFeedbackBySubmissionId(1L)).thenReturn(List.of(pastResult));
 
         // when
@@ -112,6 +116,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
 
         // and: existing past result for the first submission
         var pastResult1 = buildResultsWithCpcFeedback(1L);
+        pastResult1.setCompletionDate(ZonedDateTime.now().minusSeconds(60));
         when(resultRepository.findAllWithFeedbackBySubmissionId(1L)).thenReturn(List.of(pastResult1));
         when(resultRepository.findAllWithFeedbackBySubmissionId(2L)).thenReturn(emptyList());
         when(resultRepository.findAllWithFeedbackBySubmissionId(3L)).thenReturn(emptyList());
@@ -166,6 +171,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
         var participation1 = new StudentParticipation();
         var textSubmissionA = new TextSubmission();
         textSubmissionA.setId(submission1Id);
+        textSubmissionA.setSubmissionDate(ZonedDateTime.now());
         participation1.setId(10L);
         participation1.setSubmissions(Set.of(textSubmissionA));
         participation1.setExercise(exercise);
@@ -175,6 +181,7 @@ class ContinuousPlagiarismControlResultsServiceTest {
             var participation2 = new StudentParticipation();
             var textSubmissionB = new TextSubmission();
             textSubmissionB.setId(submission2Id);
+            textSubmissionB.setSubmissionDate(ZonedDateTime.now());
             participation2.setId(20L);
             participation2.setSubmissions(Set.of(textSubmissionB));
             participation2.setExercise(exercise);
@@ -183,10 +190,11 @@ class ContinuousPlagiarismControlResultsServiceTest {
 
         if (submission3Id != null) {
             var participation3 = new StudentParticipation();
-            var textSubmissionNoPlagiarism = new TextSubmission();
-            textSubmissionNoPlagiarism.setId(submission3Id);
+            var textSubmissionC = new TextSubmission();
+            textSubmissionC.setId(submission3Id);
+            textSubmissionC.setSubmissionDate(ZonedDateTime.now());
             participation3.setId(30L);
-            participation3.setSubmissions(Set.of(textSubmissionNoPlagiarism));
+            participation3.setSubmissions(Set.of(textSubmissionC));
             participation3.setExercise(exercise);
             participations.add(participation3);
         }
