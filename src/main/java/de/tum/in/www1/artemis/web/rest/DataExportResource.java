@@ -58,7 +58,7 @@ public class DataExportResource {
      */
     @PostMapping("data-exports")
     @EnforceAtLeastStudent
-    public RequestDataExportDTO requestDataExportForUser() {
+    public RequestDataExportDTO requestDataExport() {
         if (!canRequestDataExport()) {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
@@ -68,9 +68,6 @@ public class DataExportResource {
     @PostMapping("data-exports/{login}")
     @EnforceAdmin
     public RequestDataExportDTO requestDataExportForUser(@PathVariable String login) {
-        if (!canRequestDataExport(login)) {
-            throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
-        }
         return dataExportService.requestDataExportForUserAsAdmin(login);
     }
 

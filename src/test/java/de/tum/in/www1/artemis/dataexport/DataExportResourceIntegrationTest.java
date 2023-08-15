@@ -318,18 +318,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(dataExportFromDb.getCreatedBy()).isEqualTo(TEST_PREFIX + "admin");
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testRequestForAnotherUser_requestInThePast14Days_forbidden() throws Exception {
-        var usernameToRequest = TEST_PREFIX + "student1";
-        dataExportRepository.deleteAll();
-        DataExport dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport.setUser(userUtilService.getUserByLogin(usernameToRequest));
-        dataExportRepository.save(dataExport);
-        request.postWithResponseBody("/api/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.FORBIDDEN);
-    }
-
     private DataExport initDataExport(DataExportState state) {
         DataExport dataExport = new DataExport();
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
