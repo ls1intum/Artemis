@@ -2,12 +2,18 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -26,6 +32,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -43,7 +50,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private LocalRepository solutionRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
@@ -84,7 +91,18 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    void testFetchPush_wrongCredentials() {
+    void testFetchPush_wrongCredentials() throws InvalidNameException {
+        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+
+        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
+
+        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+
+        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
         // Try to access with the wrong password.
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);

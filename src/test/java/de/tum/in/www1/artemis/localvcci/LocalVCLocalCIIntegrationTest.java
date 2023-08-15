@@ -17,7 +17,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -62,9 +61,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private String teamRepositorySlug;
 
-    @Value("${artemis.version-control.user}")
-    private String localVCBaseUsername;
-
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
         templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
@@ -87,18 +83,21 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // TODO: mock the authorization properly, potentially in each test differently
 
-        var instructor1 = new LdapUserDto();
+        var instructor1 = new LdapUserDto().username(TEST_PREFIX + "instructor1");
         instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
-        var tutor1 = new LdapUserDto();
-        tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
-        var student1 = new LdapUserDto();
-        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
-        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(TEST_PREFIX + "instructor1");
-        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(TEST_PREFIX + "tutor1");
-        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(TEST_PREFIX + "student1");
 
-        var fakeUser = new LdapUserDto();
+        var tutor1 = new LdapUserDto().username(TEST_PREFIX + "tutor1");
+        tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
+
+        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+
+        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
         fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
+
+        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(instructor1.getUsername());
+        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(tutor1.getUsername());
+        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
         doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
 
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
@@ -113,7 +112,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     // ---- Tests for the base repositories ----
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_testsRepository() throws Exception {
@@ -121,7 +119,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchReturnsError(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testPushReturnsError(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
 
-        // Teaching assistants should be able to fetch but not push.
+        // Teaching assistants should be able to fetch but not push. both fake
         localVCLocalCITestService.testFetchSuccessful(testsRepository.localGit, tutor1Login, projectKey1, testsRepositorySlug);
         localVCLocalCITestService.testPushReturnsError(testsRepository.localGit, tutor1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
 

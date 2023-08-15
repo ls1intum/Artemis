@@ -344,17 +344,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 .email(STUDENT_111 + "@tum.de");
         doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
 
-        // first and second mocked calls are expected to add student 5 and 99 to the course students
+        // first mocked call is expected to add student 99 to the course student group
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        // third mocked call expected to create student 111
+        // second mocked call expected to create student 111
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser111Dto.getUsername(), ldapUser111Dto.getFirstName() + " " + ldapUser111Dto.getLastName(),
                 ldapUser111Dto.getEmail());
-        // the last two mocked calls are expected to add student 111 to the course student group{
+        // the last mocked call is expected to add student 111 to the course student group
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-
-        // bitbucketRequestMockProvider.mockUpdateUserDetails(student3.getLogin(), student3.getEmail(), student3.getName());
-        // bitbucketRequestMockProvider.mockAddUserToGroups();
 
         User student99 = userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
@@ -364,8 +360,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
-        // Note: student101 is not yet a user of Artemis and should be retrieved from the LDAP
-
+        // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
 

@@ -7,12 +7,16 @@ import static org.mockito.Mockito.doReturn;
 import java.util.List;
 import java.util.Optional;
 
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -32,6 +36,8 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "ldapauthintegration";
+
+    private static final String INCORRECT_PASSWORD = "incorrectPassword123";
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
@@ -58,7 +64,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     protected Course course;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InvalidNameException {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -72,9 +78,12 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
 
-        doReturn(Optional.of(new LdapUserDto())).when(ldapUserService).findByUsername(USERNAME);
+        var ldapUserDTO = new LdapUserDto().username(USERNAME);
+        ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
-        // TODO: mock even more, in particular ldapTemplate with password compare
+        doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByUsername(USERNAME);
+        doReturn(true).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(USER_PASSWORD));
+        doReturn(false).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(INCORRECT_PASSWORD));
     }
 
     @Test
@@ -90,6 +99,21 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testIncorrectPasswordAttempt() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(INCORRECT_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
+        assertThat(response.getCookie("jwt")).isNull();
     }
 
     @Test
