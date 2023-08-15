@@ -13,7 +13,10 @@ type EntityResponseType = HttpResponse<ComplaintResponse>;
 export class ComplaintResponseService {
     private resourceUrl = 'api/complaint-responses';
 
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Checks if a complaint response is locked for the currently logged-in user

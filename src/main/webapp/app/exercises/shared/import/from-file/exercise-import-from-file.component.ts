@@ -20,7 +20,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
     //Icons
     faUpload = faUpload;
 
-    constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.titleKey =
