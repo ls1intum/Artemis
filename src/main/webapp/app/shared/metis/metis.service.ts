@@ -531,7 +531,6 @@ export class MetisService implements OnDestroy {
      */
     private createSubscriptionFromPostContextFilter(): void {
         let channel = MetisWebsocketChannelPrefix;
-        console.log(this.currentConversation);
         if (getAsChannelDto(this.currentConversation)?.isCourseWide) {
             channel = `${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else if (this.currentPostContextFilter.conversationId) {
