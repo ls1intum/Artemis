@@ -156,7 +156,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
     }
 
     public ngOnInit(): void {
-        if (this.exercise.isAtLeastTutor) {
+        if (this.exercise?.isAtLeastTutor) {
             this.testCasesSubscription = this.programmingExerciseGradingService
                 .getTestCases(this.exercise.id!)
                 .pipe(
