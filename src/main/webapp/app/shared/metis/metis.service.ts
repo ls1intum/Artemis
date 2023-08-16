@@ -514,7 +514,7 @@ export class MetisService implements OnDestroy {
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                this.getFilteredPosts(this.currentPostContextFilter, false, this.currentConversation);
+                this.getFilteredPosts(this.currentPostContextFilter, true, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
