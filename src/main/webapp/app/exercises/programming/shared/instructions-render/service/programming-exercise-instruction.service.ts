@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
 import { isLegacyResult } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
@@ -79,7 +80,7 @@ export class ProgrammingExerciseInstructionService {
         );
     }
 
-    public convertTestListToIds(testList: string): number[] {
+    public convertTestListToIds(testList: string, testCases: ProgrammingExerciseTestCase[] | undefined): number[] {
         // TODO how to deal with invalid names (typos)
         // If there are test names (preview case), map the test to its corresponding id. Otherwise, use the id directly provided in the text.
         // split the names by "," only when there is not a closing bracket without a previous opening bracket
@@ -88,11 +89,11 @@ export class ProgrammingExerciseInstructionService {
             .map((text) => text.trim())
             .map((text) => {
                 // use 0 to indicate a non-found test (TODO improve)
-                return this.convertTestToId(text) ?? 0;
+                return this.convertTestToId(text, testCases) ?? 0;
             });
     }
 
-    public convertTestToId(test: string): number | undefined {
+    public convertTestToId(test: string, testCases?: ProgrammingExerciseTestCase[]): number | undefined {
         // If the text contains <testid> and </testid>, directly use the number inside
         const match = test.match('<testid>(\\d+)</testid>');
         if (match) {
@@ -100,6 +101,6 @@ export class ProgrammingExerciseInstructionService {
             return parseInt(match[1]);
         }
         // TODO otherwise find its corresponding id by the test case name (markdown preview case)
-        return undefined;
+        return testCases?.find((testCase) => testCase.testName === test)?.id;
     }
 }

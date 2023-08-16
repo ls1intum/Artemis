@@ -1,5 +1,6 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
@@ -23,6 +24,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     private latestResult?: Result;
     private exercise: ProgrammingExercise;
+    private testCases?: ProgrammingExerciseTestCase[];
 
     private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
@@ -50,6 +52,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      */
     public setExercise(exercise: Exercise) {
         this.exercise = exercise;
+    }
+
+    public setTestCases(testCases?: ProgrammingExerciseTestCase[]) {
+        this.testCases = testCases;
     }
 
     /**
@@ -101,7 +107,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         const extension: ShowdownExtension = {
             type: 'lang',
             filter: (problemStatement: string) => {
-                const tasks = problemStatement.match(this.taskRegex) || [];
+                const tasks = problemStatement.match(this.taskRegex) ?? [];
                 return this.createTasks(problemStatement, tasks);
             },
         };
@@ -121,7 +127,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     id: nextIndex,
                     completeString: testMatch[0],
                     taskName: testMatch[1],
-                    testIds: testMatch[2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch[2]) : [],
+                    testIds: testMatch[2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch[2], this.testCases) : [],
                 };
             });
         const tasksWithParticipationId: TaskArrayWithExercise = {

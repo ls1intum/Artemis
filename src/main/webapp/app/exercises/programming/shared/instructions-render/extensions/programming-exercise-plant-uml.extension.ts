@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -12,6 +13,7 @@ import { sanitize } from 'dompurify';
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     private latestResult?: Result;
+    private testCases?: ProgrammingExerciseTestCase[];
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
@@ -30,6 +32,10 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
      */
     public setLatestResult(result?: Result) {
         this.latestResult = result;
+    }
+
+    public setTestCases(testCases?: ProgrammingExerciseTestCase[]) {
+        this.testCases = testCases;
     }
 
     /**
@@ -96,7 +102,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // (green == implemented, red == not yet implemented, grey == unknown)
                 const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
                     plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(this.testsColorRegex, (match: any, capture: string) => {
-                        const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture);
+                        const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture, this.testCases);
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                         if (testCaseState === TestCaseState.SUCCESS) {
                             return 'green';

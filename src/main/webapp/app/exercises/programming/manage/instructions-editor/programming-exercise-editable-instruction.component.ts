@@ -210,7 +210,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         if (testCases) {
                             const sortedTestCaseNames = testCases
                                 .filter((testCase) => testCase.active)
-                                .map((testCase) => testCase.testName)
+                                .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
