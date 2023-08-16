@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
+/**
+ * Stores general information about a conversation that is not related to a user
+ */
 public class GeneralConversationInfo {
 
     private final long conversationId;
@@ -8,7 +11,7 @@ public class GeneralConversationInfo {
 
     public GeneralConversationInfo(long conversationId, long numberOfParticipants) {
         this.conversationId = conversationId;
-        this.numberOfParticipants = Long.valueOf(numberOfParticipants).intValue();
+        this.numberOfParticipants = (int) numberOfParticipants;
     }
 
     public long getConversationId() {

@@ -4,6 +4,9 @@ import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
 
+/**
+ * Stores user-related information about a conversation
+ */
 public class UserConversationInfo {
 
     private final long conversationId;
