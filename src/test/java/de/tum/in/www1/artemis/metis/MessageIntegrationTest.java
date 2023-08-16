@@ -166,7 +166,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void testCreateConversationPostInCourseWideChannel() throws Exception {
+    void testCreateConversationPostInCourseWideChannel() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
