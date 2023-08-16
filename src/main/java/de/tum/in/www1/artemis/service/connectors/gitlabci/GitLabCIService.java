@@ -117,7 +117,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        addBuildPlanToProgrammingExerciseIfUnset(exercise);
+        addBuildPlanToProgrammingExercise(exercise, false);
         // This method is called twice when creating an exercise. Once for the template repository and once for the solution repository.
         // The second time, we don't want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, false);
@@ -141,7 +141,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
             projectApi.updateProject(project);
 
-            updateVariableForRepository(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
+            updateRepositoryVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
         }
         catch (GitLabApiException e) {
             throw new GitLabCIException("Error enabling CI for " + repositoryURL, e);
@@ -150,24 +150,24 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private void setupGitLabCIConfigurationForGroup(ProgrammingExercise exercise, boolean overwrite) {
         final String projectKey = exercise.getProjectKey();
-        updateVariableForGroup(projectKey, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
+        updateGroupVariable(projectKey, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
                 programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", overwrite);
+        updateGroupVariable(projectKey, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", overwrite);
         // TODO: Implement the custom feedback feature
-        updateVariableForGroup(projectKey, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO", overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH, overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO", overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), overwrite);
         // TODO: Use a token that is only valid for the test repository for each programming exercise
-        updateVariableForGroup(projectKey, VARIABLE_TEST_GIT_TOKEN, gitlabToken, overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
-        updateVariableForGroup(projectKey, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, gitlabToken, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", overwrite);
     }
 
-    private void updateVariableForGroup(String projectKey, String key, String value, boolean overwrite) {
+    private void updateGroupVariable(String projectKey, String key, String value, boolean overwrite) {
         final GroupApi groupApi = gitlab.getGroupApi();
         if (groupApi.getOptionalVariable(projectKey, key).isEmpty()) {
             try {
@@ -187,7 +187,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private void updateVariableForRepository(String repositoryPath, String key, String value) {
+    private void updateRepositoryVariable(String repositoryPath, String key, String value) {
         final ProjectApi projectApi = gitlab.getProjectApi();
         if (projectApi.getOptionalVariable(repositoryPath, key).isEmpty()) {
             try {
@@ -204,9 +204,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         return value != null && value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
     }
 
-    private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
+    private void addBuildPlanToProgrammingExercise(ProgrammingExercise programmingExercise, boolean overwrite) {
         Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
-        if (optionalBuildPlan.isEmpty()) {
+        if (optionalBuildPlan.isEmpty() || overwrite) {
             var defaultBuildPlan = buildPlanService.generateDefaultBuildPlan(programmingExercise);
             buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, programmingExercise);
         }
@@ -214,7 +214,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        addBuildPlanToProgrammingExerciseIfUnset(exercise);
+        addBuildPlanToProgrammingExercise(exercise, true);
         // When recreating the build plan for the exercise, we want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, true);
 
