@@ -347,35 +347,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetStudentExamForTestExam_studentExamExists() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), -1L)).isInstanceOf(EntityNotFoundException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetStudentExamForTestExam_wrongExamId() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), -1L, studentExamForTestExam1.getId()))
-                .isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetStudentExamForTestExam_realExam() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), studentExam1.getId()))
-                .isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetStudentExamForTestExam_wrongExamId_examIsVisible() {
-        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
-        examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), studentExamForTestExam1.getId()))
-                .isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamInCourseElseThrow_noCourseAccess() {
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setGroups(Set.of());

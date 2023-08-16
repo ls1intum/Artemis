@@ -1,9 +1,9 @@
 import { Exam } from 'app/entities/exam.model';
-import { courseManagementRequest } from '../../artemis';
+
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { BASE_API, ExerciseType, PUT } from '../../constants';
+import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
+import { AdditionalData, BASE_API, Exercise, ExerciseType, PUT } from '../../constants';
 import { POST } from '../../constants';
-import { AdditionalData, Exercise } from './ExamParticipation';
 import { generateUUID } from '../../utils';
 
 /**
@@ -43,25 +43,25 @@ export class ExamExerciseGroupCreationPage {
     }
 
     handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData, processResponse: (data: any) => void) {
-        courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
+        examAPIRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case ExerciseType.TEXT:
-                    courseManagementRequest.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    exerciseAPIRequest.createTextExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case ExerciseType.MODELING:
-                    courseManagementRequest.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
+                    exerciseAPIRequest.createModelingExercise({ exerciseGroup: groupResponse.body }, title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case ExerciseType.QUIZ:
-                    courseManagementRequest.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
+                    exerciseAPIRequest.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate], title).then((response) => {
                         processResponse(response);
                     });
                     break;
                 case ExerciseType.PROGRAMMING:
-                    courseManagementRequest
+                    exerciseAPIRequest
                         .createProgrammingExercise({ exerciseGroup: groupResponse.body, title, assessmentType: additionalData.progExerciseAssessmentType })
                         .then((response) => {
                             processResponse(response);
