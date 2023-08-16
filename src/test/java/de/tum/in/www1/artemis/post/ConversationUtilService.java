@@ -326,6 +326,10 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
+    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
+        return createConversationParticipant(conversation, userName);
+    }
+
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setConversation(conversation);

@@ -14,7 +14,9 @@ import java.util.Set;
 
 import javax.validation.*;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -159,6 +162,25 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    public void testCreateConversationPostInCourseWideChannel() throws Exception {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        checkCreatedMessagePost(postToSave, createdPost);
+
+        // conversation participants should be notified via one broadcast
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId + "/conversations/" + channel.getId()), any(PostDTO.class));
     }
 
     @ParameterizedTest
