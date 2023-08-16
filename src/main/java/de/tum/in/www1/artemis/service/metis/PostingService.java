@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -33,8 +32,6 @@ public abstract class PostingService {
 
     protected final AuthorizationCheckService authorizationCheckService;
 
-    private final ChannelRepository channelRepository;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
@@ -43,7 +40,7 @@ public abstract class PostingService {
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
-            ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository) {
+            ConversationParticipantRepository conversationParticipantRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -51,7 +48,6 @@ public abstract class PostingService {
         this.authorizationCheckService = authorizationCheckService;
         this.websocketMessagingService = websocketMessagingService;
         this.conversationParticipantRepository = conversationParticipantRepository;
-        this.channelRepository = channelRepository;
     }
 
     /**
