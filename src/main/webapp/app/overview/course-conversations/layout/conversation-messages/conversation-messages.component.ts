@@ -174,7 +174,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts = true; // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation);
         }
     }
 
