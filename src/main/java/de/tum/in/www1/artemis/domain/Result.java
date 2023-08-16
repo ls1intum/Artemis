@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -495,7 +496,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return the new filtered list
      */
     public List<Feedback> createFilteredFeedbacks(boolean isBeforeDueDate) {
-        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !isBeforeDueDate || !feedback.isAfterDueDate()).toList();
+        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !isBeforeDueDate || !feedback.isAfterDueDate())
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
