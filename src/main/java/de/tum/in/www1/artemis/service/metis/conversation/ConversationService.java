@@ -148,8 +148,6 @@ public class ConversationService {
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
 
         return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
-
-        // return conversationSummaries.stream().map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
     }
 
     /**

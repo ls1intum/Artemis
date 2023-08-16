@@ -189,12 +189,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * Note: Either the user is a course instructor or a channel moderator to have moderation rights
      *
      * @param channel     the channel
+     * @param user        the user
      * @param participant optional participant for the user
      * @return true if the user has moderation rights, false otherwise
      */
-    public boolean hasChannelModerationRights(@NotNull Channel channel, Optional<ConversationParticipantSettingsView> participant, @NotNull User user) {
-        return participant.map(ConversationParticipantSettingsView::getIsModerator).orElse(false)
-                || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
+    public boolean hasChannelModerationRights(@NotNull Channel channel, @NotNull User user, Optional<ConversationParticipantSettingsView> participant) {
+        return participant.map(ConversationParticipantSettingsView::isModerator).orElse(false) || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
     }
 
     /**

@@ -7,8 +7,6 @@ import java.util.stream.Collectors;
 import javax.persistence.Persistence;
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -19,7 +17,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
@@ -27,8 +24,6 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 @Service
 public class ConversationDTOService {
-
-    private final Logger log = LoggerFactory.getLogger(ConversationDTOService.class);
 
     private final UserRepository userRepository;
 
@@ -40,17 +35,13 @@ public class ConversationDTOService {
 
     private final CourseRepository courseRepository;
 
-    private final ChannelRepository channelRepository;
-
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository,
-            ChannelRepository channelRepository) {
+            ChannelAuthorizationService channelAuthorizationService, TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.courseRepository = courseRepository;
-        this.channelRepository = channelRepository;
     }
 
     /**
@@ -158,7 +149,7 @@ public class ConversationDTOService {
         channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipantSettingsView::isModerator).orElse(false));
 
         channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
-        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, participantOptional, requestingUser));
+        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, requestingUser, participantOptional));
 
         var tutorialGroup = tutorialGroupRepository.findByTutorialGroupChannelId(channel.getId());
         tutorialGroup.ifPresent(tg -> {
