@@ -93,12 +93,12 @@ export class ExamExerciseImportComponent implements OnInit {
             // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.
             exerciseGroup.exercises?.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && exercise.title) {
-                    if (!duplicated.has(exercise.title)) {
-                        duplicated.add(exercise.title);
-                        this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
-                    } else {
+                    if (duplicated.has(exercise.title)) {
                         this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, '']);
                         exercise.title = '';
+                    } else {
+                        duplicated.add(exercise.title);
+                        this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
                     }
                 }
             });
