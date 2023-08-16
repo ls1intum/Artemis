@@ -122,6 +122,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
 
-    // used to distinguish the type when used in a DTO (e.g. LectureUnitForLearningPathNodeDetailsDTO)
+    // Used to distinguish the type when used in a DTO, e.g., LectureUnitForLearningPathNodeDetailsDTO.
     public abstract String getType();
 }
