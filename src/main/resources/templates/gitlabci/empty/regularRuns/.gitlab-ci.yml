@@ -41,5 +41,4 @@ upload-job:
     variables:
         GIT_STRATEGY: none
     script:
-        - cp -r /notification-plugin/* .
-        - gradle run
+        - java -jar /notification-plugin/artemis-notification-plugin.jar

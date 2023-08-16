@@ -41,5 +41,4 @@ upload-job:
     variables:
         GIT_STRATEGY: none
     script:
-        - cp /notification-plugin/artemis-notification-plugin.jar .
-        - java -jar artemis-notification-plugin.jar
+        - java -jar /notification-plugin/artemis-notification-plugin.jar
