@@ -225,21 +225,29 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String convertTestIdToTestName(String testId, Set<ProgrammingExerciseTestCase> testCases) {
-        var matcher = TESTID_PATTERN.matcher(testId);
-        if (!matcher.find()) {
-            // This not a test id but a name that got not replaced previously (e.g. due to a typo)
-            // Just leave this as it is
-            return testId;
-        }
-        long id;
-        try {
-            id = Long.parseLong(matcher.group(1));
-        }
-        catch (NumberFormatException ignore) {
+        Long id = extractTestId(testId);
+
+        if (id == null) {
+            // no matching test case e.d. due to a typo, leave it as it is
             return testId;
         }
 
         return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst().map(ProgrammingExerciseTestCase::getTestName).orElse(testId);
+    }
+
+    private Long extractTestId(String test) {
+        var matcher = TESTID_PATTERN.matcher(test);
+        if (!matcher.find()) {
+            // This not a test id but a name that got not replaced previously (e.g. due to a typo)
+            return null;
+        }
+
+        try {
+            return Long.parseLong(matcher.group(1));
+        }
+        catch (NumberFormatException ignore) {
+            return null;
+        }
     }
 
     /**
@@ -312,7 +320,6 @@ public class ProgrammingExerciseTaskService {
         if (problemStatement == null || problemStatement.isEmpty()) {
             return;
         }
-        // TODO check the logic for activating test cases again (just to be sure)
         // only replace active test cases (test cases that also exist in the test repository)
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
 
@@ -364,4 +371,28 @@ public class ProgrammingExerciseTaskService {
     }
 
     // TODO: Double check the hint integration (both directions)
+
+    /**
+     * Updates the existing testids to the newly provided ids. Used when importing programming exercises.
+     *
+     * @param exercise             the exercise to replace the ids in.
+     * @param newTestCaseIdByOldId a map indicating which ids should be replaced with their corresponding new ones.
+     */
+    public void updateTestIds(ProgrammingExercise exercise, Map<Long, Long> newTestCaseIdByOldId) {
+        replaceInProblemStatement(exercise, ((capture, testCases) -> {
+            // Input old ids (<testid>27</testid>), output new ids (<testid>123</testid>)
+            var capturedTestIds = extractTestCaseNames(capture);
+
+            return capturedTestIds.stream().map(tc -> {
+                Long id = extractTestId(tc);
+                if (id == null) {
+                    return tc;
+                }
+                if (newTestCaseIdByOldId.containsKey(id)) {
+                    return TESTID_START + newTestCaseIdByOldId.get(id) + TESTID_END;
+                }
+                return tc;
+            }).collect(Collectors.joining(","));
+        }));
+    }
 }
