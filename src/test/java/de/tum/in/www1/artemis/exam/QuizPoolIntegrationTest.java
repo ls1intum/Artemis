@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -114,7 +115,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidMCQuestion() throws Exception {
-        MultipleChoiceQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
+        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         quizQuestion.setTitle(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -124,7 +125,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidDnDQuestion() throws Exception {
-        DragAndDropQuestion quizQuestion = quizExerciseUtilService.createDragAndDropQuestion();
+        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -134,7 +135,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolBadRequestInvalidSAQuestion() throws Exception {
-        ShortAnswerQuestion quizQuestion = quizExerciseUtilService.createShortAnswerQuestion();
+        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
         quizQuestion.setCorrectMappings(null);
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
@@ -144,7 +145,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundCourse() throws Exception {
-        QuizQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundCourseId = 0;
@@ -154,7 +155,7 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolNotFoundExam() throws Exception {
-        QuizQuestion quizQuestion = quizExerciseUtilService.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         quizPool.setQuizQuestions(List.of(quizQuestion));
 
         int notFoundExamId = 0;

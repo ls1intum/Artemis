@@ -404,21 +404,21 @@ public class QuizExerciseUtilService {
 
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        MultipleChoiceQuestion quizQuestion = createMultipleChoiceQuestion();
+        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
         return quizQuestion;
     }
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        DragAndDropQuestion quizQuestion = createDragAndDropQuestion();
+        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
         return quizQuestion;
     }
 
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        ShortAnswerQuestion quizQuestion = createShortAnswerQuestion();
+        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
         setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
         return quizQuestion;
     }
