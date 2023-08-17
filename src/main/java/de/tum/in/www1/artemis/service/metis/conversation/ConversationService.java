@@ -387,7 +387,7 @@ public class ConversationService {
         if (participation.isEmpty()) {
             Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 ConversationParticipant conversationParticipant = new ConversationParticipant();
                 conversationParticipant.setUser(requestingUser);
                 conversationParticipant.setConversation(conversation);
@@ -423,7 +423,7 @@ public class ConversationService {
         if (participation.isEmpty()) {
             Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 ConversationParticipant conversationParticipant = new ConversationParticipant();
                 conversationParticipant.setUser(requestingUser);
                 conversationParticipant.setConversation(conversation);

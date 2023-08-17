@@ -194,17 +194,17 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         originalLecture.setVisibleDate(updatedDate);
         originalLecture.setStartDate(updatedDate);
         originalLecture.setEndDate(updatedDate);
-        String channelName = "lecture-channel";
+        String editedChannelName = "edited-lecture-channel";
         // create channel with same name
-        conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), channelName);
-        originalLecture.setChannelName(channelName);
+        conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
+        originalLecture.setChannelName(editedChannelName);
         // lecture channel should be updated despite another channel with the same name
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
 
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo(channelName);
+        assertThat(channel.getName()).isEqualTo(editedChannelName);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
         assertThat(updatedLecture.getVisibleDate()).isEqualTo(updatedDate);

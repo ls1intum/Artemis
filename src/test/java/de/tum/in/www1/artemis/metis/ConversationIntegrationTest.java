@@ -218,6 +218,25 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void switchFavoriteStatus_shouldSwitchFavoriteStatus_IfNoParticipant() throws Exception {
+        // given
+        Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isFavorite", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, trueParams);
+        this.assertFavoriteStatus(channel.getId(), "student1", true);
+        var falseParams = new LinkedMultiValueMap<String, String>();
+        falseParams.add("isFavorite", String.valueOf(false));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, falseParams);
+        this.assertFavoriteStatus(channel.getId(), "student1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
     @ParameterizedTest
     @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -258,6 +277,25 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isHidden", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
         this.assertHiddenStatus(channel.getId(), "tutor1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void switchHiddenStatus_shouldSwitchHiddenStatus_IfNoParticipant() throws Exception {
+        // given
+        Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isHidden", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
+        this.assertHiddenStatus(channel.getId(), "student1", true);
+        var falseParams = new LinkedMultiValueMap<String, String>();
+        falseParams.add("isHidden", String.valueOf(false));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
+        this.assertHiddenStatus(channel.getId(), "student1", false);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
