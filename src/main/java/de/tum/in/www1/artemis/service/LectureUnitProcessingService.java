@@ -71,8 +71,8 @@ public class LectureUnitProcessingService {
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
                 if (lectureUnitInformationDTO.removeBreakSlides() || lectureUnitInformationDTO.removeSolutionSlides()) {
-                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesKeyword(),
-                            lectureUnitInformationDTO.removeSolutionSlides(), lectureUnitInformationDTO.removeSolutionSlidesKeyword());
+                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesKeyphrase(),
+                            lectureUnitInformationDTO.removeSolutionSlides(), lectureUnitInformationDTO.removeSolutionSlidesKeyphrase());
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
                 documentUnits.get(0).save(outputStream);
