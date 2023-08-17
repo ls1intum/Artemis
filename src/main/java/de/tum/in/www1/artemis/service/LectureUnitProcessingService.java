@@ -99,14 +99,14 @@ public class LectureUnitProcessingService {
     /**
      * Removes the break slides or solution slides from the given document.
      *
-     * @param document                    document to remove break slides from
-     * @param removeBreakSlides           true, if the break slides should be removed
-     * @param removeBreakSlidesKeyword    the keyword that identifies a break slide
-     * @param removeSolutionSlides        true, if the example solution slides should be removed
-     * @param removeSolutionSlidesKeyword the keyword that identifies a example solution slide
+     * @param document                      document to remove break slides from
+     * @param removeBreakSlides             true, if the break slides should be removed
+     * @param removeBreakSlidesKeyphrase    the keyword that identifies a break slide
+     * @param removeSolutionSlides          true, if the example solution slides should be removed
+     * @param removeSolutionSlidesKeyphrase the keyword that identifies a example solution slide
      */
-    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyword, boolean removeSolutionSlides,
-            String removeSolutionSlidesKeyword) {
+    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyphrase, boolean removeSolutionSlides,
+            String removeSolutionSlidesKeyphrase) {
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
@@ -118,10 +118,10 @@ public class LectureUnitProcessingService {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyword(slideText, removeBreakSlidesKeyword) && removeBreakSlides) {
+                if (removeBreakSlides && slideContainsKeyphrase(slideText, removeBreakSlidesKeyphrase)) {
                     document.removePage(index);
                 }
-                else if (slideContainsKeyword(slideText, removeSolutionSlidesKeyword) && removeSolutionSlides) {
+                else if (removeSolutionSlides && slideContainsKeyphrase(slideText, removeSolutionSlidesKeyphrase)) {
                     document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -133,8 +133,8 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean slideContainsKeyword(String slideText, String keyword) {
-        return slideText.contains(keyword);
+    private boolean slideContainsKeyphrase(String slideText, String keyphrase) {
+        return slideText.contains(keyphrase);
     }
 
     /**
