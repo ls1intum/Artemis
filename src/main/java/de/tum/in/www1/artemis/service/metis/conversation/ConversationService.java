@@ -497,8 +497,8 @@ public class ConversationService {
     /**
      * Filter all channels where the attached lecture/exercise has been released
      *
-     * @param channels A stream of Channels
-     * @return A stream of channels for lectures/exercises that have been released
+     * @param channels a stream of channels
+     * @return a stream of channels without channels belonging to unreleased lectures/exercises/exams
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
