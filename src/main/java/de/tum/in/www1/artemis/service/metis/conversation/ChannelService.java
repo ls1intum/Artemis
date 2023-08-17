@@ -333,7 +333,7 @@ public class ChannelService {
         if (!lecture.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("lecture-", lecture.getTitle()));
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -351,7 +351,7 @@ public class ChannelService {
         if (!exercise.isCourseExercise() || !exercise.getCourseViaExerciseGroupOrCourseMember().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("exercise-", exercise.getTitle()));
         channelToCreate.setExercise(exercise);
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
@@ -367,7 +367,7 @@ public class ChannelService {
         if (exam.isTestExam() || !exam.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName);
+        Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("exam-", exam.getTitle()));
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -451,6 +451,12 @@ public class ChannelService {
         }
     }
 
+    /**
+     * Creates a channel object with some default properties
+     *
+     * @param channelName the desired name of the channel
+     * @return a default channel with the given name
+     */
     private static Channel createDefaultChannel(@NotNull String channelName) {
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
@@ -467,5 +473,22 @@ public class ChannelService {
      */
     private boolean allowDuplicateChannelName(Channel channel) {
         return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
+    }
+
+    /**
+     * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
+     * It replaces alternating/consecutive occurrences of spaces and hyphens and limits length of the name to 30 characters.
+     *
+     * @param title prefix for the channel
+     * @param title title of the lecture/exercise/exam to derive the channel name from
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(@NotNull String prefix, String title) {
+        String channelName = prefix + (title != null ? title : "");
+        channelName = channelName.replaceAll("[^a-z0-9-]+", "-");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
     }
 }
