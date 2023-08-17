@@ -12,5 +12,4 @@ import java.time.ZonedDateTime;
  * @param lastRead                  the last date the participant read the messages in the conversation
  */
 public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, ZonedDateTime lastRead) {
-
 }
