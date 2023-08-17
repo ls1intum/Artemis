@@ -11,6 +11,7 @@
             "requestForUserSuccess": "Successfully requested data export for {{ login }}",
             "downloadSuccess": "Successfully downloaded data export",
             "typeLoginToConfirm": "Please enter your login to confirm the data export request",
+            "typeUserLoginToConfirm": "Please enter the login of the user to confirm the data export request",
             "confirmationQuestion": "Do you really want to request a data export?",
             "confirmationHeader": "Request data export",
             "requestForAnotherUser": "Request data export for another user",
@@ -22,7 +23,8 @@
             "mostRecentNotDownloadable": "Your requested data export can not be downloaded because it either has already been deleted or has not yet been created.",
             "isBeingCreated": "Your recently requested data export is currently being created.",
             "lastRequestDate": "You requested your last data export on",
-            "nextRequestDate": "You can request again on"
+            "nextRequestDate": "You can request again on",
+            "login": "Login"
         }
     }
 }

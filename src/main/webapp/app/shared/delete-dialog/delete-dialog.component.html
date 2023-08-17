@@ -31,10 +31,10 @@
                             [(ngModel)]="additionalChecksValues[checkKey]"
                         />
                         <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
-                    </div>
-                    <div *ngIf="additionalChecksValues[checkKey]">
-                        <label for="additional-check-{{ i }}-text">{{ 'artemisApp.dataExport.login' | artemisTranslate }}</label>
-                        <input id="additional-check-{{ i }}-text" class="form-control" name="alternativeEntityTitle" [(ngModel)]="entityTitle" />
+                        <div *ngIf="additionalChecksValues[checkKey]">
+                            <label for="additional-check-{{ i }}-text">{{ 'artemisApp.dataExport.login' | artemisTranslate }}</label>
+                            <input id="additional-check-{{ i }}-text" class="form-control" name="alternativeEntityTitle" [(ngModel)]="entityTitle" />
+                        </div>
                     </div>
                 </div>
             </div>
