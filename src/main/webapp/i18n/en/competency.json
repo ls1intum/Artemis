@@ -198,10 +198,10 @@
             },
             "participate": {
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
-                "prev": "Previous",
-                "prevHint": "Return to your previous task",
-                "next": "Next",
-                "nextHint": "Go to next recommended task"
+                "prev": "Back",
+                "prevHint": "Return to your previous lecture unit or exercise",
+                "next": "Continue",
+                "nextHint": "Go to next recommendation"
             }
         }
     }

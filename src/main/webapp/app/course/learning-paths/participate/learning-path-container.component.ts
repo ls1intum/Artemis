@@ -65,6 +65,7 @@ export class LearningPathContainerComponent implements OnInit {
         } else if (this.exercise?.id) {
             this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
         }
+        // reset state to avoid invalid states
         this.undefineAll();
         // todo: load recommendation, part of next pr
     }
@@ -76,6 +77,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     onPrevTask() {
+        // reset state to avoid invalid states
         this.undefineAll();
         if (this.learningPathHistoryStorageService.hasPrevious(this.learningPathId)) {
             const entry = this.learningPathHistoryStorageService.getPrevious(this.learningPathId);
@@ -148,6 +150,7 @@ export class LearningPathContainerComponent implements OnInit {
             } else if (this.exercise?.id) {
                 this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
             }
+            // reset state to avoid invalid states
             this.undefineAll();
             this.learningObjectId = node.linkedResource!;
             this.lectureId = node.linkedResourceParent;
