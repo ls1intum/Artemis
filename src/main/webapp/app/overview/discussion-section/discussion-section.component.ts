@@ -192,8 +192,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
                     } else {
                         const contextFilter = {
-                            exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
-                            lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
+                            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
+                            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
                         };
                         this.metisService.getFilteredPosts(contextFilter);
                     }
