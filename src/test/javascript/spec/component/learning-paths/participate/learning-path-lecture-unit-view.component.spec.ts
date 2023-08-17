@@ -39,47 +39,18 @@ describe('LearningPathLectureUnitViewComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should display attachment unit correctly', () => {
-        const attachment = new AttachmentUnit();
-        attachment.id = 3;
-        lecture.lectureUnits = [attachment];
+    it.each([
+        { lectureUnit: new AttachmentUnit(), selector: 'jhi-attachment-unit' },
+        { lectureUnit: new VideoUnit(), selector: 'jhi-video-unit' },
+        { lectureUnit: new TextUnit(), selector: 'jhi-text-unit' },
+        { lectureUnit: new OnlineUnit(), selector: 'jhi-online-unit' },
+    ])('should display lecture unit correctly', ({ lectureUnit, selector }) => {
+        lectureUnit.id = 3;
+        lecture.lectureUnits = [lectureUnit];
         comp.lecture = lecture;
-        comp.lectureUnit = attachment;
+        comp.lectureUnit = lectureUnit;
         fixture.detectChanges();
-        const view = fixture.debugElement.nativeElement.querySelector('jhi-attachment-unit');
-        expect(view).toBeTruthy();
-    });
-
-    it('should display video unit correctly', () => {
-        const video = new VideoUnit();
-        video.id = 3;
-        lecture.lectureUnits = [video];
-        comp.lecture = lecture;
-        comp.lectureUnit = video;
-        fixture.detectChanges();
-        const view = fixture.debugElement.nativeElement.querySelector('jhi-video-unit');
-        expect(view).toBeTruthy();
-    });
-
-    it('should display text unit correctly', () => {
-        const text = new TextUnit();
-        text.id = 3;
-        lecture.lectureUnits = [text];
-        comp.lecture = lecture;
-        comp.lectureUnit = text;
-        fixture.detectChanges();
-        const view = fixture.debugElement.nativeElement.querySelector('jhi-text-unit');
-        expect(view).toBeTruthy();
-    });
-
-    it('should display online unit correctly', () => {
-        const online = new OnlineUnit();
-        online.id = 3;
-        lecture.lectureUnits = [online];
-        comp.lecture = lecture;
-        comp.lectureUnit = online;
-        fixture.detectChanges();
-        const view = fixture.debugElement.nativeElement.querySelector('jhi-online-unit');
+        const view = fixture.debugElement.nativeElement.querySelector(selector);
         expect(view).toBeTruthy();
     });
 
