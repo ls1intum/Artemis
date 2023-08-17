@@ -9,7 +9,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { saveAs } from 'file-saver';
 
 @Component({
     selector: 'jhi-data-export',
@@ -94,14 +93,6 @@ export class DataExportComponent implements OnInit {
     }
 
     downloadDataExport() {
-        this.dataExportService.downloadDataExport(this.dataExportId).subscribe(
-            (blob: Blob) => {
-                saveAs(blob, `data-export-${this.currentLogin}.zip`);
-                this.alertService.success('artemisApp.dataExport.downloadSuccess');
-            },
-            () => {
-                this.alertService.error('artemisApp.dataExport.downloadError');
-            },
-        );
+        this.dataExportService.downloadDataExport(this.dataExportId);
     }
 }

@@ -11,8 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -96,7 +95,11 @@ public class DataExportResource {
         checkDataExportCanBeDownloaded(dataExport);
         Resource resource = dataExportService.downloadDataExport(dataExport);
         File finalZipFile = Path.of(dataExport.getFilePath()).toFile();
-        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(finalZipFile.getName()).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(contentDisposition);
+        return ResponseEntity.ok().contentLength(finalZipFile.length()).headers(headers).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName())
+                .body(resource);
     }
 
     private void checkDataExportCanBeDownloaded(DataExport dataExport) {

@@ -11,12 +11,9 @@ export class DataExportService {
         return this.http.post<DataExport>(`api/data-exports`, {});
     }
 
-    downloadDataExport(dataExportId: number): Observable<Blob> {
-        return this.http.get(`api/data-exports/${dataExportId}`, {
-            responseType: 'blob',
-
-            headers: { Accept: 'application/zip' },
-        });
+    downloadDataExport(dataExportId: number) {
+        const url = `api/data-exports/${dataExportId}`;
+        window.open(url, '_blank');
     }
 
     canRequestDataExport(): Observable<boolean> {

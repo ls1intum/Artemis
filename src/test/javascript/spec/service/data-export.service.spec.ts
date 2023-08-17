@@ -33,12 +33,11 @@ describe('DataExportService', () => {
         tick();
     }));
 
-    it('should make GET request to download data export', fakeAsync(() => {
-        service.downloadDataExport(1).subscribe();
-        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/1` });
-        req.flush(new Blob());
-        tick();
-    }));
+    it('should make open download link to download data export', () => {
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        service.downloadDataExport(1);
+        expect(windowSpy).toHaveBeenCalledWith('api/data-exports/1', '_blank');
+    });
 
     it('should make GET request to check if any data export can be downloaded', fakeAsync(() => {
         service.canDownloadAnyDataExport().subscribe();
