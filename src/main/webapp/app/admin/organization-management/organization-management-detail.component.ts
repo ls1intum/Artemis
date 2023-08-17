@@ -42,7 +42,12 @@ export class OrganizationManagementDetailComponent implements OnInit {
     // Icons
     faUserSlash = faUserSlash;
 
-    constructor(private organizationService: OrganizationManagementService, private userService: UserService, private alertService: AlertService, private route: ActivatedRoute) {}
+    constructor(
+        private organizationService: OrganizationManagementService,
+        private userService: UserService,
+        private alertService: AlertService,
+        private route: ActivatedRoute,
+    ) {}
 
     /**
      * Retrieve the organization from the organization management activated route data subscription

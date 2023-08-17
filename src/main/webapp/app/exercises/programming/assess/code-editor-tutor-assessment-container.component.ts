@@ -244,7 +244,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
          *       This problem reoccurs in {@link FileUploadAssessmentComponent#initializePropertiesFromSubmission}
          */
         this.accountService.setAccessRightsForExercise(this.exercise);
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed = !!this.exercise?.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
         this.handleFeedback();
@@ -520,7 +520,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!this.participation.results) {
             this.participation.results = [];
         }
-        this.participation.results![0] = this.manualResult = response.body!;
+        this.participation.results[0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
@@ -529,7 +529,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Checks if there is a manual result and the user is the assessor. If there is no manual result, then the user is the assessor.
      * Checks if the user is at least instructor in course.
-     * @private
      */
     private checkPermissions() {
         if (this.manualResult?.assessor) {
@@ -557,7 +556,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        const feedbacks = this.manualResult?.feedbacks || [];
+        const feedbacks = this.manualResult?.feedbacks ?? [];
         this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.

@@ -42,7 +42,10 @@ export class QuizExamSummaryComponent implements OnChanges {
 
     result?: Result;
 
-    constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
+    constructor(
+        private exerciseService: QuizExerciseService,
+        private serverDateService: ArtemisServerDateService,
+    ) {}
 
     ngOnChanges(): void {
         this.updateViewFromSubmission();

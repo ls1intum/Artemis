@@ -207,7 +207,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             paramMap: convertToParamMap({
                 courseId: 1,
                 examId: 2,
-                exerciseGroupId: 3,
                 exerciseId: modelingExercise.id!,
             }),
         },
@@ -336,7 +335,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.courseId).toBe(1);
         expect(comp.examId).toBe(2);
-        expect(comp.exerciseGroupId).toBe(3);
         expect(comp.exerciseId).toBe(modelingExercise.id);
 
         tick();

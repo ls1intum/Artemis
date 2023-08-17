@@ -14,7 +14,7 @@ export class MockAccountService implements IAccountService {
         this.userIdentityValue = user;
     }
 
-    identity = () => Promise.resolve({ id: 99 } as User);
+    identity = () => Promise.resolve({ id: 99, login: 'admin' } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
     setPrefilledUsername = (username: string) => ({});
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
@@ -31,12 +31,12 @@ export class MockAccountService implements IAccountService {
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
     isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;
-    setAccessRightsForExercise = (exercise?: Exercise) => ({} as any);
-    setAccessRightsForCourse = (course?: Course) => ({} as any);
+    setAccessRightsForExercise = (exercise?: Exercise) => ({}) as any;
+    setAccessRightsForCourse = (course?: Course) => ({}) as any;
     setAccessRightsForExerciseAndReferencedCourse = (exercise?: Exercise) => {};
     setAccessRightsForCourseAndReferencedExercises = (course?: Course) => {};
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;
-    save = (account: any) => ({} as any);
+    save = (account: any) => ({}) as any;
 }

@@ -108,7 +108,11 @@ export class TeamService implements ITeamService, OnDestroy {
     private authenticationStateSubscriber: Subscription;
     private websocketStatusSubscription?: Subscription;
 
-    constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
+    constructor(
+        protected http: HttpClient,
+        private websocketService: JhiWebsocketService,
+        private accountService: AccountService,
+    ) {}
 
     ngOnDestroy(): void {
         this.websocketStatusSubscription?.unsubscribe();

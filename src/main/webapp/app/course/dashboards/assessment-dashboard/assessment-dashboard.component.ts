@@ -303,10 +303,8 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * divides exercises into finished and unfinished exercises.
-     *
+     * Divides exercises into finished and unfinished exercises.
      * @param exercises - the exercises that should get filtered
-     * @private
      */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
@@ -322,7 +320,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
     /**
      * Initiates the map that contains the current toggling state (false) for each exercise.
-     * @private
      */
     private initIsTogglingSecondCorrection() {
         this.allExercises.forEach((exercise) => {
@@ -403,18 +400,18 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
-        if (!this.isExamMode) {
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                this.courseId.toString(),
+                'exams',
+                this.examId.toString(),
+                this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
+                exercise.id!.toString(),
+            ];
+        } else {
             return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
-
-        return [
-            '/course-management',
-            this.courseId.toString(),
-            'exams',
-            this.examId.toString(),
-            this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
-            exercise.id!.toString(),
-        ];
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
