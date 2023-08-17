@@ -9,7 +9,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ProgrammingExerciseResetButtonDirective implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
 
-    constructor(private modalService: NgbModal, private renderer: Renderer2, private elementRef: ElementRef) {}
+    constructor(
+        private modalService: NgbModal,
+        private renderer: Renderer2,
+        private elementRef: ElementRef,
+    ) {}
 
     ngOnInit() {
         this.renderer.addClass(this.elementRef.nativeElement, 'btn');

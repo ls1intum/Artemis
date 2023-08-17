@@ -14,7 +14,10 @@ export class ProgrammingExercisePlantUmlService {
      * Cacheable configuration
      */
 
-    constructor(private http: HttpClient, private themeService: ThemeService) {
+    constructor(
+        private http: HttpClient,
+        private themeService: ThemeService,
+    ) {
         this.encoder = new HttpUrlCustomEncoder();
     }
 

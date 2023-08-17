@@ -4,7 +4,11 @@ import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 export class Credentials {
-    constructor(public username: string, public password: string, public rememberMe: boolean) {}
+    constructor(
+        public username: string,
+        public password: string,
+        public rememberMe: boolean,
+    ) {}
 }
 
 export interface IAuthServerProvider {
@@ -16,7 +20,11 @@ export interface IAuthServerProvider {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider implements IAuthServerProvider {
-    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private http: HttpClient,
+        private localStorage: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+    ) {}
 
     login(credentials: Credentials): Observable<object> {
         return this.http.post('api/public/authenticate', credentials);

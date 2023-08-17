@@ -20,7 +20,10 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
     private websocketConnections: Map<string, string> = new Map();
 
-    constructor(domainService: DomainService, private jhiWebsocketService: JhiWebsocketService) {
+    constructor(
+        domainService: DomainService,
+        private jhiWebsocketService: JhiWebsocketService,
+    ) {
         super(domainService);
         this.initDomainSubscription();
     }
