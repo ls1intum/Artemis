@@ -187,9 +187,9 @@
             "participate": {
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
                 "prev": "Back",
-                "prevHint": "Return to your previous task",
+                "prevHint": "Return to your previous lecture unit or exercise",
                 "next": "Continue",
-                "nextHint": "Go to next recommended task"
+                "nextHint": "Go to next recommendation"
             }
         }
     }
