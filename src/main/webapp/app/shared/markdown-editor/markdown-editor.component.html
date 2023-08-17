@@ -63,7 +63,7 @@
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
                     <button
-                        *ngFor="let command of defaultCommands | negatedTypeCheck : MultiOptionCommand"
+                        *ngFor="let command of defaultCommands | negatedTypeCheck: MultiOptionCommand"
                         type="button"
                         class="btn btn-sm py-0"
                         (click)="command.execute()"
@@ -84,7 +84,7 @@
                             </ng-container>
                         </div>
                     </div>
-                    <ng-container *ngFor="let command of defaultCommands | typeCheck : MultiOptionCommand">
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
                         <div>
                             <button
                                 mat-button
@@ -175,12 +175,12 @@
                     </div>
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
-                        <ng-container *ngFor="let command of domainCommands | typeCheck : DomainTagCommand">
+                        <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
                             <div *ngIf="command.displayCommandButton" class="btn btn-sm px-2 py-0" (click)="command.execute()">
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </div>
                         </ng-container>
-                        <ng-container *ngFor="let command of domainCommands | typeCheck : DomainMultiOptionCommand">
+                        <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
                             <div ngbDropdown class="btn-group">
                                 <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
                                     {{ command.buttonTranslationString | artemisTranslate }}

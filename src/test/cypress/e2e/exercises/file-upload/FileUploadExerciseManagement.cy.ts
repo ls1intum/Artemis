@@ -1,18 +1,19 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs/esm';
-import { courseManagement, courseManagementExercises, courseManagementRequest, fileUploadExerciseCreation, navigationBar } from 'src/test/cypress/support/artemis';
-import { admin } from 'src/test/cypress/support/users';
-import { convertModelAfterMultiPart } from 'src/test/cypress/support/requests/CourseManagementRequests';
+
+import { Course } from 'app/entities/course.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+
+import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, fileUploadExerciseCreation, navigationBar } from '../../../support/artemis';
+import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('File upload exercise management', () => {
     let course: Course;
 
     before(() => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -50,7 +51,7 @@ describe('File upload exercise management', () => {
 
         before(() => {
             cy.login(admin, '/');
-            courseManagementRequest.createFileUploadExercise({ course }).then((response) => {
+            exerciseAPIRequest.createFileUploadExercise({ course }).then((response) => {
                 exercise = response.body;
             });
         });
@@ -65,6 +66,6 @@ describe('File upload exercise management', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
