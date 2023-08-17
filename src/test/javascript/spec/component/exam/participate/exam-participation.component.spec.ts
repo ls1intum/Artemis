@@ -811,7 +811,7 @@ describe('ExamParticipationComponent', () => {
             jest.spyOn<any, any>(pageComponent, 'getExerciseId').mockReturnValue(exercise.id);
             comp.onPageChange(exerciseChange);
 
-            expect(triggerSpy).toHaveBeenCalledWith(true, false);
+            expect(triggerSpy).toHaveBeenCalledWith(true);
             expect(comp.exerciseIndex).toBe(0);
         });
     });
