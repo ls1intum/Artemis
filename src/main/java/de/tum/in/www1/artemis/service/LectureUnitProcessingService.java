@@ -107,7 +107,6 @@ public class LectureUnitProcessingService {
      */
     private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyword, boolean removeSolutionSlides,
             String removeSolutionSlidesKeyword) {
-        log.warn(removeBreakSlidesKeyword);
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
