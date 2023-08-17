@@ -318,7 +318,6 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Helper-Method to reset the Exam Id and Exam dates when importing the Exam
-     * @private
      */
     private resetIdAndDatesForImport() {
         this.exam.id = undefined;

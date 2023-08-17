@@ -18,7 +18,7 @@
             "model": "Model",
             "explanationText": "Explanation",
             "modelingEditor": "Modeling Editor",
-            "problemStatement": "Problem statement",
+            "problemStatement": "Problem Statement",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "assessment": {
                 "title": "Assessment",

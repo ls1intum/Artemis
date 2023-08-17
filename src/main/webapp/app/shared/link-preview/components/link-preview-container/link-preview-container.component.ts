@@ -16,7 +16,10 @@ export class LinkPreviewContainerComponent implements OnInit {
     showLoadingsProgress = true;
     multiple = false;
 
-    constructor(public linkPreviewService: LinkPreviewService, public linkifyService: LinkifyService) {}
+    constructor(
+        public linkPreviewService: LinkPreviewService,
+        public linkifyService: LinkifyService,
+    ) {}
 
     ngOnInit() {
         this.data = this.data ?? '';
