@@ -87,12 +87,6 @@ public class DataExportResource {
         return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState() == DataExportState.FAILED;
     }
 
-    private boolean canRequestDataExport(String login) {
-        var user = userRepository.getUserByLoginElseThrow(login);
-        return checkIfUserCanRequest(user);
-
-    }
-
     /**
      * Download the data export for the given user
      *

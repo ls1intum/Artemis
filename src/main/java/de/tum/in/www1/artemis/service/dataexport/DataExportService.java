@@ -110,8 +110,7 @@ public class DataExportService {
         }
         for (var dataExport : dataExportsFromUser) {
             if (dataExport.getDataExportState().isDownloadable()) {
-                ZonedDateTime nextRequestDate;
-                nextRequestDate = retrieveNextRequestDate(dataExport);
+                ZonedDateTime nextRequestDate = retrieveNextRequestDate(dataExport);
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
