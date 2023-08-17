@@ -163,10 +163,10 @@ public class ConversationMessagingService extends PostingService {
         if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
             Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
 
-            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 ConversationParticipant conversationParticipant = new ConversationParticipant();
                 conversationParticipant.setUser(requestingUser);
-                conversationParticipant.setConversation(conversation);
+                conversationParticipant.setConversation(channel);
                 conversationParticipant.setIsModerator(false);
                 conversationParticipant.setIsHidden(false);
                 conversationParticipant.setIsFavorite(false);
