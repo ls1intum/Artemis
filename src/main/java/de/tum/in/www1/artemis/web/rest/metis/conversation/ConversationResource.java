@@ -148,7 +148,7 @@ public class ConversationResource extends ConversationManagementResource {
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel && ((Channel) conversationFromDatabase).getIsCourseWide())
+        var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
                 || conversationService.isMember(conversationId, requestingUser.getId());
         if (!isAllowedToSearchForMembers) {
             var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
