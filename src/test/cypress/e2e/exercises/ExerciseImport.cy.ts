@@ -1,10 +1,19 @@
+import { Interception } from 'cypress/types/net-stubbing';
 import dayjs from 'dayjs/esm';
 
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+
+import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import {
+    courseManagementAPIRequest,
     courseManagementExercises,
-    courseManagementRequest,
     courseOverview,
+    exerciseAPIRequest,
     modelingExerciseCreation,
     modelingExerciseEditor,
     programmingExerciseCreation,
@@ -14,16 +23,8 @@ import {
     textExerciseCreation,
     textExerciseEditor,
 } from '../../support/artemis';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../support/users';
-import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { Interception } from 'cypress/types/net-stubbing';
-import { checkField, generateUUID } from '../../support/utils';
+import { checkField, convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
 describe('Import exercises', () => {
     let course: Course;
@@ -35,25 +36,25 @@ describe('Import exercises', () => {
 
     before('Setup course with exercises', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createTextExercise({ course }).then((response) => {
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createTextExercise({ course }).then((response) => {
                 textExercise = response.body;
             });
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
                 quizExercise = response.body;
             });
-            courseManagementRequest.createModelingExercise({ course }).then((response) => {
+            exerciseAPIRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;
             });
-            courseManagementRequest.createProgrammingExercise({ course }).then((response) => {
+            exerciseAPIRequest.createProgrammingExercise({ course }).then((response) => {
                 programmingExercise = response.body;
             });
-            courseManagementRequest.createCourse(true).then((response) => {
+            courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
                 secondCourse = convertModelAfterMultiPart(response);
-                courseManagementRequest.addStudentToCourse(secondCourse, studentOne);
-                courseManagementRequest.addInstructorToCourse(secondCourse, instructor);
+                courseManagementAPIRequest.addStudentToCourse(secondCourse, studentOne);
+                courseManagementAPIRequest.addInstructorToCourse(secondCourse, instructor);
             });
         });
     });
@@ -158,14 +159,14 @@ describe('Import exercises', () => {
             cy.login(studentOne, `/courses/${secondCourse.id}`);
             courseOverview.startExercise(exercise.id!);
             courseOverview.openRunningExercise(exercise.id!);
-            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, partiallySuccessful, () => {
-                programmingExerciseEditor.getResultScore().contains(partiallySuccessful.expectedResult).and('be.visible');
+            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, () => {
+                programmingExerciseEditor.getResultScore().contains(javaPartiallySuccessfulSubmission.expectedResult).and('be.visible');
             });
         });
     });
 
     after('Delete Courses', () => {
-        courseManagementRequest.deleteCourse(course, admin);
-        courseManagementRequest.deleteCourse(secondCourse, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
     });
 });

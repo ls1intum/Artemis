@@ -9,11 +9,10 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -150,6 +149,26 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
 
+    /**
+     * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
+     *
+     * @param userId the id of the user
+     * @return all student exams for the given user
+     */
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exam exam
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.studentParticipations sp
+                LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+            WHERE se.user.id = sp.student.id
+                  AND se.user.id = :userId
+            """)
+    Set<StudentExam> findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -247,6 +266,26 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 AND se.exam.testExam = TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentExam s
+            SET s.submitted = true,
+                s.submissionDate = :submissionDate
+            WHERE s.id = :studentExamId
+            """)
+    void submitStudentExam(@Param("studentExamId") Long studentExamId, @Param("submissionDate") ZonedDateTime submissionDate);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentExam s
+            SET s.started = true,
+                s.startedDate = :startedDate
+            WHERE s.id = :studentExamId
+            """)
+    void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
 
     @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {

@@ -21,7 +21,11 @@ export class ExerciseDetailsComponent implements OnInit {
     formattedGradingInstructions: SafeHtml;
     isExamExercise: boolean;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService, public exerciseService: ExerciseService) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private accountService: AccountService,
+        public exerciseService: ExerciseService,
+    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

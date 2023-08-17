@@ -27,7 +27,11 @@ export class ExamPointsSummaryComponent implements OnInit {
     faClipboard = faClipboard;
     faAward = faAward;
 
-    constructor(private serverDateService: ArtemisServerDateService, public exerciseService: ExerciseService, private changeDetector: ChangeDetectorRef) {}
+    constructor(
+        private serverDateService: ArtemisServerDateService,
+        public exerciseService: ExerciseService,
+        private changeDetector: ChangeDetectorRef,
+    ) {}
 
     ngOnInit() {
         if (this.isExamResultPublished()) {

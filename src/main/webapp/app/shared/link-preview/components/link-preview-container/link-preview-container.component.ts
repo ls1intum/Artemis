@@ -14,8 +14,12 @@ export class LinkPreviewContainerComponent implements OnInit {
     hasError: boolean;
     loaded = false;
     showLoadingsProgress = true;
+    multiple = false;
 
-    constructor(public linkPreviewService: LinkPreviewService, public linkifyService: LinkifyService) {}
+    constructor(
+        public linkPreviewService: LinkPreviewService,
+        public linkifyService: LinkifyService,
+    ) {}
 
     ngOnInit() {
         this.data = this.data ?? '';
@@ -41,6 +45,7 @@ export class LinkPreviewContainerComponent implements OnInit {
                         this.hasError = false;
                         this.loaded = true;
                         this.showLoadingsProgress = false;
+                        this.multiple = this.linkPreviews.length > 1;
                     },
                 });
             });

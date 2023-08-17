@@ -47,7 +47,11 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     hasSchedule = false;
 
-    constructor(private changeDetectorRef: ChangeDetectorRef, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
+    constructor(
+        private changeDetectorRef: ChangeDetectorRef,
+        private tutorialGroupSessionService: TutorialGroupSessionService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnChanges() {
         if (this.session) {
