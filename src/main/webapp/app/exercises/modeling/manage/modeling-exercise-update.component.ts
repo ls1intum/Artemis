@@ -5,7 +5,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, getCourseFromExercise, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -24,6 +24,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { isMessagingEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -242,4 +243,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }
+
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

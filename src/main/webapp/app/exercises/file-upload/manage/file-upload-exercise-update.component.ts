@@ -6,7 +6,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseFromExercise, getCourseId, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -20,6 +20,7 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { isMessagingEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -217,4 +218,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         });
         this.isSaving = false;
     }
+
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

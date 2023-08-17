@@ -15,7 +15,7 @@
             [pattern]="programmingExerciseCreationConfig.titleNamePattern"
             [hideTitleLabel]="true"
             [emphasizeLabels]="true"
-            [hideChannelName]="isExamMode || (isEdit && programmingExercise.channelName === undefined)"
+            [hideChannelName]="isExamMode || (isEdit && programmingExercise.channelName === undefined) || !isMessagingEnabled(getCourseFromExercise(programmingExercise))"
             [initChannelName]="!isEdit"
         ></jhi-title-channel-name>
     </div>

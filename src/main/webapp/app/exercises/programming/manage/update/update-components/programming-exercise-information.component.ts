@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { isMessagingEnabled } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -15,4 +17,6 @@ export class ProgrammingExerciseInformationComponent {
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     protected readonly ProjectType = ProjectType;
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

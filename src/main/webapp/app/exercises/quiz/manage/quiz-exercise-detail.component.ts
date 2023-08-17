@@ -15,9 +15,9 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, resetDates } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
@@ -605,4 +605,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise.title = newTitle;
         this.cacheValidation();
     }
+
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

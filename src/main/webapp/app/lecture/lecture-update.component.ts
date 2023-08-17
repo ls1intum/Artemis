@@ -7,7 +7,7 @@ import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -208,4 +208,6 @@ export class LectureUpdateComponent implements OnInit {
             this.lecture.visibleDate = startDate.clone();
         }
     }
+
+    protected readonly isMessagingEnabled = isMessagingEnabled;
 }

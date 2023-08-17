@@ -6,7 +6,7 @@
             [(title)]="lecture.title"
             [(channelName)]="lecture.channelName"
             channelNamePrefix="lecture-"
-            [hideChannelName]="lecture.id !== undefined && lecture.channelName === undefined"
+            [hideChannelName]="(lecture.id !== undefined && lecture.channelName === undefined) || !isMessagingEnabled(lecture.course)"
             [initChannelName]="lecture.id === undefined"
         ></jhi-title-channel-name>
     </form>
