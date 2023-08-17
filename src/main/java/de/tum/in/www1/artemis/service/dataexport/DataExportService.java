@@ -60,7 +60,7 @@ public class DataExportService {
         User user = userRepository.getUser();
         dataExport.setUser(user);
         dataExport = dataExportRepository.save(dataExport);
-        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), false);
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
     }
 
     public RequestDataExportDTO requestDataExportForUserAsAdmin(String login) {
@@ -69,7 +69,7 @@ public class DataExportService {
         User user = userRepository.getUserByLoginElseThrow(login);
         dataExport.setUser(user);
         dataExport = dataExportRepository.save(dataExport);
-        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), true);
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
     }
 
     /**

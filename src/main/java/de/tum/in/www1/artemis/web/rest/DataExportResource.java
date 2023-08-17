@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.dataexport.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
@@ -63,12 +62,6 @@ public class DataExportResource {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
         return dataExportService.requestDataExport();
-    }
-
-    @PostMapping("data-exports/{login}")
-    @EnforceAdmin
-    public RequestDataExportDTO requestDataExportForUser(@PathVariable String login) {
-        return dataExportService.requestDataExportForUserAsAdmin(login);
     }
 
     /**
