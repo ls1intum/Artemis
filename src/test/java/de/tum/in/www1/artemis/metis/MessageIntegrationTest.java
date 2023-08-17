@@ -317,11 +317,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", existingConversationPosts.get(0).getConversation().getId().toString());
+        Long conversationId = existingConversationPosts.get(0).getConversation().getId();
+        params.add("conversationId", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.size());
+        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
     }
 
     @Test
