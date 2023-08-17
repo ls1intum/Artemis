@@ -299,6 +299,20 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetConversationPosts_IfNoParticipant() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "course-wide");
+        conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationId", channel.getId().toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(1);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved

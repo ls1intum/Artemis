@@ -353,6 +353,10 @@ public class ConversationUtilService {
         return conversationRepository.save(groupChat);
     }
 
+    public Post addMessageToConversation(String login, Conversation conversation) {
+        return createMessageWithReactionForUser(login, "test", conversation);
+    }
+
     public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
