@@ -111,8 +111,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("""
             SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
-                user.login,
-                CASE WHEN cp.isHidden THEN true ELSE false END
+                user,
+                CASE WHEN cp.isHidden = true THEN true ELSE false END
             )
             FROM User user
             JOIN UserGroup ug ON user.id = ug.userId

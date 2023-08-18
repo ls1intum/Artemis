@@ -40,11 +40,11 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
 
     @Query("""
             SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
-                u.login,
-                CASE WHEN cp.isHidden THEN true ELSE false END
+                user,
+                CASE WHEN cp.isHidden = true THEN true ELSE false END
             )
             FROM ConversationParticipant cp
-            JOIN cp.user u
+            JOIN cp.user user
             WHERE cp.conversation.id = :#{#conversationId}
             """)
     Set<UserConversationWebSocketView> findWebSocketRecipientsForConversation(@Param("conversationId") Long conversationId);
