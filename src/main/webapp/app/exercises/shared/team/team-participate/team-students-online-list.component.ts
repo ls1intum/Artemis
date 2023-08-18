@@ -32,7 +32,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     faCircle = faCircle;
     faHistory = faHistory;
 
-    constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
+    constructor(
+        private accountService: AccountService,
+        private jhiWebsocketService: JhiWebsocketService,
+    ) {}
 
     /**
      * Subscribes to the websocket topic "team" for the given participation

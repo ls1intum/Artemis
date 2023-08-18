@@ -5,9 +5,7 @@ import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegra
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -421,10 +419,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.get(getTutorialGroupsPath(exampleCourseId) + persistedTutorialGroup.getId(), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
         persistedTutorialGroup.getRegistrations().forEach(registration -> {
-            verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any());
+            verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
+                    (Object) any());
         });
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + persistedTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"),
-                (Object) any());
+        verify(websocketMessagingService, timeout(2000).times(1))
+                .sendMessage(eq("/topic/user/" + persistedTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
 
     }
 
@@ -468,10 +467,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
 
         existingTutorialGroup.getRegistrations().forEach(registration -> {
-            verify(messagingTemplate, times(2)).convertAndSend(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any());
+            verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
+                    (Object) any());
         });
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + existingTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"),
-                (Object) any());
+        verify(websocketMessagingService, timeout(2000).times(1))
+                .sendMessage(eq("/topic/user/" + existingTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
     }
 
     @Test

@@ -1,12 +1,13 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { Exam } from 'app/entities/exam.model';
+
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { generateUUID } from '../../support/utils';
+import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+
 import {
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    examAPIRequests,
     examExerciseGroupCreation,
     examExerciseGroups,
     examManagement,
@@ -18,6 +19,7 @@ import {
     textExerciseCreation,
 } from '../../support/artemis';
 import { admin, instructor, studentOne } from '../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
 describe('Exam management', () => {
     let course: Course;
@@ -27,11 +29,14 @@ describe('Exam management', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new ExamBuilder(course).title('Exam ' + generateUUID()).build();
-            courseManagementRequest.createExam(examConfig).then((examResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            const examConfig: Exam = {
+                course,
+                title: 'Exam ' + generateUUID(),
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
         });
@@ -42,7 +47,7 @@ describe('Exam management', () => {
 
         before(() => {
             cy.login(instructor);
-            courseManagementRequest.addExerciseGroupForExam(exam).then((response) => {
+            examAPIRequests.addExerciseGroupForExam(exam).then((response) => {
                 exerciseGroup = response.body;
                 groupCount++;
             });
@@ -174,6 +179,6 @@ describe('Exam management', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
+import static de.tum.in.www1.artemis.exercise.ExerciseFactory.populateExerciseForExam;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZoneId;
@@ -37,6 +38,12 @@ public class ProgrammingExerciseFactory {
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
         return generateProgrammingExerciseForExam(exerciseGroup, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup, title);
+        populateProgrammingExercise(programmingExercise, ProgrammingLanguage.JAVA);
+        return programmingExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {

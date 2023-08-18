@@ -70,8 +70,6 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * And if service workers are not available we can't actually check for updates, so we have to rely on ever having seen a different version number in a request
      *
      * @param hasUpdate if it is known that there is an update, only relevant if service workers are not available
-     *
-     * @private
      */
     private checkForUpdates(hasUpdate: boolean) {
         // don't spam errors when service workers are not available, instead rely on the Content-Version header of responses

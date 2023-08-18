@@ -15,7 +15,10 @@ export class SystemNotificationService {
     public resourceUrl = 'api/system-notifications';
     public publicResourceUrl = 'api/public/system-notifications';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(
+        private router: Router,
+        private http: HttpClient,
+    ) {}
 
     /**
      * Find a notification on the server using a GET request.

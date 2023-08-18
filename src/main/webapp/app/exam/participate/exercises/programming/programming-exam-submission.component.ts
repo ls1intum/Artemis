@@ -42,7 +42,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     @Input()
     courseId: number;
 
-    participationIsLocked = false;
     showEditorInstructions = true;
     hasSubmittedOnce = false;
 
@@ -63,7 +62,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private domainService: DomainService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
     }
 
@@ -72,9 +74,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        // We lock the online editor when the participation is locked.
-        // This is the case before the exam start date and after the individual exam end date, or when the submission limit is reached for the participation's exercise.
-        this.participationIsLocked = this.studentParticipation.locked ?? false;
         this.updateDomain();
     }
 

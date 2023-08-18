@@ -296,16 +296,16 @@ public class CourseResource {
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been enrolled in the course
+     * @return response entity for groups of user who has been enrolled in the course
      */
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<User> enrollInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<String>> enrollInCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseService.enrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(user.getGroups());
     }
 
     /**
@@ -315,16 +315,16 @@ public class CourseResource {
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been unenrolled from the course
+     * @return response entity for groups of user who has been unenrolled from the course
      */
     @PostMapping("courses/{courseId}/unenroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<User> unenrollFromCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<String>> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
         courseService.unenrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(user.getGroups());
     }
 
     /**
@@ -802,7 +802,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getStudentGroupName());
@@ -886,7 +886,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/tutors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
@@ -900,7 +900,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/editors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getEditorGroupName());
@@ -914,7 +914,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/instructors")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
