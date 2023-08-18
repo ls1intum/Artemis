@@ -89,7 +89,7 @@ describe('DataExportComponent', () => {
         expect(component.canDownload).toBeFalse();
     });
     it('should call data export service when data export is downloaded', () => {
-        const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockReturnValue(of({} as unknown as Blob));
+        const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockImplementation();
         component.canDownload = true;
         component.dataExportId = 1;
         component.downloadDataExport();
