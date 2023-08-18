@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -64,12 +65,16 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ProgrammingExerciseFeedbackCreationService(ProfileService profileService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            WebsocketMessagingService websocketMessagingService, ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            WebsocketMessagingService websocketMessagingService, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.profileService = profileService;
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -297,6 +302,12 @@ public class ProgrammingExerciseFeedbackCreationService {
         if (!testCasesToSave.isEmpty()) {
             testCaseRepository.saveAll(testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
+            // Update the test cases in the problem statement.
+            // This handles the case if the problem statement already contains the name of test case
+            // that got later pushed into the test repository. Since this test case now exists,
+            // the problem statement should now refer to its id.
+            programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
+            programmingExerciseRepository.save(exercise);
             return true;
         }
         return false;
