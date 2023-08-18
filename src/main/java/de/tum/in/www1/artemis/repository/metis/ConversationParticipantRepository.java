@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.UserConversationWebSocketView;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,6 +37,17 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             WHERE conversationParticipant.conversation.id = :#{#conversationId}
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
+
+    @Query("""
+            SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
+                u.login,
+                CASE WHEN cp.isHidden THEN true ELSE false END
+            )
+            FROM ConversationParticipant cp
+            JOIN cp.user u
+            WHERE cp.conversation.id = :#{#conversationId}
+            """)
+    Set<UserConversationWebSocketView> findWebSocketRecipientsForConversation(@Param("conversationId") Long conversationId);
 
     @Async
     @Transactional // ok because of modifying query

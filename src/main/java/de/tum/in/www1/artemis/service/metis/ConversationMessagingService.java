@@ -13,9 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -86,8 +84,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
 
-        var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
-        var notificationRecipients = getRecipientsForConversation(conversation).collect(Collectors.toSet());
+        var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -115,28 +112,32 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, conversation, notificationRecipients, course, createdMessage);
+        notifyAboutMessageCreation(author, conversation, course, createdMessage);
 
         return createdMessage;
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Set<User> notificationRecipients, Course course, Post createdMessage) {
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
+        Set<UserConversationWebSocketView> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(UserConversationWebSocketView::getUser).collect(Collectors.toSet());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, notificationRecipients);
+        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, notificationRecipients);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipients);
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
-        notificationRecipients = notificationRecipients.stream().filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
+        var notificationRecipients = webSocketRecipients.stream().filter(user -> !user.isChannelHidden() && user.getUser().getId() != author.getId())
+                .map(UserConversationWebSocketView::getUser).collect(Collectors.toSet());
+
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
         conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, notificationRecipients);
