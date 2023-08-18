@@ -485,7 +485,7 @@ public class ChannelService {
      */
     private static String generateChannelNameFromTitle(@NotNull String prefix, String title) {
         String channelName = prefix + (title != null ? title : "");
-        channelName = channelName.replaceAll("[^a-z0-9-]+", "-");
+        channelName = channelName.toLowerCase().replaceAll("[^a-z0-9]+", "-");
         if (channelName.length() > 30) {
             channelName = channelName.substring(0, 30);
         }
