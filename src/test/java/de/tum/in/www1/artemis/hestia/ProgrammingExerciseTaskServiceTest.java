@@ -280,7 +280,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         updateProblemStatement("[task][Task 1](testClass[BubbleSort])\n[task][Task 2](nonExistingTask)");
         var testCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         testCase.setActive(false);
-        testCase = programmingExerciseTestCaseRepository.save(testCase);
+        programmingExerciseTestCaseRepository.save(testCase);
 
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         String problemStatement = programmingExercise.getProblemStatement();
