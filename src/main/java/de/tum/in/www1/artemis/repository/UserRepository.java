@@ -114,6 +114,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
     Set<User> findAllInGroup(@Param("groupName") String groupName);
 
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+            JOIN UserGroup ug ON user.id = ug.userId
+            JOIN Course course ON (course.studentGroupName = ug.group
+                OR course.teachingAssistantGroupName = ug.group
+                OR course.editorGroupName = ug.group
+                OR course.instructorGroupName = ug.group
+            )
+            WHERE user.isDeleted = false
+            AND course.id = :courseId
+            """)
+    Set<User> findAllInCourse(@Param("courseId") Long courseId);
+
     /**
      * Searches for users in a group by their login or full name.
      *

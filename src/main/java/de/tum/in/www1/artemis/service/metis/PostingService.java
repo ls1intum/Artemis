@@ -120,7 +120,7 @@ public abstract class PostingService {
      * @return users that should receive the new message
      */
     protected Stream<User> getRecipientsForConversation(Conversation conversation) {
-        return conversation instanceof Channel channel && channel.getIsCourseWide() ? Stream.of()
+        return conversation instanceof Channel channel && channel.getIsCourseWide() ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
                 : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);
     }
 
