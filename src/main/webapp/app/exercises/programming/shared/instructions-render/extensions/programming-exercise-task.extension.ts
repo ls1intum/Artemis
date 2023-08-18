@@ -15,9 +15,9 @@ import { ShowdownExtension } from 'showdown';
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     // E.g. [task][Implement BubbleSort](testBubbleSort)
-    private readonly taskRegex = /\[task\]\[.*\]\((([^()]*(\([^()]*\))*)*)\)({.*})?/g;
+    private readonly taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
     // E.g. Implement BubbleSort, testBubbleSort
-    private readonly innerTaskRegex = /\[task\]\[(.*)\]\((([^()]*(\([^()]*\))*)*)\)({(.*)})?/;
+    private readonly innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
 
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
