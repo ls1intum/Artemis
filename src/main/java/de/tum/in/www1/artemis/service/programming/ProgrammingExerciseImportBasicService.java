@@ -122,7 +122,7 @@ public class ProgrammingExerciseImportBasicService {
         updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
-        // Use the template problem statement (with ids) as a new basis.
+        // Use the template problem statement (with ids) as a new basis (You cannot edit the problem statement while importing)
         // Then replace the old test ids by the newly created ones.
         importedExercise.setProblemStatement(templateExercise.getProblemStatement());
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);

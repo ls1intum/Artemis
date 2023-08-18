@@ -59,6 +59,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 @Service
@@ -71,6 +72,8 @@ public class ProgrammingExerciseExportService {
     private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -92,10 +95,11 @@ public class ProgrammingExerciseExportService {
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
-    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.fileService = fileService;
@@ -128,6 +132,7 @@ public class ProgrammingExerciseExportService {
 
         // Add problem statement as .md file if it is not null
         if (exercise.getProblemStatement() != null) {
+            programmingExerciseTaskService.replaceTestIdsWithNames(exercise);
             exportProblemStatementAndEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
         }
 
