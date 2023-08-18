@@ -25,9 +25,10 @@ ARG WAR_FILE_STAGE="builder"
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:17-jdk as builder
 
 # some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
-RUN echo "Installing build dependencies" \
+RUN \
+  --mount=type=cache,target=/var/cache/apt \
+  echo "Installing build dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends python3 build-essential \
-  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/artemis
@@ -95,10 +96,8 @@ ARG GID=1337
 # Artemis: graphviz, locales
 RUN \
   --mount=type=cache,target=/var/cache/apt \
-  --mount=type=cache,target=/var/lib/apt \
   echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
-  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # See https://github.com/ls1intum/Artemis/issues/4439
