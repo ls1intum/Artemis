@@ -198,7 +198,7 @@ public class ProgrammingExerciseTaskService {
             for (String testName : testCaseNames) {
                 Optional<ProgrammingExerciseTestCase> foundTestCase;
                 if (testName.startsWith(TESTID_START)) {
-                    long id = extractTestId(testName);
+                    Long id = extractTestId(testName);
                     foundTestCase = testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
                 }
                 else {

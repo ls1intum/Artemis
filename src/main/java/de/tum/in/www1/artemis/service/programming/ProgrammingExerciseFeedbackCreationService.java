@@ -230,9 +230,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
         else {
             // This feedback was created by a test which is not known to Artemis (not part of the solution result)
-            // We use the text attribute as a fallback that allows reconnecting the feedback if the related test gets created later
-            // Feedback like this does not get displayed to students until a test case is set.
-            // TODO Implement this linking during re-evaluate
+            // Feedback like this does not get displayed to students. (see ProgrammingExerciseGradingService#filterAutomaticFeedbacksWithoutTestCase
             feedback.setText(testName);
         }
 
