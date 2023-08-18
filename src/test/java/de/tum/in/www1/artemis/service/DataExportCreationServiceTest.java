@@ -172,12 +172,14 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
         assertThat(extractedZipDirPath).isDirectoryContaining(generalUserInformationCsv).isDirectoryContaining(readmeMd).isDirectoryContaining(courseDir);
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "short");
-        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
+        var exercisesDirPath = courseDirPath.resolve("exercises");
+        assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
+        assertThat(exercisesDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
         assertCommunicationDataCsvFile(courseDirPath);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
 
     }
 
@@ -356,8 +358,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
         assertCommunicationDataCsvFile(courseDirPath);
-        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
-        var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
+        var examsDirPath = courseDirPath.resolve("exams");
+        assertThat(courseDirPath).isDirectoryContaining(examsDirPath::equals);
+        var examDirPath = getCourseOrExamDirectoryPath(examsDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false, false));
 
     }
@@ -400,7 +403,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         assertCommunicationDataCsvFile(courseDirPath);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        var exercisesDirPath = courseDirPath.resolve("exercises");
+        assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
+        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
@@ -449,7 +454,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
-        getExerciseDirectoryPaths(courseDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        var exercisesDirPath = courseDirPath.resolve("exercises");
+        assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
+        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
     }
 
     private DataExport initDataExport() {
