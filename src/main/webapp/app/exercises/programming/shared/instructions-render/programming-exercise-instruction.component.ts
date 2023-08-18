@@ -37,8 +37,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
     public onNoInstructionsAvailable = new EventEmitter();
 
     public problemStatement: string;
-    public participationSubscription: Subscription;
-    private testCasesSubscription: Subscription;
+    public participationSubscription?: Subscription;
+    private testCasesSubscription?: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
