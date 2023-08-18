@@ -283,7 +283,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
-        // Get test cases which activate state flag changed.
+        // Get test cases where the activate state has changed (re-added or removed tests).
         Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
