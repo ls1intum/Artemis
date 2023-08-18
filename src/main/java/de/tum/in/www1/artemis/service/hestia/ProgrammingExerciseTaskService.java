@@ -304,7 +304,9 @@ public class ProgrammingExerciseTaskService {
      * @param exercise the exercise to replaces the test names in the problem statement
      */
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
-        replaceInProblemStatement(exercise, this::extractTestCaseIdsFromNames);
+        // Only replace active test cases (tests that actually exist in the repository).
+        // The other test cases will get replaced as soon as they get active.
+        replaceInProblemStatement(exercise, this::extractTestCaseIdsFromNames, true);
     }
 
     /**
@@ -312,16 +314,23 @@ public class ProgrammingExerciseTaskService {
      * Replaces the test ids with test names.
      */
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
-        replaceInProblemStatement(exercise, this::extractTestNamesFromIds);
+        // Also replace inactive test cases, don't send testids to the editor.
+        // The client will then show a warning that the mentioned test name no longer exists.
+        replaceInProblemStatement(exercise, this::extractTestNamesFromIds, false);
     }
 
-    private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
+    private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer, boolean onlyActive) {
         var problemStatement = exercise.getProblemStatement();
         if (problemStatement == null || problemStatement.isEmpty()) {
             return;
         }
-        // only replace active test cases (test cases that also exist in the test repository)
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+        Set<ProgrammingExerciseTestCase> testCases;
+        if (onlyActive) {
+            testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+        }
+        else {
+            testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
+        }
 
         if (testCases.isEmpty()) {
             return;
@@ -393,6 +402,6 @@ public class ProgrammingExerciseTaskService {
                 }
                 return tc;
             }).collect(Collectors.joining(","));
-        }));
+        }), false);
     }
 }
