@@ -21,9 +21,9 @@ type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeBreakSlides: boolean;
-    removeBreakSlidesKeyword: string;
+    removeBreakSlidesKeyphrase: string;
     removeSolutionSlides: boolean;
-    removeSolutionSlidesKeyword: string;
+    removeSolutionSlidesKeyphrase: string;
 };
 
 @Component({
@@ -51,9 +51,9 @@ export class AttachmentUnitsComponent implements OnInit {
     fileName: string;
     invalidUnitTableMessage?: string;
     removeBreakSlides: boolean;
-    removeBreakSlidesKeyword: string;
+    removeBreakSlidesKeyphrase: string;
     removeSolutionSlides: boolean;
-    removeSolutionSlidesKeyword: string;
+    removeSolutionSlidesKeyphrase: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -73,9 +73,9 @@ export class AttachmentUnitsComponent implements OnInit {
 
     ngOnInit(): void {
         this.removeBreakSlides = false;
-        this.removeBreakSlidesKeyword = 'Break';
+        this.removeBreakSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideKeyphrase');
         this.removeSolutionSlides = false;
-        this.removeSolutionSlidesKeyword = 'Example solution';
+        this.removeSolutionSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideKeyphrase');
         this.isLoading = true;
         this.isProcessingMode = true;
 
@@ -108,9 +108,9 @@ export class AttachmentUnitsComponent implements OnInit {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
                 removeBreakSlides: this.removeBreakSlides,
-                removeBreakSlidesKeyword: this.removeBreakSlidesKeyword,
+                removeBreakSlidesKeyphrase: this.removeBreakSlidesKeyphrase,
                 removeSolutionSlides: this.removeSolutionSlides,
-                removeSolutionSlidesKeyword: this.removeSolutionSlidesKeyword,
+                removeSolutionSlidesKeyphrase: this.removeSolutionSlidesKeyphrase,
             };
             const formData: FormData = new FormData();
             formData.append('file', this.file);

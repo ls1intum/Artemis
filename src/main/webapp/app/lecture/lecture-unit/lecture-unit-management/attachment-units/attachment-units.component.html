@@ -84,7 +84,14 @@
                     {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideInfo' | artemisTranslate }}
                 </span>
             </div>
-            <input type="text" class="form-control" id="removeBreakSlidesKeyword" placeholder="Break" autocomplete="off" [(ngModel)]="removeBreakSlidesKeyword" />
+            <input
+                type="text"
+                class="form-control"
+                id="removeBreakSlidesKeyword"
+                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideKeyphrase' | artemisTranslate }}"
+                autocomplete="off"
+                [(ngModel)]="removeBreakSlidesKeyphrase"
+            />
         </div>
     </div>
 
@@ -102,9 +109,9 @@
                 type="text"
                 class="form-control"
                 name="removeSolutionSlidesKeyword"
-                placeholder="Example solution"
+                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideKeyphrase' | artemisTranslate }}"
                 autocomplete="off"
-                [(ngModel)]="removeSolutionSlidesKeyword"
+                [(ngModel)]="removeSolutionSlidesKeyphrase"
             />
         </div>
     </div>

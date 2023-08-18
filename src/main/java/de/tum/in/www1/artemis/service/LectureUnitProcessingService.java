@@ -100,9 +100,9 @@ public class LectureUnitProcessingService {
      * Removes the break slides or solution slides from the given document.
      *
      * @param document                      document to remove break slides from
-     * @param removeBreakSlides             true, if the break slides should be removed
+     * @param removeBreakSlides             true if the break slides should be removed
      * @param removeBreakSlidesKeyphrase    the keyword that identifies a break slide
-     * @param removeSolutionSlides          true, if the example solution slides should be removed
+     * @param removeSolutionSlides          true if the example solution slides should be removed
      * @param removeSolutionSlidesKeyphrase the keyword that identifies a example solution slide
      */
     private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyphrase, boolean removeSolutionSlides,
