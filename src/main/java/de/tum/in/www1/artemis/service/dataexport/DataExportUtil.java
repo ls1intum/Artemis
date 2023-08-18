@@ -19,7 +19,7 @@ final class DataExportUtil {
 
     static void createDirectoryIfNotExistent(Path directory) throws IOException {
         if (!Files.exists(directory)) {
-            Files.createDirectory(directory);
+            Files.createDirectories(directory);
         }
     }
 

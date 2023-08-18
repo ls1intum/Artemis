@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.dataexport;
 
 import static de.tum.in.www1.artemis.service.dataexport.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
+import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
 
 import java.io.File;
@@ -44,6 +45,8 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 public class DataExportExerciseCreationService {
 
     private static final String PDF_FILE_EXTENSION = ".pdf";
+
+    private static final String EXERCISE_PREFIX = "exercise_";
 
     static final String CSV_FILE_EXTENSION = ".csv";
 
@@ -96,15 +99,16 @@ public class DataExportExerciseCreationService {
             var course = entry.getKey();
             Path courseDir = retrieveCourseDirPath(workingDirectory, course);
             var exercises = entry.getValue();
+            Path exercisesDir = courseDir.resolve("exercises");
             if (!exercises.isEmpty()) {
-                Files.createDirectory(courseDir);
+                createDirectoryIfNotExistent(exercisesDir);
             }
             for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    createProgrammingExerciseExport(programmingExercise, courseDir, userId);
+                    createProgrammingExerciseExport(programmingExercise, exercisesDir, userId);
                 }
                 else {
-                    createNonProgrammingExerciseExport(exercise, courseDir, userId);
+                    createNonProgrammingExerciseExport(exercise, exercisesDir, userId);
                 }
             }
         }
@@ -114,13 +118,13 @@ public class DataExportExerciseCreationService {
      * Creates an export for a given programming exercise. Includes submission information, the repository from the VCS and potential plagiarism cases.
      *
      * @param programmingExercise the programming exercise for which the export should be created
-     * @param courseDir           the directory that is used for the course the exercise belongs to
+     * @param exercisesDir        the directory that is used for to store the exercises of the course the exercise belongs to
      * @param userId              the id of the user that requested the export
      * @throws IOException if an error occurs while accessing the file system
      */
 
-    public void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path courseDir, long userId) throws IOException {
-        Path exerciseDir = courseDir.resolve(programmingExercise.getSanitizedExerciseTitle());
+    public void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path exercisesDir, long userId) throws IOException {
+        Path exerciseDir = exercisesDir.resolve(EXERCISE_PREFIX + programmingExercise.getSanitizedExerciseTitle());
         if (!Files.exists(exerciseDir)) {
             Files.createDirectory(exerciseDir);
         }
@@ -156,7 +160,7 @@ public class DataExportExerciseCreationService {
      * @throws IOException if an error occurs while accessing the file system
      */
     public void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, long userId) throws IOException {
-        Path exercisePath = courseDir.resolve(exercise.getSanitizedExerciseTitle());
+        Path exercisePath = courseDir.resolve(EXERCISE_PREFIX + exercise.getSanitizedExerciseTitle());
         if (!Files.exists(exercisePath)) {
             Files.createDirectory(exercisePath);
         }

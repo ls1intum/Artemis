@@ -7,9 +7,7 @@ import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveC
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,8 +16,10 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
@@ -38,11 +38,14 @@ public class DataExportExamCreationService {
 
     private final ExamService examService;
 
-    public DataExportExamCreationService(StudentExamRepository studentExamRepository, DataExportExerciseCreationService dataExportExerciseCreationService,
-            ExamService examService) {
+    private final GradingScaleRepository gradingScaleRepository;
+
+    public DataExportExamCreationService(StudentExamRepository studentExamRepository, DataExportExerciseCreationService dataExportExerciseCreationService, ExamService examService,
+            GradingScaleRepository gradingScaleRepository) {
         this.studentExamRepository = studentExamRepository;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.examService = examService;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -61,9 +64,10 @@ public class DataExportExamCreationService {
                 var exam = studentExam.getExam();
                 var examTitle = exam.getSanitizedExamTitle();
                 var courseDirPath = retrieveCourseDirPath(workingDirectory, exam.getCourse());
-                createDirectoryIfNotExistent(courseDirPath);
+                var examsDirPath = courseDirPath.resolve("exams");
+                createDirectoryIfNotExistent(examsDirPath);
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
-                var examWorkingDir = Files.createDirectories(courseDirPath.resolve(examDirectoryName));
+                var examWorkingDir = Files.createDirectories(examsDirPath.resolve(examDirectoryName));
                 createStudentExamExport(studentExam, examWorkingDir);
             }
         }
@@ -92,8 +96,9 @@ public class DataExportExamCreationService {
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
         var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
+        var gradingScale = gradingScaleRepository.findByExamId(studentExam.getExam().getId());
         List<String> headers = new ArrayList<>();
-        var examResults = getExamResultsStreamToPrint(studentResult, headers);
+        var examResults = getExamResultsStreamToPrint(studentResult, headers, gradingScale);
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
         try (final CSVPrinter printer = new CSVPrinter(
                 Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)), csvFormat)) {
@@ -102,21 +107,21 @@ public class DataExportExamCreationService {
         }
     }
 
-    private Stream<?> getExamResultsStreamToPrint(ExamScoresDTO.StudentResult studentResult, List<String> headers) {
+    private Stream<?> getExamResultsStreamToPrint(ExamScoresDTO.StudentResult studentResult, List<String> headers, Optional<GradingScale> gradingScaleOptional) {
         var builder = Stream.builder();
         if (studentResult.overallPointsAchieved() != null) {
             builder.add(studentResult.overallPointsAchieved());
             headers.add("overall points");
         }
-        if (studentResult.hasPassed() != null) {
+        if (studentResult.hasPassed() != null && gradingScaleOptional.isPresent()) {
             builder.add(studentResult.hasPassed());
             headers.add("passed");
         }
-        if (studentResult.overallGrade() != null) {
+        if (studentResult.overallGrade() != null && gradingScaleOptional.isPresent()) {
             builder.add(studentResult.overallGrade());
             headers.add("overall grade");
         }
-        if (studentResult.gradeWithBonus() != null) {
+        if (studentResult.gradeWithBonus() != null && gradingScaleOptional.isPresent()) {
             builder.add(studentResult.gradeWithBonus());
             headers.add("grade with bonus");
         }
