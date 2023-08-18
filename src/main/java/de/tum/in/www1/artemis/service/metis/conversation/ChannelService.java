@@ -330,9 +330,6 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, String channelName) {
-        if (!lecture.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            return null;
-        }
         Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("lecture-", lecture.getTitle()));
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -348,7 +345,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExerciseChannel(Exercise exercise, String channelName) {
-        if (!exercise.isCourseExercise() || !exercise.getCourseViaExerciseGroupOrCourseMember().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+        if (!exercise.isCourseExercise()) {
             return null;
         }
         Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("exercise-", exercise.getTitle()));
@@ -364,7 +361,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, String channelName) {
-        if (exam.isTestExam() || !exam.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+        if (exam.isTestExam()) {
             return null;
         }
         Channel channelToCreate = createDefaultChannel(channelName != null ? channelName : generateChannelNameFromTitle("exam-", exam.getTitle()));
