@@ -30,9 +30,7 @@ export class TitleChannelNameComponent implements OnInit {
             // Defer updating the channel name into the next change detection cycle to avoid the
             // "NG0100: Expression has changed after it was checked" error
             setTimeout(() => {
-                let defaultChannelName = this.channelNamePrefix + (this.title ?? '');
-                defaultChannelName = defaultChannelName.replace(/[^a-z0-9-]+/g, '-');
-                this.formatChannelName(defaultChannelName);
+                this.formatChannelName(this.channelNamePrefix + (this.title ?? ''));
             });
         }
     }
@@ -44,9 +42,10 @@ export class TitleChannelNameComponent implements OnInit {
     }
 
     formatChannelName(newName: string) {
-        if (!this.hideChannelName) {
-            this.channelName = newName.toLowerCase().slice(0, 30).replaceAll(' ', '-');
-            this.channelNameChange.emit(this.channelName);
-        }
+        this.channelName = newName
+            .toLowerCase()
+            .replaceAll(/[^a-z0-9-]+/g, '-')
+            .slice(0, 30);
+        this.channelNameChange.emit(this.channelName);
     }
 }
