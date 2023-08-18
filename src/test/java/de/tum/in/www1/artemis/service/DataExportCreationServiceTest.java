@@ -248,8 +248,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
             Files.createDirectories(repoDownloadClonePath);
         }
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", courseShortName, true,
-                true);
+        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
+                courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();

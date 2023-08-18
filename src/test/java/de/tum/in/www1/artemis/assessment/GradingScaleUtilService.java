@@ -8,18 +8,24 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import com.opencsv.CSVReader;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
  */
 @Service
 public class GradingScaleUtilService {
+
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
 
     @NotNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
@@ -62,6 +68,13 @@ public class GradingScaleUtilService {
         gradingScale.setPresentationsNumber(presentationsNumber);
         gradingScale.setPresentationsWeight(presentationsWeight);
         return gradingScale;
+    }
+
+    public GradingScale generateAndSaveGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
+            Exam exam) {
+        GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);
+        gradingScale.setExam(exam);
+        return gradingScaleRepository.save(gradingScale);
     }
 
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {

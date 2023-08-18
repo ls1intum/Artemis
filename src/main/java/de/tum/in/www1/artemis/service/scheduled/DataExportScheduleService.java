@@ -56,14 +56,15 @@ public class DataExportScheduleService {
      * Created will be all data exports that are in the state REQUESTED OR IN_CREATION
      * Deleted will be all data exports that have a creation date older than seven days
      */
+    // TODO change again after testing. As long as we do not use this cron expression one server test always fails
     // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     @Scheduled(cron = "0 */5 * * * *")
     public void createDataExportsAndDeleteOldOnes() {
-        // if (profileService.isDev()) {
-        // // do not execute this in a development environment
-        // // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-        // return;
-        // }
+        if (profileService.isDev()) {
+            // do not execute this in a development environment
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
 
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
