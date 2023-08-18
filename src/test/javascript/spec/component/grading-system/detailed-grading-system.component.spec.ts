@@ -182,7 +182,7 @@ describe('Detailed Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[3].upperBoundPercentage).toBe(100);
         expect(comp.gradingScale.gradeSteps[3].isPassingGrade).toBeTrue();
         expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeFalse();
     });
 
     it('should delete grade names correctly', () => {

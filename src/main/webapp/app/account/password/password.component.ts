@@ -22,7 +22,12 @@ export class PasswordComponent implements OnInit {
     passwordForm: FormGroup;
     passwordResetEnabled = false;
 
-    constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: FormBuilder) {}
+    constructor(
+        private passwordService: PasswordService,
+        private accountService: AccountService,
+        private profileService: ProfileService,
+        private fb: FormBuilder,
+    ) {}
 
     ngOnInit() {
         this.accountService.identity().then((user) => {

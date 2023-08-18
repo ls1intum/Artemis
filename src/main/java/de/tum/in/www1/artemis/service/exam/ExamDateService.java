@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Set;
@@ -10,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -75,13 +78,30 @@ public class ExamDateService {
         }
         Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
         if (exam.isTestExam()) {
-            var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
-            if (optionalStudentExam.isPresent()) {
-                StudentExam studentExam = optionalStudentExam.get();
-                return studentExam.isSubmitted() || studentExam.isEnded();
-            }
+            return isTestExamWorkingPeriodOver(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);
+    }
+
+    /**
+     * Returns <code>true</code> if the exercise working period is over for a test exam participation.
+     * This is the case as soon as the students hand in their results.
+     *
+     * @param exam                 the test exam
+     * @param studentParticipation used to find the related student exam
+     * @return <code>true</code> if the exercise is over, <code>false</code> otherwise
+     * @throws IllegalArgumentException if the method is called with a normal exam (no test exam)
+     */
+    public boolean isTestExamWorkingPeriodOver(Exam exam, StudentParticipation studentParticipation) {
+        if (!exam.isTestExam()) {
+            throw new IllegalArgumentException("This function should only be used for test exams");
+        }
+        var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
+        if (optionalStudentExam.isPresent()) {
+            StudentExam studentExam = optionalStudentExam.get();
+            return studentExam.isSubmitted() || studentExam.isEnded();
+        }
+        return false;
     }
 
     /**
@@ -158,5 +178,10 @@ public class ExamDateService {
         }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
+    }
+
+    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+        // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
+        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 }

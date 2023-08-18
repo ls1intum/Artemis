@@ -93,6 +93,14 @@ public interface InstanceMessageSendService {
     void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId);
 
     /**
+     * Send a message to the main server that all student repositories of an exercise should be instantly unlocked.
+     * This does not unlock the participations associated with the repositories! See {@link #sendUnlockAllStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be unlocked
+     */
+    void sendUnlockAllStudentRepositories(Long exerciseId);
+
+    /**
      * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.
      *
      * @param exerciseId the id of the exercise that should be unlocked
@@ -153,20 +161,6 @@ public interface InstanceMessageSendService {
      * @param exerciseId of the exercise a notification should be created for
      */
     void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId);
-
-    /**
-     * Send a message to the main server that the exam monitoring was updated and a (re-)scheduling has to be performed
-     *
-     * @param examId the id of the exam that should be scheduled
-     */
-    void sendExamMonitoringSchedule(Long examId);
-
-    /**
-     * Send a message to the main server that the exam monitoring was cancelled and the scheduling should be cancelled
-     *
-     * @param examId the id of the exam that should be scheduled
-     */
-    void sendExamMonitoringScheduleCancel(Long examId);
 
     /**
      * Send a message to the main server that the working time of a student exam was changed during the conduction and rescheduling might be necessary

@@ -15,7 +15,10 @@ type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
 export class ExerciseUnitService {
     private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private lectureUnitService: LectureUnitService,
+    ) {}
 
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         if (exerciseUnit.exercise) {
