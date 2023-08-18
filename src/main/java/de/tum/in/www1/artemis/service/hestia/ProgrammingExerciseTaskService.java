@@ -196,7 +196,15 @@ public class ProgrammingExerciseTaskService {
             var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
             for (String testName : testCaseNames) {
-                testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
+                Optional<ProgrammingExerciseTestCase> foundTestCase;
+                if (testName.startsWith(TESTID_START)) {
+                    long id = extractTestId(testName);
+                    foundTestCase = testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
+                }
+                else {
+                    foundTestCase = testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
+                }
+                foundTestCase.ifPresent(task.getTestCases()::add);
             }
             tasks.add(task);
         }
