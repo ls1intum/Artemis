@@ -36,7 +36,7 @@ public class ExamUser extends AbstractAuditingEntity {
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevSigningImagePath;
@@ -238,7 +238,11 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @PostRemove
     public void onDelete() {
-        fileService.schedulePathForDeletion(Path.of(prevSigningImagePath), 0);
-        fileService.schedulePathForDeletion(Path.of(prevStudentImagePath), 0);
+        if (signingImagePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevSigningImagePath), 0);
+        }
+        if (studentImagePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevStudentImagePath), 0);
+        }
     }
 }

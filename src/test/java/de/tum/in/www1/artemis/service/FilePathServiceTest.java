@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
-public class FilePathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FilePathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private FilePathService filePathService;

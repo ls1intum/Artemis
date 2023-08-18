@@ -23,10 +23,7 @@ public class FileUploadSubmission extends Submission {
     }
 
     @Transient
-    private transient FilePathService filePathService = new FilePathService();
-
-    @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @Column(name = "file_path")
     private String filePath;
@@ -36,10 +33,9 @@ public class FileUploadSubmission extends Submission {
      */
     @PostRemove
     public void onDelete() {
-        if (filePath == null) {
-            return;
+        if (filePath != null) {
+            fileService.schedulePathForDeletion(Path.of(filePath), 0);
         }
-        fileService.schedulePathForDeletion(Path.of(filePath), 0);
     }
 
     public String getFilePath() {

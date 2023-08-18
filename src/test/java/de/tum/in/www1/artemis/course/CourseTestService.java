@@ -134,9 +134,6 @@ public class CourseTestService {
     private ZipFileService zipFileService;
 
     @Autowired
-    private FileService fileService;
-
-    @Autowired
     private FilePathService filePathService;
 
     @Autowired

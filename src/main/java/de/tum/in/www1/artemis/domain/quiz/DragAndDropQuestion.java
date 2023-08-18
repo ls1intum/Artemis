@@ -31,10 +31,10 @@ public class DragAndDropQuestion extends QuizQuestion {
     private final transient FilePathService filePathService = new FilePathService();
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevBackgroundFilePath;
@@ -191,7 +191,9 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     @PostRemove
     public void onDelete() {
-        fileService.schedulePathForDeletion(Path.of(prevBackgroundFilePath), 0);
+        if (prevBackgroundFilePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevBackgroundFilePath), 0);
+        }
     }
 
     /**

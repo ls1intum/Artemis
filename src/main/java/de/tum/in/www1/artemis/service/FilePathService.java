@@ -5,6 +5,8 @@ import java.nio.file.Path;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ public class FilePathService {
     // use auto-injection
     // TODO: Rework this behaviour be removing the dependencies to services (like FileService) from the domain package
     private static String fileUploadPath;
+
+    private static Logger log = LoggerFactory.getLogger(FilePathService.class);
 
     @Value("${artemis.file-upload-path}")
     public void setFileUploadPathStatic(String fileUploadPath) {
@@ -132,7 +136,7 @@ public class FilePathService {
                 return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(shouldBeAttachmentUnitId, "slide", shouldBeSlideId, filename));
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath);
+                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath, e);
             }
         }
         if (uriPath.startsWith("/api/files/file-upload-exercises")) {
@@ -144,7 +148,7 @@ public class FilePathService {
                 return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath);
+                throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath, e);
             }
         }
 
@@ -216,7 +220,7 @@ public class FilePathService {
                 return URI.create("/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + path);
+                throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + path, e);
             }
         }
         if (path.startsWith(FilePathService.getFileUploadExercisesFilePath())) {
@@ -227,7 +231,7 @@ public class FilePathService {
                 return URI.create("/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + path);
+                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + path, e);
             }
         }
 

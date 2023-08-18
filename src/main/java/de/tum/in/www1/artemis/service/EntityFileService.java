@@ -15,6 +15,9 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service for handling file operations for entities.
+ */
 @Service
 public class EntityFileService {
 

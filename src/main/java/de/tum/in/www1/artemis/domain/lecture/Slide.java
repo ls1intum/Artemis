@@ -34,7 +34,7 @@ public class Slide extends DomainObject {
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevSlideImagePath;
@@ -106,6 +106,8 @@ public class Slide extends DomainObject {
 
     @PostRemove
     public void onDelete() {
-        fileService.schedulePathForDeletion(Path.of(prevSlideImagePath), 0);
+        if (prevSlideImagePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevSlideImagePath), 0);
+        }
     }
 }

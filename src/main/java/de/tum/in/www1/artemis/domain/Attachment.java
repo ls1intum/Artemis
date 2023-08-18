@@ -35,7 +35,7 @@ public class Attachment extends DomainObject implements Serializable {
     private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevLink;
@@ -154,10 +154,9 @@ public class Attachment extends DomainObject implements Serializable {
      */
     @PostRemove
     public void onDelete() {
-        if (prevLink == null || attachmentType != AttachmentType.FILE) {
-            return;
+        if (prevLink != null && attachmentType == AttachmentType.FILE) {
+            fileService.schedulePathForDeletion(Path.of(prevLink), 0);
         }
-        fileService.schedulePathForDeletion(Path.of(prevLink), 0);
     }
 
     public String getName() {

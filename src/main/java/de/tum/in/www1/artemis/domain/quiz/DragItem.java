@@ -33,10 +33,10 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     private final transient FilePathService filePathService = new FilePathService();
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevPictureFilePath;
@@ -167,7 +167,9 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
 
     @PostRemove
     public void onDelete() {
-        fileService.schedulePathForDeletion(Path.of(prevPictureFilePath), 0);
+        if (prevPictureFilePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevPictureFilePath), 0);
+        }
     }
 
     @Override

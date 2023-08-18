@@ -48,13 +48,13 @@ public class Course extends DomainObject {
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
     @Transient
-    private transient FilePathService filePathService = new FilePathService();
+    private final transient FilePathService filePathService = new FilePathService();
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @Transient
-    private transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevCourseIcon;
@@ -692,10 +692,9 @@ public class Course extends DomainObject {
 
     @PostRemove
     public void onDelete() {
-        if (prevCourseIcon == null) {
-            return;
+        if (prevCourseIcon != null) {
+            fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
         }
-        fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
     }
 
     @Override
