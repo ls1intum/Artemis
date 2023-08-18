@@ -15,11 +15,8 @@ export class FileService {
      * @param {ProjectType} projectType (if available)
      * @returns json test file
      */
-    getTemplateFile(language?: ProgrammingLanguage, projectType?: ProjectType) {
-        const urlParts = [];
-        if (language) {
-            urlParts.push(language);
-        }
+    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType) {
+        const urlParts = [language];
         if (projectType) {
             urlParts.push(projectType);
         }

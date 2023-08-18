@@ -181,8 +181,10 @@ public class FileResource {
     }
 
     /**
-     * GET /files/templates/:language/:projectType : Get the template file with the given filename
+     * GET /files/templates/:language/:projectType : Get the template file with the given filename<br/>
      * GET /files/templates/:language : Get the template file with the given filename
+     * <p>
+     * The readme file contains the default problem statement for new programming exercises.
      *
      * @param language    The programming language for which the template file should be returned
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
@@ -228,7 +230,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
-        DragAndDropQuestion question = quizQuestionRepository.findByIdOrElseThrow(questionId);
+        DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         return responseEntityForFilePath(fileService.actualPathForPublicPath(question.getBackgroundFilePath()));
