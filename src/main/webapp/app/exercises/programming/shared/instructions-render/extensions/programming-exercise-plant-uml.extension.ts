@@ -113,7 +113,6 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                         }
                     });
                     return plantUmlIndexed;
-                    // TODO cases create and import (change to new ids)
                 });
                 // send the adapted plantUml to the server for rendering and inject the result into the html DOM based on the unique plantUml id
                 this.injectableElementsFoundSubject.next(() => {

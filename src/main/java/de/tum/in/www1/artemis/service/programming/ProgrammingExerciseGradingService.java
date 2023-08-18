@@ -127,6 +127,10 @@ public class ProgrammingExerciseGradingService {
             checkCorrectBranchElseThrow(participation, buildResult);
 
             ProgrammingExercise exercise = participation.getProgrammingExercise();
+
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
             }
@@ -349,7 +353,6 @@ public class ProgrammingExerciseGradingService {
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
             relevantTestCases = filterRelevantTestCasesForStudent(testCases, result);
-            // TODO ensure that in the new way feedback is correctly filtered for students
         }
 
         // We only apply submission policies if it is a student participation
