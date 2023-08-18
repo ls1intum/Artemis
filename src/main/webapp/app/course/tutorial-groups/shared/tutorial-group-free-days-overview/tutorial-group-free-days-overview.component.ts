@@ -10,7 +10,10 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
-    constructor(private sortService: SortService, private iterableDiffers: IterableDiffers) {}
+    constructor(
+        private sortService: SortService,
+        private iterableDiffers: IterableDiffers,
+    ) {}
 
     @Input()
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];

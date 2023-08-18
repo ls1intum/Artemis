@@ -14,7 +14,10 @@ export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-    constructor(private http: HttpClient, private stringCountService: StringCountService) {}
+    constructor(
+        private http: HttpClient,
+        private stringCountService: StringCountService,
+    ) {}
 
     /**
      * Creates an example submission

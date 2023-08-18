@@ -1,14 +1,13 @@
-import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs/esm';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
-import { ExerciseType } from '../../../support/constants';
-import { Exercise } from '../../../support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
-import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../../support/artemis';
+
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+
+import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
+import { courseManagementAPIRequest, examAPIRequests, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examTestRun } from '../../../support/artemis';
+import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, instructor } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -22,18 +21,16 @@ describe('Test exam test run', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            const examContent = new ExamBuilder(course)
-                .title(examTitle)
-                .testExam()
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().add(1, 'days'))
-                .endDate(dayjs().add(3, 'days'))
-                .examMaxPoints(40)
-                .numberOfExercises(4)
-                .build();
-            courseManagementRequest.createExam(examContent).then((examResponse) => {
+            const examConfig: Exam = {
+                course,
+                title: examTitle,
+                testExam: true,
+                examMaxPoints: 40,
+                numberOfExercisesInExam: 4,
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
                 Promise.all([
                     examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
@@ -50,7 +47,7 @@ describe('Test exam test run', () => {
     beforeEach('Create test run instance', () => {
         cy.login(instructor);
         // TODO: API call does not work yet, for now we use the UI to create the test run
-        // courseManagementRequest.createExamTestRun(exam, exerciseArray).then((response: any) => {
+        // courseManagementAPIRequest.createExamTestRun(exam, exerciseArray).then((response: any) => {
         //     testRun = response.body;
         // });
         cy.visit(`/course-management/${course.id}/exams/${exam.id}`);
@@ -147,6 +144,6 @@ describe('Test exam test run', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

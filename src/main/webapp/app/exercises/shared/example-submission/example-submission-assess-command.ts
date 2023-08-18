@@ -11,7 +11,11 @@ export interface FeedbackMarker {
 }
 
 export class ExampleSubmissionAssessCommand {
-    constructor(private tutorParticipationService: TutorParticipationService, private alertService: AlertService, private feedbackMarker: FeedbackMarker) {}
+    constructor(
+        private tutorParticipationService: TutorParticipationService,
+        private alertService: AlertService,
+        private feedbackMarker: FeedbackMarker,
+    ) {}
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, exerciseId).subscribe({
