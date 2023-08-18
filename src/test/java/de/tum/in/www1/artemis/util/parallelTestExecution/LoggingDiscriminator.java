@@ -20,8 +20,16 @@ public class LoggingDiscriminator implements Discriminator<ILoggingEvent> {
 
     private boolean isStarted;
 
+    private Long threadIdOnStart;
+
+    public LoggingDiscriminator() {
+        threadIdOnStart = Thread.currentThread().getId();
+        System.out.println("Parallel Debug Info: LoggingDiscriminator created in " + threadIdOnStart);
+    }
+
     @Override
     public String getDiscriminatingValue(ILoggingEvent iLoggingEvent) {
+        System.out.println("Parallel Debug Info: LoggingDiscriminator.getDiscriminatingValue() called for " + threadIdOnStart);
         if (value.get() == null) {
             return DEFAULT;
         }
@@ -36,11 +44,13 @@ public class LoggingDiscriminator implements Discriminator<ILoggingEvent> {
     @Override
     public void start() {
         isStarted = true;
+        System.out.println("Parallel Debug Info: LoggingDiscriminator started in " + threadIdOnStart);
     }
 
     @Override
     public void stop() {
         isStarted = false;
+        System.out.println("Parallel Debug Info: LoggingDiscriminator stopped in " + threadIdOnStart);
     }
 
     @Override
@@ -77,5 +87,11 @@ public class LoggingDiscriminator implements Discriminator<ILoggingEvent> {
 
     static TestGroup getTestGroup() {
         return testGroup.get();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        System.out.println("Parallel Debug Info: LoggingDiscriminator finalized in " + threadIdOnStart);
+        super.finalize();
     }
 }

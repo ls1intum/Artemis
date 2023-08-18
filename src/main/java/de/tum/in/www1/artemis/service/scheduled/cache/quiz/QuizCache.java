@@ -35,10 +35,14 @@ final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
 
     private final ITopic<QuizExercise> cachedQuizExerciseUpdates;
 
+    private final Long threadIdOnCreation;
+
     public QuizCache(HazelcastInstance hazelcastInstance) {
         super(hazelcastInstance, Constants.HAZELCAST_EXERCISE_CACHE);
         this.cachedQuizExerciseUpdates = hazelcastInstance.getTopic(HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC);
         this.cachedQuizExerciseUpdates.addMessageListener(newQuizExerciseMessage -> updateQuizExerciseLocally(newQuizExerciseMessage.getMessageObject()));
+        this.threadIdOnCreation = Thread.currentThread().getId();
+        System.out.println("Parallel Debug Info: QuizCache created in " + threadIdOnCreation);
     }
 
     /**
@@ -100,6 +104,7 @@ final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
         Objects.requireNonNull(quizExercise, "quizExercise must not be null");
         // Send every instance (including itself) a message to update the quizExercise of the corresponding QuizExerciseCache locally
         cachedQuizExerciseUpdates.publish(quizExercise);
+        System.out.println("Parallel debug info: QuizCache updateQuizExercise in " + threadIdOnCreation + " -> " + Thread.currentThread().getId());
     }
 
     /**
@@ -110,5 +115,6 @@ final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
         logger.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
+        System.out.println("Parallel debug info: QuizCache updateQuizExerciseLocally in " + threadIdOnCreation + " -> " + Thread.currentThread().getId());
     }
 }
