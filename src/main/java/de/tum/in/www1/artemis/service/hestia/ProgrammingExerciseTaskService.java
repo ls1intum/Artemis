@@ -295,7 +295,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Replaces the test names embedded into the problem statement with their corresponding id.
-     * The result does not get saved yet.
+     * The problem statement of the passed exercise gets changed, but the result does not get saved.
      * <p>
      * Example:
      * Input: [task][Implement BubbleSort](testBubbleSort, testClass[BubbleSort])
@@ -312,6 +312,9 @@ public class ProgrammingExerciseTaskService {
     /**
      * Prepares a saved problem statement (with test ids) for editors.
      * Replaces the test ids with test names.
+     * The problem statement of the passed exercise gets changed, but the result does not get saved.
+     *
+     * @param exercise The exercise where its problem statement is updated
      */
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
         // Also replace inactive test cases, don't send testids to the editor.
@@ -378,8 +381,6 @@ public class ProgrammingExerciseTaskService {
             });
         });
     }
-
-    // TODO: Double check the hint integration (both directions)
 
     /**
      * Updates the existing testids to the newly provided ids. Used when importing programming exercises.
