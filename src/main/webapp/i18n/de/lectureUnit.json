@@ -130,7 +130,7 @@
                 "removeBreakSlideKeyphrase": "Pause",
                 "removeBreakSlideTooltip": "Pausenfolien, die den Schlüsselsatz enthalten, werden entfernt.",
                 "removeSolutionSlide": "Entferne Folien mit Beispiellösungen",
-                "removeSolutionSlideInfo": "Alle Folien mit Beispiellösungen mit dem folgenden Schlüsselsatz werden entfernt.",
+                "removeSolutionSlideInfo": "Alle Folien mit Beispiellösungen mit dem folgenden Schlüsselsatz werden aus allen Einheiten entfernt.",
                 "removeSolutionSlideKeyphrase": "Beispiellösungen",
                 "removeSolutionSlideTooltip": "Folien mit Beispiellösungen, die den Schlüsselsatz enthalten, werden entfernt.",
                 "validation": {
