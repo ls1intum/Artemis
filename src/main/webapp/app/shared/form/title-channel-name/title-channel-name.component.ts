@@ -42,9 +42,8 @@ export class TitleChannelNameComponent implements OnInit {
     }
 
     formatChannelName(newName: string, allowDuplicateDashes = false) {
-        newName = newName.toLowerCase().slice(0, 30);
         const regex = allowDuplicateDashes ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
-        this.channelName = newName.replaceAll(regex, '-');
+        this.channelName = newName.toLowerCase().replaceAll(regex, '-').slice(0, 30);
         this.channelNameChange.emit(this.channelName);
     }
 }
