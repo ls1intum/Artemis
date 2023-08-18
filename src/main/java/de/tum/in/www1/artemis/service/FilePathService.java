@@ -5,8 +5,6 @@ import java.nio.file.Path;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +21,6 @@ public class FilePathService {
     // use auto-injection
     // TODO: Rework this behaviour be removing the dependencies to services (like FileService) from the domain package
     private static String fileUploadPath;
-
-    private static Logger log = LoggerFactory.getLogger(FilePathService.class);
 
     @Value("${artemis.file-upload-path}")
     public void setFileUploadPathStatic(String fileUploadPath) {
