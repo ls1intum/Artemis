@@ -26,7 +26,7 @@
             name="channelName"
             id="field_channel_name"
             [ngModel]="channelName"
-            (ngModelChange)="formatChannelName($event)"
+            (ngModelChange)="formatChannelName($event, true)"
             maxlength="30"
         />
     </div>

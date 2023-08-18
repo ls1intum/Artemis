@@ -41,11 +41,10 @@ export class TitleChannelNameComponent implements OnInit {
         this.formatChannelName(this.channelNamePrefix + this.title);
     }
 
-    formatChannelName(newName: string) {
-        this.channelName = newName
-            .toLowerCase()
-            .replaceAll(/[^a-z0-9-]+/g, '-')
-            .slice(0, 30);
+    formatChannelName(newName: string, allowDuplicateDashes = false) {
+        newName = newName.toLowerCase().slice(0, 30);
+        const regex = allowDuplicateDashes ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
+        this.channelName = newName.replaceAll(regex, '-');
         this.channelNameChange.emit(this.channelName);
     }
 }
