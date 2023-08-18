@@ -34,7 +34,7 @@ networks:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-postgresql-data:
-        name: artemis-postgresql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
     artemis-data:
         name: artemis-data
