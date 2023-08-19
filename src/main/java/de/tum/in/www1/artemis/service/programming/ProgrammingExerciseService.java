@@ -653,10 +653,6 @@ public class ProgrammingExerciseService {
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
     }
 
-    public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
-        return programmingExerciseRepository.save(programmingExercise);
-    }
-
     /**
      * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
