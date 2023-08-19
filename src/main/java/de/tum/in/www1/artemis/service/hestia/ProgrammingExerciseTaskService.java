@@ -44,14 +44,29 @@ public class ProgrammingExerciseTaskService {
      * To avoid stack overflows, we use possessive quantifiers (*+, ++, ...) within the loop for the test cases.
      * See <a href="https://rules.sonarsource.com/java/tag/regex/RSPEC-5998/">this article</a> for more details
      * <p>
-     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client.
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(,?\\s*+([^()\\s]++(\\([^()]*+\\))?))*+)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(,?\\s*+[^()\\s]++(\\([^()]*+\\))?)*+)\\)");
 
+    /**
+     * Regex to find PlantUML diagrams inside a problem statement.
+     * This matches everything starting with {@code @startuml} and ending with {@code @enduml}.
+     * The capture group 1 will be the content of the diagram (everything besides {@code @startuml} and {@code @enduml})
+     */
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
-    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((?<test>\\s*+[^()\\s]++(\\([^()]*+\\))?)\\)");
+    /**
+     * Regex to find test cases inside a PlantUML diagram.
+     * Instructors can change the color of UML elements by using e.g {@code <color:testsColor(testConstructors[LinkedList])>+ LinkedList()</color>}
+     * <p>
+     * The first capture group of this pattern will contain the test name, in the example above {@code testConstructors[LinkedList]}.
+     * It's currently not possible to assign multiple test cases to a single UML element.
+     * <p>
+     * This is coupled to the value used in `ProgrammingExercisePlantUmlExtensionWrapper` in the client.
+     * If you change the regex, make sure to change it in all places!
+     */
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((\\s*+[^()\\s]++(\\([^()]*+\\))?)\\)");
 
     private static final String TESTID_START = "<testid>";
 

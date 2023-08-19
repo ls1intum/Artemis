@@ -496,6 +496,12 @@ public class Result extends DomainObject implements Comparable<Result> {
         }
     }
 
+    /**
+     * Removes the test names from all feedback if it should not be shown to the student.
+     * Also updates the testCaseCount and passedTestCaseCount attributes.
+     *
+     * @param programmingExercise used to check if students can see the test case names
+     */
     private void filterTestCaseFeedback(ProgrammingExercise programmingExercise) {
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
         if (!Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
