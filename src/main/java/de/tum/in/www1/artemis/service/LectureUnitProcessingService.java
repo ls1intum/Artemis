@@ -155,7 +155,7 @@ public class LectureUnitProcessingService {
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
             // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
-            return new LectureUnitInformationDTO(units, numberOfPages, false, "", false, "");
+            return new LectureUnitInformationDTO(units, numberOfPages, false, null, false, null);
         }
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);
