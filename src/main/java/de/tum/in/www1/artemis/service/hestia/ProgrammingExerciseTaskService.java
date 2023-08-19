@@ -34,7 +34,7 @@ public class ProgrammingExerciseTaskService {
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)\\]\\((?<tests>[^()]*(\\(.*\\))?[^()]*(,[^()]*(\\(.*?\\))?[^()]*)*)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:,?\\s*([^()\\s]+(?:\\(.*?\\))?))*)\\)");
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
