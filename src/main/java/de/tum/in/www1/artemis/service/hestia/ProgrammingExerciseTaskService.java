@@ -26,19 +26,32 @@ public class ProgrammingExerciseTaskService {
     private final ExerciseHintRepository exerciseHintRepository;
 
     /**
-     * Pattern that is used to extract the tasks (capturing group "name") and test case names (capturing group "tests") from the problem statement.
-     * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
-     * - name: "Implement BubbleSort"
-     * - tests: "testBubbleSort,testBubbleSortHidden"
+     * Pattern that is used to extract the tasks (capturing group {@code name}) and test case names (capturing groups {@code tests}) from the problem statement.
+     * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following groups are extracted by the capturing groups:
+     * <ul>
+     * <li>name: {@code Implement BubbleSort}
+     * <li>tests: {@code testBubbleSort,testBubbleSortHidden}
+     * </ul>
+     * <p>
+     * The first section captures the task identifier {@code [task]}.<br>
+     * The second section {@code name} matches the task name, allowing any characters but square brackets.<br>
+     * The third and last section {@code tests} captures the test cases within round brackets. Each test case may be prefixed by a comma and whitespace, contain a test name without
+     * round brackets or whitespace and then optional parameters in round brackets with any characters but round brackets.<br>
+     * Therefore, allowed test names are {@code testName}, {@code testName()}, {@code testName(1234, 12)}.<br>
+     * For multiple testcases it's {@code testName,otherTestName()} or {@code testName,     otherTestName()}.<br>
+     * Technically {@code ,testName} would also be valid, but the empty test case just gets ignored.
+     * <p>
+     * To avoid stack overflows, we use possessive quantifiers (*+, ++, ...) within the loop for the test cases.
+     * See <a href="https://rules.sonarsource.com/java/tag/regex/RSPEC-5998/">this article</a> for more details
      * <p>
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(,?\\s*+([^()\\s]++(?:\\([^()]*+\\))?))*+)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(,?\\s*+([^()\\s]++(\\([^()]*+\\))?))*+)\\)");
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
-    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]*\\))*[^()]*)\\)");
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((?<test>\\s*+[^()\\s]++(\\([^()]*+\\))?)\\)");
 
     private static final String TESTID_START = "<testid>";
 
