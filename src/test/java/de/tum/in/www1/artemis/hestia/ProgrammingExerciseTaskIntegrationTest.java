@@ -204,12 +204,12 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
         // 2 tasks, all test cases distributed across the tasks -> no unassigned
         assertThat(response).hasSize(2);
-        var bubbleSort = response.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst().orElseThrow();
-        var context = response.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst().orElseThrow();
+        var bubbleSort = response.stream().filter(task -> taskName1.equals(task.getTaskName())).findFirst().orElseThrow();
+        var context = response.stream().filter(task -> taskName2.equals(task.getTaskName())).findFirst().orElseThrow();
 
-        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> tc.getTestName().equals("testClass[BubbleSort]"));
-        assertThat(context.getTestCases()).hasSize(2).anyMatch(tc -> tc.getTestName().equals("testMethods[Context]"))
-                .anyMatch(tc -> tc.getTestName().equals("testMethods[Policy]"));
+        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> "testClass[BubbleSort]".equals(tc.getTestName()));
+        assertThat(context.getTestCases()).hasSize(2).anyMatch(tc -> "testMethods[Context]".equals(tc.getTestName()))
+                .anyMatch(tc -> "testMethods[Policy]".equals(tc.getTestName()));
     }
 
     @Test
@@ -225,11 +225,17 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
         // 1 task, 1 unassigned
         assertThat(response).hasSize(2);
-        var bubbleSort = response.stream().filter(task -> task.getTaskName().equals(taskName)).findFirst().orElseThrow();
-        var unassigned = response.stream().filter(task -> task.getTaskName().equals("Not assigned to task")).findFirst().orElseThrow();
+        var bubbleSort = response.stream().filter(task -> taskName.equals(task.getTaskName())).findFirst().orElseThrow();
+        var unassigned = response.stream().filter(task -> "Not assigned to task".equals(task.getTaskName())).findFirst().orElseThrow();
 
-        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> tc.getTestName().equals("testClass[BubbleSort]"));
-        assertThat(unassigned.getTestCases()).hasSize(2).anyMatch(tc -> tc.getTestName().equals("testMethods[Context]"))
-                .anyMatch(tc -> tc.getTestName().equals("testMethods[Policy]"));
+        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> "testClass[BubbleSort]".equals(tc.getTestName()));
+        assertThat(unassigned.getTestCases()).hasSize(2).anyMatch(tc -> "testMethods[Context]".equals(tc.getTestName()))
+                .anyMatch(tc -> "testMethods[Policy]".equals(tc.getTestName()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetTasksWithUnassignedTestCases_AsStudent() throws Exception {
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks-with-unassigned-test-cases", HttpStatus.FORBIDDEN, Set.class);
     }
 }
