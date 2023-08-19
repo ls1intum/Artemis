@@ -161,4 +161,75 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
         assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetTasksWithUnassignedTestCases_NoTasks() throws Exception {
+        var response = request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/tasks-with-unassigned-test-cases", HttpStatus.OK,
+                ProgrammingExerciseTask.class);
+
+        // No tasks available -> all tests in one "unassigned" group
+        assertThat(response).hasSize(1);
+        var unassigned = response.get(0);
+        assertThat(unassigned.getTaskName()).isEqualTo("Not assigned to task");
+        assertThat(unassigned.getTestCases()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetTasksWithUnassignedTestCases_AllTasksAssigned() throws Exception {
+        String taskName1 = "Implement Bubble Sort";
+        String taskName2 = "Implement Policy and Context";
+        programmingExercise.setProblemStatement("""
+                # Sorting with the Strategy Pattern
+
+                In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
+
+                ### Part 1: Sorting
+
+                First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
+
+                **You have the following tasks:**
+
+                1. [task][%s](testClass[BubbleSort])
+                Implement the class `BubbleSort`.
+                2. [task][%s](testMethods[Context],testMethods[Policy],)
+                Implement the classes `Context` and `Policy`. Make sure to follow..
+                """.formatted(taskName1, taskName2));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+
+        var response = request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/tasks-with-unassigned-test-cases", HttpStatus.OK,
+                ProgrammingExerciseTask.class);
+
+        // 2 tasks, all test cases distributed across the tasks -> no unassigned
+        assertThat(response).hasSize(2);
+        var bubbleSort = response.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst().orElseThrow();
+        var context = response.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst().orElseThrow();
+
+        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> tc.getTestName().equals("testClass[BubbleSort]"));
+        assertThat(context.getTestCases()).hasSize(2).anyMatch(tc -> tc.getTestName().equals("testMethods[Context]"))
+                .anyMatch(tc -> tc.getTestName().equals("testMethods[Policy]"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetTasksWithUnassignedTestCases_Mixed() throws Exception {
+        String taskName = "Implement Bubble Sort";
+        programmingExercise.setProblemStatement("[task][%s](testClass[BubbleSort])".formatted(taskName));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+
+        var response = request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/tasks-with-unassigned-test-cases", HttpStatus.OK,
+                ProgrammingExerciseTask.class);
+
+        // 1 task, 1 unassigned
+        assertThat(response).hasSize(2);
+        var bubbleSort = response.stream().filter(task -> task.getTaskName().equals(taskName)).findFirst().orElseThrow();
+        var unassigned = response.stream().filter(task -> task.getTaskName().equals("Not assigned to task")).findFirst().orElseThrow();
+
+        assertThat(bubbleSort.getTestCases()).hasSize(1).allMatch(tc -> tc.getTestName().equals("testClass[BubbleSort]"));
+        assertThat(unassigned.getTestCases()).hasSize(2).anyMatch(tc -> tc.getTestName().equals("testMethods[Context]"))
+                .anyMatch(tc -> tc.getTestName().equals("testMethods[Policy]"));
+    }
 }
