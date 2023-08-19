@@ -10,7 +10,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a successful state for all tasks if the result is successful', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: true,
@@ -18,7 +18,7 @@ describe('ProgrammingExerciseInstructionService', () => {
                 { testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: true },
                 { testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true },
             ],
-        } as Result;
+        };
         const testCases = result.feedbacks!.map((feedback) => feedback.testCase!.id!);
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases.slice(0, 1), result);
@@ -35,7 +35,7 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
@@ -43,7 +43,7 @@ describe('ProgrammingExerciseInstructionService', () => {
                 { testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: false },
                 { testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true },
             ],
-        } as Result;
+        };
         const testCases = result.feedbacks!.map((feedback) => feedback.testCase!.id!);
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
@@ -52,12 +52,12 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a failed state for a task if at least one test has failed (legacy case)', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2018-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: false }],
-        } as Result;
+        };
         const testCases = [1, 2];
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
@@ -66,12 +66,12 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a state if there is no feedback for the specified tests (non legacy only)', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [{ testCase: { testName: 'irrelevantTest', id: 3 }, detailText: 'lorem ipsum', positive: true }],
-        } as Result;
+        };
         const testCases = [1, 2];
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);

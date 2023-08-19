@@ -134,7 +134,7 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         result.filterSensitiveFeedbacks(true);
 
-        assertThat(result.getFeedbacks()).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
+        assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
     }
 
     @Test

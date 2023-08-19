@@ -36,14 +36,14 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     afterEach(() => {});
 
     it('should load the expected number of steps according to the provided tests', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
-        } as Result;
-        const tasks = [
-            { completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] } as Task,
-            { completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', testIds: [2] } as Task,
+        };
+        const tasks: Task[] = [
+            { id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] },
+            { id: 2, completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', testIds: [2] },
         ];
         comp.latestResult = result;
         comp.tasks = tasks;
@@ -61,11 +61,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     });
 
     it('should not show any icons for empty tasks list', () => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
-        } as any;
+        };
         comp.latestResult = result;
         comp.tasks = [];
 
