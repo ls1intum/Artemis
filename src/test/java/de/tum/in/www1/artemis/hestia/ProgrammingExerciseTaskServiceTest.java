@@ -369,4 +369,30 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         assertThat(problemStatement).contains("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>".formatted(test1.getId(), test2.getId()))
                 .contains("This description contains the words test and taskTest, which should not be replaced.");
     }
+
+    @Test
+    void testIdReplacementWithNames() {
+        var bubbleSort = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var inactiveTest = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testName");
+        inactiveTest.setActive(false);
+        programmingExerciseTestCaseRepository.save(inactiveTest);
+
+        updateProblemStatement("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>)".formatted(bubbleSort.getId(), inactiveTest.getId()));
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        String problemStatement = programmingExercise.getProblemStatement();
+
+        // inactive tests should also get replaced
+        assertThat(problemStatement).doesNotContain("<testid>").contains("testClass[BubbleSort]", "testName");
+    }
+
+    @Test
+    void testUpdateIds() {
+        updateProblemStatement("[task][Taskname](<testid>1</testid>,<testid>2</testid>)");
+
+        programmingExerciseTaskService.updateTestIds(programmingExercise, Map.of(1L, 10L, 2L, 23L));
+        String problemStatement = programmingExercise.getProblemStatement();
+
+        assertThat(problemStatement).contains("<testid>10</testid>", "<testid>23</testid>");
+    }
 }
