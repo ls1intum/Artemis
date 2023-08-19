@@ -51,6 +51,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
+    private testCases: Map<number, ProgrammingExerciseTestCase[]> = new Map();
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -80,7 +81,12 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
             return this.getTestCases(exerciseId).pipe(
                 map((testCases) => (testCases.length ? testCases : undefined)),
                 catchError(() => of(undefined)),
-                switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => this.initTestCaseSubscription(exerciseId, testCases)),
+                switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                    if (testCases) {
+                        this.testCases.set(exerciseId, testCases);
+                    }
+                    return this.initTestCaseSubscription(exerciseId, testCases);
+                }),
             );
         }
     }
@@ -100,8 +106,10 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * Executes a REST request to the test case endpoint.
      * @param exerciseId
      */
-    // TODO don't always send a request, look if caching is possible here
     public getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        if (this.testCases.has(exerciseId)) {
+            return of(this.testCases.get(exerciseId)!);
+        }
         return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`);
     }
 
@@ -153,7 +161,12 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
             .receive(testCaseTopic)
             .pipe(
                 map((testCases) => (testCases.length ? testCases : undefined)),
-                tap((testCases) => this.notifySubscribers(exerciseId, testCases)),
+                tap((testCases) => {
+                    if (testCases) {
+                        this.testCases.set(exerciseId, testCases);
+                    }
+                    this.notifySubscribers(exerciseId, testCases);
+                }),
             )
             .subscribe();
         return this.subjects[exerciseId];

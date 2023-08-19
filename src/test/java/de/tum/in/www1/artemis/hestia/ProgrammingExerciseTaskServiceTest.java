@@ -254,6 +254,23 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testExtractTasksFromTestIds() {
+        var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();
+
+        updateProblemStatement("[task][Task 1](<testid>%s</testid>,<testid>%s</testid>)".formatted(test1.getId(), test2.getId()));
+
+        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(actualTasks).hasSize(1);
+        final var actualTask = actualTasks.iterator().next().getId();
+        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
+        var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        assertThat(actualTestCaseNames).containsExactlyInAnyOrder("testClass[BubbleSort]", "testMethods[Context]");
+    }
+
     private boolean checkTaskEqual(ProgrammingExerciseTask task, String expectedName, String expectedTestName) {
         var testCases = task.getTestCases();
         return expectedName.equals(task.getTaskName()) && !testCases.isEmpty() && expectedTestName.equals(testCases.stream().findFirst().get().getTestName());
