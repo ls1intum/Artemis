@@ -20,7 +20,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
     private plantUmlIndex = 0;
 
     // This regex is the same as in the server: ProgrammingExerciseTaskService.java
-    private readonly testsColorRegex = /testsColor\(((?:[^()]+\([^()]*\))*[^()]*)\)/g;
+    private readonly testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private plantUmlService: ProgrammingExercisePlantUmlService,
