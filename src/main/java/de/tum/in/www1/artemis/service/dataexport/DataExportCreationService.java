@@ -176,6 +176,5 @@ public class DataExportCreationService {
         // current timestamp
         return zipFileService.createZipFileWithFolderContent(dataExportsPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ZIP_FILE_EXTENSION),
                 workingDirectory, null);
-
     }
 }

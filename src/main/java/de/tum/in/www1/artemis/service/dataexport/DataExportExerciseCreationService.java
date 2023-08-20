@@ -122,7 +122,6 @@ public class DataExportExerciseCreationService {
      * @param userId              the id of the user that requested the export
      * @throws IOException if an error occurs while accessing the file system
      */
-
     public void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path exercisesDir, long userId) throws IOException {
         Path exerciseDir = exercisesDir.resolve(EXERCISE_PREFIX + programmingExercise.getSanitizedExerciseTitle());
         if (!Files.exists(exerciseDir)) {
