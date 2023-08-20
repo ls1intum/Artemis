@@ -16,7 +16,11 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
     isInputOpen = false;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
+    constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+    ) {
         super(metisService, modalService, formBuilder);
     }
 
