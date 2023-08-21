@@ -6,6 +6,11 @@ import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
 
+export enum LearningPathViewMode {
+    GRAPH,
+    PATH,
+}
+
 @Component({
     selector: 'jhi-learning-path-graph',
     styleUrls: ['./learning-path-graph.component.scss'],
@@ -16,8 +21,12 @@ export class LearningPathGraphComponent implements OnInit {
     isLoading = false;
     @Input() learningPathId: number;
     @Input() courseId: number;
+    @Input() viewMode?: LearningPathViewMode;
+    @Output() viewModeChange = new EventEmitter<LearningPathViewMode>();
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
     ngxLearningPath: NgxLearningPathDTO;
+    ngxGraph?: NgxLearningPathDTO;
+    ngxPath?: NgxLearningPathDTO;
 
     layout: string | Layout = 'dagreCluster';
     curve = shape.curveBundle;
@@ -31,18 +40,57 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
-    constructor(private activatedRoute: ActivatedRoute, private learningPathService: LearningPathService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private learningPathService: LearningPathService,
+    ) {}
 
     ngOnInit() {
         if (this.learningPathId) {
-            this.loadData();
+            this.loadDataIfNecessary();
         }
     }
 
-    loadData() {
+    refreshData() {
+        if (this.ngxGraph) {
+            this.loadGraphRepresentation();
+        }
+        if (this.ngxPath) {
+            this.loadPathRepresentation();
+        }
+        if (this.viewMode == LearningPathViewMode.GRAPH) {
+            this.ngxLearningPath = this.ngxGraph!;
+        } else {
+            this.ngxLearningPath = this.ngxPath!;
+        }
+    }
+
+    loadDataIfNecessary() {
+        if (this.viewMode == LearningPathViewMode.GRAPH) {
+            if (!this.ngxGraph) {
+                this.loadGraphRepresentation();
+            }
+            this.ngxLearningPath = this.ngxGraph!;
+        } else {
+            if (!this.ngxPath) {
+                this.loadPathRepresentation();
+            }
+            this.ngxLearningPath = this.ngxPath!;
+        }
+    }
+
+    loadGraphRepresentation() {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
-            this.ngxLearningPath = ngxLearningPathResponse.body!;
+            this.ngxGraph = ngxLearningPathResponse.body!;
+            this.isLoading = false;
+        });
+    }
+
+    loadPathRepresentation() {
+        this.isLoading = true;
+        this.learningPathService.getLearningPathNgxPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
+            this.ngxPath = ngxLearningPathResponse.body!;
             this.isLoading = false;
         });
     }
@@ -56,5 +104,14 @@ export class LearningPathGraphComponent implements OnInit {
     onCenterView() {
         this.zoomToFit$.next(true);
         this.center$.next(true);
+    }
+
+    changeViewMode() {
+        if (this.viewMode === LearningPathViewMode.GRAPH) {
+            this.viewMode = LearningPathViewMode.PATH;
+        } else {
+            this.viewMode = LearningPathViewMode.GRAPH;
+        }
+        this.loadDataIfNecessary();
     }
 }

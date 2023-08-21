@@ -16,6 +16,7 @@
                 <jhi-learning-path-graph
                     #learningPathGraphComponent
                     *ngIf="learningPathId"
+                    [viewMode]="PATH"
                     [courseId]="courseId"
                     [learningPathId]="learningPathId"
                     (nodeClicked)="nodeClicked.emit($event)"

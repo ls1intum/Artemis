@@ -2,7 +2,7 @@
     <div class="row modal-nav">
         <jhi-learning-path-progress-nav
             [learningPath]="learningPath"
-            (onRefresh)="learningPathGraphComponent.loadData(); learningPathGraphComponent.onCenterView()"
+            (onRefresh)="learningPathGraphComponent.refreshData(); learningPathGraphComponent.onCenterView()"
             (onCenterView)="learningPathGraphComponent.onCenterView()"
             (onClose)="close()"
         ></jhi-learning-path-progress-nav>
@@ -12,6 +12,7 @@
             #learningPathGraphComponent
             class="graph"
             *ngIf="courseId && learningPath"
+            [viewMode]="GRAPH"
             [courseId]="courseId"
             [learningPathId]="learningPath.id!"
         ></jhi-learning-path-graph>
