@@ -201,6 +201,22 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     }
 
     @Test
+    void createTimeoutFeedback() {
+        String msgWithStackTrace = """
+                org.opentest4j.AssertionFailedError: execution timed out after 1 s
+                \tat de.tum.in.test.api.localization.Messages.localizedFailure(Messages.java:34)
+                \tat de.tum.in.test.api.internal.TimeoutUtils.generateTimeoutFailure(TimeoutUtils.java:79)
+                \tat de.tum.in.test.api.internal.TimeoutUtils.executeWithTimeout(TimeoutUtils.java:72)
+                \tat de.tum.in.test.api.internal.TimeoutUtils.performTimeoutExecution(TimeoutUtils.java:42)
+                    """;
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
+        assertThat(actualFeedback)
+                .isEqualTo("The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. "
+                        + "Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.\n"
+                        + "Exception message: execution timed out after 1 s");
+    }
+
+    @Test
     void createFeedbackFromTestCaseSuccessfulWithMessage() {
         String msg = "success\nmessage";
         assertThat(createFeedbackFromTestCase("test1", List.of(msg), true)).isEqualTo("success\nmessage");
