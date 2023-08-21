@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
@@ -56,9 +56,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     private GradingScaleUtilService gradingScaleUtilService;
 
     @Autowired
-    private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
     private ExerciseRepository exerciseRepository;
 
     private Bonus courseBonus;
@@ -85,14 +82,15 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         course = courseUtilService.addEmptyCourse();
         course.setMaxPoints(100);
-        courseRepository.save(course);
+        courseRepository.saveAndFlush(course);
 
-        // Sets the achievable points for the course to 200, even though the course's max points are set to 100.
-        Exercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2),
-                ZonedDateTime.now().minusHours(1));
+        // Sets the achievable points for the course to 200, even though the course's max points are still set to 100.
+        Exercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1),
+                course);
         exercise.setMaxPoints(200.0);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exerciseRepository.save(exercise);
+        assertThat(course.getMaxPoints()).isEqualTo(100);
 
         Exam targetExam = examUtilService.addExamWithExerciseGroup(course, true);
         targetExam.setExamMaxPoints(200);
