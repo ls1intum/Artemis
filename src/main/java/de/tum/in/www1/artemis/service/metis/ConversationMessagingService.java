@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.service.metis;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -118,8 +120,8 @@ public class ConversationMessagingService extends PostingService {
     }
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
-        Set<UserConversationWebSocketView> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(UserConversationWebSocketView::getUser).collect(Collectors.toSet());
+        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::getUser).collect(Collectors.toSet());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
@@ -135,8 +137,7 @@ public class ConversationMessagingService extends PostingService {
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
-        var notificationRecipients = webSocketRecipients.stream().filter(user -> !user.isChannelHidden() && user.getUser().getId() != author.getId())
-                .map(UserConversationWebSocketView::getUser).collect(Collectors.toSet());
+        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
@@ -145,6 +146,37 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+    }
+
+    /**
+     * Filters the given list of recipients for users that should receive a notification about a new message.
+     * In all cases, the author will be filtered out.
+     * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
+     * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
+     *
+     * @param author              the author of the message
+     * @param conversation        the conversation the new message has been written in
+     * @param webSocketRecipients the list of users that should be filtered
+     * @return filtered list of users that are supposed to receive a notification
+     */
+    @NotNull
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
+        // Initialize filter with check for author
+        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.getUser().getId(), author.getId());
+
+        if (conversation instanceof Channel channel) {
+            // If a channel is not an announcement channel, filter out users, that hid the conversation
+            if (!channel.getIsAnnouncementChannel()) {
+                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+            }
+
+            // If a channel is not visible to students, filter out participants that are only students
+            if (!conversationService.isChannelVisibleToStudents(channel)) {
+                filter = filter.and(recipientSummary -> authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), recipientSummary.getUser()));
+            }
+        }
+
+        return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::getUser).collect(Collectors.toSet());
     }
 
     /**

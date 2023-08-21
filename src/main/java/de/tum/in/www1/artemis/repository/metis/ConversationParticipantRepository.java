@@ -1,19 +1,18 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.transaction.Transactional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.UserConversationWebSocketView;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,16 +37,13 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "user.groups", "user.authorities" })
     @Query("""
-            SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
-                user,
-                CASE WHEN cp.isHidden = true THEN true ELSE false END
-            )
-            FROM ConversationParticipant cp
-            JOIN cp.user user
-            WHERE cp.conversation.id = :#{#conversationId}
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.id = :#{#conversationId}
             """)
-    Set<UserConversationWebSocketView> findWebSocketRecipientsForConversation(@Param("conversationId") Long conversationId);
+    Set<ConversationParticipant> findConversationParticipantWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
 
     @Async
     @Transactional // ok because of modifying query

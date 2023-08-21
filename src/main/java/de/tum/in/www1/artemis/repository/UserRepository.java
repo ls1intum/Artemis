@@ -109,11 +109,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
     Set<User> findAllInGroup(@Param("groupName") String groupName);
 
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("""
-            SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
-                user,
-                CASE WHEN cp.isHidden = true THEN true ELSE false END
-            )
+            SELECT DISTINCT user
             FROM User user
             JOIN UserGroup ug ON user.id = ug.userId
             JOIN Course course ON (course.studentGroupName = ug.group
@@ -121,9 +119,27 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 OR course.editorGroupName = ug.group
                 OR course.instructorGroupName = ug.group
             )
-            LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
             WHERE user.isDeleted = false
             AND course.id = :courseId
+            """)
+    Set<User> findAllInCourse(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT NEW de.tum.in.www1.artemis.domain.UserConversationWebSocketView (
+                user.id,
+                CASE WHEN cp.isHidden = true THEN true ELSE false END,
+                CASE WHEN students.studentGroupName IS null THEN true ELSE false END
+            )
+            FROM User user
+            JOIN UserGroup ug ON ug.userId = user.id
+            LEFT JOIN Course students ON ug.group = students.studentGroupName
+            LEFT JOIN Course atLeastTutors ON (atLeastTutors.teachingAssistantGroupName = ug.group
+                OR atLeastTutors.editorGroupName = ug.group
+                OR atLeastTutors.instructorGroupName = ug.group
+            )
+            LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
+            WHERE user.isDeleted = false
+            AND (students.id = :courseId OR atLeastTutors.id = :courseId)
             """)
     Set<UserConversationWebSocketView> findAllWebSocketRecipientsInCourseForConversation(@Param("courseId") Long courseId, @Param("conversationId") Long conversationId);
 
