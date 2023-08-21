@@ -1,5 +1,5 @@
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 
 describe('Feedback', () => {
     describe('buildFeedbackTextForReview', () => {
@@ -47,6 +47,28 @@ describe('Feedback', () => {
 
             const expectedTextIgnoreSimpleText = 'Grading instruction feedback<br>multi<br>line<br>detail';
             expect(buildFeedbackTextForReview(feedback, false)).toBe(expectedTextIgnoreSimpleText);
+        });
+    });
+
+    describe('isTestCaseFeedback', () => {
+        it('should correctly detect manual feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.MANUAL, detailText: 'content' };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect sca feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect submission policy feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeFalse();
+        });
+
+        it('should correctly detect test case feedback', () => {
+            const feedback: Feedback = { type: FeedbackType.AUTOMATIC, detailText: 'content', testCase: { testName: 'test1' } };
+            expect(Feedback.isTestCaseFeedback(feedback)).toBeTrue();
         });
     });
 });

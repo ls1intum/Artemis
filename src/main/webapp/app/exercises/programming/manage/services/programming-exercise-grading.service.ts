@@ -109,7 +109,11 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
         if (this.testCases.has(exerciseId)) {
             return of(this.testCases.get(exerciseId)!);
         }
-        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`).pipe(
+            tap((testCases) => {
+                this.testCases.set(exerciseId, testCases);
+            }),
+        );
     }
 
     /**
