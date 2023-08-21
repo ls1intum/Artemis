@@ -52,7 +52,7 @@ public class DataExportResource {
     /**
      * Request a data export for the given user
      *
-     * @return the data export object
+     * @return a DTO containing the id of the data export that was created, its state and when it was requested
      */
     @PostMapping("data-exports")
     @EnforceAtLeastStudent
@@ -65,6 +65,7 @@ public class DataExportResource {
 
     /**
      * Checks if the user can request a new data export.
+     * This is the case if the user has not requested a data export yet or if the last data export was created more than DAYS_BETWEEN_DATA_EXPORTS days ago.
      *
      * @return true if the user can request a new data export, false otherwise
      */
@@ -84,6 +85,10 @@ public class DataExportResource {
 
     /**
      * Download the data export for the given user
+     * We check if the user is the owner of the data export and if the data export can be downloaded.
+     * If this is the case, we return a resource containing the data export zip file.
+     * The file name is set to the name of the zip file.
+     * The content disposition header is set to attachment so that the browser will download the file instead of displaying it.
      *
      * @param dataExportId the id of the data export to download
      * @return A resource containing the data export zip file
@@ -93,7 +98,7 @@ public class DataExportResource {
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
         DataExport dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        checkDataExportCanBeDownloaded(dataExport);
+        checkDataExportCanBeDownloadedElseThrow(dataExport);
         Resource resource = dataExportService.downloadDataExport(dataExport);
         File finalZipFile = Path.of(dataExport.getFilePath()).toFile();
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(finalZipFile.getName()).build();
@@ -103,7 +108,14 @@ public class DataExportResource {
                 .body(resource);
     }
 
-    private void checkDataExportCanBeDownloaded(DataExport dataExport) {
+    /**
+     * Checks if the data export can be downloaded.
+     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
+     *
+     * @param dataExport the data export to check
+     * @throws AccessForbiddenException if the data export is not in a downloadable state
+     */
+    private void checkDataExportCanBeDownloadedElseThrow(DataExport dataExport) {
         if (!dataExport.getDataExportState().isDownloadable()) {
             throw new AccessForbiddenException("Data export has either not been created or already been deleted");
         }
@@ -150,7 +162,7 @@ public class DataExportResource {
     /**
      * Check if the user can download any data export
      *
-     * @return a data export DTO with the id of the export that can be downloaded or a DTO with a id of null if no export can be downloaded
+     * @return a data export DTO with the id of the export that can be downloaded or a DTO with an id of null if no export can be downloaded
      */
     @GetMapping("data-exports/can-download")
     @EnforceAtLeastStudent
@@ -175,8 +187,8 @@ public class DataExportResource {
      *
      * @param dataExportId the id of the data export to check
      * @return true if the data export can be downloaded, false otherwise
-     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
-     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
+     * @throws EntityNotFoundException  if the data export or the user could not be found
+     * @throws AccessForbiddenException if the user is not allowed to download the data export
      */
     private boolean canDownloadSpecificDataExport(long dataExportId) throws EntityNotFoundException, AccessForbiddenException {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
