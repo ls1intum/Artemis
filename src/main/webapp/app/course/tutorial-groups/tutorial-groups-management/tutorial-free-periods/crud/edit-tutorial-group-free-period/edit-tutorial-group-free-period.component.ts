@@ -32,7 +32,11 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
 
     ngUnsubscribe = new Subject<void>();
     formData: TutorialGroupFreePeriodFormData;
-    constructor(private activeModal: NgbActiveModal, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private alertService: AlertService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private alertService: AlertService,
+    ) {}
 
     initialize() {
         if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {

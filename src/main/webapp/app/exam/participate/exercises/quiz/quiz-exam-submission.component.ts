@@ -52,7 +52,10 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(private quizService: ArtemisQuizService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private quizService: ArtemisQuizService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
         smoothscroll.polyfill();
     }

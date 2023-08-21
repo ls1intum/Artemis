@@ -17,7 +17,10 @@ export class LectureUnitNodeDetailsComponent implements OnInit {
 
     isLoading = false;
 
-    constructor(private lectureUnitService: LectureUnitService, private alertService: AlertService) {}
+    constructor(
+        private lectureUnitService: LectureUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         if (!this.lectureUnit) {

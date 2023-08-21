@@ -14,7 +14,10 @@ export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
     private resourceUrl = 'api/file-upload-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * Sends request to create new file upload exercise
