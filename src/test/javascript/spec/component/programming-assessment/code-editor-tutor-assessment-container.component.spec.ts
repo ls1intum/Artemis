@@ -147,7 +147,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute);
+    const route = (): ActivatedRoute => ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 

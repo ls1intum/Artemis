@@ -25,7 +25,10 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
 
-    constructor(private translateService: TranslateService, private exerciseService: ExerciseService) {}
+    constructor(
+        private translateService: TranslateService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
