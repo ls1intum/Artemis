@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
+ * This service is responsible for downloading, deleting data exports and checking if a data export can be requested.
+ * For creating data exports, see {@link DataExportCreationService}.
  */
 @Service
 public class DataExportService {
@@ -111,6 +113,15 @@ public class DataExportService {
                 retrieveNextRequestDate(latestDataExport.get()));
     }
 
+    /**
+     * Calculates the next date when the user can request a data export.
+     * This is the date when the last data export was requested (stored in the createdDate) + the constant DAYS_BETWEEN_DATA_EXPORTS.
+     * By default, DAYS_BETWEEN_DATA_EXPORTS is set to 14 days.
+     * This can be changed by setting the property artemis.data-export.days-between-data-exports in the application.yml file.
+     *
+     * @param dataExport the data export for which the next request date should be calculated
+     * @return the next date when the user can request a data export
+     */
     @NotNull
     private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
         return dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);

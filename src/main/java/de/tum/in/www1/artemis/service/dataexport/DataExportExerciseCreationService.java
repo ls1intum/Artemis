@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 /**
  * A service to create the data export for exercise participations of the user
+ * It is responsible for creating the export for programming exercises and modeling, text and file upload exercises.
+ * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
  */
 @Service
 public class DataExportExerciseCreationService {
@@ -167,6 +169,14 @@ public class DataExportExerciseCreationService {
         createPlagiarismCaseInfoExport(exercise, exercisePath, userId);
     }
 
+    /**
+     * Creates the export for the submission of the user to the given exercise. Includes the submission information and the submission content and the results if the results are
+     * published.
+     * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
+     *
+     * @param exercise    the exercise for which the export should be created
+     * @param exerciseDir the directory in which the export should be created
+     */
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
         boolean includeResults = exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
                 || exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise);
@@ -192,6 +202,13 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Stores the modeling submission as pdf if the apollon profile is active and the apollon conversion service works, otherwise stores it as json file.
+     *
+     * @param modelingSubmission the modeling submission for which the content should be stored
+     * @param outputDir          the directory in which the content should be stored
+     * @throws IOException if the file cannot be written
+     */
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
         if (modelingSubmission.getModel() == null) {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
@@ -213,6 +230,15 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Stores the given model as json file and adds a markdown file with an explanation how to view the model.
+     * Used if the Apollon Conversion Service is not available or an error occurs while using it.
+     *
+     * @param model     the model belonging to the submission as JSON string
+     * @param outputDir the directory in which the content should be stored
+     * @param fileName  the file name of the JSON file
+     * @throws IOException if the file cannot be written
+     */
     private void addModelJsonWithExplanationHowToView(String model, Path outputDir, String fileName) throws IOException {
         Files.writeString(outputDir.resolve(fileName + ".json"), model);
         String explanation = """
@@ -221,6 +247,13 @@ public class DataExportExerciseCreationService {
         Files.writeString(outputDir.resolve("view_model.md"), explanation);
     }
 
+    /**
+     * Stores the text submission content as txt file.
+     *
+     * @param textSubmission the text submission for which the content should be stored
+     * @param outputDir      the directory in which the content should be stored
+     * @throws IOException if the file cannot be written
+     */
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
         // text can be null which leads to an exception
         if (textSubmission.getText() != null) {
@@ -231,6 +264,14 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Creates a TXT file containing the results with the score, the number of passed test cases if it is a programming exercise
+     * and the feedbacks (both manual and automatic).
+     *
+     * @param submission the submission for which the results should be stored
+     * @param outputDir  the directory in which the results should be stored
+     * @throws IOException if the file cannot be written
+     */
     private void createResultsAndComplaintFiles(Submission submission, Path outputDir) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
@@ -268,6 +309,15 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Creates a CSV file containing the complaint data.
+     * Complaint can be either a complaint or a more feedback request.
+     *
+     * @param complaint the complaint for which the data should be stored
+     * @param outputDir the directory in which the data should be stored
+     * @throws IOException if the file cannot be written
+     */
+
     private void addComplaintData(Complaint complaint, Path outputDir) throws IOException {
         List<String> headers = new ArrayList<>();
         var dataStreamBuilder = Stream.builder();
@@ -297,6 +347,14 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Creates a CSV file containing the plagiarism case information.
+     *
+     * @param exercise     the exercise for which the plagiarism case information should be stored
+     * @param exercisePath the directory in which the plagiarism case information should be stored
+     * @param userId       the id of the user that requested the export and that is involved in the plagiarism case
+     * @throws IOException if the file cannot be written
+     */
     private void createPlagiarismCaseInfoExport(Exercise exercise, Path exercisePath, long userId) throws IOException {
         var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         List<String> headers = new ArrayList<>();
@@ -334,6 +392,14 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Copies the file upload submission file to the data export working directory if it still exists.
+     *
+     * @param submissionFilePath   the path to the file upload submission file
+     * @param outputDir            the directory to which the file should be copied
+     * @param fileUploadSubmission the file upload submission for which the file should be copied
+     * @throws IOException if the file cannot be copied
+     */
     private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         try {
             FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
@@ -344,12 +410,27 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Adds a markdown file to the data export working directory that informs the user that the file for the file upload submission no longer exists.
+     *
+     * @param outputDir            the directory in which the file should be stored
+     * @param fileUploadSubmission the file upload submission for which the file should be stored
+     * @throws IOException if the file cannot be written
+     */
     private void addInfoThatFileForFileUploadSubmissionNoLongerExists(Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         var exercise = fileUploadSubmission.getParticipation().getExercise();
         Files.writeString(outputDir.resolve("submission_file_no_longer_exists.md"),
                 String.format("Your submitted file for the exercise %s no longer exists on the file system.", exercise));
     }
 
+    /**
+     * Creates a CSV file containing the submission information.
+     * This includes the id, the submission date and the commit hash if it is a programming exercise.
+     *
+     * @param submission the submission for which the information should be stored
+     * @param outputPath the directory in which the information should be stored
+     * @throws IOException if the file cannot be written
+     */
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
         List<String> headers = new ArrayList<>(List.of("id", "submissionDate"));
         if (submission instanceof ProgrammingSubmission) {
@@ -365,6 +446,13 @@ public class DataExportExerciseCreationService {
         }
     }
 
+    /**
+     * Returns a stream of the submission information that should be included in the CSV file.
+     * This includes the id, the submission date and the commit hash if it is a programming exercise.
+     *
+     * @param submission the submission for which the information should be stored
+     * @return a stream of the submission information that should be included in the CSV file
+     */
     private Stream<?> getSubmissionStreamToPrint(Submission submission) {
         var builder = Stream.builder();
         builder.add(submission.getId()).add(submission.getSubmissionDate());

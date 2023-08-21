@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for data exports
+ * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
 @RestController
 @RequestMapping("api/")
