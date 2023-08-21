@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -14,11 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
-import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.*;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -50,6 +50,19 @@ public class LearningPathService {
     private final CourseRepository courseRepository;
 
     private final CompetencyRelationRepository competencyRelationRepository;
+
+    private final static double DUE_DATE_UTILITY = 10;
+
+    private final static double PRIOR_UTILITY = 150;
+
+    // Important: EXTENDS_UTILITY should be smaller than ASSUMES_UTILITY to prefer extends-relation to assumes-relations.
+    private final static double EXTENDS_UTILITY_RATIO = 1;
+
+    private final static double ASSUMES_UTILITY_RATIO = 2;
+
+    private final static double EXTENDS_OR_ASSUMES_UTILITY = 100;
+
+    private final static double MASTERY_PROGRESS_UTILITY = 1;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             CourseRepository courseRepository, CompetencyRelationRepository competencyRelationRepository) {
@@ -357,6 +370,193 @@ public class LearningPathService {
         }
     }
 
+    /**
+     * Generates Ngx path representation of the learning path.
+     *
+     * @param learningPath the learning path for which the Ngx representation should be created
+     * @return Ngx path representation of the learning path
+     * @see NgxLearningPathDTO
+     */
+    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
+        Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
+        Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
+
+        var recommendedOrderOfCompetenciesById = getRecommendedOrderOfCompetencies(learningPath);
+        var recommendedOrderOfCompetencies = recommendedOrderOfCompetenciesById.stream()
+                .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
+
+        // generate ngx representation of recommended competencies
+        // IMPORTANT generateNgxGraphRepresentationForCompetency will be replaced by future PR
+        recommendedOrderOfCompetencies.forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges));
+        // generate edges between competencies
+        for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {
+            var sourceNodeId = getCompetencyEndNodeId(recommendedOrderOfCompetenciesById.get(i));
+            var targetNodeId = getCompetencyStartNodeId(recommendedOrderOfCompetenciesById.get(i + 1));
+            edges.add(new NgxLearningPathDTO.Edge(getRelationEdgeId(sourceNodeId, targetNodeId), sourceNodeId, targetNodeId));
+        }
+
+        return new NgxLearningPathDTO(nodes, edges);
+    }
+
+    private List<Long> getRecommendedOrderOfCompetencies(LearningPath learningPath) {
+        HashMap<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
+        HashMap<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
+        HashMap<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        HashMap<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        // TODO
+        RecommendationState state = new RecommendationState(null, null, matchingClusters, priorsCompetencies, extendsCompetencies, assumesCompetencies);
+        // CompetencyProgress progress = competency.getUserProgress().stream().filter(competencyProgress ->
+        // competencyProgress.getUser().getId().equals(user.getId())).findFirst().orElseThrow();
+
+        var pendingCompetencies = getPendingCompetencies(learningPath.getCompetencies(), state);
+        return simulateProgression(pendingCompetencies, state);
+    }
+
+    private HashMap<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
+        final HashMap<Long, Set<Long>> matchingClusters = new HashMap<>();
+        for (var competency : competencies) {
+            if (!matchingClusters.containsKey(competency.getId())) {
+                final var matchingCompetencies = competencyRelationRepository.getMatchingCompetenciesByCompetencyId(competency.getId());
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingCompetencies.forEach(id -> matchingClusters.put(id, matchingCompetencies));
+            }
+        }
+        return matchingClusters;
+    }
+
+    private HashMap<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters) {
+        HashMap<Long, Set<Long>> priorsMap = new HashMap<>();
+        for (var competency : competencies) {
+            if (!priorsMap.containsKey(competency.getId())) {
+                final var priors = competencyRelationRepository.getPriorCompetenciesByCompetencyIds(matchingClusters.get(competency.getId()));
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingClusters.get(competency.getId()).forEach(id -> priorsMap.put(id, priors));
+            }
+        }
+        return priorsMap;
+    }
+
+    private HashMap<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorsCompetencies) {
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorsCompetencies, CompetencyRelation.RelationType.EXTENDS);
+    }
+
+    private HashMap<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorsCompetencies) {
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorsCompetencies, CompetencyRelation.RelationType.ASSUMES);
+    }
+
+    private HashMap<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters,
+            HashMap<Long, Set<Long>> priorsCompetencies, CompetencyRelation.RelationType type) {
+        HashMap<Long, Long> map = new HashMap<>();
+        for (var competency : competencies) {
+            if (!map.containsKey(competency.getId())) {
+                long numberOfRelations = competencyRelationRepository.countRelationsOfTypeBetweenCompetencyGroups(matchingClusters.get(competency.getId()), type,
+                        priorsCompetencies.get(competency.getId()));
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingClusters.get(competency.getId()).forEach(id -> map.put(id, numberOfRelations));
+            }
+        }
+        return map;
+    }
+
+    private Set<Competency> getPendingCompetencies(Set<Competency> competencies, RecommendationState state) {
+        Set<Competency> pendingCompetencies = new HashSet<>(competencies);
+        pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
+                || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
+        return pendingCompetencies;
+    }
+
+    private List<Long> simulateProgression(Set<Competency> pendingCompetencies, RecommendationState state) {
+        List<Long> recommendedOrder = new ArrayList<>();
+        while (!pendingCompetencies.isEmpty()) {
+            HashMap<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
+            var maxEntry = utilities.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue));
+            // is present since outstandingCompetencies is not empty
+            Long competencyId = maxEntry.get().getKey();
+
+            // add competency to recommended order
+            recommendedOrder.add(competencyId);
+
+            // simulate completion of competency
+            state.masteredCompetencies.add(competencyId);
+            pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
+                    || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
+        }
+        return recommendedOrder;
+    }
+
+    private HashMap<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
+
+        HashMap<Long, Double> utilities = new HashMap<>();
+        for (var competency : competencies) {
+            utilities.put(competency.getId(), computeUtilityOfCompetency(competency, state));
+        }
+        return utilities;
+    }
+
+    private double computeUtilityOfCompetency(Competency competency, RecommendationState state) {
+        // if competency is already mastered there competency has no utility
+        if (state.masteredCompetencies.contains(competency.getId())) {
+            return 0;
+        }
+        double utility = 0;
+        utility += computeDueDateUtility(competency);
+        utility += computePriorUtility(competency, state);
+        utility += computeExtendsOrAssumesUtility(competency, state);
+        utility += computeMasteryUtility(competency, state);
+        return utility;
+    }
+
+    private static double computeDueDateUtility(Competency competency) {
+        final var earliestDueDate = getEarliestDueDate(competency);
+        if (earliestDueDate.isEmpty()) {
+            return 0;
+        }
+        double timeDelta = ChronoUnit.DAYS.between(ZonedDateTime.now(), earliestDueDate.get());
+
+        if (timeDelta < 0) {
+            // deadline has passed
+            return (-timeDelta) * DUE_DATE_UTILITY;
+        }
+        else if (timeDelta > 0) {
+            // deadline not passed yet
+            return (1 / timeDelta) * DUE_DATE_UTILITY;
+        }
+        else {
+            return DUE_DATE_UTILITY;
+        }
+    }
+
+    private static Optional<ZonedDateTime> getEarliestDueDate(Competency competency) {
+        final var lectureDueDates = competency.getLectureUnits().stream().map(LectureUnit::getLecture).map(Lecture::getEndDate);
+        final var exerciseDueDates = competency.getExercises().stream().map(Exercise::getDueDate);
+        return Stream.concat(Stream.concat(Stream.of(competency.getSoftDueDate()), lectureDueDates), exerciseDueDates).filter(Objects::nonNull).min(Comparator.naturalOrder());
+    }
+
+    private static double computePriorUtility(Competency competency, RecommendationState state) {
+        // return max utility if no prior competencies are present
+        if (state.priorCompetencies.get(competency.getId()).size() == 0) {
+            return PRIOR_UTILITY;
+        }
+        final double masteredPriorCompetencies = state.priorCompetencies.get(competency.getId()).stream()
+                .filter(id -> state.masteredCompetencies.contains(id) || state.matchingClusters.get(id).stream().anyMatch(state.masteredCompetencies::contains)).count();
+        final double weight = masteredPriorCompetencies / state.priorCompetencies.get(competency.getId()).size();
+        return weight * PRIOR_UTILITY;
+    }
+
+    private static double computeExtendsOrAssumesUtility(Competency competency, RecommendationState state) {
+        final double weight = state.extendsCompetencies.get(competency.getId()) * EXTENDS_UTILITY_RATIO + state.assumesCompetencies.get(competency.getId()) * ASSUMES_UTILITY_RATIO;
+        // return max utility if competency does not extend or assume other competencies
+        if (weight == 0) {
+            return EXTENDS_OR_ASSUMES_UTILITY;
+        }
+        return (1 / weight) * EXTENDS_OR_ASSUMES_UTILITY;
+
+    }
+
+    private static double computeMasteryUtility(Competency competency, RecommendationState state) {
+        return state.competencyMastery.get(competency.getId()) * MASTERY_PROGRESS_UTILITY;
+    }
+
     public static String getCompetencyStartNodeId(long competencyId) {
         return "node-" + competencyId + "-start";
     }
@@ -411,5 +611,9 @@ public class LearningPathService {
 
     public static String getDirectEdgeId(long competencyId) {
         return "edge-" + competencyId + "-direct";
+    }
+
+    private record RecommendationState(Set<Long> masteredCompetencies, HashMap<Long, Double> competencyMastery, HashMap<Long, Set<Long>> matchingClusters,
+            HashMap<Long, Set<Long>> priorCompetencies, HashMap<Long, Long> extendsCompetencies, HashMap<Long, Long> assumesCompetencies) {
     }
 }
