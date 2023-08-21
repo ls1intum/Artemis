@@ -14,20 +14,19 @@ public enum BonusStrategy implements IBonusStrategy {
     GRADES_DISCRETE {
 
         @Override
-        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double bonusToAchievedPoints,
+                GradingScale sourceGradingScale, Double sourceAchievedPoints, Double sourceReachablePoints, double weight) {
             throw new NotImplementedException("GRADES_DISCRETE bonus strategy not yet implemented");
         }
     },
     GRADES_CONTINUOUS {
 
         @Override
-        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
-            final double reachablePointsOfBonusTo = bonusToGradingScale.getMaxPoints();
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfSource / reachablePointsOfSource, sourceGradingScale.getId());
-            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfBonusTo / reachablePointsOfBonusTo,
-                    bonusToGradingScale.getId());
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double bonusToAchievedPoints,
+                GradingScale sourceGradingScale, Double sourceAchievedPoints, Double sourceReachablePoints, double weight) {
+            final double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale.getId());
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
             GradeStep maxGradeStep = bonusToGradingScale.maxGrade();
 
             Double bonusGrade = bonusGradeStep.getNumericValue();
@@ -47,34 +46,33 @@ public enum BonusStrategy implements IBonusStrategy {
                 finalGrade = maxGrade;
             }
 
-            return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), bonusGrade, null, // Irrelevant for this bonus strategy.
+            return new BonusExampleDTO(bonusToAchievedPoints, sourceAchievedPoints, bonusToRawGradeStep.getGradeName(), bonusGrade, null, // Irrelevant for this bonus strategy.
                     Double.toString(finalGrade), exceedsMax);
         }
     },
     POINTS {
 
         @Override
-        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
-                GradingScale sourceGradingScale, Double achievedPointsOfSource, Double reachablePointsOfSource, double weight) {
-            final double reachablePointsOfBonusTo = bonusToGradingScale.getMaxPoints();
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfSource / reachablePointsOfSource, sourceGradingScale.getId());
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double bonusToAchievedPoints,
+                GradingScale sourceGradingScale, Double sourceAchievedPoints, Double sourceReachablePoints, double weight) {
+            final double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale.getId());
 
             Double bonusGrade = bonusGradeStep.getNumericValue();
             if (bonusGrade == null) {
                 throw new BadRequestAlertException("Bonus source grade names must be numeric", "gradeStep", "invalidGradeName");
             }
 
-            double finalPoints = roundScoreSpecifiedByCourseSettings(achievedPointsOfBonusTo + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
+            double finalPoints = roundScoreSpecifiedByCourseSettings(bonusToAchievedPoints + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             boolean exceedsMax = doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight);
             if (exceedsMax) {
                 finalPoints = bonusToGradingScale.getMaxPoints();
             }
-            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * achievedPointsOfBonusTo / reachablePointsOfBonusTo,
-                    bonusToGradingScale.getId());
-            GradeStep finalGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * finalPoints / reachablePointsOfBonusTo, bonusToGradingScale.getId());
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
+            GradeStep finalGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * finalPoints / bonusToReachablePoints, bonusToGradingScale.getId());
 
-            return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), bonusGrade, finalPoints, finalGradeStep.getGradeName(),
+            return new BonusExampleDTO(bonusToAchievedPoints, sourceAchievedPoints, bonusToRawGradeStep.getGradeName(), bonusGrade, finalPoints, finalGradeStep.getGradeName(),
                     exceedsMax);
         }
     };

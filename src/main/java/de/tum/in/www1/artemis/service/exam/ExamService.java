@@ -289,35 +289,35 @@ public class ExamService {
             return null;
         }
 
-        GradingScale targetGradingScale = gradingScale.get();
-        var bonus = targetGradingScale.getBonusFrom().stream().findAny().orElseThrow();
+        GradingScale bonusToGradingScale = gradingScale.get();
+        var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
 
         Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
-        double tempReachableSourcePoints = sourceGradingScale.getMaxPoints();
+        double tempSourceReachablePoints = sourceGradingScale.getMaxPoints();
         if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
             // fetch course with exercises to calculate reachable points
             Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
-            tempReachableSourcePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
         }
-        final double reachableSourcePoints = tempReachableSourcePoints;
+        final double sourceReachablePoints = tempSourceReachablePoints;
 
-        return (studentId, achievedPointsOfBonusTo) -> {
+        return (studentId, bonusToAchievedPoints) -> {
             BonusSourceResultDTO result = scoresMap != null ? scoresMap.get(studentId) : null;
-            Double achievedPointsOfSource = 0.0;
+            Double sourceAchievedPoints = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
             Double achievedPresentationScore = null;
             if (result != null) {
-                achievedPointsOfSource = result.achievedPoints();
+                sourceAchievedPoints = result.achievedPoints();
                 verdict = result.mostSeverePlagiarismVerdict();
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource, reachableSourcePoints);
+            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
@@ -1291,6 +1291,6 @@ public class ExamService {
     @FunctionalInterface
     private interface ExamBonusCalculator {
 
-        BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double achievedPointsOfBonusTo);
+        BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double bonusToAchievedPoints);
     }
 }

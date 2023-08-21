@@ -95,11 +95,12 @@ public class BonusResource {
         return ResponseEntity.ok(bonus);
     }
 
-    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, Double reachableSourcePoints,
-            GradingScale targetGradingScale, GradingScale sourceGradingScale) {
+    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double bonusToAchievedPoints, Double sourceAchievedPoints,
+            Double sourceReachablePoints, GradingScale bonusToGradingScale, GradingScale sourceGradingScale) {
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
-        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, reachableSourcePoints, calculationSign);
+        return bonusService.calculateGradeWithBonus(bonusStrategy, bonusToGradingScale, bonusToAchievedPoints, sourceGradingScale, sourceAchievedPoints, sourceReachablePoints,
+                calculationSign);
     }
 
     /**
