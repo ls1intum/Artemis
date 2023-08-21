@@ -74,7 +74,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: CourseManagementService, private translateService: TranslateService) {
+    constructor(
+        private service: CourseManagementService,
+        private translateService: TranslateService,
+    ) {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.updateXAxisLabel();

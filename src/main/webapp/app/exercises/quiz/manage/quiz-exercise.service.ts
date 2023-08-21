@@ -15,7 +15,10 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 export class QuizExerciseService {
     private resourceUrl = 'api/quiz-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * Create the given quiz exercise

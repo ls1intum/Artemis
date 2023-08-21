@@ -11,7 +11,10 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
     isRegistering = true;
     registeredSuccessfully: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {}
+    constructor(
+        private route: ActivatedRoute,
+        private http: HttpClient,
+    ) {}
 
     /**
      * perform LTI 13 dynamic registration

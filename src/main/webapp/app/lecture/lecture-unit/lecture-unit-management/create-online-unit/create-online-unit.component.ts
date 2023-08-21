@@ -20,7 +20,12 @@ export class CreateOnlineUnitComponent implements OnInit {
     lectureId: number;
     courseId: number;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private onlineUnitService: OnlineUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private onlineUnitService: OnlineUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
