@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -52,9 +51,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private QuizExerciseService quizExerciseService;
-
-    @Autowired
-    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -70,9 +66,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
-
-    @Autowired
-    private QuizExerciseUtilService quizUtilService;
 
     @Autowired
     private TeamRepository teamRepository;

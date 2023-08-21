@@ -21,14 +21,6 @@
         </sift>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>build/logs/allLogs.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} | %3.3threadLocalId --> %3.3threadId == %9.9testGroup | %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <logger name="de.tum.in.www1.artemis" level="INFO"/>
 
     <logger name="tech.jhipster" level="WARN"/>
@@ -63,7 +55,6 @@
     <root>
         <level>WARN</level>
         <appender-ref ref="SIFT"/>
-        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>
