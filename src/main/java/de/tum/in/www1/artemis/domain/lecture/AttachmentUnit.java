@@ -81,4 +81,10 @@ public class AttachmentUnit extends LectureUnit {
     public void setReleaseDate(ZonedDateTime releaseDate) {
         // Should be set in associated attachment
     }
+
+    // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
+    @Override
+    public String getType() {
+        return "attachment";
+    }
 }

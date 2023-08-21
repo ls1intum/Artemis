@@ -138,7 +138,7 @@ public class LearningPathResource {
     }
 
     /**
-     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path.
+     * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
@@ -147,7 +147,7 @@ public class LearningPathResource {
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable Long learningPathId) {
-        log.debug("REST request to get ngx representation of learning path with id: {}", learningPathId);
+        log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
         return getLearningPathNgx(learningPathId, NgxRequestType.GRAPH);
     }
 
@@ -171,13 +171,13 @@ public class LearningPathResource {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }
-        if (authorizationCheckService.isStudentInCourse(course, null)) {
-            final var user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (authorizationCheckService.isStudentInCourse(course, user)) {
             if (!user.getId().equals(learningPath.getUser().getId())) {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null) && !authorizationCheckService.isAdmin()) {
+        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !authorizationCheckService.isAdmin()) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
 

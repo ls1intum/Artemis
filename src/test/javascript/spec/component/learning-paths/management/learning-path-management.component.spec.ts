@@ -90,7 +90,7 @@ describe('LearningPathManagementComponent', () => {
         searchForLearningPathsStub.mockReturnValue(of(searchResult));
         enableLearningPathsStub.mockReturnValue(of(new HttpResponse<void>()));
         generateMissingLearningPathsForCourseStub.mockReturnValue(of(new HttpResponse<void>()));
-        health = new LearningPathHealthDTO(HealthStatus.OK);
+        health = new LearningPathHealthDTO([HealthStatus.OK]);
         getHealthStatusForCourseStub.mockReturnValue(of(new HttpResponse({ body: health })));
     });
 
@@ -122,7 +122,7 @@ describe('LearningPathManagementComponent', () => {
     }));
 
     it('should enable learning paths and load data', fakeAsync(() => {
-        const healthDisabled = new LearningPathHealthDTO(HealthStatus.DISABLED);
+        const healthDisabled = new LearningPathHealthDTO([HealthStatus.DISABLED]);
         getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthDisabled }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
         fixture.detectChanges();
         comp.ngOnInit();
@@ -145,7 +145,7 @@ describe('LearningPathManagementComponent', () => {
     }));
 
     it('should generate missing learning paths and load data', fakeAsync(() => {
-        const healthMissing = new LearningPathHealthDTO(HealthStatus.MISSING);
+        const healthMissing = new LearningPathHealthDTO([HealthStatus.MISSING]);
         getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthMissing }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
         fixture.detectChanges();
         comp.ngOnInit();

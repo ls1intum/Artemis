@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -180,4 +181,6 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     default Competency findByIdWithExercisesElseThrow(Long competencyId) {
         return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
+
+    long countByCourse(Course course);
 }

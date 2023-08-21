@@ -13,9 +13,9 @@ import {
     TemplateRef,
     ViewContainerRef,
 } from '@angular/core';
-
 import { DOCUMENT } from '@angular/common';
 import { NgbPopover, NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
+
 @Directive({
     selector: '[jhiStickyPopover]',
 })
@@ -26,7 +26,6 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
 
     triggers: string;
     container: string;
-    ngpPopover: TemplateRef<any>;
     canClosePopover: boolean;
 
     toggle(): void {

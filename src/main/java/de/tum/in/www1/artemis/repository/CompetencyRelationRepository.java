@@ -34,6 +34,13 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     Set<CompetencyRelation> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+                    SELECT count(cr)
+                    FROM CompetencyRelation cr
+                    WHERE cr.headCompetency.course.id = :courseId OR cr.tailCompetency.course.id = :courseId
+            """)
+    long countByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
                     SELECT DISTINCT relation.headCompetency.id
                     FROM CompetencyRelation relation
                     LEFT JOIN relation.headCompetency

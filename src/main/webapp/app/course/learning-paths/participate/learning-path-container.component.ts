@@ -42,7 +42,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
-        private learningPathHistoryStorageService: LearningPathHistoryStorageService,
+        public learningPathHistoryStorageService: LearningPathHistoryStorageService,
     ) {}
 
     ngOnInit() {
@@ -53,6 +53,9 @@ export class LearningPathContainerComponent implements OnInit {
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {
             this.learningPathId = learningPathIdResponse.body!;
+
+            // load latest lecture unit or exercise that was accessed
+            this.onPrevTask();
         });
     }
 
@@ -62,17 +65,9 @@ export class LearningPathContainerComponent implements OnInit {
         } else if (this.exercise?.id) {
             this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
         }
+        // reset state to avoid invalid states
         this.undefineAll();
-        /*this.learningPathService.getRecommendation(this.learningPathId).subscribe((recommendationResponse) => {
-            const recommendation = recommendationResponse.body!;
-            this.learningObjectId = recommendation.learningObjectId;
-            this.lectureId = recommendation.lectureId;
-            if (recommendation.type == RecommendationType.LECTURE_UNIT) {
-                this.loadLectureUnit();
-            } else if (recommendation.type === RecommendationType.EXERCISE) {
-                this.loadExercise();
-            }
-        });*/
+        // todo: load recommendation, part of next pr
     }
 
     undefineAll() {
@@ -82,6 +77,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     onPrevTask() {
+        // reset state to avoid invalid states
         this.undefineAll();
         if (this.learningPathHistoryStorageService.hasPrevious(this.learningPathId)) {
             const entry = this.learningPathHistoryStorageService.getPrevious(this.learningPathId);
@@ -147,10 +143,6 @@ export class LearningPathContainerComponent implements OnInit {
         }
     }
 
-    hasPrevious() {
-        return this.learningPathHistoryStorageService.hasPrevious(this.learningPathId);
-    }
-
     onNodeClicked(node: NgxLearningPathNode) {
         if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
             if (this.lectureUnit?.id) {
@@ -158,6 +150,7 @@ export class LearningPathContainerComponent implements OnInit {
             } else if (this.exercise?.id) {
                 this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
             }
+            // reset state to avoid invalid states
             this.undefineAll();
             this.learningObjectId = node.linkedResource!;
             this.lectureId = node.linkedResourceParent;

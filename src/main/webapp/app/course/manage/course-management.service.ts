@@ -502,7 +502,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course EntityResponses.
      * @param courseRes
-     * @private
      */
     processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
@@ -518,7 +517,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
      * @param courseRes
-     * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertTutorialGroupsDatesFromServer(courseRes);
@@ -606,7 +604,6 @@ export class CourseManagementService {
     /**
      * Converts the exercise category json string into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
@@ -618,7 +615,6 @@ export class CourseManagementService {
     /**
      * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {

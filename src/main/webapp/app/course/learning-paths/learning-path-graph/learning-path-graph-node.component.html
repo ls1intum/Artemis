@@ -27,15 +27,26 @@
 </ng-template>
 
 <ng-template #popContentTask>
-    <jhi-exercise-node-details class="node-details" *ngIf="node.type === NodeType.EXERCISE" [exerciseId]="node.linkedResource!"></jhi-exercise-node-details>
+    <jhi-exercise-node-details
+        class="node-details"
+        *ngIf="node.type === NodeType.EXERCISE"
+        [exerciseId]="node.linkedResource!"
+        [(exercise)]="nodeDetailsData.exercise"
+    ></jhi-exercise-node-details>
     <jhi-lecture-unit-node-details
         class="node-details"
         *ngIf="node.type === NodeType.LECTURE_UNIT"
-        [lectureId]="node.linkedResourceParent!"
         [lectureUnitId]="node.linkedResource!"
+        [(lectureUnit)]="nodeDetailsData.lectureUnit"
     ></jhi-lecture-unit-node-details>
 </ng-template>
 
 <ng-template #popContentCompetency>
-    <jhi-competency-node-details class="node-details" [courseId]="courseId" [competencyId]="node.linkedResource!"></jhi-competency-node-details>
+    <jhi-competency-node-details
+        class="node-details"
+        [courseId]="courseId"
+        [competencyId]="node.linkedResource!"
+        [(competency)]="nodeDetailsData.competency"
+        [(competencyProgress)]="nodeDetailsData.competencyProgress"
+    ></jhi-competency-node-details>
 </ng-template>

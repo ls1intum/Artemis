@@ -8,7 +8,7 @@
                 [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
                 container="body"
             ></fa-icon>
-            <span>{{ competency!.title }}</span>
+            <span>{{ competency.title }}</span>
             <span *ngIf="this.mastery >= 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
             <span *ngIf="competency.optional" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
         </h3>

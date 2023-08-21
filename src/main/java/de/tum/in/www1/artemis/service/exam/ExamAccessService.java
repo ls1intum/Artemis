@@ -63,6 +63,7 @@ public class ExamAccessService {
     public StudentExam getExamInCourseElseThrow(Long courseId, Long examId) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
+        // TODO: we should distinguish the whole method between test exam and real exam to improve the readability of the code
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
@@ -105,68 +106,9 @@ public class ExamAccessService {
             // Check that the current user is registered for the test exam. Otherwise, the student can self-register
             examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         }
-        else {
-            // Check that the current user is registered for the exam
-            if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-                throw new AccessForbiddenException(ENTITY_NAME, examId);
-            }
-        }
+        // NOTE: the check examRepository.isUserRegisteredForExam is not necessary because we already checked before that there is a student exam in this case for the current user
 
         return studentExam;
-    }
-
-    /**
-     * Retrieves a specified studentExam for a test exam from the database and sends it to the client
-     *
-     * @param courseId      the course to which the exam belongs
-     * @param examId        the examId of the exam we are interested in
-     * @param studentExamId the id of the studentExam we are interested in
-     * @return a StudentExam without Exercises
-     */
-    public StudentExam getStudentExamForTestExamElseThrow(Long courseId, Long examId, Long studentExamId) {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Check that the current user is at least student in the course.
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-
-        StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
-
-        Exam exam = studentExam.getExam();
-
-        if (!examId.equals(exam.getId())) {
-            throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "examIdMismatch");
-        }
-
-        if (!exam.isTestExam()) {
-            throw new AccessForbiddenException("The requested exam is no TestExam");
-        }
-        // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-        studentExam.setExercises(null);
-
-        checkStudentAccessToTestExamAndExamIsVisible(course, currentUser, exam);
-
-        return studentExam;
-    }
-
-    /**
-     * Helper-method to check, if the course and exam belong together, if the student has access to the exam or need
-     * to self-register him first and if the exam is already visible
-     *
-     * @param course      the course linked to the exam and studentExam
-     * @param currentUser the user for which the exam should be retrieved
-     * @param exam        the exam linked to the studentExam
-     */
-    private void checkStudentAccessToTestExamAndExamIsVisible(Course course, User currentUser, Exam exam) {
-        checkExamBelongsToCourseElseThrow(course.getId(), exam);
-
-        // Check that the current user is registered for the test exam. Otherwise, the student can self-register.
-        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
-
-        // Check that the exam is visible
-        if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException(ENTITY_NAME, exam.getId());
-        }
     }
 
     /**

@@ -12,7 +12,6 @@ export class LearningPathProgressNavComponent {
     @Output() onCenterView: EventEmitter<void> = new EventEmitter();
     @Output() onClose: EventEmitter<void> = new EventEmitter();
 
-    // icons
     faXmark = faXmark;
     faArrowsToEye = faArrowsToEye;
     faArrowsRotate = faArrowsRotate;

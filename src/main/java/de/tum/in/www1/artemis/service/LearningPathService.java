@@ -49,6 +49,8 @@ public class LearningPathService {
 
     private final CourseRepository courseRepository;
 
+    private final CompetencyRepository competencyRepository;
+
     private final CompetencyRelationRepository competencyRelationRepository;
 
     private final static double DUE_DATE_UTILITY = 10;
@@ -65,11 +67,12 @@ public class LearningPathService {
     private final static double MASTERY_PROGRESS_UTILITY = 1;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            CourseRepository courseRepository, CompetencyRelationRepository competencyRelationRepository) {
+            CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseRepository = courseRepository;
+        this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
     }
 
@@ -80,7 +83,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudents(course);
-        students.forEach((student) -> generateLearningPathForUser(course, student));
+        students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
 
@@ -191,17 +194,46 @@ public class LearningPathService {
      */
     public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
         if (!course.getLearningPathsEnabled()) {
-            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.DISABLED);
+            return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
         }
 
+        Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
+        Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
+        checkNoCompetencies(course, status);
+        checkNoRelations(course, status);
+
+        // if no issues where found, add OK status
+        if (status.isEmpty()) {
+            status.add(LearningPathHealthDTO.HealthStatus.OK);
+        }
+
+        return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
+    }
+
+    private Long checkMissingLearningPaths(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
         long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
+        Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
 
-        if (numberOfStudents == numberOfLearningPaths) {
-            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.OK);
+        if (numberOfMissingLearningPaths != 0) {
+            status.add(LearningPathHealthDTO.HealthStatus.MISSING);
         }
         else {
-            return new LearningPathHealthDTO(LearningPathHealthDTO.HealthStatus.MISSING, numberOfStudents - numberOfLearningPaths);
+            numberOfMissingLearningPaths = null;
+        }
+
+        return numberOfMissingLearningPaths;
+    }
+
+    private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
+        if (competencyRepository.countByCourse(course) == 0) {
+            status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
+        }
+    }
+
+    private void checkNoRelations(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
+        if (competencyRelationRepository.countByCourseId(course.getId()) == 0) {
+            status.add(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
         }
     }
 

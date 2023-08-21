@@ -30,4 +30,10 @@ public class VideoUnit extends LectureUnit {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
+    @Override
+    public String getType() {
+        return "video";
+    }
 }

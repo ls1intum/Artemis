@@ -87,23 +87,49 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         @Test
         void testHealthStatusDisabled() {
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
-            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.DISABLED);
+            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.DISABLED);
+            assertThat(healthStatus.missingLearningPaths()).isNull();
         }
 
         @Test
         void testHealthStatusOK() {
+            final var competency1 = competencyUtilService.createCompetency(course);
+            final var competency2 = competencyUtilService.createCompetency(course);
+            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
-            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.OK);
+            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.OK);
+            assertThat(healthStatus.missingLearningPaths()).isNull();
         }
 
         @Test
         void testHealthStatusMissing() {
+            final var competency1 = competencyUtilService.createCompetency(course);
+            final var competency2 = competencyUtilService.createCompetency(course);
+            competencyUtilService.addRelation(competency1, CompetencyRelation.RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
             userUtilService.addStudent(TEST_PREFIX + "tumuser", TEST_PREFIX + "student1337");
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
-            assertThat(healthStatus.status()).isEqualTo(LearningPathHealthDTO.HealthStatus.MISSING);
+            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.MISSING);
             assertThat(healthStatus.missingLearningPaths()).isEqualTo(1);
+        }
+
+        @Test
+        void testHealthStatusNoCompetencies() {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            var healthStatus = learningPathService.getHealthStatusForCourse(course);
+            assertThat(healthStatus.status()).containsExactlyInAnyOrder(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES, LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
+            assertThat(healthStatus.missingLearningPaths()).isNull();
+        }
+
+        @Test
+        void testHealthStatusNoRelations() {
+            competencyUtilService.createCompetency(course);
+            competencyUtilService.createCompetency(course);
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+            var healthStatus = learningPathService.getHealthStatusForCourse(course);
+            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
+            assertThat(healthStatus.missingLearningPaths()).isNull();
         }
     }
 

@@ -121,4 +121,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
+
+    // Used to distinguish the type when used in a DTO, e.g., LectureUnitForLearningPathNodeDetailsDTO.
+    public abstract String getType();
 }
