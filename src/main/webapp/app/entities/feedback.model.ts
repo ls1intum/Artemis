@@ -87,10 +87,7 @@ export class Feedback implements BaseEntity {
         if (feedback.type !== FeedbackType.AUTOMATIC) {
             return false;
         }
-        if (!feedback.text) {
-            return true;
-        }
-        return !feedback.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0) && !feedback.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return !!feedback.testCase;
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
@@ -113,7 +110,7 @@ export class Feedback implements BaseEntity {
 
     public static hasContent(that: Feedback): boolean {
         // if the feedback is associated with the grading instruction, the detail text is optional
-        return Feedback.hasDetailText(that) || !!(that.gradingInstruction && that.gradingInstruction.feedback);
+        return Feedback.hasDetailText(that) || !!that.gradingInstruction?.feedback;
     }
 
     /**
@@ -154,7 +151,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction?.id) {
+        if (dropInfo?.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {
@@ -201,7 +198,7 @@ export class Feedback implements BaseEntity {
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
     let feedbackText = '';
-    if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+    if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
