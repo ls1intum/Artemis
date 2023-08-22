@@ -6,6 +6,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public record LectureUnitInformationDTO(List<LectureUnitSplitDTO> units, int numberOfPages, boolean removeBreakSlides, String removeBreakSlidesKeyphrase,
-        boolean removeSolutionSlides, String removeSolutionSlidesKeyphrase) {
+public record LectureUnitInformationDTO(List<LectureUnitSplitDTO> units, int numberOfPages, String removeSlidesCommaSeparatedKeyPhrases) {
 }
