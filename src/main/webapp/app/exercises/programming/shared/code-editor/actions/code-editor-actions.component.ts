@@ -60,13 +60,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     faSync = faSync;
     farPlayCircle = faPlayCircle;
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set editorState(editorState: EditorState) {
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
