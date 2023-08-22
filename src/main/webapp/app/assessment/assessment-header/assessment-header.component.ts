@@ -77,7 +77,6 @@ export class AssessmentHeaderComponent {
         textAssessmentAnalytics.setComponentRoute(route);
     }
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     get highlightDifferences() {
         return this._highlightDifferences;
     }

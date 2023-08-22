@@ -24,7 +24,6 @@ describe('LoginService', () => {
     let authenticateStub: jest.SpyInstance;
     let authServerProviderStub: jest.SpyInstance;
     let alertServiceClearStub: jest.SpyInstance;
-    let notificationServiceCleanUpStub: jest.SpyInstance;
     let navigateByUrlStub: jest.SpyInstance;
 
     beforeEach(() => {
@@ -78,8 +77,6 @@ describe('LoginService', () => {
     function commonExpects() {
         expect(authenticateStub).toHaveBeenCalledOnce();
         expect(authenticateStub).toHaveBeenCalledWith(undefined);
-        expect(notificationServiceCleanUpStub).toHaveBeenCalledOnce();
-        expect(notificationServiceCleanUpStub).toHaveBeenCalledWith();
         expect(alertServiceClearStub).toHaveBeenCalledOnce();
         expect(alertServiceClearStub).toHaveBeenCalledWith();
         expect(navigateByUrlStub).toHaveBeenCalledOnce();
