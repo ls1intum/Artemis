@@ -1,8 +1,9 @@
-import { Course } from '../../../main/webapp/app/entities/course.model';
-import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
-import { courseManagementRequest, courseOverview, modelingExerciseEditor, navigationBar } from '../support/artemis';
-import { convertModelAfterMultiPart } from '../support/requests/CourseManagementRequests';
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, modelingExerciseEditor, navigationBar } from '../support/artemis';
 import { admin, studentOne, studentTwo } from '../support/users';
+import { convertModelAfterMultiPart } from '../support/utils';
 
 describe('Logout tests', () => {
     let course: Course;
@@ -11,11 +12,11 @@ describe('Logout tests', () => {
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
+            exerciseAPIRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -58,6 +59,6 @@ describe('Logout tests', () => {
     });
 
     after(() => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
