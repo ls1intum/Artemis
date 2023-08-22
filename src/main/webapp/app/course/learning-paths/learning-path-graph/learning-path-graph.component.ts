@@ -64,12 +64,17 @@ export class LearningPathGraphComponent implements OnInit {
         if (this.viewMode === LearningPathViewMode.GRAPH) {
             if (!this.ngxGraph) {
                 this.loadGraphRepresentation(true);
+            } else {
+                this.ngxLearningPath = this.ngxGraph;
+                this.update$.next(true);
             }
         } else {
             if (!this.ngxPath) {
                 this.loadPathRepresentation(true);
+            } else {
+                this.ngxLearningPath = this.ngxPath;
+                this.update$.next(true);
             }
-            this.ngxLearningPath = this.ngxPath!;
         }
     }
 
@@ -79,6 +84,7 @@ export class LearningPathGraphComponent implements OnInit {
             this.ngxGraph = ngxLearningPathResponse.body!;
             if (render) {
                 this.ngxLearningPath = this.ngxGraph;
+                this.update$.next(true);
             }
             this.isLoading = false;
         });
@@ -90,6 +96,7 @@ export class LearningPathGraphComponent implements OnInit {
             this.ngxPath = ngxLearningPathResponse.body!;
             if (render) {
                 this.ngxLearningPath = this.ngxPath;
+                this.update$.next(true);
             }
             this.isLoading = false;
         });
@@ -113,5 +120,6 @@ export class LearningPathGraphComponent implements OnInit {
             this.viewMode = LearningPathViewMode.GRAPH;
         }
         this.loadDataIfNecessary();
+        this.update$.next(true);
     }
 }
