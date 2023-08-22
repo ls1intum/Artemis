@@ -179,7 +179,7 @@ export class FeedbackComponent implements OnInit {
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    if (feedbacks && feedbacks.length) {
+                    if (feedbacks?.length) {
                         this.result.feedbacks = feedbacks!;
 
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
