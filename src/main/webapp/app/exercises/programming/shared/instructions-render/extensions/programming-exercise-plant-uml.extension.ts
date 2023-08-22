@@ -85,7 +85,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // E.g. Implement BubbleSort, testBubbleSort
                 const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}"></div>`;
                 // Replace test status markers.
-                const plantUmls = text.match(plantUmlRegex) || [];
+                const plantUmls = text.match(plantUmlRegex) ?? [];
                 // Assign unique ids to uml data structure at the beginning.
                 const plantUmlsIndexed = plantUmls.map((plantUml) => {
                     const nextIndex = this.plantUmlIndex;

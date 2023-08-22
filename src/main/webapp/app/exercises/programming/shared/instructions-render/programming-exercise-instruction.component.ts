@@ -237,6 +237,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
             if (!latestResult) {
                 return of(undefined);
             }
+            latestResult.participation = this.participation;
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
