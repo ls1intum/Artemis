@@ -25,7 +25,6 @@ import { isMessagingEnabled } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;

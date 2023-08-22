@@ -28,7 +28,6 @@ import { isMessagingEnabled } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrls: ['../../../shared/exercise/_exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;

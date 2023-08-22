@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -11,7 +12,7 @@ describe('TitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, ArtemisSharedComponentModule],
             declarations: [TitleChannelNameComponent],
             providers: [NgForm],
         }).compileComponents();

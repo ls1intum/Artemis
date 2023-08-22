@@ -29,7 +29,6 @@ import { isMessagingEnabled } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
