@@ -62,6 +62,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
+
     constructor(
         private alertService: AlertService,
         private modelingExerciseService: ModelingExerciseService,
@@ -243,7 +246,4 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

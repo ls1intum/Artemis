@@ -58,6 +58,9 @@ export class TextExerciseUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
+
     constructor(
         private alertService: AlertService,
         private textExerciseService: TextExerciseService,
@@ -218,7 +221,4 @@ export class TextExerciseUpdateComponent implements OnInit {
         }
         this.isSaving = false;
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

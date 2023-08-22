@@ -92,6 +92,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     faExclamationCircle = faExclamationCircle;
 
     readonly QuizMode = QuizMode;
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
 
     constructor(
         private route: ActivatedRoute,
@@ -605,7 +607,4 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise.title = newTitle;
         this.cacheValidation();
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 }

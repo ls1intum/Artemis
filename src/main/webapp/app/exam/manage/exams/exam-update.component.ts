@@ -46,6 +46,7 @@ export class ExamUpdateComponent implements OnInit {
     faFont = faFont;
 
     readonly FeatureToggle = FeatureToggle;
+    protected readonly isMessagingEnabled = isMessagingEnabled;
 
     constructor(
         private route: ActivatedRoute,
@@ -330,6 +331,4 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.examUsers = undefined;
         this.exam.studentExams = undefined;
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
 }

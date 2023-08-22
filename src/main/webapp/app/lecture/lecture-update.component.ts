@@ -52,6 +52,8 @@ export class LectureUpdateComponent implements OnInit {
     // The list of file extensions for the "accept" attribute of the file input field
     readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();
 
@@ -208,6 +210,4 @@ export class LectureUpdateComponent implements OnInit {
             this.lecture.visibleDate = startDate.clone();
         }
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
 }

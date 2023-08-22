@@ -53,6 +53,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
 
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly getCourseFromExercise = getCourseFromExercise;
+
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private modalService: NgbModal,
@@ -218,7 +221,4 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         });
         this.isSaving = false;
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 }
