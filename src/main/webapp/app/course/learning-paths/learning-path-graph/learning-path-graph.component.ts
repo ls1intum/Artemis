@@ -53,44 +53,44 @@ export class LearningPathGraphComponent implements OnInit {
 
     refreshData() {
         if (this.ngxGraph) {
-            this.loadGraphRepresentation();
+            this.loadGraphRepresentation(this.viewMode === LearningPathViewMode.GRAPH);
         }
         if (this.ngxPath) {
-            this.loadPathRepresentation();
-        }
-        if (this.viewMode == LearningPathViewMode.GRAPH) {
-            this.ngxLearningPath = this.ngxGraph!;
-        } else {
-            this.ngxLearningPath = this.ngxPath!;
+            this.loadPathRepresentation(this.viewMode === LearningPathViewMode.PATH);
         }
     }
 
     loadDataIfNecessary() {
-        if (this.viewMode == LearningPathViewMode.GRAPH) {
+        if (this.viewMode === LearningPathViewMode.GRAPH) {
             if (!this.ngxGraph) {
-                this.loadGraphRepresentation();
+                this.loadGraphRepresentation(true);
             }
-            this.ngxLearningPath = this.ngxGraph!;
         } else {
             if (!this.ngxPath) {
-                this.loadPathRepresentation();
+                this.loadPathRepresentation(true);
             }
             this.ngxLearningPath = this.ngxPath!;
         }
     }
 
-    loadGraphRepresentation() {
+    loadGraphRepresentation(render: boolean) {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxGraph = ngxLearningPathResponse.body!;
+            if (render) {
+                this.ngxLearningPath = this.ngxGraph;
+            }
             this.isLoading = false;
         });
     }
 
-    loadPathRepresentation() {
+    loadPathRepresentation(render: boolean) {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxPath = ngxLearningPathResponse.body!;
+            if (render) {
+                this.ngxLearningPath = this.ngxPath;
+            }
             this.isLoading = false;
         });
     }
