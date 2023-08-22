@@ -172,13 +172,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function loadResultDetails
+     * @function loadAndAttachResultDetails
      * @desc Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
-            map((res) => res && res.body),
+            map((res) => res?.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
