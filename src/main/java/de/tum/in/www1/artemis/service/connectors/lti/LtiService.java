@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 @Service
 public class LtiService {
@@ -109,14 +110,28 @@ public class LtiService {
     @NotNull
     private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
-            final User newUser;
+            final User createdNewUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
-            newUser = userCreationService.createUser(username, null, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            newUser.setActivationKey(null);
-            userRepository.save(newUser);
-            log.info("Created new user {}", newUser);
-            return newUser;
+
+            ManagedUserVM newUser = new ManagedUserVM();
+            newUser.setLogin(username);
+            newUser.setPassword(null);
+            newUser.setGroups(groups);
+            newUser.setFirstName(firstName);
+            newUser.setLastName(lastName);
+            newUser.setEmail(email);
+            newUser.setVisibleRegistrationNumber(null);
+            newUser.setImageUrl(null);
+            newUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+            newUser.setInternal(true);
+
+            createdNewUser = userCreationService.createUser(newUser);
+            createdNewUser.setActivationKey(null);
+            userRepository.save(createdNewUser);
+
+            log.info("Created new user {}", createdNewUser);
+            return createdNewUser;
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);
