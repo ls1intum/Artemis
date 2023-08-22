@@ -4,7 +4,6 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-// eslint-disable-next-line max-len
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
