@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -13,7 +12,7 @@ export class UserSettingsService {
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
 
-    constructor(private accountService: AccountService, private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
     // load methods
 

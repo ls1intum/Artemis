@@ -20,7 +20,6 @@ function urlValidator(control: AbstractControl) {
     let validUrl = true;
 
     try {
-        // eslint-disable-next-line
         new URL(control.value);
     } catch {
         validUrl = false;
@@ -55,7 +54,10 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     // Icons
     faArrowLeft = faArrowLeft;
 
-    constructor(private fb: FormBuilder, private onlineUnitService: OnlineUnitService) {}
+    constructor(
+        private fb: FormBuilder,
+        private onlineUnitService: OnlineUnitService,
+    ) {}
 
     get nameControl() {
         return this.form.get('name');

@@ -19,7 +19,6 @@ polyfill({
 });
 
 // Drag-enter listener for mobile devices: without this code, mobile drag and drop will not work correctly!
-/* eslint-disable */
 (event: any) => {
     event.preventDefault();
 };
@@ -99,7 +98,10 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+    ) {}
 
     ngOnInit(): void {
         this.evaluateDropLocations();
