@@ -35,7 +35,13 @@ import {
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { HttpResponse } from '@angular/common/http';
+import { Observable, ReplaySubject } from 'rxjs';
+
+export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSettingsService {
@@ -82,15 +88,35 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE, [TUTORIAL_GROUP_DELETED_TITLE, TUTORIAL_GROUP_UPDATED_TITLE]],
     ]);
 
-    // needed to make it possible for other services to get the latest settings without calling the server additional times
-    private newestNotificationSettings: NotificationSetting[] = [];
+    private currentNotificationSettings: NotificationSetting[] = [];
+    private currentNotificationSettingsSubject = new ReplaySubject<NotificationSetting[]>(1);
 
-    public getNotificationSettings(): NotificationSetting[] {
-        return this.newestNotificationSettings;
+    private notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
+
+    constructor(private userSettingsService: UserSettingsService) {
+        this.listenForNotificationSettingsChanges();
     }
 
-    public setNotificationSettings(notificationSettings: NotificationSetting[]) {
-        this.newestNotificationSettings = notificationSettings;
+    public refreshNotificationSettings(): void {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
+                this.currentNotificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    res.body!,
+                    UserSettingsCategory.NOTIFICATION_SETTINGS,
+                ) as NotificationSetting[];
+
+                this.notificationTitleActivationMap = this.createUpdatedNotificationTitleActivationMap();
+                this.currentNotificationSettingsSubject.next(this.currentNotificationSettings);
+            },
+        });
+    }
+
+    getNotificationSettings(): NotificationSetting[] {
+        return this.currentNotificationSettings;
+    }
+
+    getNotificationSettingsUpdates(): Observable<NotificationSetting[]> {
+        return this.currentNotificationSettingsSubject.asObservable();
     }
 
     /**
@@ -98,15 +124,15 @@ export class NotificationSettingsService {
      * @param notificationSettings will be mapped to their respective title and create a new updated map
      * @return the updated map
      */
-    public createUpdatedNotificationTitleActivationMap(notificationSettings: NotificationSetting[]): Map<string, boolean> {
+    private createUpdatedNotificationTitleActivationMap(): Map<string, boolean> {
         const updatedMap: Map<string, boolean> = new Map<string, boolean>();
         let tmpNotificationTitles: string[];
 
-        for (let i = 0; i < notificationSettings.length; i++) {
-            tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP.get(notificationSettings[i].settingId) ?? [];
+        for (let i = 0; i < this.currentNotificationSettings.length; i++) {
+            tmpNotificationTitles = NotificationSettingsService.NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TITLE_MAP.get(this.currentNotificationSettings[i].settingId) ?? [];
             if (tmpNotificationTitles.length > 0) {
                 tmpNotificationTitles.forEach((tmpNotificationTitle) => {
-                    updatedMap.set(tmpNotificationTitle, notificationSettings[i].webapp!);
+                    updatedMap.set(tmpNotificationTitle, this.currentNotificationSettings[i].webapp!);
                 });
             }
         }
@@ -116,10 +142,9 @@ export class NotificationSettingsService {
     /**
      * Checks if the notification (i.e. its title (only for Group/Single-User Notifications)) is activated in the notification settings
      * @param notification which should be checked if it is activated in the notification settings of the current user
-     * @param notificationTitleActivationMap hold the information of the saved notification settings and their status
      * @return true if this notification (title) is activated in the settings, else return false
      */
-    public isNotificationAllowedBySettings(notification: Notification, notificationTitleActivationMap: Map<string, boolean>): boolean {
+    public isNotificationAllowedBySettings(notification: Notification): boolean {
         if (
             notification instanceof GroupNotification ||
             notification.notificationType === NotificationType.GROUP ||
@@ -127,9 +152,20 @@ export class NotificationSettingsService {
             notification.notificationType === NotificationType.CONVERSATION
         ) {
             if (notification.title) {
-                return notificationTitleActivationMap.get(notification.title) ?? true;
+                return this.notificationTitleActivationMap.get(notification.title) ?? true;
             }
         }
         return true;
+    }
+
+    /**
+     * Subscribes and listens for changes related to notifications
+     */
+    private listenForNotificationSettingsChanges(): void {
+        this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
+            if (changeMessage === reloadNotificationSideBarMessage) {
+                this.refreshNotificationSettings();
+            }
+        });
     }
 }
