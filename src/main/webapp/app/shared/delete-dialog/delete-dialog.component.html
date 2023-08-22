@@ -31,9 +31,9 @@
                             [(ngModel)]="additionalChecksValues[checkKey]"
                         />
                         <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
-                        <div *ngIf="additionalChecksValues[checkKey]">
+                        <div *ngIf="additionalChecksValues[checkKey] && actionType === actionTypes.RequestDataExport">
                             <label for="additional-check-{{ i }}-text">{{ 'artemisApp.dataExport.login' | artemisTranslate }}</label>
-                            <input id="additional-check-{{ i }}-text" class="form-control" name="alternativeEntityTitle" [(ngModel)]="entityTitle" />
+                            <jhi-look-ahead-search-field id="additional-check-{{ i }}-text" class="form-control" [(ngModel)]="entityTitle"> </jhi-look-ahead-search-field>
                         </div>
                     </div>
                 </div>
