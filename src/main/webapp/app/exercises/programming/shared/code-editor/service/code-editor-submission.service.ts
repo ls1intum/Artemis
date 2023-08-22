@@ -19,7 +19,11 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: AlertService) {
+    constructor(
+        domainService: DomainService,
+        private submissionService: ProgrammingSubmissionService,
+        private alertService: AlertService,
+    ) {
         super(domainService);
         this.initDomainSubscription();
     }

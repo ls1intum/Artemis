@@ -17,6 +17,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
 
+import de.tum.in.www1.artemis.service.connectors.GitService;
+
 /**
  * This class describes a local repository cloned from an origin repository.
  * In the case of using the local VCS with the local CIS instead of, e.g. Bitbucket and Bamboo, the local VCS contains the origin repositories,
@@ -85,7 +87,7 @@ public class LocalRepository {
         Path filePath = localRepoPath.resolve("test.txt");
         Files.createFile(filePath);
         localGit.add().addFilepattern("test.txt").call();
-        localGit.commit().setMessage("Initial commit").call();
+        GitService.commit(localGit).setMessage("Initial commit").call();
         localGit.push().setRemote("origin").call();
     }
 
