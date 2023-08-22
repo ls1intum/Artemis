@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, NEW_REPLY_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
-import { QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
+import {
+    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
+    NEW_MESSAGE_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
+    Notification,
+    QUIZ_EXERCISE_STARTED_TITLE,
+} from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,12 +15,6 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
-import { Subscription } from 'rxjs';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -36,10 +32,6 @@ export class NotificationPopupComponent implements OnInit {
 
     private studentExamExerciseIds: number[];
 
-    notificationSettings: NotificationSetting[] = [];
-    notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
-    subscriptionToNotificationSettingsChanges: Subscription;
-
     // Icons
     faTimes = faTimes;
     faMessage = faMessage;
@@ -47,11 +39,9 @@ export class NotificationPopupComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        private userSettingsService: UserSettingsService,
         private notificationSettingsService: NotificationSettingsService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private alertService: AlertService,
@@ -59,16 +49,9 @@ export class NotificationPopupComponent implements OnInit {
         private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
-    /**
-     * Subscribe to notification updates that are received via websocket if the user is logged in.
-     */
     ngOnInit(): void {
-        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
-            if (user) {
-                this.loadNotificationSettings();
-                this.listenForNotificationSettingsChanges();
-                this.subscribeToNotificationUpdates();
-            }
+        this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {
+            this.addNotification(notification);
         });
     }
 
@@ -159,12 +142,6 @@ export class NotificationPopupComponent implements OnInit {
         return this.router.url;
     }
 
-    private subscribeToNotificationUpdates(): void {
-        this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            this.addNotification(notification);
-        });
-    }
-
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
         if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
@@ -176,7 +153,7 @@ export class NotificationPopupComponent implements OnInit {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
             if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
-                if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
+                if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification);
                 }
@@ -280,38 +257,5 @@ export class NotificationPopupComponent implements OnInit {
         setTimeout(() => {
             this.notifications = this.notifications.filter(({ id }) => id !== notification.id);
         }, 30000);
-    }
-
-    /**
-     * Loads the notifications settings
-     */
-    private loadNotificationSettings(): void {
-        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
-            next: (res: HttpResponse<Setting[]>) => {
-                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
-                    res.body!,
-                    UserSettingsCategory.NOTIFICATION_SETTINGS,
-                ) as NotificationSetting[];
-                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
-                // update the notification settings in the service to make them reusable for others (to avoid unnecessary server calls)
-                this.notificationSettingsService.setNotificationSettings(this.notificationSettings);
-            },
-        });
-    }
-
-    /**
-     * Subscribes and listens for changes related to notifications
-     * When a fitting event arrives resets close all popups and reloads the notification settings
-     */
-    private listenForNotificationSettingsChanges(): void {
-        this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
-            if (changeMessage === reloadNotificationSideBarMessage) {
-                // reset notification settings
-                this.notificationSettings = [];
-                this.notifications = [];
-                this.notificationTitleActivationMap = new Map<string, boolean>();
-                this.loadNotificationSettings();
-            }
-        });
     }
 }
