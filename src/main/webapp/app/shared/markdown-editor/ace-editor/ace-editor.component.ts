@@ -170,7 +170,6 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
         this.setText(value);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     writeValue(value: string) {
         this.setText(value);
     }
@@ -178,14 +177,12 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private _onChange = (_: any) => {};
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     registerOnChange(fn: any) {
         this._onChange = fn;
     }
 
     private _onTouched = () => {};
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     registerOnTouched(fn: any) {
         this._onTouched = fn;
     }
