@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.competency;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +71,34 @@ public class CompetencyUtilService {
      */
     public Competency createCompetency(Course course) {
         return createCompetency(course, "");
+    }
+
+    /**
+     * Creates competency and links it to the course.
+     *
+     * @param course course the competency will be linked to
+     * @param time   the soft due date of the competency
+     * @return the persisted competency
+     */
+    public Competency createCompetencyWithSoftDueDate(Course course, ZonedDateTime time) {
+        final var competency = createCompetency(course);
+        competency.setSoftDueDate(time);
+        return competencyRepo.save(competency);
+    }
+
+    /**
+     * Creates multiple competencies and links them to the course.
+     *
+     * @param course       course the competencies will be linked to
+     * @param softDueDates soft due dates of the competencies
+     * @return array of the persisted competencies
+     */
+    public Competency[] createCompetencies(Course course, ZonedDateTime... softDueDates) {
+        Competency[] competencies = new Competency[softDueDates.length];
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = createCompetencyWithSoftDueDate(course, softDueDates[i]);
+        }
+        return competencies;
     }
 
     /**

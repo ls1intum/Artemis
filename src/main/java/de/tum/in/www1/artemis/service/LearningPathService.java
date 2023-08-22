@@ -457,14 +457,17 @@ public class LearningPathService {
         Set<Long> masteredCompetencies = new HashSet<>();
         HashMap<Long, Double> competencyMastery = new HashMap<>();
         learningPath.getCompetencies().forEach(competency -> {
-            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), learningPath.getUser().getId()).orElseThrow();
-            if (CompetencyProgressService.isMastered(progress)) {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), learningPath.getUser().getId());
+            if (progress.isEmpty()) {
+                competencyMastery.put(competency.getId(), 0d);
+            }
+            else if (CompetencyProgressService.isMastered(progress.get())) {
                 // add competency to mastered set if mastered
                 masteredCompetencies.add(competency.getId());
             }
             else {
                 // calculate mastery progress if not completed yet
-                competencyMastery.put(competency.getId(), CompetencyProgressService.getMasteryProgress(progress));
+                competencyMastery.put(competency.getId(), CompetencyProgressService.getMasteryProgress(progress.get()));
             }
         });
         return new RecommendationState(masteredCompetencies, competencyMastery, matchingClusters, priorsCompetencies, extendsCompetencies, assumesCompetencies);

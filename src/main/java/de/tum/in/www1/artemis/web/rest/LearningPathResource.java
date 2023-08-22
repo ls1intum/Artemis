@@ -219,7 +219,19 @@ public class LearningPathResource {
         return ResponseEntity.ok(learningPath.getId());
     }
 
-    private enum NgxRequestType {
-        GRAPH, PATH
+    public enum NgxRequestType {
+
+        GRAPH("graph"), PATH("path");
+
+        private final String url;
+
+        NgxRequestType(String url) {
+            this.url = url;
+        }
+
+        @Override
+        public String toString() {
+            return url;
+        }
     }
 }

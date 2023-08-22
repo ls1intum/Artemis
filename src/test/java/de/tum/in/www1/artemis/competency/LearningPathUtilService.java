@@ -57,6 +57,18 @@ public class LearningPathUtilService {
     }
 
     /**
+     * Creates learning path for given user in course.
+     *
+     * @param course the course for which the learning path should be generated
+     * @return the persisted learning path
+     */
+    public LearningPath createLearningPathInCourseForUser(Course course, User user) {
+        final var learningPath = createLearningPathInCourse(course);
+        learningPath.setUser(user);
+        return learningPathRepository.save(learningPath);
+    }
+
+    /**
      * Creates learning path.
      *
      * @param competencies the competencies that will be linked to the learning path
