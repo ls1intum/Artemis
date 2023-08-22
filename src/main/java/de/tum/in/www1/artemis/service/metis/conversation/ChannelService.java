@@ -449,7 +449,8 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel object with some default properties
+     * Creates a channel object with the provided name.
+     * The resulting channel is public, not an announcement channel and not archived.
      *
      * @param channelName the desired name of the channel
      * @return a default channel with the given name
@@ -474,10 +475,12 @@ public class ChannelService {
 
     /**
      * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
-     * It replaces alternating/consecutive occurrences of spaces and hyphens and limits length of the name to 30 characters.
+     * The resulting name only contains lower case letters, digits and hyphens and has a maximum length of 30 characters.
+     * Upper case letters are transformed to lower case and special characters are replaced with a hyphen, while avoiding
+     * consecutive hyphens, e.g. "Example(%)name" becomes "example-name".
      *
-     * @param title prefix for the channel
-     * @param title title of the lecture/exercise/exam to derive the channel name from
+     * @param prefix prefix for the channel
+     * @param title  title of the lecture/exercise/exam to derive the channel name from
      * @return the generated channel name
      */
     private static String generateChannelNameFromTitle(@NotNull String prefix, String title) {
