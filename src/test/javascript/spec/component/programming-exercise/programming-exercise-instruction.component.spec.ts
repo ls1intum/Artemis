@@ -545,8 +545,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [
-                { text: 'testMethods[Policy]', positive: true },
-                { text: 'testPolicy()', positive: false },
+                { testCase: { id: 1, testName: 'testMethods[Policy]' }, positive: true },
+                { testCase: { id: 2, testName: 'testPolicy()' }, positive: false },
             ],
         };
         const exercise: ProgrammingExercise = {
