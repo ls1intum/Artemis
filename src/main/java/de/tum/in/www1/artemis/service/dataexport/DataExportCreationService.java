@@ -99,6 +99,16 @@ public class DataExportCreationService {
         return finishDataExportCreation(dataExport, dataExportPath);
     }
 
+    /**
+     * Adds a markdown file with the title README.md to the data export.
+     * This file contains information Art. 15 GDPR requires us to provide to the user.
+     * The file is retrieved from the resources folder.
+     * The file is added to the root of the data export.
+     *
+     * @param workingDirectory the directory in which the data export is created
+     * @throws IOException        if the file could not be copied
+     * @throws URISyntaxException if the resource file path is invalid
+     */
     private void addReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
         var readmeInDataExportPath = workingDirectory.resolve("README.md");
         var readmeTemplatePath = Path.of("templates", "dataexport", "README.md");
@@ -189,7 +199,7 @@ public class DataExportCreationService {
 
     /**
      * Adds the general user information to the data export.
-     * This includes the login, name, email and registration number (matriculation number).
+     * This includes the login, name, email, and registration number (matriculation number).
      *
      * @param user             the user for which the information should be added
      * @param workingDirectory the directory in which the information should be stored

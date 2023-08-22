@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 /**
  * A service to create the communication data export for users
  * This includes messages (posts), thread replies (answer posts) and reactions to posts and answer posts
- * All communication data is exported per course and stored in a CSV file
+ * All communication data is exported per course and stored in a CSV file.
  */
 @Service
 public class DataExportCommunicationDataService {

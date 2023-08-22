@@ -50,7 +50,7 @@ public class DataExportResource {
     }
 
     /**
-     * Request a data export for the given user
+     * POST /data-exports: Request a data export for the currently logged-in user.
      *
      * @return a DTO containing the id of the data export that was created, its state and when it was requested
      */
@@ -84,7 +84,8 @@ public class DataExportResource {
     }
 
     /**
-     * Download the data export for the given user
+     * GET /data-exports/{dataExportId}: Download the data export for the given id.
+     * <p>
      * We check if the user is the owner of the data export and if the data export can be downloaded.
      * If this is the case, we return a resource containing the data export zip file.
      * The file name is set to the name of the zip file.
@@ -122,7 +123,7 @@ public class DataExportResource {
     }
 
     /**
-     * checks if the currently logged-in user is the owner of the given data export
+     * Checks if the currently logged-in user is the owner of the given data export
      *
      * @param dataExport the data export that needs to be checked
      * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
@@ -134,7 +135,7 @@ public class DataExportResource {
     }
 
     /**
-     * checks if the currently logged-in user is owner of the given data export
+     * Checks if the currently logged-in user is owner of the given data export
      *
      * @param dataExport the data export that needs to be checked
      * @return true if the user is the owner of the data export, false otherwise
@@ -149,7 +150,7 @@ public class DataExportResource {
     }
 
     /**
-     * Check if the user can request a data export
+     * GET /data-exports/can-request: Check if the logged-in user can request a data export
      *
      * @return true if the user can request a data export, false otherwise
      */
@@ -160,7 +161,7 @@ public class DataExportResource {
     }
 
     /**
-     * Check if the user can download any data export
+     * GET /data-exports/can-download: Check if the logged-in user can download any data export.
      *
      * @return a data export DTO with the id of the export that can be downloaded or a DTO with an id of null if no export can be downloaded
      */
@@ -171,7 +172,7 @@ public class DataExportResource {
     }
 
     /**
-     * Check if the user can download a specific data export
+     * GET /data-exports/{dataExportId}/can-download: Check if the logged-in user can download the data export with the given id.
      *
      * @param dataExportId the id of the data export that should be checked
      * @return true if the user can download the data export, false otherwise

@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 /**
  * A service to create the data export for exercise participations of the user
- * It is responsible for creating the export for programming exercises and modeling, text and file upload exercises.
+ * It is responsible for creating the export for programming exercises and modeling, text, and file upload exercises.
  * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
  */
 @Service
@@ -120,7 +120,7 @@ public class DataExportExerciseCreationService {
      * Creates an export for a given programming exercise. Includes submission information, the repository from the VCS and potential plagiarism cases.
      *
      * @param programmingExercise the programming exercise for which the export should be created
-     * @param exercisesDir        the directory that is used for to store the exercises of the course the exercise belongs to
+     * @param exercisesDir        the directory where all exercises of a course should be stored
      * @param userId              the id of the user that requested the export
      * @throws IOException if an error occurs while accessing the file system
      */
@@ -265,7 +265,7 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates a TXT file containing the results with the score, the number of passed test cases if it is a programming exercise
+     * Creates a txt file containing the results with the score, the number of passed test cases if it is a programming exercise
      * and the feedbacks (both manual and automatic).
      *
      * @param submission the submission for which the results should be stored
@@ -317,7 +317,6 @@ public class DataExportExerciseCreationService {
      * @param outputDir the directory in which the data should be stored
      * @throws IOException if the file cannot be written
      */
-
     private void addComplaintData(Complaint complaint, Path outputDir) throws IOException {
         List<String> headers = new ArrayList<>();
         var dataStreamBuilder = Stream.builder();

@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 /**
  * A service to create the data export for exams the user has participated in.
  * This includes exercise participations and general information such as working time.
- * If the results are published, the results are also included.
+ * Results are only included if the results are already published.
  */
 @Service
 public class DataExportExamCreationService {
@@ -69,15 +69,16 @@ public class DataExportExamCreationService {
                 var examsDirPath = courseDirPath.resolve("exams");
                 createDirectoryIfNotExistent(examsDirPath);
                 var examDirectoryName = EXAM_DIRECTORY_PREFIX + examTitle + "_" + studentExam.getId();
-                var examWorkingDir = Files.createDirectories(examsDirPath.resolve(examDirectoryName));
-                createStudentExamExport(studentExam, examWorkingDir);
+                var examWorkingDirPath = examsDirPath.resolve(examDirectoryName);
+                createDirectoryIfNotExistent(examWorkingDirPath);
+                createStudentExamExport(studentExam, examWorkingDirPath);
             }
         }
     }
 
     /**
      * Creates the data export for the given student exam.
-     * This includes extracting all exercise participations, general exam information such as working time and the results if the results are published.
+     * This includes extracting all exercise participations, general exam information such as working time, and the results if the results are published.
      *
      * @param studentExam    the student exam belonging to the user for which the data export should be created
      * @param examWorkingDir the directory in which the information about the exam should be stored
@@ -125,7 +126,7 @@ public class DataExportExamCreationService {
     /**
      * Returns a stream of the exam results that should be included in the exam results CSV file.
      *
-     * @param studentResult
+     * @param studentResult        the result belonging to the student exam
      * @param headers              a list containing the column headers that should be included in the CSV file
      * @param gradingScaleOptional the optional grading scale of the exam
      * @return a stream of information that should be included in the exam results CSV file
@@ -157,7 +158,7 @@ public class DataExportExamCreationService {
 
     /**
      * Adds general information about the student exam to the data export.
-     * This includes information such as if the exam was started, if it is a test exam, when it was started, if it was submitted, when it was submitted, the working time and the
+     * This includes information such as if the exam was started, if it is a test exam, when it was started, if it was submitted, when it was submitted, the working time, and the
      * individual end of the working time.
      *
      * @param studentExam    the student exam for which the information should be added
