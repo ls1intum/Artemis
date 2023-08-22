@@ -134,6 +134,11 @@ describe('AttachmentUnitsComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should initialize without remove slides', () => {
+        expect(attachmentUnitsComponent.removeBreakSlides).toBeFalse();
+        expect(attachmentUnitsComponent.removeSolutionSlides).toBeFalse();
+    });
+
     it('should create attachment units', fakeAsync(() => {
         const lectureUnitInformationDTOObj = { units: units, numberOfPages: numberOfPages, removeBreakSlides: removeBreakSlides };
         const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
