@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
@@ -12,6 +11,8 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
@@ -45,53 +46,41 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         return this.exercise;
     }
 
-    // TODO fix this
     loadGitDiffReport(): void {
-        // this.isLoadingDiffReport = true;
-        // let subscription;
-        // if (!this.currentSubmission) {
-        //     return;
-        // }
-        // if (this.previousSubmission) {
-        //     subscription = this.programmingExerciseService.getDiffReportForSubmissions(this.exercise.id!, this.previousSubmission, this.currentSubmission)
-        // } else {
-        //     subscription = this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(this.exercise.id!, this.currentSubmission)
-        // }
-        // subscription.subscribe((gitDiffReport: ProgrammingExerciseGitDiffReport | undefined) => {
-        //     if (gitDiffReport) {
-        //         console.log(gitDiffReport);
-        //         this.exercise.gitDiffReport = gitDiffReport;
-        //         gitDiffReport.programmingExercise = this.exercise;
-        //         this.addedLineCount = gitDiffReport.entries
-        //             .map((entry) => entry.lineCount)
-        //             .filter((lineCount) => lineCount)
-        //             .map((lineCount) => lineCount!)
-        //             .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-        //         this.removedLineCount = gitDiffReport.entries
-        //             .map((entry) => entry.previousLineCount)
-        //             .filter((lineCount) => lineCount)
-        //             .map((lineCount) => lineCount!)
-        //             .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-        //         this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
-        //             next: (response: Map<string, string>) => {
-        //                 this.templateFileContentByPath = response;
-        //                 this.isLoading = this.solutionFileContentByPath === undefined;
-        //             },
-        //         });
-        //         this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
-        //             next: (response: Map<string, string>) => {
-        //                 this.solutionFileContentByPath = response;
-        //                 this.isLoading = this.templateFileContentByPath === undefined;
-        //             },
-        //         });
-        //     },
-        //     error: (error) => {
-        //         this.isLoading = false;
-        //         this.alertService.error(error.message);
-        //     }
-        //
-        //     this.isLoadingDiffReport = false;
-        // });
+        this.isLoadingDiffReport = true;
+        let subscription;
+        if (!this.currentSubmission) {
+            return;
+        }
+        if (this.previousSubmission) {
+            subscription = this.programmingExerciseService.getDiffReportForSubmissions(this.exercise.id!, this.previousSubmission, this.currentSubmission);
+        } else {
+            // if there is no previous submission, we want to see the diff between the current submission and the template
+            subscription = this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(this.exercise.id!, this.currentSubmission);
+        }
+        subscription.subscribe((gitDiffReport: ProgrammingExerciseGitDiffReport | undefined) => {
+            if (gitDiffReport) {
+                this.exercise.gitDiffReport = gitDiffReport;
+                gitDiffReport.programmingExercise = this.exercise;
+                gitDiffReport.participationIdForFirstCommit = this.previousSubmission?.participation?.id;
+                gitDiffReport.participationIdForSecondCommit = this.currentSubmission.participation?.id;
+                this.calculateLineCount(gitDiffReport);
+            }
+            this.isLoadingDiffReport = false;
+        });
+    }
+
+    private calculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
+        this.addedLineCount = gitDiffReport.entries
+            .map((entry) => entry.lineCount)
+            .filter((lineCount) => lineCount)
+            .map((lineCount) => lineCount!)
+            .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+        this.removedLineCount = gitDiffReport.entries
+            .map((entry) => entry.previousLineCount)
+            .filter((lineCount) => lineCount)
+            .map((lineCount) => lineCount!)
+            .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
     }
 
     /**
@@ -100,6 +89,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = this.exercise.gitDiffReport;
+        modalRef.componentInstance.diffForTemplateAndSolution = false;
     }
 
     getSubmission(): Submission | undefined {
@@ -114,7 +104,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         this.submissionVersion = submissionVersion;
     }
 
-    updateViewFromSubmission(): void {}
-
     updateSubmissionFromView(): void {}
+
+    updateViewFromSubmission(): void {}
 }

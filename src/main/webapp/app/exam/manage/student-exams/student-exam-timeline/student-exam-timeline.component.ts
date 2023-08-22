@@ -112,7 +112,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
             activeProgrammingComponent.previousSubmission = this.findPreviousSubmission(this.currentExercise!, this.currentSubmission!);
             activeProgrammingComponent.loadGitDiffReport();
-            // activeProgrammingComponent!.studentParticipation.submissions![0] = this.currentSubmission as ProgrammingSubmission;
         }
     }
 

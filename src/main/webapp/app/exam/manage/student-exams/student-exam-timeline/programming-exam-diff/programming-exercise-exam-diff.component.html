@@ -1,13 +1,14 @@
-<p>Programming Diff works</p>
-<jhi-commits-info [commits]="commits" />
+<jhi-commits-info [commits]="commits" [activeCommitHash]="currentSubmission?.commitHash" />
 <div *ngIf="exercise?.gitDiffReport">
-    <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
+    <dt>
+        <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabel">Lines added/removed between current submission and previous submission</span>
+    </dt>
     <dd>
         <div class="fw-bold">
             <jhi-git-diff-line-stat
                 [addedLineCount]="addedLineCount"
                 [removedLineCount]="removedLineCount"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
             ></jhi-git-diff-line-stat>
             <jhi-button
                 [featureToggle]="FeatureToggle.ProgrammingExercises"
@@ -15,7 +16,7 @@
                 [btnSize]="ButtonSize.SMALL"
                 [icon]="faEye"
                 [title]="'artemisApp.programmingExercise.diffReport.button'"
-                [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
+                [tooltip]="'artemisApp.programmingExercise.diffReport.tooltipBetweenSubmissions'"
                 (onClick)="showGitDiff()"
                 class="ms-2"
             ></jhi-button>

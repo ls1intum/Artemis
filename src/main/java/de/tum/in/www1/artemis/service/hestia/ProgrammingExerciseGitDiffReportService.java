@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -52,18 +54,21 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final FileService fileService;
+
     private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
 
     public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, FileService fileService) {
         this.gitService = gitService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -170,8 +175,8 @@ public class ProgrammingExerciseGitDiffReportService {
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
         var submission1 = programmingSubmissionRepository.findById(submissionId1).orElseThrow();
 
-        var repo1 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(),
-                submission1.getCommitHash(), true);
+        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(), submission1.getCommitHash(),
+                false);
         var oldTreeParser = new FileTreeIterator(repo1);
         var newTreeParser = new FileTreeIterator(templateRepo);
         var report = createReport(templateRepo, oldTreeParser, newTreeParser);
@@ -210,10 +215,14 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2)
             throws GitAPIException, IOException {
-        var repo1 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(),
-                submission1.getCommitHash(), true);
-        var repo2 = gitService.getOrCheckoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission2.getParticipation()).getVcsRepositoryUrl(),
-                submission2.getCommitHash(), true);
+        var repositoryUrl = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl();
+        var repo1 = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        var repo1Path = repo1.getLocalPath();
+        var repo2Path = fileService.getTemporaryUniquePath(repo1Path.getParent(), 5);
+        FileSystemUtils.copyRecursively(repo1Path, repo2Path);
+        repo1 = gitService.checkoutRepositoryAtCommit(repo1, submission1.getCommitHash());
+        var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUrl);
+        repo2 = gitService.checkoutRepositoryAtCommit(repo2, submission2.getCommitHash());
         return parseFilesAndCreateReport(repo1, repo2);
 
     }

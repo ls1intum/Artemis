@@ -181,6 +181,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
             Repository repository = gitService.getOrCheckoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
+            gitService.checkoutHead(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
     }
