@@ -137,24 +137,31 @@ describe('Build Plan Editor', () => {
         discardPeriodicTasks();
     }));
 
-    it('should show an error message if no build plan could be found', fakeAsync(() => {
-        activatedRoute.snapshot = {
-            params: { exerciseId: 3 },
-        } as unknown as ActivatedRouteSnapshot;
-        const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(new HttpResponse<BuildPlan>({ status: 404 })));
+    it.each([
+        [404, 'artemisApp.programmingExercise.buildPlanFetchError'],
+        [405, 'error.http.405'],
+    ])(
+        'should show an error message if fetching the build plan failed',
+        fakeAsync((status: number, expectedError: string) => {
+            activatedRoute.snapshot = {
+                params: { exerciseId: 3 },
+            } as unknown as ActivatedRouteSnapshot;
+            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(new HttpResponse<BuildPlan>({ status })));
 
-        const alertStub = jest.spyOn(alertService, 'error');
+            const alertStub = jest.spyOn(alertService, 'error');
 
-        comp.ngAfterViewInit();
-        tick();
+            comp.ngAfterViewInit();
+            tick();
 
-        expect(getBuildPlanStub).toHaveBeenCalledWith(3);
-        expect(comp.isLoading).toBeFalse();
-        expect(comp.buildPlan).toBeUndefined();
+            expect(getBuildPlanStub).toHaveBeenCalledWith(3);
+            expect(comp.isLoading).toBeFalse();
+            expect(comp.buildPlan).toBeUndefined();
 
-        expect(alertStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledWith(expectedError);
 
-        flush();
-        discardPeriodicTasks();
-    }));
+            flush();
+            discardPeriodicTasks();
+        }),
+    );
 });

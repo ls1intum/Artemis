@@ -1,6 +1,7 @@
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 import { BuildPlan } from 'app/entities/build-plan.model';
@@ -79,10 +80,15 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
                 this.initEditor();
                 this.isLoading = false;
             },
-            error: () => {
+            error: (error) => {
                 this.buildPlan = undefined;
-                this.alertService.error('artemisApp.programmingExercise.buildPlanFetchError');
                 this.isLoading = false;
+
+                if (error.status == 404) {
+                    this.alertService.error('artemisApp.programmingExercise.buildPlanFetchError');
+                } else {
+                    onError(this.alertService, error);
+                }
             },
         });
     }
