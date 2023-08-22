@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -161,7 +162,7 @@ public class QuizExerciseResource {
 
         QuizExercise result = quizExerciseService.save(quizExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(result, quizExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
         channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
