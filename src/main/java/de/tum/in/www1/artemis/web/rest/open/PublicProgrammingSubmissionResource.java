@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -90,7 +89,7 @@ public class PublicProgrammingSubmissionResource {
             programmingMessagingService.notifyUserAboutSubmission(submission);
 
             // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
-            ltiNewResultService.onNewResult((StudentParticipation) participation);
+            ltiNewResultService.onNewResult(participation);
         }
         catch (IllegalArgumentException ex) {
             log.error(

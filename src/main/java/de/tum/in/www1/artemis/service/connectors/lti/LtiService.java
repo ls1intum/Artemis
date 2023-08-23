@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
@@ -31,8 +28,10 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import tech.jhipster.security.RandomUtil;
 
 @Service
 public class LtiService {
@@ -51,12 +50,19 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+            JWTCookieService jwtCookieService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            Optional<CIUserManagementService> optionalCIUserManagementService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     /**
@@ -110,28 +116,21 @@ public class LtiService {
     @NotNull
     private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
-            final User createdNewUser;
+            final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
 
-            ManagedUserVM newUser = new ManagedUserVM();
-            newUser.setLogin(username);
-            newUser.setPassword(null);
-            newUser.setGroups(groups);
-            newUser.setFirstName(firstName);
-            newUser.setLastName(lastName);
-            newUser.setEmail(email);
-            newUser.setVisibleRegistrationNumber(null);
-            newUser.setImageUrl(null);
-            newUser.setLangKey(Constants.DEFAULT_LANGUAGE);
-            newUser.setInternal(true);
+            var password = RandomUtil.generatePassword();
+            newUser = userCreationService.createUser(username, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            newUser.setActivationKey(null);
+            userRepository.save(newUser);
 
-            createdNewUser = userCreationService.createUser(newUser);
-            createdNewUser.setActivationKey(null);
-            userRepository.save(createdNewUser);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser, password));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser, password));
 
-            log.info("Created new user {}", createdNewUser);
-            return createdNewUser;
+            log.info("Created new user {}", newUser);
+            return newUser;
+
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);

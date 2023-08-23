@@ -111,7 +111,7 @@ public class ResultService {
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
-                ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
+                ltiNewResultService.onNewResult(savedResult.getParticipation());
             }
 
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
