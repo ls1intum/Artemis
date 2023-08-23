@@ -8,5 +8,4 @@ export interface NgxChartsMultiSeriesDataEntry extends NgxChartsEntry {
     series: any[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface NgxChartsEntry {}
