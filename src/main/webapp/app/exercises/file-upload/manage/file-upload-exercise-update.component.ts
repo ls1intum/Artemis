@@ -6,7 +6,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseFromExercise, getCourseId, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseFromExercise, getCourseId, hideChannelName, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -42,6 +42,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     isImport: boolean;
     examCourseId?: number;
+    hideChannelNameInput = false;
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
@@ -103,11 +104,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (!this.isExamMode) {
-                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
-                            this.fileUploadExercise.channelName = '';
-                        }
-                    }
+                    this.hideChannelNameInput = hideChannelName(this.fileUploadExercise, this.isExamMode, this.isImport);
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),
