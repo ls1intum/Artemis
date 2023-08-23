@@ -360,7 +360,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdapWithEmail(String email) {
-        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByUsername(email));
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByEmail(email));
     }
 
     /**
@@ -392,7 +392,7 @@ public class UserService {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
 
-                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
+                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
                 if (StringUtils.hasText(ldapUser.getUsername())) {
                     var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
                     if (existingUser.isPresent()) {
@@ -740,7 +740,7 @@ public class UserService {
                 return optionalStudent;
             }
 
-            // In this case, the user was NOT found in the database! We can try to create if from the external user management, in case it is configured
+            // In this case, the user was NOT found in the database! We can try to create it from the external user management, in case it is configured
             if (StringUtils.hasText(login)) {
                 optionalStudent = createUserFromLdapWithLogin(login);
             }

@@ -59,6 +59,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private static final String USERNAME = TEST_PREFIX + "student1";
 
+    private static final String NONEXISTENT_USERNAME = TEST_PREFIX + "student2";
+
     protected ProgrammingExercise programmingExercise;
 
     protected Course course;
@@ -77,11 +79,13 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
+        userRepository.findOneByLogin(NONEXISTENT_USERNAME).ifPresent(userRepository::delete);
 
         var ldapUserDTO = new LdapUserDto().username(USERNAME);
         ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
         doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByUsername(USERNAME);
+        doReturn(Optional.empty()).when(ldapUserService).findByUsername(NONEXISTENT_USERNAME);
         doReturn(true).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(USER_PASSWORD));
         doReturn(false).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(INCORRECT_PASSWORD));
     }
@@ -107,6 +111,21 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
         loginVM.setPassword(INCORRECT_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
+        assertThat(response.getCookie("jwt")).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testNonExistentUserNameAttempt() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(NONEXISTENT_USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
         loginVM.setRememberMe(true);
 
         HttpHeaders httpHeaders = new HttpHeaders();

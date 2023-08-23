@@ -418,6 +418,45 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterLDAPUsersInExam() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        var savedExam = examUtilService.addExam(course1);
+        String student100 = TEST_PREFIX + "student100";
+        String student200 = TEST_PREFIX + "student200";
+        String student300 = TEST_PREFIX + "student300";
+
+        // setup mocks
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000");
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser2Dto.getUsername(), ldapUser2Dto.getFirstName() + " " + ldapUser2Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000");
+        doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser3Dto.getUsername(), ldapUser3Dto.getFirstName() + " " + ldapUser3Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        // user with login
+        StudentDTO dto1 = new StudentDTO(student100, student100, student100, null, null);
+        // user with email
+        StudentDTO dto2 = new StudentDTO(null, student200, student200, null, student200 + "@tum.de");
+        // user with registration number
+        StudentDTO dto3 = new StudentDTO(null, student300, student300, "3000000", null);
+        // user without anything
+        StudentDTO dto4 = new StudentDTO(null, null, null, null, null);
+
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(dto1, dto2, dto3, dto4), StudentDTO.class, HttpStatus.OK);
+        assertThat(registrationFailures).containsExactly(dto4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentsToExam_testExam() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
 
