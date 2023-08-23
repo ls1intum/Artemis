@@ -282,7 +282,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName);
+        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
         jiraRequestMockProvider.mockAddUserToGroup(user, false);
 
@@ -290,13 +290,18 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
             case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
             case "editor" -> new StudentDTO(null, userName, userName, null, userName + "@tum.de");
             case "instructor" -> new StudentDTO(userName, userName, userName, null, null);
-            default -> new StudentDTO(null, userName, userName, "1000002", userName + "@tum.de");
+            default -> new StudentDTO(userName, userName, userName, "1000002", userName + "@tum.de");
         };
 
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
-        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
-
+        if (dto1.login() != null) {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
+        }
+        else if (dto1.email() != null) {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
+        }
+        else {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
+        }
         StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
 
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,

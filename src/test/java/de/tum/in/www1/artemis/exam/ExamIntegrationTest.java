@@ -426,17 +426,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String student300 = TEST_PREFIX + "student300";
 
         // setup mocks
-        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000");
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
         doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
-        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000");
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
         doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser2Dto.getUsername(), ldapUser2Dto.getFirstName() + " " + ldapUser2Dto.getLastName(), null);
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
-        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000");
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
         doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser3Dto.getUsername(), ldapUser3Dto.getFirstName() + " " + ldapUser3Dto.getLastName(), null);
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
