@@ -75,7 +75,6 @@ export class DeleteButtonDirective implements OnInit {
             actionType: this.actionType,
             buttonType: this.buttonType,
             delete: this.delete,
-            dataExportForAnotherUser: this.dataExportForAnotherUser,
             dialogError: this.dialogError,
             requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks,
         };
