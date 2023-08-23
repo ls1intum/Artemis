@@ -5,8 +5,6 @@ import { finalize } from 'rxjs/operators';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
@@ -14,11 +12,9 @@ export class LoginService {
 
     constructor(
         private accountService: AccountService,
-        private websocketService: JhiWebsocketService,
         private authServerProvider: AuthServerProvider,
         private router: Router,
         private alertService: AlertService,
-        private notificationService: NotificationService,
     ) {}
 
     /**
@@ -86,7 +82,6 @@ export class LoginService {
     private onLogout(): void {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
-        this.notificationService.cleanUp();
         this.router.navigateByUrl('/');
     }
 
