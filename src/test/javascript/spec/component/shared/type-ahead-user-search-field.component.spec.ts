@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TypeAheadUserSearchFieldComponent } from 'app/shared/type-ahead-search-field/type-ahead-user-search-field.component';
 import { UserService } from 'app/core/user/user.service';
-import { Observable, of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -30,7 +30,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     it('should create', () => {
         expect(component).toBeTruthy();
     });
-    it('should call the user service on search', fakeAsync(() => {
+    it('should call the user service on search', () => {
         const searchSpy = jest.spyOn(userService, 'search').mockReturnValue(
             of({
                 body: [{ login: 'ge12abc', name: 'abc' }],
@@ -38,9 +38,8 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         );
 
         component.search(of('ge12abc'));
-        tick();
         expect(searchSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
-    }));
+    });
 
     it('should not call the user service on search for string with less than three characters', () => {
         const searchSpy = jest.spyOn(userService, 'search');
@@ -62,7 +61,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     });
 
     it('should set searchFailed to true if the user service throws an error', () => {
-        jest.spyOn(userService, 'search').mockReturnValue(new Error() as unknown as Observable<HttpResponse<User[]>>);
+        jest.spyOn(userService, 'search').mockReturnValue(throwError({ status: 500 }));
         component.search(of('ge12abc'));
         expect(component.searchFailed).toBeTrue();
     });
