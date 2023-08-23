@@ -56,6 +56,7 @@ export class TypeAheadUserSearchFieldComponent {
         const user = this.loginOrName as unknown as User;
         // this is a user object returned by search, but we are only interested in the login
         // if we don't do this, the user object will be converted to a string and passed to the parent component
+        // before we sent a request to the server this is a string, and we can emit it directly
         if (user && user.login) {
             this.loginOrNameChange.emit(user.login);
         } else {
@@ -66,6 +67,7 @@ export class TypeAheadUserSearchFieldComponent {
 
     resultFormatter = (result: User) => result.name! + ' (' + result.login! + ')';
     inputFormatter(input: User | string) {
+        // here applies the same as in onChange()
         const user = input as unknown as User;
         if (user && user.login) {
             return user.login!;
