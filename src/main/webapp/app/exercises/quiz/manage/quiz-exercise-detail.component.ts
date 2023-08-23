@@ -15,7 +15,7 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, hideChannelName, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, requiresChannelName, resetDates } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -220,7 +220,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
-            this.hideChannelNameInput = hideChannelName(this.quizExercise, this.isExamMode, this.isImport);
+            this.hideChannelNameInput = !requiresChannelName(this.quizExercise, this.isExamMode, this.isImport);
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }

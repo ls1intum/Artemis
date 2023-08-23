@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { isMessagingEnabled } from 'app/entities/course.model';
-import { getCourseFromExercise, hideChannelName } from 'app/entities/exercise.model';
+import { getCourseFromExercise, requiresChannelName } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -24,7 +24,7 @@ export class ProgrammingExerciseInformationComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.programmingExercise || changes.isImportFromExistingExercise || changes.isExamMode) {
-            this.hideChannelNameInput = hideChannelName(this.programmingExercise, this.isExamMode, !this.isEdit);
+            this.hideChannelNameInput = !requiresChannelName(this.programmingExercise, this.isExamMode, !this.isEdit);
         }
     }
 }

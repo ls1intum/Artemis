@@ -252,18 +252,27 @@ export function resetDates(exercise: Exercise) {
     exercise.exampleSolutionPublicationDate = undefined;
 }
 
-export function hideChannelName(exercise: Exercise, isExamMode: boolean, isImport: boolean): boolean {
+/**
+ * Determines whether the provided exercises should have a channel name. This is not the case, if messaging in the course
+ * is disabled or if it is an exam exercise.
+ * If messaging is enabled, a channel name should exist for newly created and imported exercises.
+ *
+ * @param exercise
+ * @param isExamMode
+ * @param isImport
+ */
+export function requiresChannelName(exercise: Exercise, isExamMode: boolean, isImport: boolean): boolean {
     // hide if messaging is disabled or exam mode
     if (!isMessagingEnabled(getCourseFromExercise(exercise)) || isExamMode) {
-        return true;
+        return false;
     }
 
     // show on create or import
     const isCreate = exercise.id === undefined;
     if (isCreate || isImport) {
-        return false;
+        return true;
     }
 
-    // hide channel name in edit mode if the exercise doesn't have a channel
-    return exercise.channelName === undefined;
+    // show channel name in edit mode if the exercise has a channel
+    return exercise.channelName !== undefined;
 }
