@@ -262,17 +262,17 @@ export function resetDates(exercise: Exercise) {
  * @param isImport
  */
 export function requiresChannelName(exercise: Exercise, isExamMode: boolean, isImport: boolean): boolean {
-    // hide if messaging is disabled or exam mode
+    // not required if messaging is disabled or exam mode
     if (!isMessagingEnabled(getCourseFromExercise(exercise)) || isExamMode) {
         return false;
     }
 
-    // show on create or import
+    // required on create or import (messaging is enabled)
     const isCreate = exercise.id === undefined;
     if (isCreate || isImport) {
         return true;
     }
 
-    // show channel name in edit mode if the exercise has a channel
+    // when editing, it is required if the exercise has a channel
     return exercise.channelName !== undefined;
 }
