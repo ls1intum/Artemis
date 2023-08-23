@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -58,10 +59,12 @@ public class NotificationSettingsResource {
     @GetMapping("notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<NotificationSetting>> getNotificationSettingsForCurrentUser() {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        long start = System.nanoTime();
+        User currentUser = userRepository.getUser();
         log.debug("REST request to get all NotificationSettings for current user {}", currentUser);
         Set<NotificationSetting> notificationSettingSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         notificationSettingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(notificationSettingSet, currentUser);
+        log.info("Load notification settings for current user done in {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(notificationSettingSet, HttpStatus.OK);
     }
 
