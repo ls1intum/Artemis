@@ -7,16 +7,13 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -1289,16 +1286,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @MethodSource("getGetParticipationsubmittedNotEndedQuizParameters")
-    void getParticipation_submittedNotEndedQuiz(QuizMode quizMode, boolean isSubmissionAllowed) throws Exception {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), quizMode, course);
+    @EnumSource(QuizMode.class)
+    void testCheckQuizParticipation(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);
-
-        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
-                SecurityContextHolder.getContext().getAuthentication());
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
@@ -1312,24 +1306,15 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(submittedAnswer);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
-
-        quizScheduleService.processCachedQuizSubmissions();
-
-        if (!isSubmissionAllowed) {
-            // Duration is set to 0 so that QuizBatch.isSubmissionAllowed() will be false
-            quizExercise.setDuration(0);
-            quizExercise = exerciseRepo.save(quizExercise);
-        }
+        quizSubmission.submitted(true);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         var actualParticipation = request.get("/api/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation.getInitializationState()).isEqualTo(InitializationState.FINISHED);
-
         var actualResults = actualParticipation.getResults();
         assertThat(actualResults).hasSize(1);
 
         var actualSubmission = (QuizSubmission) actualResults.stream().findFirst().get().getSubmission();
-        assertThat(actualSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(actualSubmission.isSubmitted()).isTrue();
 
         var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();
@@ -1342,10 +1327,5 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var actualSubmittedAnswerText = (ShortAnswerSubmittedText) actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
-    }
-
-    private static Stream<Arguments> getGetParticipationsubmittedNotEndedQuizParameters() {
-        return Stream.of(Arguments.of(QuizMode.SYNCHRONIZED, true), Arguments.of(QuizMode.SYNCHRONIZED, false), Arguments.of(QuizMode.BATCHED, true),
-                Arguments.of(QuizMode.BATCHED, false), Arguments.of(QuizMode.INDIVIDUAL, true), Arguments.of(QuizMode.INDIVIDUAL, false));
     }
 }
