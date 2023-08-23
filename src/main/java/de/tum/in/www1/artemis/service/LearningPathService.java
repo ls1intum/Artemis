@@ -460,6 +460,7 @@ public class LearningPathService {
         HashMap<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
         HashMap<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
         Set<Long> masteredCompetencies = new HashSet<>();
+        // map of non-mastered competencies to their normalized mastery score with respect to the associated threshold
         HashMap<Long, Double> competencyMastery = new HashMap<>();
         learningPath.getCompetencies().forEach(competency -> {
             // fetched learning path only contains data of the associated user
@@ -597,8 +598,8 @@ public class LearningPathService {
 
             // simulate completion of competency
             state.masteredCompetencies.add(competencyId);
-            pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
-                    || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
+            pendingCompetencies
+                    .removeIf(competency -> competency.getId().equals(competencyId) || state.matchingClusters.get(competency.getId()).stream().anyMatch(competencyId::equals));
         }
         return recommendedOrder;
     }
