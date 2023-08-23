@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, Subscription, of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -17,7 +17,6 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { SubmissionType } from 'app/entities/submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
@@ -134,28 +133,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     loadParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
-            mergeMap((participation: ProgrammingExerciseStudentParticipation) =>
-                participation.results?.length
-                    ? this.loadResultDetails(participation, participation.results[0]).pipe(
-                          map((feedbacks) => {
-                              participation.results![0].feedbacks = feedbacks;
-                              return participation;
-                          }),
-                          catchError(() => of(participation)),
-                      )
-                    : of(participation),
-            ),
-        );
-    }
-
-    /**
-     * Fetches details for the result (if we received one) and attach them to the result.
-     * Mutates the input parameter result.
-     */
-    loadResultDetails(participation: Participation, result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
-            map((res) => {
-                return res.body || [];
+            map((participation: ProgrammingExerciseStudentParticipation) => {
+                if (participation.results?.length) {
+                    // connect result and participation
+                    participation.results[0].participation = participation;
+                }
+                return participation;
             }),
         );
     }
