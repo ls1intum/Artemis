@@ -6,7 +6,7 @@ import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, getCourseFromExercise, resetDates } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, getCourseFromExercise, hideChannelName, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
@@ -47,6 +47,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    hideChannelNameInput = false;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -106,11 +107,8 @@ export class TextExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    this.hideChannelNameInput = hideChannelName(this.textExercise, this.isExamMode, this.isImport);
                     if (!this.isExamMode) {
-                        if (this.textExercise.id == undefined && this.textExercise.channelName == undefined) {
-                            this.textExercise.channelName = '';
-                        }
-
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
                             this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({

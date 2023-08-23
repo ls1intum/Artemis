@@ -21,7 +21,7 @@
             [(channelName)]="modelingExercise.channelName"
             channelNamePrefix="exercise-"
             [emphasizeLabels]="true"
-            [hideChannelName]="isExamMode || (!isImport && modelingExercise.channelName === undefined) || !isMessagingEnabled(getCourseFromExercise(modelingExercise))"
+            [hideChannelName]="hideChannelNameInput"
             [initChannelName]="isImport || modelingExercise.id === undefined"
         ></jhi-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">

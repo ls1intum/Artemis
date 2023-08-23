@@ -34,7 +34,7 @@
                     (channelNameChange)="updateChannelName($event)"
                     channelNamePrefix="exercise-"
                     [emphasizeLabels]="true"
-                    [hideChannelName]="isExamMode || (!isImport && quizExercise.channelName === undefined) || !isMessagingEnabled(getCourseFromExercise(quizExercise))"
+                    [hideChannelName]="hideChannelNameInput"
                     [initChannelName]="isImport || quizExercise.id === undefined"
                 ></jhi-title-channel-name>
             </form>

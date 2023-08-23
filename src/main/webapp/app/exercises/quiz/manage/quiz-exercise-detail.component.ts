@@ -15,7 +15,7 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, hideChannelName, resetDates } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -69,6 +69,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
     shortAnswerFilterEnabled: boolean;
+    hideChannelNameInput = false;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -219,11 +220,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
-            if (!this.isExamMode) {
-                if (this.quizExercise.id == undefined && this.quizExercise.channelName == undefined) {
-                    this.quizExercise.channelName = '';
-                }
-            }
+            this.hideChannelNameInput = hideChannelName(this.quizExercise, this.isExamMode, this.isImport);
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }

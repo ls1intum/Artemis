@@ -5,7 +5,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, getCourseFromExercise, resetDates } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, getCourseFromExercise, hideChannelName, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -54,6 +54,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
     goBackAfterSaving = false;
+    hideChannelNameInput = false;
 
     documentationType = DocumentationType.Model;
 
@@ -115,10 +116,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    this.hideChannelNameInput = hideChannelName(this.modelingExercise, this.isExamMode, this.isImport);
                     if (!this.isExamMode) {
-                        if (this.modelingExercise.id == undefined && this.modelingExercise.channelName == undefined) {
-                            this.modelingExercise.channelName = '';
-                        }
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
