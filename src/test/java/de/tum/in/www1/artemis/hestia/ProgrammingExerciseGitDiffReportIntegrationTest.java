@@ -38,6 +38,8 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
 
     private final LocalRepository templateRepo = new LocalRepository("main");
 
+    private final LocalRepository participationRepo = new LocalRepository("main");
+
     private ProgrammingExercise exercise;
 
     @Autowired
@@ -87,5 +89,17 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getGitDiffBetweenTemplateAndSubmission() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        // ProgrammingSubmission submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST",participationRepo);
+        // reportService.createReportForSubmissionWithTemplate(exercise);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + exercise.getTemplateParticipation().getId() + "/diff-report/"
+                + exercise.getSolutionParticipation().getId(), HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+
     }
 }

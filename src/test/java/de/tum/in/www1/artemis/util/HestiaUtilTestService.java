@@ -189,6 +189,39 @@ public class HestiaUtilTestService {
         return savedExercise;
     }
 
+    public ProgrammingSubmission setupSubmission(Map<String, String> files, LocalRepository participationRepo) throws Exception {
+
+        // TODO setup repo in TEST
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Path.of(participationRepo.localRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            File solutionFile = Files.createFile(filePath).toFile();
+            // write content to the created file
+            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        }
+
+        var participationRepoUrl = new GitUtilService.MockFileRepositoryUrl(participationRepo.localRepoFile);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participationRepoUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participationRepoUrl, false);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
+
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(participationRepoUrl));
+
+        return new ProgrammingSubmission();
+
+    }
+
     /**
      * Sets up the test repository of a programming exercise with a single file
      *
