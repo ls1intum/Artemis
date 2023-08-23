@@ -214,8 +214,8 @@ public class ExerciseHintService {
         var testCasesInTask = task.getTestCases();
         var feedbacks = result.getFeedbacks();
         // a task is successful if feedback for all in the task linked tests exist and if these tests all passed.
-        var feedbackForTask = testCasesInTask.stream().map(testCase -> feedbacks.stream().filter(feedback -> testCase.equals(feedback.getTestCase())).findAny().orElse(null))
-                .filter(Objects::nonNull).toList();
+        var feedbackForTask = testCasesInTask.stream().map(testCase -> feedbacks.stream().filter(feedback -> testCase.equals(feedback.getTestCase())).findAny())
+                .filter(Optional::isPresent).map(Optional::get).toList();
         if (feedbackForTask.size() != testCasesInTask.size()) {
             // some expected test cases were not executed in the student's result
             return false;
