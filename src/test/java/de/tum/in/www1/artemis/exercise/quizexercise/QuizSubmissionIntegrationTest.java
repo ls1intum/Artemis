@@ -350,9 +350,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student5");
         }
 
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
-        // submit quiz for the first time, expected status = OK
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
+        // create a submission for the first time
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
+        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student5", quizSubmission);
         // submit quiz for the second time, expected status = BAD_REQUEST
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }

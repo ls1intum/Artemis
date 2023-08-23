@@ -900,12 +900,21 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
 
         request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
-        if (result == HttpStatus.OK) {
-            // if joining was successful repeating the request should fail, otherwise with the same reason as the first attempt
-            result = HttpStatus.BAD_REQUEST;
-        }
+    }
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testCannotPerformJoinTwice(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(2), quizMode);
+        QuizBatch batch = new QuizBatch();
+        batch.setStartTime(ZonedDateTime.now().minusMinutes(1));
+        batch.setPassword("1234");
+
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
