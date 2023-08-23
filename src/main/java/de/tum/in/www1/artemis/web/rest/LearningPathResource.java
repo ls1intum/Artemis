@@ -166,7 +166,7 @@ public class LearningPathResource {
     }
 
     private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable Long learningPathId, NgxRequestType type) {
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
@@ -219,6 +219,9 @@ public class LearningPathResource {
         return ResponseEntity.ok(learningPath.getId());
     }
 
+    /**
+     * Enum representing the different graph representations that can be requested.
+     */
     public enum NgxRequestType {
 
         GRAPH("graph"), PATH("path");

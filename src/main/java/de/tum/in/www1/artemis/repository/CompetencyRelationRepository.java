@@ -62,6 +62,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);
 
+    // Important: this query is native since JPARepositories don't support recursive queries of this form
     @Query(value = """
                     WITH RECURSIVE transitive_closure(id) AS
                     (

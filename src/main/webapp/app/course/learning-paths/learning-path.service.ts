@@ -40,12 +40,8 @@ export class LearningPathService {
     }
 
     private sanitizeNgxLearningPathResponse(ngxLearningPathResponse: HttpResponse<NgxLearningPathDTO>) {
-        if (!ngxLearningPathResponse.body!.nodes) {
-            ngxLearningPathResponse.body!.nodes = [];
-        }
-        if (!ngxLearningPathResponse.body!.edges) {
-            ngxLearningPathResponse.body!.edges = [];
-        }
+        ngxLearningPathResponse.body!.nodes ??= [];
+        ngxLearningPathResponse.body!.edges ??= [];
         return ngxLearningPathResponse;
     }
 

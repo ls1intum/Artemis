@@ -16,8 +16,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -457,7 +462,8 @@ public class LearningPathService {
         Set<Long> masteredCompetencies = new HashSet<>();
         HashMap<Long, Double> competencyMastery = new HashMap<>();
         learningPath.getCompetencies().forEach(competency -> {
-            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), learningPath.getUser().getId());
+            // fetched learning path only contains data of the associated user
+            final var progress = competency.getUserProgress().stream().findFirst();
             if (progress.isEmpty()) {
                 competencyMastery.put(competency.getId(), 0d);
             }

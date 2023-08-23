@@ -8,6 +8,9 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.repository.CompetencyProgressRepository;
 
+/**
+ * Service responsible for initializing the database with specific testdata related to competency progress for use in integration tests.
+ */
 @Service
 public class CompetencyProgressUtilService {
 

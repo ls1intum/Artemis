@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -313,6 +314,17 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
 
         @Test
+        void testUtilityConstantsValid() throws NoSuchFieldException, IllegalAccessException {
+            Field extendsUtilityRatioField = LearningPathService.class.getDeclaredField("EXTENDS_UTILITY_RATIO");
+            Field assumesUtilityRatioField = LearningPathService.class.getDeclaredField("ASSUMES_UTILITY_RATIO");
+            extendsUtilityRatioField.setAccessible(true);
+            assumesUtilityRatioField.setAccessible(true);
+            final var extendsUtilityRatio = extendsUtilityRatioField.getDouble(null);
+            final var assumesUtilityRatio = assumesUtilityRatioField.getDouble(null);
+            assertThat(extendsUtilityRatio).isLessThan(assumesUtilityRatio);
+        }
+
+        @Test
         void testEmptyLearningPath() {
             NgxLearningPathDTO expected = new NgxLearningPathDTO(Set.of(), Set.of());
             generatePathAndAssert(expected);
@@ -503,7 +515,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private void generateAndAssert(NgxLearningPathDTO expected, LearningPathResource.NgxRequestType type) {
         LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
-        learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
+        learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
         NgxLearningPathDTO actual = switch (type) {
             case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
             case PATH -> learningPathService.generateNgxPathRepresentation(learningPath);
