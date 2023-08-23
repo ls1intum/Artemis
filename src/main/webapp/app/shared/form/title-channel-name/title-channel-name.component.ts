@@ -10,7 +10,7 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() title?: string;
     @Input() channelName?: string;
     @Input() channelNamePrefix: string;
-    @Input() pattern: string;
+    @Input() titlePattern: string;
     @Input() hideTitleLabel: boolean;
     @Input() emphasizeLabels = false;
     @Input() hideChannelName?: boolean;
