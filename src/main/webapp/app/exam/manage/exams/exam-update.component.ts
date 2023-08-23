@@ -31,6 +31,8 @@ export class ExamUpdateComponent implements OnInit {
     maxWorkingTimeInMinutes: number;
     isImport = false;
     isImportInSameCourse = false;
+    hideChannelNameInput = false;
+
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Link to the component enabling the selection of exercise groups and exercises for import
@@ -61,9 +63,7 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
-            if (this.exam.id == undefined && this.exam.testExam !== true) {
-                this.exam.channelName = '';
-            }
+            this.hideChannelNameInput = false;
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
 

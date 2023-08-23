@@ -33,7 +33,7 @@
                     [(title)]="lecture.title"
                     [(channelName)]="lecture.channelName"
                     channelNamePrefix="lecture-"
-                    [hideChannelName]="(lecture.id !== undefined && lecture.channelName === undefined) || !isMessagingEnabled(lecture.course)"
+                    [hideChannelName]="hideChannelNameInput"
                     [initChannelName]="lecture.id === undefined"
                 ></jhi-title-channel-name>
                 <div class="form-group" id="field_description">

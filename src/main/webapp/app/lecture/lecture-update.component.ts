@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture, requiresChannelName } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
@@ -32,6 +32,7 @@ export class LectureUpdateComponent implements OnInit {
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
+    hideChannelNameInput = false;
 
     courses: Course[];
 
@@ -82,6 +83,7 @@ export class LectureUpdateComponent implements OnInit {
             if (course) {
                 this.lecture.course = course;
             }
+            this.hideChannelNameInput = !requiresChannelName(this.lecture);
         });
 
         this.activatedRoute.queryParams.subscribe((params) => {
