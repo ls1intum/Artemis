@@ -162,7 +162,7 @@ def coverage_to_table(covs, exclude_urls=False):
         file_report_url = cov[1]
         class_file = filename_only if exclude_urls or file_report_url is None else f"[{filename_only}]({file_report_url})"
         line_coverage = cov[2]
-        confirmation = "✅❌"
+        confirmation = "✅ ❌"
         if line_coverage.startswith("100"):
             confirmation = "✅"
         elif line_coverage.startswith("not found"):
