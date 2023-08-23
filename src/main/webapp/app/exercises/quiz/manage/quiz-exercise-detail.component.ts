@@ -15,9 +15,9 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, getCourseFromExercise, requiresChannelName, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
@@ -69,7 +69,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
     shortAnswerFilterEnabled: boolean;
-    hideChannelNameInput = false;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -93,8 +92,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     faExclamationCircle = faExclamationCircle;
 
     readonly QuizMode = QuizMode;
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 
     constructor(
         private route: ActivatedRoute,
@@ -220,7 +217,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
-            this.hideChannelNameInput = !requiresChannelName(this.quizExercise, this.isExamMode, this.isImport);
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }

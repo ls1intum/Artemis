@@ -6,7 +6,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseFromExercise, getCourseId, requiresChannelName, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -20,7 +20,6 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { isMessagingEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -42,7 +41,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     isImport: boolean;
     examCourseId?: number;
-    hideChannelNameInput = false;
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
@@ -52,9 +50,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faBan = faBan;
     faSave = faSave;
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly getCourseFromExercise = getCourseFromExercise;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -104,7 +99,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    this.hideChannelNameInput = !requiresChannelName(this.fileUploadExercise, this.isExamMode, this.isImport);
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),
