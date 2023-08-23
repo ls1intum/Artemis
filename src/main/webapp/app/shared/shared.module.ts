@@ -23,10 +23,10 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { LookAheadSearchFieldModule } from 'app/shared/data-table/look-ahead-search-field/look-ahead-search-field.module';
+import { TypeAheadUserSearchFieldModule } from 'app/shared/type-ahead-search-field/type-ahead-user-search-field.module';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, LookAheadSearchFieldModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, TypeAheadUserSearchFieldModule],
     declarations: [
         LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,

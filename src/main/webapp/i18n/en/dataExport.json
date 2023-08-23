@@ -24,7 +24,8 @@
             "isBeingCreated": "Your recently requested data export is currently being created.",
             "lastRequestDate": "You requested your last data export on",
             "nextRequestDate": "You can request again on",
-            "login": "Login"
+            "loginOrName": "Login or name of the user",
+            "searchQueryTooShort": "Please enter at least {{ minSearchQueryLength }} characters."
         }
     }
 }

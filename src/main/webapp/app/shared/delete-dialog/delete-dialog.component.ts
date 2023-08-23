@@ -137,4 +137,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
             this.alternativeEntityTitle = '';
         }
     }
+
+    trackChanges() {
+        console.log('track changes - delete dialog');
+        console.log(this.entityTitle);
+    }
 }
