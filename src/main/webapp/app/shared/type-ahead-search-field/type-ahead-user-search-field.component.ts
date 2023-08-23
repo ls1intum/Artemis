@@ -24,25 +24,25 @@ export class TypeAheadUserSearchFieldComponent {
     constructor(private userService: UserService) {}
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
-        console.log('search');
-        this.searching = true;
         this.searchFailed = false;
-        const observable = login.pipe(
-            tap((loginOrName) => console.log('searching for ' + loginOrName)),
+        return login.pipe(
             switchMap((loginOrName: string) => {
-                console.log('searching for ' + loginOrName);
-                if (loginOrName.length < 3) {
+                if (loginOrName.length < this.minSearchQueryLength) {
+                    this.searchQueryTooShort = true;
+                    this.searching = false;
                     return of([]);
+                } else {
+                    this.searchQueryTooShort = false;
                 }
+                this.searching = true;
+
                 return this.userService.search(loginOrName).pipe(
                     switchMap((usersResponse) => of(usersResponse.body!)),
                     tap((users) => {
-                        console.log('found ' + users.length + ' users');
                         this.searching = false;
                         this.searchNoResults = users.length === 0;
                     }),
                     catchError(() => {
-                        console.log('error');
                         this.searching = false;
                         this.searchFailed = true;
                         return of([]);
@@ -50,12 +50,27 @@ export class TypeAheadUserSearchFieldComponent {
                 );
             }),
         );
-        return observable;
     };
 
     onChange() {
-        this.loginOrNameChange.emit(this.loginOrName);
-        this.searchQueryTooShort = this.loginOrName.length < this.minSearchQueryLength - 1;
+        const user = this.loginOrName as unknown as User;
+        // this is a user object returned by search, but we are only interested in the login
+        // if we don't do this, the user object will be converted to a string and passed to the parent component
+        if (user && user.login) {
+            this.loginOrNameChange.emit(user.login);
+        } else {
+            this.loginOrNameChange.emit(this.loginOrName);
+        }
+        this.searchQueryTooShort = this.loginOrName.length < this.minSearchQueryLength;
     }
-    userFormatter = (result: User) => result.login! + ' ' + result.name!;
+
+    resultFormatter = (result: User) => result.name! + ' (' + result.login! + ')';
+    inputFormatter(input: User | string) {
+        const user = input as unknown as User;
+        if (user && user.login) {
+            return user.login!;
+        } else {
+            return input as string;
+        }
+    }
 }

@@ -37,16 +37,17 @@ describe('TypeAheadUserSearchFieldComponent', () => {
             } as unknown as HttpResponse<User[]>),
         );
 
-        component.search(of('ge12abc'));
+        component.search(of('ge12abc')).subscribe();
         expect(searchSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
     });
 
     it('should not call the user service on search for string with less than three characters', () => {
         const searchSpy = jest.spyOn(userService, 'search');
 
-        component.search(of('ge'));
+        component.search(of('ge')).subscribe();
         expect(searchSpy).not.toHaveBeenCalled();
         expect(component.searchQueryTooShort).toBeTrue();
+        expect(component.searching).toBeFalse();
     });
 
     it('should set searchNoResults to true if no users are found', () => {
@@ -56,13 +57,32 @@ describe('TypeAheadUserSearchFieldComponent', () => {
             } as unknown as HttpResponse<User[]>),
         );
 
-        component.search(of('ge12abc'));
+        component.search(of('ge12abc')).subscribe();
         expect(component.searchNoResults).toBeTrue();
+        expect(component.searching).toBeFalse();
     });
 
     it('should set searchFailed to true if the user service throws an error', () => {
         jest.spyOn(userService, 'search').mockReturnValue(throwError({ status: 500 }));
-        component.search(of('ge12abc'));
+        component.search(of('ge12abc')).subscribe();
         expect(component.searchFailed).toBeTrue();
+        expect(component.searching).toBeFalse();
+    });
+
+    it('should emit the loginOrNameChange event on change with the correct value and update searchQueryTooShort', () => {
+        const loginOrNameChangeSpy = jest.spyOn(component.loginOrNameChange, 'emit');
+        component.loginOrName = 'ge12abc';
+        component.onChange();
+        expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
+        expect(component.searchQueryTooShort).toBeFalse();
+
+        component.loginOrName = 'ge';
+        component.onChange();
+        expect(component.searchQueryTooShort).toBeTrue();
+    });
+
+    it('should format the result correctly', () => {
+        const user = { login: 'ge12abc', name: 'abc' } as User;
+        expect(component.resultFormatter(user)).toBe('abc (ge12abc)');
     });
 });

@@ -25,7 +25,7 @@
             "lastRequestDate": "You requested your last data export on",
             "nextRequestDate": "You can request again on",
             "loginOrName": "Login or name of the user",
-            "searchQueryTooShort": "Please enter at least {{ minSearchQueryLength }} characters."
+            "searchQueryTooShort": "Please enter at least {{ length }} characters."
         }
     }
 }

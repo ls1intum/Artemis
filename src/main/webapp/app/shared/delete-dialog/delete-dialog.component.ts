@@ -114,7 +114,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
      * Check if all security checks are fulfilled
      * if deleteConfirmationText is passed the entityTitle and entered confirmation have to match
      * if requireConfirmationOnlyForAdditionalChecks is passed:
-     *   if at least one additional check is selected the entityTitle and entered confirmation also have to match
+     * if at least one additional check is selected the entityTitle and entered confirmation also have to match
      */
     get areSecurityChecksFulfilled(): boolean {
         return !(
