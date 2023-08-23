@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -250,4 +250,20 @@ export function resetDates(exercise: Exercise) {
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;
+}
+
+export function hideChannelName(exercise: Exercise, isExamMode: boolean, isImport: boolean): boolean {
+    // hide if messaging is disabled or exam mode
+    if (!isMessagingEnabled(getCourseFromExercise(exercise)) || isExamMode) {
+        return true;
+    }
+
+    // show on create or import
+    const isCreate = exercise.id === undefined;
+    if (isCreate || isImport) {
+        return false;
+    }
+
+    // hide channel name in edit mode if the exercise doesn't have a channel
+    return exercise.channelName === undefined;
 }
