@@ -23,7 +23,7 @@ export class ProgrammingExerciseInformationComponent implements OnChanges {
     protected readonly getCourseFromExercise = getCourseFromExercise;
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.programmingExercise || changes.isImportFromExistingExercise || changes.isExamMode) {
+        if (changes.programmingExercise || changes.isEdit || changes.isExamMode) {
             this.hideChannelNameInput = !requiresChannelName(this.programmingExercise, this.isExamMode, !this.isEdit);
         }
     }
