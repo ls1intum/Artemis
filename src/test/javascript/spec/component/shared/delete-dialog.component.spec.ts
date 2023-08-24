@@ -15,7 +15,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import '@angular/localize/init';
 import { ButtonType } from 'app/shared/components/button.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
@@ -125,43 +124,4 @@ describe('DeleteDialogComponent', () => {
         fixture.destroy();
         flush();
     }));
-
-    it.each([true, false])('should set the correct translation strings and values on data export checkbox change', (checkboxChecked: boolean) => {
-        comp.entityTitle = 'title';
-        comp.alternativeEntityTitle = 'alternative title';
-        comp.oldEntityTitle = comp.entityTitle;
-        comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } });
-        if (checkboxChecked) {
-            expect(comp.confirmEntityName).toBe('');
-            expect(comp.deleteConfirmationText).toBe('artemisApp.dataExport.typeUserLoginToConfirm');
-            expect(comp.entityTitle).toBe('alternative title');
-        } else {
-            expect(comp.confirmEntityName).toBe('');
-            expect(comp.deleteConfirmationText).toBe('artemisApp.dataExport.typeLoginToConfirm');
-            expect(comp.entityTitle).toBe('title');
-            expect(comp.alternativeEntityTitle).toBe('');
-        }
-    });
-
-    it('should emit correct even when clicking confirm button', () => {
-        comp.entityTitle = 'title';
-        comp.dataExportForAnotherUser = new EventEmitter<string>();
-        const dataExportEmitSpy = jest.spyOn(comp.dataExportForAnotherUser, 'emit');
-        comp.actionType = ActionType.RequestDataExport;
-        comp.additionalChecks = { test: 'test' };
-        comp.additionalChecksValues = { test: true };
-        comp.confirmDelete();
-        expect(dataExportEmitSpy).toHaveBeenCalledOnce();
-        expect(dataExportEmitSpy).toHaveBeenCalledWith('title');
-        expect(comp.delete).not.toHaveBeenCalledOnce();
-        dataExportEmitSpy.mockReset();
-
-        comp.actionType = ActionType.Delete;
-        comp.delete = new EventEmitter<{ [key: string]: boolean }>();
-        const deleteEmitSpy = jest.spyOn(comp.delete, 'emit');
-        comp.confirmDelete();
-        expect(deleteEmitSpy).toHaveBeenCalledOnce();
-        expect(deleteEmitSpy).toHaveBeenCalledWith({ test: true });
-        expect(dataExportEmitSpy).not.toHaveBeenCalledOnce();
-    });
 });

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -6,7 +6,6 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faBan, faCheck, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { NgForm } from '@angular/forms';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -17,8 +16,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     private dialogErrorSubscription: Subscription;
     dialogError: Observable<string>;
     @Output() delete: EventEmitter<{ [key: string]: boolean }>;
-    @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
-
     submitDisabled: boolean;
     confirmEntityName: string;
     entityTitle: string;
@@ -106,7 +103,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
      * Check if all security checks are fulfilled
      * if deleteConfirmationText is passed the entityTitle and entered confirmation have to match
      * if requireConfirmationOnlyForAdditionalChecks is passed:
-     * if at least one additional check is selected the entityTitle and entered confirmation also have to match
+     *  if at least one additional check is selected the entityTitle and entered confirmation also have to match
      */
     get areSecurityChecksFulfilled(): boolean {
         return !(

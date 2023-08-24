@@ -19,7 +19,6 @@ export class DeleteButtonDirective implements OnInit {
     @Input() requireConfirmationOnlyForAdditionalChecks = false;
     @Input() dialogError: Observable<string>;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
-    @Output() dataExportForAnotherUser = new EventEmitter<string>();
     @Input() animation = true;
 
     deleteTextSpan: HTMLElement;

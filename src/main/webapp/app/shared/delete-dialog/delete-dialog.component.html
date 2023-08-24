@@ -38,7 +38,7 @@
             type="submit"
             [ngClass]="['btn', buttonType]"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled || confirmEntityName.trim().length === 0"
+            [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
             [ngSwitch]="actionType"
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>

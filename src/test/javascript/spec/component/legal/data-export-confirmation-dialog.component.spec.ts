@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -9,16 +9,16 @@ import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { EventEmitter } from '@angular/core';
+import { DebugElement, EventEmitter } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-
-//TODO finish tests
+import { By } from '@angular/platform-browser';
+import { Observable, Subject } from 'rxjs';
 
 describe('DataExportConfirmationDialogComponent', () => {
     let comp: DataExportConfirmationDialogComponent;
     let fixture: ComponentFixture<DataExportConfirmationDialogComponent>;
-    //let debugElement: DebugElement;
-    //let ngbActiveModal: NgbActiveModal;
+    let debugElement: DebugElement;
+    let ngbActiveModal: NgbActiveModal;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -30,64 +30,81 @@ describe('DataExportConfirmationDialogComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);
                 comp = fixture.componentInstance;
-                // debugElement = fixture.debugElement;
-                // ngbActiveModal = TestBed.inject(NgbActiveModal);
+                debugElement = fixture.debugElement;
+                ngbActiveModal = TestBed.inject(NgbActiveModal);
             });
     });
 
-    // TODO: fix tests
-    it('Dialog is correctly initialized', fakeAsync(() => {
-        // const closeSpy = jest.spyOn(ngbActiveModal, 'close');
-        // let inputFormGroup = debugElement.query(By.css('.form-group'));
-        // expect(inputFormGroup).toBeNull();
-        //
-        // const modalTitle = fixture.debugElement.query(By.css('.modal-title'));
-        // expect(modalTitle).not.toBeNull();
-        // comp.entityTitle = 'title';
-        // comp.deleteQuestion = 'artemisApp.exercise.delete.question';
-        // comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
-        // comp.dialogError = new Observable<string>();
-        // comp.buttonType = ButtonType.ERROR;
-        // fixture.detectChanges();
-        //
-        // const closeButton = fixture.debugElement.query(By.css('.btn-close'));
-        // expect(closeButton).not.toBeNull();
-        // closeButton.nativeElement.click();
-        // expect(closeSpy).toHaveBeenCalledOnce();
-        // expect(cancelButton).not.toBeNull();
-        // cancelButton.nativeElement.click();
-        // expect(closeSpy).toHaveBeenCalledTimes(2);
-        //
-        // inputFormGroup = debugElement.query(By.css('.form-group'));
-        // expect(inputFormGroup).not.toBeNull();
-    }));
+    it('should initialize dialog correctly', () => {
+        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
+        comp.adminDialog = true;
+        comp.expectedLogin = 'login';
+        comp.expectedLoginOfOtherUser = 'other login';
+        comp.dialogError = new Observable<string>();
+        fixture.detectChanges();
+        const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
+        const closeButton = fixture.debugElement.query(By.css('.btn-close'));
+        expect(closeButton).not.toBeNull();
+        closeButton.nativeElement.click();
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(cancelButton).not.toBeNull();
+        cancelButton.nativeElement.click();
+        expect(closeSpy).toHaveBeenCalledTimes(2);
 
-    it('Form properly checked before submission', fakeAsync(() => {
-        // // Form can't be submitted if there is deleteConfirmationText and user didn't input the entity title
-        // comp.entityTitle = 'title';
-        // comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
-        // comp.confirmEntityName = '';
-        // comp.dialogError = new Observable<string>();
-        // comp.buttonType = ButtonType.ERROR;
-        // fixture.detectChanges();
-        // let submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        // expect(submitButton.nativeElement.disabled).toBeTrue();
-        //
-        // // User entered some title
-        // comp.confirmEntityName = 'some title';
-        // fixture.detectChanges();
-        // submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        // expect(submitButton.nativeElement.disabled).toBeTrue();
-        //
-        // // User entered correct tile
-        // comp.confirmEntityName = 'title';
-        // expect(comp.confirmEntityName).toBe('title');
-        // fixture.detectChanges();
-        // submitButton = debugElement.query(By.css('.btn.btn-danger'));
-        // expect(submitButton.nativeElement.disabled).toBeFalse();
-    }));
+        const inputFormGroup = debugElement.query(By.css('.form-group'));
+        expect(inputFormGroup).not.toBeNull();
+    });
 
-    it('Error dialog events are correctly handled', fakeAsync(() => {}));
+    it('should correctly enable and disable request button', () => {
+        // Form can't be submitted if the expected login doesn't match the entered login
+        comp.expectedLogin = 'login';
+        comp.enteredLogin = '';
+        comp.dialogError = new Observable<string>();
+        fixture.detectChanges();
+        let submitButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(submitButton.nativeElement.disabled).toBeTrue();
+
+        // User entered incorrect login --> button is disabled
+        comp.enteredLogin = 'my login';
+        fixture.detectChanges();
+        submitButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(submitButton.nativeElement.disabled).toBeTrue();
+
+        // User entered correct login --> button is enabled
+        comp.enteredLogin = 'login';
+        fixture.detectChanges();
+        submitButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(submitButton.nativeElement.disabled).toBeFalse();
+    });
+
+    it('should handle dialog error events correctly', () => {
+        comp.enteredLogin = 'login';
+        comp.expectedLogin = 'login';
+        const dialogErrorSource = new Subject<string>();
+        comp.dialogError = dialogErrorSource.asObservable();
+        comp.dataExportRequest = new EventEmitter<void>();
+        fixture.detectChanges();
+        let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBeFalse();
+
+        // external component request method was executed
+        comp.confirmDataExportRequest();
+        fixture.detectChanges();
+        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBeTrue();
+
+        // external component emits error to the dialog
+        dialogErrorSource.next('example error');
+        fixture.detectChanges();
+        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBeFalse();
+
+        // external component completed request method successfully
+        const clearStub = jest.spyOn(comp, 'clear');
+        clearStub.mockReturnValue();
+        dialogErrorSource.next('');
+        expect(clearStub).toHaveBeenCalledOnce();
+    });
 
     it.each([true, false])('should set the correct translation strings and values on checkbox change', (checkboxChecked: boolean) => {
         comp.expectedLogin = 'login';
