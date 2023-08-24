@@ -78,7 +78,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         jest.resetAllMocks();
 
         // @ts-ignore, otherwise we cannot set the loginOrName to an object
-        component.loginOrName = { login: 'ge12abc' }.toString();
+        component.loginOrName = { login: 'ge12abc' };
         component.onChange();
         expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
 
