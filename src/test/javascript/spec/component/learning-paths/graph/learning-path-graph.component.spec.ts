@@ -49,13 +49,11 @@ describe('LearningPathGraphComponent', () => {
         comp.learningPathId = 1;
         fixture.detectChanges();
         if (viewMode === LearningPathViewMode.GRAPH) {
-            expect(getLearningPathNgxGraphStub).toHaveBeenCalledOnce();
-            expect(getLearningPathNgxGraphStub).toHaveBeenCalledWith(1);
+            expect(getLearningPathNgxGraphStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(getLearningPathNgxPathStub).not.toHaveBeenCalled();
         } else {
             expect(getLearningPathNgxGraphStub).not.toHaveBeenCalledOnce();
-            expect(getLearningPathNgxPathStub).toHaveBeenCalled();
-            expect(getLearningPathNgxPathStub).toHaveBeenCalledWith(1);
+            expect(getLearningPathNgxPathStub).toHaveBeenCalledExactlyOnceWith(1);
         }
     });
 
@@ -65,12 +63,9 @@ describe('LearningPathGraphComponent', () => {
         const zoomToFitStub = jest.spyOn(comp.zoomToFit$, 'next');
         fixture.detectChanges();
         comp.onResize();
-        expect(updateStub).toHaveBeenCalledOnce();
-        expect(updateStub).toHaveBeenCalledWith(true);
-        expect(centerStub).toHaveBeenCalledOnce();
-        expect(centerStub).toHaveBeenCalledWith(true);
-        expect(zoomToFitStub).toHaveBeenCalledOnce();
-        expect(zoomToFitStub).toHaveBeenCalledWith(true);
+        expect(updateStub).toHaveBeenCalledExactlyOnceWith(true);
+        expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
+        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should zoom to fit and center on resize', () => {
@@ -78,25 +73,22 @@ describe('LearningPathGraphComponent', () => {
         const centerStub = jest.spyOn(comp.center$, 'next');
         fixture.detectChanges();
         comp.onCenterView();
-        expect(zoomToFitStub).toHaveBeenCalledOnce();
-        expect(zoomToFitStub).toHaveBeenCalledWith(true);
-        expect(centerStub).toHaveBeenCalledOnce();
-        expect(centerStub).toHaveBeenCalledWith(true);
+        expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith(true);
+        expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should change view mode and load data if necessary', () => {
         comp.viewMode = LearningPathViewMode.GRAPH;
         comp.learningPathId = 1;
         fixture.detectChanges();
-        expect(getLearningPathNgxGraphStub).toHaveBeenCalledOnce();
-        expect(getLearningPathNgxGraphStub).toHaveBeenCalledWith(1);
+        expect(getLearningPathNgxGraphStub).toHaveBeenCalledExactlyOnceWith(1);
         expect(getLearningPathNgxPathStub).not.toHaveBeenCalled();
         comp.changeViewMode();
         expect(comp.viewMode).toEqual(LearningPathViewMode.PATH);
-        expect(getLearningPathNgxPathStub).toHaveBeenCalledOnce();
-        expect(getLearningPathNgxGraphStub).toHaveBeenCalledWith(1);
+        expect(getLearningPathNgxPathStub).toHaveBeenCalledExactlyOnceWith(1);
         comp.changeViewMode();
         expect(comp.viewMode).toEqual(LearningPathViewMode.GRAPH);
+        // make sure stub was not called again
         expect(getLearningPathNgxGraphStub).toHaveBeenCalledOnce();
     });
 });

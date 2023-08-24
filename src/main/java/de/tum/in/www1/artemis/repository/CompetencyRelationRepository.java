@@ -19,45 +19,46 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             SELECT relation
             FROM CompetencyRelation relation
             WHERE relation.headCompetency.id = :#{#competencyId}
-            OR relation.tailCompetency.id = :#{#competencyId}
+                OR relation.tailCompetency.id = :#{#competencyId}
             """)
     Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT relation
             FROM CompetencyRelation relation
-            LEFT JOIN FETCH relation.headCompetency
-            LEFT JOIN FETCH relation.tailCompetency
+                LEFT JOIN FETCH relation.headCompetency
+                LEFT JOIN FETCH relation.tailCompetency
             WHERE relation.headCompetency.course.id = :#{#courseId}
-            AND relation.tailCompetency.course.id = :#{#courseId}
+                AND relation.tailCompetency.course.id = :#{#courseId}
             """)
     Set<CompetencyRelation> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-                    SELECT count(cr)
-                    FROM CompetencyRelation cr
-                    WHERE cr.headCompetency.course.id = :courseId OR cr.tailCompetency.course.id = :courseId
+            SELECT count(cr)
+            FROM CompetencyRelation cr
+            WHERE cr.headCompetency.course.id = :courseId
+                OR cr.tailCompetency.course.id = :courseId
             """)
     long countByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-                    SELECT DISTINCT relation.headCompetency.id
-                    FROM CompetencyRelation relation
-                    LEFT JOIN relation.headCompetency
-                    LEFT JOIN relation.tailCompetency
-                    WHERE relation.tailCompetency.id IN :competencyIds
-                    AND relation.type <> 'MATCHES'
+            SELECT DISTINCT relation.headCompetency.id
+            FROM CompetencyRelation relation
+                LEFT JOIN relation.headCompetency
+                LEFT JOIN relation.tailCompetency
+            WHERE relation.tailCompetency.id IN :competencyIds
+                AND relation.type <> 'MATCHES'
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 
     @Query("""
-                    SELECT COUNT(relation)
-                    FROM CompetencyRelation relation
-                    LEFT JOIN relation.headCompetency
-                    LEFT JOIN relation.tailCompetency
-                    WHERE relation.tailCompetency.id IN :competencyTailIds
-                    AND relation.headCompetency.id IN :competencyHeadIds
-                    AND relation.type = :type
+            SELECT COUNT(relation)
+            FROM CompetencyRelation relation
+                LEFT JOIN relation.headCompetency
+                LEFT JOIN relation.tailCompetency
+            WHERE relation.tailCompetency.id IN :competencyTailIds
+                AND relation.headCompetency.id IN :competencyHeadIds
+                AND relation.type = :type
             """)
     long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);

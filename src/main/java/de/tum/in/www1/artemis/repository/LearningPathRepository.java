@@ -46,15 +46,15 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT learningPath
-                FROM LearningPath learningPath
+            SELECT learningPath
+            FROM LearningPath learningPath
                 LEFT JOIN FETCH learningPath.competencies competencies
                 LEFT JOIN FETCH competencies.userProgress progress
                 LEFT JOIN FETCH competencies.lectureUnits lectureUnits
                 LEFT JOIN FETCH lectureUnits.completedUsers completedUsers
                 LEFT JOIN FETCH competencies.exercises exercises
                 LEFT JOIN FETCH exercises.studentParticipations studentParticipations
-                WHERE learningPath.id = :learningPathId
+            WHERE learningPath.id = :learningPathId
                 AND (progress IS NULL OR progress.user.id = learningPath.user.id)
                 AND (completedUsers IS NULL OR completedUsers.user.id = learningPath.user.id)
                 AND (studentParticipations IS NULL OR studentParticipations.student.id = learningPath.user.id)
