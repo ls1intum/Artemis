@@ -44,6 +44,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
      * @param course        the current course context (might differ from the exercise in case of import)
      * @param isExamMode    true if the exercise should be an exam exercise
      * @param isImport      true if the exercise is being imported
+     * @return boolean      true if the channel name is required, else false
      */
     private requiresChannelName(exercise: Exercise, course: Course | undefined, isExamMode: boolean, isImport: boolean): boolean {
         // not required if messaging is disabled or exam mode
