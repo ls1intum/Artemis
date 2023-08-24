@@ -1,4 +1,6 @@
-<jhi-commits-info [commits]="commits" [activeCommitHash]="currentSubmission?.commitHash" />
+<h5 class="mb-2">{{ exercise?.title }}</h5>
+
+<jhi-commits-info class="mb-2" [activeCommitHash]="currentSubmission?.commitHash" [participationId]="studentParticipation?.id" />
 <div *ngIf="exercise?.gitDiffReport">
     <dt>
         <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabel">Lines added/removed between current submission and previous submission</span>

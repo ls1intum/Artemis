@@ -62,12 +62,9 @@ public class ProgrammingExerciseGitDiffReportResource {
     public ResponseEntity<ProgrammingExerciseGitDiffReport> getGitDiffReportForSubmissions(@PathVariable long exerciseId, @PathVariable long submissionId1,
             @PathVariable long submissionId2) throws GitAPIException, IOException {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} and submission {} of exercise {}", submissionId1, submissionId2, exerciseId);
-
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
         var report = gitDiffReportService.createReportForSubmissions(submissionId1, submissionId2);
-
         return ResponseEntity.ok(report);
     }
 
@@ -76,12 +73,9 @@ public class ProgrammingExerciseGitDiffReportResource {
     public ResponseEntity<ProgrammingExerciseGitDiffReport> getGitDiffReportForSubmissionWithTemplate(@PathVariable long exerciseId, @PathVariable long submissionId1)
             throws GitAPIException, IOException {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} with the template of exercise {}", submissionId1, exerciseId);
-
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
         var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submissionId1);
-
         return ResponseEntity.ok(report);
     }
 }

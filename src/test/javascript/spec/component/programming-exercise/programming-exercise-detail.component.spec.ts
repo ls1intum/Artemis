@@ -74,8 +74,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     } as ExerciseManagementStatisticsDto;
 
     const gitDiffReport = {
-        templateRepositoryCommitHash: 'x1',
-        solutionRepositoryCommitHash: 'x2',
+        firstCommitHash: 'x1',
+        secondCommitHash: 'x2',
         entries: [
             {
                 previousFilePath: '/src/test.java',

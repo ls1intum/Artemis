@@ -24,7 +24,6 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -523,18 +522,14 @@ export class ProgrammingExerciseService {
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
-    getDiffReportForSubmissions(
-        exerciseId: number,
-        olderSubmission: ProgrammingSubmission,
-        newerSubmission: ProgrammingSubmission,
-    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+    getDiffReportForSubmissions(exerciseId: number, olderSubmissionId: number, newerSubmissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmission.id}/diff-report/${newerSubmission.id}`, { observe: 'response' })
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report/${newerSubmissionId}`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
-    getDiffReportForSubmissionWithTemplate(exerciseId: number, submission: ProgrammingSubmission): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+    getDiffReportForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submission.id}/diff-report-with-template`, { observe: 'response' })
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
 

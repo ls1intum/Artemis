@@ -51,14 +51,16 @@ export class GitDiffReportModalComponent implements OnInit {
 
     private loadRepositoryFilesForParticipations() {
         if (this.report.participationIdForFirstCommit) {
-            this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContent(this.report.participationIdForFirstCommit!).subscribe({
-                next: (filesWithContent: Map<string, string>) => {
-                    this.firstCommitFileContentByPath = filesWithContent;
-                },
-                error: () => {
-                    this.errorWhileFetchingRepos = true;
-                },
-            });
+            this.programmingExerciseParticipationService
+                .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForFirstCommit!, this.report.firstCommitHash)
+                .subscribe({
+                    next: (filesWithContent: Map<string, string>) => {
+                        this.firstCommitFileContentByPath = filesWithContent;
+                    },
+                    error: () => {
+                        this.errorWhileFetchingRepos = true;
+                    },
+                });
         } else {
             // if there is no first commit, we want to see the diff between the current submission and the template
             this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
@@ -70,14 +72,16 @@ export class GitDiffReportModalComponent implements OnInit {
                 },
             });
         }
-        this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContent(this.report.participationIdForSecondCommit!).subscribe({
-            next: (filesWithContent: Map<string, string>) => {
-                this.secondCommitFileContentByPath = filesWithContent;
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
+        this.programmingExerciseParticipationService
+            .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForSecondCommit!, this.report.secondCommitHash)
+            .subscribe({
+                next: (filesWithContent: Map<string, string>) => {
+                    this.secondCommitFileContentByPath = filesWithContent;
+                },
+                error: () => {
+                    this.errorWhileFetchingRepos = true;
+                },
+            });
     }
 
     close(): void {
