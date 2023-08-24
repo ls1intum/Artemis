@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
