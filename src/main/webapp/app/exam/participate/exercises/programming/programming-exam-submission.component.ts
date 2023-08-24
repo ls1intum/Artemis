@@ -63,7 +63,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private domainService: DomainService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
     }
 
@@ -127,8 +130,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     updateViewFromSubmission(): void {
         // do nothing - the code editor itself is taking care of updating the view from submission
     }
-    //@ts-ignore it's intentionally unused
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
         // submission versions are not supported for programming exercises
         throw new Error('Submission versions are not supported for file upload exercises.');
     }
