@@ -1,5 +1,5 @@
-import { DELETE } from '../../../constants';
 import { courseList, courseOverview } from '../../../artemis';
+import { DELETE } from '../../../constants';
 import { BASE_API, GET, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 import { getExercise } from '../../../utils';

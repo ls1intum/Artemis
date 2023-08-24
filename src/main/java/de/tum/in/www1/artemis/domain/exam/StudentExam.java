@@ -96,16 +96,18 @@ public class StudentExam extends AbstractAuditingEntity {
         return started;
     }
 
-    public void setStarted(Boolean started) {
-        this.started = started;
+    /**
+     * Sets the started flag to true and sets the startedDate to the current date
+     *
+     * @param startedDate the date when the exam was started
+     */
+    public void setStartedAndStartDate(ZonedDateTime startedDate) {
+        this.started = true;
+        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getStartedDate() {
         return startedDate;
-    }
-
-    public void setStartedDate(ZonedDateTime startedDate) {
-        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getSubmissionDate() {

@@ -1745,8 +1745,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfLockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService).lockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise2);
     }
 
     @Test
@@ -1799,8 +1799,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise);
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositoriesAndParticipations(programmingExercise2);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise);
+        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise2);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1994,8 +1994,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(now().minusMinutes(1));
         });
@@ -2686,8 +2685,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(now().minusMinutes(1));
         });

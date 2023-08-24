@@ -16,7 +16,10 @@ export class RatingComponent implements OnInit {
     public disableRating = false;
     @Input() result?: Result;
 
-    constructor(private ratingService: RatingService, private accountService: AccountService) {}
+    constructor(
+        private ratingService: RatingService,
+        private accountService: AccountService,
+    ) {}
 
     ngOnInit(): void {
         if (!this.result || !this.result.id || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
