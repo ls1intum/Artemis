@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -250,29 +250,4 @@ export function resetDates(exercise: Exercise) {
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;
-}
-
-/**
- * Determines whether the provided exercises should have a channel name. This is not the case, if messaging in the course
- * is disabled or if it is an exam exercise.
- * If messaging is enabled, a channel name should exist for newly created and imported exercises.
- *
- * @param exercise
- * @param isExamMode
- * @param isImport
- */
-export function requiresChannelName(exercise: Exercise, isExamMode: boolean, isImport: boolean): boolean {
-    // not required if messaging is disabled or exam mode
-    if (!isMessagingEnabled(getCourseFromExercise(exercise)) || isExamMode) {
-        return false;
-    }
-
-    // required on create or import (messaging is enabled)
-    const isCreate = exercise.id === undefined;
-    if (isCreate || isImport) {
-        return true;
-    }
-
-    // when editing, it is required if the exercise has a channel
-    return exercise.channelName !== undefined;
 }

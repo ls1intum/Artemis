@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { Exercise, requiresChannelName } from 'app/entities/exercise.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -21,7 +21,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     hideChannelNameInput = false;
     ngOnChanges(changes: SimpleChanges) {
         if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
-            this.hideChannelNameInput = !requiresChannelName(this.exercise, this.isExamMode, this.isImport);
+            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course, this.isExamMode, this.isImport);
         }
     }
 
@@ -33,5 +33,31 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     updateChannelName(newName: string) {
         this.exercise.channelName = newName;
         this.onChannelNameChange.emit(newName);
+    }
+
+    /**
+     * Determines whether the provided exercises should have a channel name. This is not the case, if messaging in the course
+     * is disabled or if it is an exam exercise.
+     * If messaging is enabled, a channel name should exist for newly created and imported exercises.
+     *
+     * @param exercise      the exercise under consideration
+     * @param course        the current course context (might differ from the exercise in case of import)
+     * @param isExamMode    true if the exercise should be an exam exercise
+     * @param isImport      true if the exercise is being imported
+     */
+    private requiresChannelName(exercise: Exercise, course: Course | undefined, isExamMode: boolean, isImport: boolean): boolean {
+        // not required if messaging is disabled or exam mode
+        if (!isMessagingEnabled(course) || isExamMode) {
+            return false;
+        }
+
+        // required on create or import (messaging is enabled)
+        const isCreate = exercise.id === undefined;
+        if (isCreate || isImport) {
+            return true;
+        }
+
+        // when editing, it is required if the exercise has a channel
+        return exercise.channelName !== undefined;
     }
 }
