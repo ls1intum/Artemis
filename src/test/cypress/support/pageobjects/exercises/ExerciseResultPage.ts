@@ -1,4 +1,5 @@
 import { BASE_API, GET } from '../../constants';
+
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */

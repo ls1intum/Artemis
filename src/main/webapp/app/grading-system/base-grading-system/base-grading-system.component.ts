@@ -124,7 +124,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * and sets the inclusivity and first passing grade properties
      *
      * @param gradingScale the grading scale retrieved from the get request
-     * @private
      */
     handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
@@ -363,7 +362,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * and sets the existingGradingScale property
      *
      * @param newGradingScale the grading scale that was just saved
-     * @private
      */
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
@@ -721,9 +719,8 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Import grade steps from csv file
      * @param event the read event
      * @param csvFile the csv file
-     * @private
      */
-    async readGradingStepsFromCSVFile(event: any, csvFile: File) {
+    private async readGradingStepsFromCSVFile(event: any, csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
@@ -761,7 +758,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                     lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
                     upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
                     ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
-                } as GradeStep),
+                }) as GradeStep,
         );
     }
 

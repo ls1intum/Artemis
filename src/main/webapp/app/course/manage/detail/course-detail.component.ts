@@ -47,7 +47,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faChartBar = faChartBar;
     faClipboard = faClipboard;
 
-    constructor(private eventManager: EventManager, private courseManagementService: CourseManagementService, private route: ActivatedRoute, private alertService: AlertService) {}
+    constructor(
+        private eventManager: EventManager,
+        private courseManagementService: CourseManagementService,
+        private route: ActivatedRoute,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
