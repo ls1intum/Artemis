@@ -5,20 +5,11 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
 
     <conversionRule conversionWord="threadId" converterClass="de.tum.in.www1.artemis.util.parallelTestExecution.ThreadIdConverter"/>
-    <conversionRule conversionWord="threadLocalId" converterClass="de.tum.in.www1.artemis.util.parallelTestExecution.ThreadLocalIdConverter"/>
-    <conversionRule conversionWord="testGroup" converterClass="de.tum.in.www1.artemis.util.parallelTestExecution.TestGroupConverter"/>
 
-    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
-        <discriminator class="de.tum.in.www1.artemis.util.parallelTestExecution.LoggingDiscriminator"></discriminator>
-        <sift>
-            <appender class="ch.qos.logback.core.FileAppender">
-                <file>build/logs/${logFileName}.log</file>
-                <append>false</append>
-                <encoder>
-                    <pattern>%d{HH:mm:ss.SSS} | %3.3threadLocalId --> %3.3threadId == %9.9testGroup | %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
-                </encoder>
-            </appender>
-        </sift>
+    <appender name="ParallelConsoleAppender" class="de.tum.in.www1.artemis.util.parallelTestExecution.ParallelConsoleAppender">
+        <encoder>
+            <pattern>%16.16d{HH:mm:ss.SSS} | %3.3threadId %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
+        </encoder>
     </appender>
 
     <logger name="de.tum.in.www1.artemis" level="INFO"/>
@@ -54,7 +45,7 @@
 
     <root>
         <level>WARN</level>
-        <appender-ref ref="SIFT"/>
+        <appender-ref ref="ParallelConsoleAppender"/>
     </root>
 
 </configuration>
