@@ -36,6 +36,10 @@ public class AthenaRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
+    private final RestTemplate veryShortTimeoutRestTemplate;
+
+    private MockRestServiceServer mockServerVeryShortTimeout;
+
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
@@ -44,15 +48,17 @@ public class AthenaRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
+            @Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.veryShortTimeoutRestTemplate = veryShortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
+        mockServerVeryShortTimeout = MockRestServiceServer.createServer(veryShortTimeoutRestTemplate);
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -63,6 +69,10 @@ public class AthenaRequestMockProvider {
 
         if (mockServerShortTimeout != null) {
             mockServerShortTimeout.reset();
+        }
+
+        if (mockServerVeryShortTimeout != null) {
+            mockServerVeryShortTimeout.reset();
         }
 
         if (closeable != null) {
@@ -95,7 +105,7 @@ public class AthenaRequestMockProvider {
      * @param expectedContents     The expected contents of the request
      */
     public void mockSelectSubmissionsAndExpect(long submissionIdResponse, RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission"))
+        ResponseActions responseActions = mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
@@ -113,7 +123,7 @@ public class AthenaRequestMockProvider {
      * with a server error.
      */
     public void mockGetSelectedSubmissionAndExpectNetworkingException() {
-        mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission")).andExpect(method(HttpMethod.POST))
+        mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission")).andExpect(method(HttpMethod.POST))
                 .andRespond(withException(new SocketTimeoutException("Mocked SocketTimeoutException")));
     }
 
