@@ -11,7 +11,7 @@ export class DataExportRequestButtonDirective implements OnInit {
     @Input() adminDialog = false;
     @Output() dataExportRequest = new EventEmitter<void>();
     @Output() dataExportRequestForAnotherUser = new EventEmitter<string>();
-    confirmationText: HTMLElement;
+    private buttonText: HTMLElement;
 
     constructor(
         private dataExportConfirmationDialogService: DataExportConfirmationDialogService,
@@ -33,10 +33,10 @@ export class DataExportRequestButtonDirective implements OnInit {
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
         // create a span with confirmation text
-        this.confirmationText = this.renderer.createElement('span');
-        this.renderer.addClass(this.confirmationText, 'd-xl-inline');
+        this.buttonText = this.renderer.createElement('span');
+        this.renderer.addClass(this.buttonText, 'd-xl-inline');
         this.setTextContent();
-        this.renderer.appendChild(this.elementRef.nativeElement, this.confirmationText);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.buttonText);
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
@@ -69,6 +69,6 @@ export class DataExportRequestButtonDirective implements OnInit {
     }
 
     private setTextContent() {
-        this.renderer.setProperty(this.confirmationText, 'textContent', this.translateService.instant(`artemisApp.dataExport.request`));
+        this.renderer.setProperty(this.buttonText, 'textContent', this.translateService.instant(`artemisApp.dataExport.request`));
     }
 }

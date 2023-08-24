@@ -63,6 +63,12 @@ public class DataExportService {
         return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
     }
 
+    /**
+     * Request a data export for another user (not yourself) as admin.
+     *
+     * @param login the login of the user to create the data export for, not the login of the requesting admin user
+     * @return a RequestDataExportDTO containing the id of the data export and the state of the data export
+     */
     public RequestDataExportDTO requestDataExportForUserAsAdmin(String login) {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);

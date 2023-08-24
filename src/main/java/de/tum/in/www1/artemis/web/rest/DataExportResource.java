@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -71,11 +70,6 @@ public class DataExportResource {
      */
     private boolean canRequestDataExport() {
         var user = userRepository.getUser();
-        return checkIfUserCanRequest(user);
-
-    }
-
-    private boolean checkIfUserCanRequest(User user) {
         var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
         if (dataExports.isEmpty()) {
             return true;

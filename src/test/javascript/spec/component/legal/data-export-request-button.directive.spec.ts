@@ -63,10 +63,10 @@ describe('DataExportRequestButtonDirective', () => {
         expect(confirmButton).not.toBeNull();
         expect(confirmButton.properties['type']).toBe('submit');
 
-        // Check that confirmation text span was added to the DOM.
-        const confirmationText = debugElement.query(By.css('.d-xl-inline'));
-        expect(confirmationText).not.toBeNull();
-        expect(confirmationText.nativeElement.textContent).not.toBeNull();
+        // Check that button text span was added to the DOM.
+        const buttonText = debugElement.query(By.css('.d-xl-inline'));
+        expect(buttonText).not.toBeNull();
+        expect(buttonText.nativeElement.textContent).toBe('artemisApp.dataExport.request');
 
         const directiveEl = debugElement.query(By.directive(DataExportRequestButtonDirective));
         expect(directiveEl).not.toBeNull();
