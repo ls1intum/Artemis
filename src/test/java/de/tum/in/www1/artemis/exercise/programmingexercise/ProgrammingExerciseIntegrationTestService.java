@@ -2189,6 +2189,14 @@ class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
+    void testRedirectGetParticipationRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/", HttpStatus.OK,
+                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
     private long getMaxProgrammingExerciseId() {
         return programmingExerciseRepository.findAll(PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
     }

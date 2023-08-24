@@ -249,7 +249,6 @@ public class ProgrammingExerciseGitDiffReportService {
                 gitDiffEntry.setGitDiffReport(report);
             }
             report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
-
             return report;
         }
     }
