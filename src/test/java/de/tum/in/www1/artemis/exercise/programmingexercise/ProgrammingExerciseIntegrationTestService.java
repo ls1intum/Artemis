@@ -2189,12 +2189,20 @@ class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/", HttpStatus.OK,
-                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        // without forwarding the redirectUrl is null
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
+                null);
     }
 
     private long getMaxProgrammingExerciseId() {

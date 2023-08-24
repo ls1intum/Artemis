@@ -180,7 +180,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var oldTreeParser = new FileTreeIterator(repo1);
         var newTreeParser = new FileTreeIterator(templateRepo);
         var report = createReport(templateRepo, oldTreeParser, newTreeParser);
-        gitService.checkoutHead(repo1);
+        gitService.switchBackToDefaultBranchHead(repo1);
         return report;
     }
 
@@ -233,8 +233,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var newTreeParser = new FileTreeIterator(repo2);
 
         var report = createReport(repo1, oldTreeParser, newTreeParser);
-        gitService.checkoutHead(repo1);
-        gitService.checkoutHead(repo2);
+        gitService.switchBackToDefaultBranchHead(repo1);
+        gitService.switchBackToDefaultBranchHead(repo2);
         return report;
     }
 

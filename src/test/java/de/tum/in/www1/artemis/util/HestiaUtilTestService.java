@@ -222,7 +222,7 @@ public class HestiaUtilTestService {
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
-        doNothing().when(gitService).checkoutHead(any());
+        doNothing().when(gitService).switchBackToDefaultBranchHead(any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any(),
                 anyBoolean());

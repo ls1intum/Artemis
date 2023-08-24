@@ -15,12 +15,16 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +43,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -126,6 +131,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
@@ -156,10 +164,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private File studentFile;
 
+    private Course course;
+
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -265,6 +275,59 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
         }
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitTutorForbidden() throws Exception {
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + 123, HttpStatus.FORBIDDEN, String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.localGit);
+        courseUtilService.updateCourseGroups("abc", course, "");
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.FORBIDDEN, String.class, String.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesWithContentAtCommit() throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.localGit);
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    private void prepareRepository() throws GitAPIException, IOException {
+        // files are already created in beforeEach
+        // first commit
+        studentRepository.localGit.add().addFilepattern(".").call();
+        studentRepository.localGit.commit().setMessage("my commit 1").call();
+        // second commit
+        Files.createFile(Path.of(studentRepository.localRepoFile + "/" + "dummy.txt"));
+        studentRepository.localGit.add().addFilepattern(".").call();
+        studentRepository.localGit.commit().setMessage("my commit 2").call();
+    }
+
+    @NotNull
+    private String getCommitHash(Git repo) throws GitAPIException {
+        AtomicReference<String> commitHash = new AtomicReference<>();
+        repo.log().call().forEach(revCommit -> {
+            if ("my commit 1".equals(revCommit.getFullMessage())) {
+                commitHash.set(revCommit.getId().getName());
+            }
+        });
+        return commitHash.get();
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -17,6 +18,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +112,65 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
+        // first commit
+        prepareRepositoryContent();
+        String commitHash = getCommitHash();
+        if (withUrl) {
+            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL), commitHash, true);
+        }
+        else {
+            gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash);
+
+        }
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+        assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+    }
+
+    @Test
+    void testSwitchBackToDefaultBranchHead() throws GitAPIException {
+        prepareRepositoryContent();
+        String commitHash = getCommitHash();
+        // switch to different commit at branch
+        gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+        assertThat(gitUtilService.getLog(GitUtilService.REPOS.LOCAL)).hasSize(2);
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEmpty();
+        // switch back
+        gitService.switchBackToDefaultBranchHead(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+        // switch to different branch
+        gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "my-other-branch", true);
+        // switch back again
+        gitService.switchBackToDefaultBranchHead(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
+
+    }
+
+    @NotNull
+    private String getCommitHash() {
+        AtomicReference<String> commitHash = new AtomicReference<>();
+        gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {
+            if ("my first commit".equals(revCommit.getFullMessage())) {
+                commitHash.set(revCommit.getId().getName());
+            }
+        });
+        return commitHash.get();
+    }
+
+    private void prepareRepositoryContent() {
+        // first commit
+        gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "lorem ipsum");
+        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my first commit");
+        // second commit
+        gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2, "lorem ipsum solet");
+        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my second commit");
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
     void testPushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
@@ -155,7 +216,8 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
+    @DisabledOnOs(OS.WINDOWS)
+    // git file locking issues
     void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 

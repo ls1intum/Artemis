@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -31,7 +30,7 @@ public class GitUtilService {
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
     private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
-    private final Path remotePath = Path.of(System.getProperty("java.io.tmpdir")).resolve("remotegittest/scm/test-repository");
+    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
     public GitUtilService() throws IOException {
     }
@@ -68,14 +67,13 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            Files.createDirectories(remotePath);
             remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
-            GitService.commit(remoteGit).setMessage("initial commit").call();
+            remoteGit.commit().setMessage("initial commit").call();
 
             // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
@@ -200,10 +198,14 @@ public class GitUtilService {
     }
 
     public void stashAndCommitAll(REPOS repo) {
+        stashAndCommitAll(repo, "new commit");
+    }
+
+    public void stashAndCommitAll(REPOS repo, String commitMsg) {
         try {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
-            GitService.commit(git).setMessage("new commit").call();
+            git.commit().setMessage(commitMsg).call();
         }
         catch (GitAPIException ignored) {
         }

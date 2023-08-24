@@ -161,14 +161,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFiles(participationId);
     }
 
-    @GetMapping(value = "/repository/{participationId}/files/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    /**
+     * GET /repository/{participationId}/files/{commitId} : get the files of the repository with the given participationId at the given commitId
+     *
+     * @param participationId the participationId of the repository we want to get the files from
+     * @param commitId        the commitId of the repository we want to get the files from
+     * @return a map with the file path as key and the file content as value
+     */
+    @GetMapping(value = "/repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, FileType>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
         try {
-
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
         }
         catch (AccessUnauthorizedException e) {
@@ -178,11 +184,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException(e);
         }
         return executeAndCheckForExceptions(() -> {
-
-            Repository repository = gitService.getOrCheckoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
-            Map<String, FileType> fileList = repositoryService.getFiles(repository);
-            gitService.checkoutHead(repository);
-            return new ResponseEntity<>(fileList, HttpStatus.OK);
+            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
+            Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            gitService.switchBackToDefaultBranchHead(repository);
+            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
 

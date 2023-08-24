@@ -893,7 +893,13 @@ public class GitService {
         }
     }
 
-    public void checkoutHead(Repository repository) throws GitAPIException {
+    /**
+     * Switch back to the HEAD commit of the default branch
+     *
+     * @param repository the repository for which we want to switch to the HEAD commit of the default branch
+     * @throws GitAPIException if this operation fails
+     */
+    public void switchBackToDefaultBranchHead(Repository repository) throws GitAPIException {
         try (Git git = new Git(repository)) {
             git.checkout().setName(defaultBranch).call();
         }
