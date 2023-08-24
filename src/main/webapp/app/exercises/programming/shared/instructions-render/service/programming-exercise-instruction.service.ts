@@ -31,12 +31,12 @@ export class ProgrammingExerciseInstructionService {
      * @param latestResult the result to check for if the tests were successful.
      */
     public testStatusForTask = (testIds: number[], latestResult?: Result): TaskResult => {
-        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && testIds) {
+        if (latestResult?.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && testIds) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: testIds, failedTests: [], notExecutedTests: [] } };
         }
 
-        if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
+        if (latestResult?.feedbacks?.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = this.separateTests(testIds, latestResult);
 
