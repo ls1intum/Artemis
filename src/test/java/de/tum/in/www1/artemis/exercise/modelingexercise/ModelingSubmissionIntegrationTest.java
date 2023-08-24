@@ -771,7 +771,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         exam = examRepository.save(exam);
 
         var studentExam = examUtilService.addStudentExamForTestExam(exam, TEST_PREFIX + "student1");
-        studentExam.setStarted(true);
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(5));
         studentExam.setSubmitted(true);
         studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
         studentExamRepository.save(studentExam);

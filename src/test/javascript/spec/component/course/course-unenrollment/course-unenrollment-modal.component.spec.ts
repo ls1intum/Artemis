@@ -4,7 +4,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
@@ -42,7 +41,7 @@ describe('CourseRegistrationButtonComponent', () => {
                 component.course.id = 1;
                 component.course.title = 'Unenrollment Test Course Title';
                 courseService = TestBed.inject(CourseManagementService);
-                unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
+                unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
                 alertService = TestBed.inject(AlertService);
                 successAlertStub = jest.spyOn(alertService, 'success');
                 errorAlertStub = jest.spyOn(alertService, 'error');
