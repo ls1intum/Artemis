@@ -95,7 +95,7 @@ def filter_file_changes(file_changes):
 
     for file_name, change_type in file_changes.items():
         if file_name.startswith("src/main/webapp/app"):
-            if file_name.endswith(".ts") and "module.ts" not in file_name:
+            if file_name.endswith(".ts") and not file_name.endswith("module.ts"):
                 client_file_changes[file_name[len("src/main/webapp/"):]] = change_type
                 continue
         elif file_name.startswith("src/main/java/de/tum/in/www1/artemis"):
@@ -104,6 +104,20 @@ def filter_file_changes(file_changes):
                 continue
         logging.debug(f"Skipping {file_name}")
     return client_file_changes, server_file_changes
+
+
+def check_if_client_artefact_exists(username, password, build_id):
+    artefact_url = get_client_tests_cov_report_url(build_id)
+    response = requests.get(artefact_url, auth=(username, password))
+    logging.debug(f"GET {artefact_url} -> {response.status_code}")
+    return response.status_code == 200
+
+
+def check_if_server_artefact_exists(username, password, build_id):
+    artefact_url = get_server_tests_cov_report_url(build_id)
+    response = requests.get(artefact_url, auth=(username, password))
+    logging.debug(f"GET {artefact_url} -> {response.status_code}")
+    return response.status_code == 200
 
 
 def get_client_line_coverage(username, password, build_id, file_name, change_type):
@@ -154,6 +168,9 @@ def get_server_line_coverage(username, password, build_id, file_name, change_typ
 
 
 def coverage_to_table(covs, exclude_urls=False):
+    if covs is None:
+        return "Coverage artefact not found, tests probably failed."
+
     header = "| Class/File | Line Coverage | Confirmation (assert/expect) |\n|------------|--------------:|---------------------:|"
     table_data = []
 
@@ -225,11 +242,12 @@ def main(argv):
     client_cov = [
         get_client_line_coverage(args.username, args.password, args.build_id, file_name, change_type)
         for file_name, change_type in tqdm(client_file_changes.items(), desc="Fetching client coverage", unit="files")
-    ]
+    ] if check_if_client_artefact_exists(args.username, args.password, args.build_id) else None
+
     server_cov = [
         get_server_line_coverage(args.username, args.password, args.build_id, file_name, change_type)
         for file_name, change_type in tqdm(server_file_changes.items(), desc="Fetching server coverage", unit="files")
-    ]
+    ] if check_if_server_artefact_exists(args.username, args.password, args.build_id) else None
 
     client_table = coverage_to_table(client_cov, args.exclude_urls)
     server_table = coverage_to_table(server_cov, args.exclude_urls)
