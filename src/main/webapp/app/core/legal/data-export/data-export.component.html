@@ -8,41 +8,6 @@
     </p>
 
     <div class="column d-flex justify-content-center align-content-center">
-        <!--        <button-->
-        <!--            *ngIf="!downloadMode && isAdmin"-->
-        <!--            id="request-data-export-as-admin-btn"-->
-        <!--            jhiDeleteButton-->
-        <!--            [actionType]="ActionType.RequestDataExport"-->
-        <!--            [buttonSize]="ButtonSize.LARGE"-->
-        <!--            [buttonType]="ButtonType.PRIMARY"-->
-        <!--            [entityTitle]="currentLogin!"-->
-        <!--            deleteQuestion="artemisApp.dataExport.confirmationQuestion"-->
-        <!--            [additionalChecks]="{-->
-        <!--                dataExportForAnotherUser: 'artemisApp.dataExport.requestForAnotherUser'-->
-        <!--            }"-->
-        <!--            (delete)="requestExport()"-->
-        <!--            (dataExportForAnotherUser)="requestExportForAnotherUser($event)"-->
-        <!--            [dialogError]="dialogError$"-->
-        <!--            [animation]="false"-->
-        <!--            deleteConfirmationText="artemisApp.dataExport.typeLoginToConfirm"-->
-        <!--            class="mb-1"-->
-        <!--        ></button>-->
-        <!--        <button-->
-        <!--            *ngIf="!downloadMode && !isAdmin"-->
-        <!--            id="request-data-export-btn"-->
-        <!--            jhiDeleteButton-->
-        <!--            [actionType]="ActionType.RequestDataExport"-->
-        <!--            [buttonSize]="ButtonSize.LARGE"-->
-        <!--            [buttonType]="ButtonType.PRIMARY"-->
-        <!--            [entityTitle]="currentLogin!"-->
-        <!--            [disabled]="!canRequestDataExport"-->
-        <!--            deleteQuestion="artemisApp.dataExport.confirmationQuestion"-->
-        <!--            (delete)="requestExport()"-->
-        <!--            [dialogError]="dialogError$"-->
-        <!--            [animation]="false"-->
-        <!--            deleteConfirmationText="artemisApp.dataExport.typeLoginToConfirm"-->
-        <!--            class="mb-1"-->
-        <!--        ></button>-->
         <button
             *ngIf="!downloadMode"
             jhiDataExportRequestButton

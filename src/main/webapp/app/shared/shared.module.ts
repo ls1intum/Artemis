@@ -23,10 +23,9 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { TypeAheadUserSearchFieldModule } from 'app/shared/type-ahead-search-field/type-ahead-user-search-field.module';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, TypeAheadUserSearchFieldModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,
