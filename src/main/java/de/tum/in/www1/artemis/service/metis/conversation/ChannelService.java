@@ -330,7 +330,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, Optional<String> channelName) {
-        Channel channelToCreate = createDefaultChannel(channelName.orElse(generateChannelNameFromTitle("lecture-", Optional.ofNullable(lecture.getTitle()))));
+        Channel channelToCreate = createDefaultChannel(channelName, lecture.getTitle());
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -348,7 +348,7 @@ public class ChannelService {
         if (!exercise.isCourseExercise()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName.orElse(generateChannelNameFromTitle("exercise-", Optional.ofNullable(exercise.getTitle()))));
+        Channel channelToCreate = createDefaultChannel(channelName, exercise.getTitle());
         channelToCreate.setExercise(exercise);
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
@@ -364,7 +364,7 @@ public class ChannelService {
         if (exam.isTestExam()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName.orElse(generateChannelNameFromTitle("exam-", Optional.ofNullable(exam.getTitle()))));
+        Channel channelToCreate = createDefaultChannel(channelName, exam.getTitle());
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -452,10 +452,11 @@ public class ChannelService {
      * Creates a channel object with the provided name.
      * The resulting channel is public, not an announcement channel and not archived.
      *
-     * @param channelName the desired name of the channel
+     * @param channelNameOptional the desired name of the channel wrapped in an Optional
      * @return a default channel with the given name
      */
-    private static Channel createDefaultChannel(@NotNull String channelName) {
+    private static Channel createDefaultChannel(Optional<String> channelNameOptional, String backupTitle) {
+        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle("lecture-", Optional.ofNullable(backupTitle)));
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
