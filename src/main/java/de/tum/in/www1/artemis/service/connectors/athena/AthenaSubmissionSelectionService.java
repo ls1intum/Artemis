@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -30,9 +29,6 @@ import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 @Service
 @Profile("athena")
 public class AthenaSubmissionSelectionService {
-
-    // pretty short timeout, because this should be fast, and it's not too bad if it fails
-    private static final int REQUEST_TIMEOUT_MS = 1000;
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
 
@@ -58,16 +54,11 @@ public class AthenaSubmissionSelectionService {
     }
 
     /**
-     * Create a new AthenaSubmissionSelectionService, which uses a custom timeout for requests to Athena
+     * Create a new AthenaSubmissionSelectionService
+     * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
-    public AthenaSubmissionSelectionService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate) {
-        // Configure rest template to use the given timeout
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(REQUEST_TIMEOUT_MS);
-        requestFactory.setReadTimeout(REQUEST_TIMEOUT_MS);
-        athenaRestTemplate.setRequestFactory(requestFactory);
-        // Create connector
-        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
+    public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate) {
+        connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
     }
 
     /**
