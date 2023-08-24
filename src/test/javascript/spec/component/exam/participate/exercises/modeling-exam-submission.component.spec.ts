@@ -1,7 +1,7 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { UMLModel } from '@palsch/apollon';
+import { ApollonEditor, UMLModel } from '@palsch/apollon';
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -233,8 +233,11 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     it('should update the model on submission version change', async () => {
-        jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } } as unknown as ModelingEditorComponent);
-        jest.spyOn(comp.modelingEditor.apollonEditor, 'nextRender').mockImplementation(() => Promise.resolve());
+        jest.replaceProperty(comp, 'modelingEditor', {
+            apollonEditor: {
+                nextRender: () => {},
+            } as unknown as ApollonEditor,
+        } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
                 'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
