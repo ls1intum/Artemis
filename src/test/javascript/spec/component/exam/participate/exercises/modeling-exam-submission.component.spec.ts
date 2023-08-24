@@ -233,11 +233,7 @@ describe('ModelingExamSubmissionComponent', () => {
     });
 
     it('should update the model on submission version change', async () => {
-        jest.replaceProperty(comp, 'modelingEditor', {
-            apollonEditor: {
-                nextRender: () => {},
-            } as unknown as ApollonEditor,
-        } as unknown as ModelingEditorComponent);
+        jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } as unknown as ApollonEditor } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
                 'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
