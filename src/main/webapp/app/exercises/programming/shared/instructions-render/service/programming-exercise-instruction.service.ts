@@ -81,26 +81,26 @@ export class ProgrammingExerciseInstructionService {
     }
 
     public convertTestListToIds(testList: string, testCases: ProgrammingExerciseTestCase[] | undefined): number[] {
-        // TODO how to deal with invalid names (typos)
-        // If there are test names (preview case), map the test to its corresponding id. Otherwise, use the id directly provided in the text.
-        // split the names by "," only when there is not a closing bracket without a previous opening bracket
+        // If there are test names (e.g. during the markdown preview), map the test to its corresponding id using the given testCases array.
+        // Otherwise, use the id directly provided within the <testid> section.
+        // split the tests by "," only when there is not a closing bracket without a previous opening bracket
         return testList
             .split(/,(?![^(]*?\))/)
             .map((text) => text.trim())
             .map((text) => {
-                // use 0 to indicate a non-found test (TODO improve)
-                return this.convertTestToId(text, testCases) ?? 0;
+                // -1 to indicate a not found test
+                return this.convertProblemStatementTextToTestId(text, testCases) ?? -1;
             });
     }
 
-    public convertTestToId(test: string, testCases?: ProgrammingExerciseTestCase[]): number | undefined {
+    public convertProblemStatementTextToTestId(test: string, testCases?: ProgrammingExerciseTestCase[]): number | undefined {
         // If the text contains <testid> and </testid>, directly use the number inside
-        const match = test.match('<testid>(\\d+)</testid>');
+        const match = RegExp('<testid>(\\d+)</testid>').exec(test);
         if (match) {
             // If there already is an id, return it directly
             return parseInt(match[1]);
         }
-        // TODO otherwise find its corresponding id by the test case name (markdown preview case)
+        // otherwise find its corresponding id by the test case name
         return testCases?.find((testCase) => testCase.testName === test)?.id;
     }
 }
