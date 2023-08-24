@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -16,13 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
-import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -70,6 +66,8 @@ public class LearningPathService {
     private final static double EXTENDS_OR_ASSUMES_UTILITY = 100;
 
     private final static double MASTERY_PROGRESS_UTILITY = 1;
+
+    private final static double SCORE_THRESHOLD = 50;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository) {
@@ -455,6 +453,8 @@ public class LearningPathService {
      * @see RecommendationState
      */
     private RecommendationState generateInitialRecommendationState(LearningPath learningPath) {
+        HashMap<Long, Competency> competencyIdMap = (HashMap<Long, Competency>) learningPath.getCompetencies().stream()
+                .collect(Collectors.toMap(Competency::getId, Function.identity()));
         HashMap<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
         HashMap<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
         HashMap<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
@@ -477,7 +477,7 @@ public class LearningPathService {
                 competencyMastery.put(competency.getId(), CompetencyProgressService.getMasteryProgress(progress.get()));
             }
         });
-        return new RecommendationState(masteredCompetencies, competencyMastery, matchingClusters, priorsCompetencies, extendsCompetencies, assumesCompetencies);
+        return new RecommendationState(competencyIdMap, masteredCompetencies, competencyMastery, matchingClusters, priorsCompetencies, extendsCompetencies, assumesCompetencies);
     }
 
     /**
@@ -723,6 +723,33 @@ public class LearningPathService {
         return state.competencyMastery.get(competency.getId()) * MASTERY_PROGRESS_UTILITY;
     }
 
+    /**
+     * Analyzes the current progress within the learning path and generates a recommended ordering of learning objects in a competency.
+     *
+     * @param learningPath the learning path that should be analyzed
+     * @param competency   the competency
+     * @param state        the current state of the recommendation
+     * @return the recommended ordering of learning objects
+     */
+    private List<LearningObject> getRecommendedOrderOfLearningObjects(LearningPath learningPath, Competency competency, RecommendationState state) {
+        var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser())).toList();
+        ArrayList<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
+        // TODO: check for better criteria
+        var pendingExercises = competency.getExercises().stream().filter(exercise -> !exercise.isCompletedFor(learningPath.getUser()));
+        final var combinedPriorConfidence = computeCombinedPriorConfidence(learningPath, competency, state);
+        return recommendedOrder;
+    }
+
+    private double computeCombinedPriorConfidence(LearningPath learningPath, Competency competency, RecommendationState state) {
+        return state.priorCompetencies.get(competency.getId()).stream().map(state.competencyIdMap::get).map(c -> c.getUserProgress().stream().findFirst())
+                .mapToDouble(competencyProgress -> {
+                    if (competencyProgress.isEmpty()) {
+                        return 0;
+                    }
+                    return competencyProgress.get().getConfidence();
+                }).sorted().summaryStatistics().getAverage();
+    }
+
     public static String getCompetencyStartNodeId(long competencyId) {
         return "node-" + competencyId + "-start";
     }
@@ -779,7 +806,8 @@ public class LearningPathService {
         return "edge-" + competencyId + "-direct";
     }
 
-    private record RecommendationState(Set<Long> masteredCompetencies, HashMap<Long, Double> competencyMastery, HashMap<Long, Set<Long>> matchingClusters,
-            HashMap<Long, Set<Long>> priorCompetencies, HashMap<Long, Long> extendsCompetencies, HashMap<Long, Long> assumesCompetencies) {
+    private record RecommendationState(HashMap<Long, Competency> competencyIdMap, Set<Long> masteredCompetencies, HashMap<Long, Double> competencyMastery,
+            HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies, HashMap<Long, Long> extendsCompetencies,
+            HashMap<Long, Long> assumesCompetencies) {
     }
 }
