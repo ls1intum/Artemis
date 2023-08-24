@@ -16,7 +16,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
         </div>
-        <jhi-exercise-title-channel-name [exercise]="modelingExercise" [isExamMode]="isExamMode" [isImport]="isImport"></jhi-exercise-title-channel-name>
+        <jhi-exercise-title-channel-name
+            [exercise]="modelingExercise"
+            [course]="modelingExercise.course"
+            [isExamMode]="isExamMode"
+            [isImport]="isImport"
+        ></jhi-exercise-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
