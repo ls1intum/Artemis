@@ -12,6 +12,7 @@ import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
@@ -19,7 +20,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
     styleUrls: ['./programming-exercise-exam-diff.component.scss'],
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
 })
-export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponent {
+export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() previousSubmission: ProgrammingSubmission | undefined;
     @Input() currentSubmission: ProgrammingSubmission;
@@ -38,10 +39,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         private modalService: NgbModal,
     ) {
         super(changeDetectorReference);
-    }
-
-    getExercise(): Exercise {
-        return this.exercise;
     }
 
     loadGitDiffReport(): void {
@@ -93,14 +90,9 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     }
 
     getSubmission(): Submission | undefined {
-        return undefined;
+        return this.currentSubmission;
     }
-
-    hasUnsavedChanges(): boolean {
-        return false;
+    getExercise(): Exercise {
+        return this.exercise;
     }
-
-    updateSubmissionFromView(): void {}
-
-    updateViewFromSubmission(): void {}
 }
