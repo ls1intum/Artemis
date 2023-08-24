@@ -31,10 +31,7 @@ export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy 
     faSpinner = faSpinner;
     faCheck = faCheck;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -93,10 +90,5 @@ export class DataExportConfirmationDialogComponent implements OnInit, OnDestroy 
             this.confirmationTextHint = 'artemisApp.dataExport.typeLoginToConfirm';
             this.expectedLoginOfOtherUser = '';
         }
-    }
-
-    trackChanges() {
-        console.log('track changes - delete dialog');
-        console.log(this.expectedLogin);
     }
 }

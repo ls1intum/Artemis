@@ -75,6 +75,12 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         component.onChange();
         expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
         expect(component.searchQueryTooShort).toBeFalse();
+        jest.resetAllMocks();
+
+        // @ts-ignore, otherwise we cannot set the loginOrName to an object
+        component.loginOrName = { login: 'ge12abc' }.toString();
+        component.onChange();
+        expect(loginOrNameChangeSpy).toHaveBeenCalledExactlyOnceWith('ge12abc');
 
         component.loginOrName = 'ge';
         component.onChange();
@@ -84,5 +90,12 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     it('should format the result correctly', () => {
         const user = { login: 'ge12abc', name: 'abc' } as User;
         expect(component.resultFormatter(user)).toBe('abc (ge12abc)');
+    });
+
+    it('should format the input correctly', () => {
+        const user = { login: 'ge12abc' } as User;
+        expect(component.inputFormatter(user)).toBe('ge12abc');
+        const loginString = 'ge12abc';
+        expect(component.inputFormatter(loginString)).toBe('ge12abc');
     });
 });
