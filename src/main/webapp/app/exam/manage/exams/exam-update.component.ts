@@ -48,7 +48,6 @@ export class ExamUpdateComponent implements OnInit {
     faFont = faFont;
 
     readonly FeatureToggle = FeatureToggle;
-    protected readonly isMessagingEnabled = isMessagingEnabled;
 
     constructor(
         private route: ActivatedRoute,
@@ -63,7 +62,6 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
-            this.hideChannelNameInput = false;
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
 
@@ -76,6 +74,7 @@ export class ExamUpdateComponent implements OnInit {
                 next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
+                    this.hideChannelNameInput = exam.testExam || (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
