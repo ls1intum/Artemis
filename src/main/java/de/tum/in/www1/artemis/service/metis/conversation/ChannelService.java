@@ -12,10 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
@@ -330,7 +327,7 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createLectureChannel(Lecture lecture, Optional<String> channelName) {
-        Channel channelToCreate = createDefaultChannel(channelName, lecture.getTitle());
+        Channel channelToCreate = createDefaultChannel(channelName, "lecture-", lecture.getTitle());
         channelToCreate.setLecture(lecture);
         Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         lecture.setChannelName(createdChannel.getName());
@@ -348,7 +345,7 @@ public class ChannelService {
         if (!exercise.isCourseExercise()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName, exercise.getTitle());
+        Channel channelToCreate = createDefaultChannel(channelName, "exercise-", exercise.getTitle());
         channelToCreate.setExercise(exercise);
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
@@ -364,7 +361,7 @@ public class ChannelService {
         if (exam.isTestExam()) {
             return null;
         }
-        Channel channelToCreate = createDefaultChannel(channelName, exam.getTitle());
+        Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
@@ -453,10 +450,12 @@ public class ChannelService {
      * The resulting channel is public, not an announcement channel and not archived.
      *
      * @param channelNameOptional the desired name of the channel wrapped in an Optional
+     * @param prefix              the prefix for the channel name
+     * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
      * @return a default channel with the given name
      */
-    private static Channel createDefaultChannel(Optional<String> channelNameOptional, String backupTitle) {
-        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle("lecture-", Optional.ofNullable(backupTitle)));
+    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NotNull String prefix, String backupTitle) {
+        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle(prefix, Optional.ofNullable(backupTitle)));
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
