@@ -180,7 +180,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = { "exercise-new-fileupload-exercise", "" })
+    @ValueSource(strings = { "exercise-new-fileupload-exerci", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise(String channelName) throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse().get(0);
