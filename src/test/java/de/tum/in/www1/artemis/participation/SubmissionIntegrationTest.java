@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionVersionDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -217,11 +218,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission = submissionRepository.save(submission);
         SubmissionVersion submissionVersion1 = ParticipationFactory.generateSubmissionVersion("test1", submission, student);
         submissionVersion1 = submissionVersionRepository.save(submissionVersion1);
+        System.out.println("sv1 after save " + submissionVersion1.getCreatedDate());
         SubmissionVersion submissionVersion2 = ParticipationFactory.generateSubmissionVersion("test2", submission, student);
         submissionVersion2 = submissionVersionRepository.save(submissionVersion2);
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
-        List<SubmissionVersion> versions = request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersion.class);
-        assertThat(versions).containsExactly(submissionVersion1, submissionVersion2);
+        var expected1 = SubmissionVersionDTO.of(submissionVersion1);
+        var expected2 = SubmissionVersionDTO.of(submissionVersion2);
+        System.out.println("sv dto: " + expected1.createdDate());
+        List<SubmissionVersionDTO> versions = request.getList("/api/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersionDTO.class);
+        assertThat(versions).containsExactly(expected1, expected2);
     }
 
     @Test
