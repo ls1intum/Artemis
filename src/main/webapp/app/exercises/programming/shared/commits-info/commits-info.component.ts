@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommitInfo } from 'app/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-commits-info',
