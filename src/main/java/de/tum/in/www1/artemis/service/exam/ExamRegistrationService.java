@@ -88,7 +88,7 @@ public class ExamRegistrationService {
      */
     public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
