@@ -818,7 +818,7 @@ public class ExamResource {
             throw new BadRequestAlertException("There are still exams running, quizzes can only be evaluated once all exams are finished.", ENTITY_NAME,
                     "evaluateQuizExercisesTooEarly");
         }
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
