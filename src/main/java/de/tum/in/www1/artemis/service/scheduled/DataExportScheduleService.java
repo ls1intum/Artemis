@@ -70,7 +70,7 @@ public class DataExportScheduleService {
         log.info("Creating data exports and deleting old ones");
         Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
         dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
         var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
         dataExportsToBeDeleted.forEach(this::deleteDataExport);

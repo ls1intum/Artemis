@@ -167,14 +167,53 @@ public class DataExportExamCreationService {
      * @param examWorkingDir the directory in which the information should be stored
      */
     private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        String[] headers = { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        List<String> headers = new ArrayList<>();
+        var generalExamInformation = getGeneralExamInformationStreamToPrint(studentExam, headers);
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
 
         try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve(EXAM_DIRECTORY_PREFIX + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
-            printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
-                    studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
+            printer.printRecord(generalExamInformation);
             printer.flush();
         }
+    }
+
+    /**
+     * Returns a stream of the general exam information that should be included in the general exam information CSV file.
+     * Do not include information if it is not available, this means null.
+     *
+     * @param studentExam the student exam for which the information should be added
+     * @param headers     a list containing the column headers that should be included in the CSV file
+     * @return a stream of information that should be included in the general exam information CSV file
+     */
+    private Stream<?> getGeneralExamInformationStreamToPrint(StudentExam studentExam, List<String> headers) {
+        var builder = Stream.builder();
+        if (studentExam.isStarted() != null) {
+            builder.add(studentExam.isStarted());
+            headers.add("started");
+        }
+        headers.add("test exam");
+        builder.add(studentExam.isTestExam());
+        if (studentExam.getStartedDate() != null) {
+            builder.add(studentExam.getStartedDate());
+            headers.add("started at");
+        }
+        if (studentExam.isSubmitted() != null) {
+            builder.add(studentExam.isSubmitted());
+            headers.add("submitted");
+        }
+        if (studentExam.getSubmissionDate() != null) {
+            builder.add(studentExam.getSubmissionDate());
+            headers.add("submitted at");
+        }
+        if (studentExam.getWorkingTime() != null) {
+            builder.add(studentExam.getWorkingTime() / 60);
+            headers.add("working time (in minutes)");
+        }
+        if (studentExam.getIndividualEndDate() != null) {
+            builder.add(studentExam.getIndividualEndDate());
+            headers.add("individual end date");
+        }
+        return builder.build();
     }
 
 }

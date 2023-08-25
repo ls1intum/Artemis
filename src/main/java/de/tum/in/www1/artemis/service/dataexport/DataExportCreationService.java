@@ -101,6 +101,7 @@ public class DataExportCreationService {
 
     /**
      * Adds a markdown file with the title README.md to the data export.
+     * <p>
      * This file contains information Art. 15 GDPR requires us to provide to the user.
      * The file is retrieved from the resources folder.
      * The file is added to the root of the data export.
@@ -117,6 +118,7 @@ public class DataExportCreationService {
 
     /**
      * Creates the data export for the given user.
+     * <p>
      * This includes creation of the export and notifying the user about the creation.
      *
      * @param dataExport the data export to be created
@@ -144,6 +146,7 @@ public class DataExportCreationService {
 
     /**
      * Handles the case of a failed data export creation.
+     * <p>
      * This includes setting the state of the data export to failed, notifying the user about the failure and sending an email to the admin with the exception why the export
      * failed.
      *

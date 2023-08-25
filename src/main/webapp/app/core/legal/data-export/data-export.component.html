@@ -29,7 +29,8 @@
             id="download-data-export-btn"
             [btnSize]="ButtonSize.LARGE"
             [disabled]="!canDownload"
-            title="artemisApp.dataExport.download"
+            [tooltip]="'artemisApp.dataExport.download'"
+            [title]="'artemisApp.dataExport.download'"
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
