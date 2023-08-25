@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,9 +68,10 @@ public class DataExportScheduleService {
 
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
-        Set<DataExport> successfulDataExports = new HashSet<>();
+        Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        dataExportsToBeCreated.forEach(dataExport -> createDataExport(dataExport, successfulDataExports));
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
         var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
         dataExportsToBeDeleted.forEach(this::deleteDataExport);
         Optional<User> admin = userService.findInternalAdminUser();
