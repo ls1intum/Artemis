@@ -47,7 +47,8 @@
     <div class="bonus-calculated">
         <ng-container *ngIf="bonus.sourceGradingScale?.gradeSteps">
             <div class="mb-0 ms-2 fs-6 fw-bold no-flex-shrink">
-                {{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}
+                <span>{{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}</span>
+                <jhi-help-icon *ngIf="bonus.sourceGradingScale?.course" text="artemisApp.bonus.bonusSource.maxPointsCourseHelpText"></jhi-help-icon>
             </div>
             <div class="mb-4 fs-6">
                 <table class="table table-striped">
