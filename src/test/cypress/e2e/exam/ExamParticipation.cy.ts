@@ -16,7 +16,7 @@ import {
     textExerciseEditor,
 } from '../../support/artemis';
 import { Exercise, ExerciseType } from '../../support/constants';
-import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
+import { admin, instructor, studentFour, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
 // Common primitives
@@ -26,28 +26,28 @@ const textFixtureShort = 'loremIpsum-short.txt';
 describe('Exam participation', () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
-    let studentOneName: string;
     let studentTwoName: string;
     let studentThreeName: string;
+    let studentFourName: string;
 
     before('Create course', () => {
         cy.login(admin);
         courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
             courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
             courseManagementAPIRequest.addStudentToCourse(course, studentThree);
+            courseManagementAPIRequest.addStudentToCourse(course, studentFour);
             courseManagementAPIRequest.addTutorToCourse(course, tutor);
             courseManagementAPIRequest.addInstructorToCourse(course, instructor);
-        });
-        users.getUserInfo(studentOne.username, (userInfo) => {
-            studentOneName = userInfo.name;
         });
         users.getUserInfo(studentTwo.username, (userInfo) => {
             studentTwoName = userInfo.name;
         });
         users.getUserInfo(studentThree.username, (userInfo) => {
             studentThreeName = userInfo.name;
+        });
+        users.getUserInfo(studentFour.username, (userInfo) => {
+            studentFourName = userInfo.name;
         });
     });
 
@@ -77,16 +77,16 @@ describe('Exam participation', () => {
                     exerciseArray = exerciseArray.concat(responses);
                 });
 
-                examAPIRequests.registerStudentForExam(exam, studentOne);
                 examAPIRequests.registerStudentForExam(exam, studentTwo);
                 examAPIRequests.registerStudentForExam(exam, studentThree);
+                examAPIRequests.registerStudentForExam(exam, studentFour);
                 examAPIRequests.generateMissingIndividualExams(exam);
                 examAPIRequests.prepareExerciseStartForExam(exam);
             });
         });
 
         it('Participates as a student in a registered exam', () => {
-            examParticipation.startParticipation(studentOne, course, exam);
+            examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 examNavigation.openExerciseAtIndex(j);
@@ -104,11 +104,11 @@ describe('Exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
         it('Using save and continue to navigate within exam', () => {
-            examParticipation.startParticipation(studentTwo, course, exam);
+            examParticipation.startParticipation(studentThree, course, exam);
             examNavigation.openExerciseAtIndex(0);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
@@ -124,11 +124,11 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
         });
 
         it('Using exercise overview to navigate within exam', () => {
-            examParticipation.startParticipation(studentThree, course, exam);
+            examParticipation.startParticipation(studentFour, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 // Skip programming exercise this time to save execution time
@@ -144,7 +144,7 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
     });
 
@@ -172,16 +172,16 @@ describe('Exam participation', () => {
                     exerciseArray.push(response);
                 });
 
-                examAPIRequests.registerStudentForExam(exam, studentOne);
                 examAPIRequests.registerStudentForExam(exam, studentTwo);
                 examAPIRequests.registerStudentForExam(exam, studentThree);
+                examAPIRequests.registerStudentForExam(exam, studentFour);
                 examAPIRequests.generateMissingIndividualExams(exam);
                 examAPIRequests.prepareExerciseStartForExam(exam);
             });
         });
 
         it('Participates in the exam, hand-in early, but instead continues', () => {
-            examParticipation.startParticipation(studentOne, course, exam);
+            examParticipation.startParticipation(studentTwo, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             examNavigation.openExerciseAtIndex(textExerciseIndex);
@@ -201,11 +201,11 @@ describe('Exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
         it('Reloads exam page during participation and ensures that everything is as expected', () => {
-            examParticipation.startParticipation(studentTwo, course, exam);
+            examParticipation.startParticipation(studentThree, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             examNavigation.openExerciseAtIndex(textExerciseIndex);
@@ -213,7 +213,7 @@ describe('Exam participation', () => {
             examParticipation.clickSaveAndContinue();
 
             cy.reload();
-            examParticipation.startParticipation(studentTwo, course, exam);
+            examParticipation.startParticipation(studentThree, course, exam);
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             textExerciseEditor.checkCurrentContent(textExercise.id, textExercise.additionalData!.textFixture!);
             examParticipation.clickSaveAndContinue();
@@ -223,11 +223,11 @@ describe('Exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
         });
 
         it('Reloads exam result page and ensures that everything is as expected', () => {
-            examParticipation.startParticipation(studentThree, course, exam);
+            examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             examNavigation.openExerciseAtIndex(textExerciseIndex);
@@ -244,29 +244,25 @@ describe('Exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
     });
 
     describe('Normal Hand-in', () => {
         let exam: Exam;
-        let studentOneName: string;
         const examTitle = 'exam' + generateUUID();
 
         before('Create exam', () => {
             exerciseArray = [];
 
             cy.login(admin);
-            users.getUserInfo(studentOne.username, (userInfo) => {
-                studentOneName = userInfo.name;
-            });
 
             const examConfig: Exam = {
                 course,
                 title: examTitle,
                 visibleDate: dayjs().subtract(3, 'minutes'),
                 startDate: dayjs().subtract(2, 'minutes'),
-                endDate: dayjs().add(20, 'seconds'),
+                endDate: dayjs().add(30, 'seconds'),
                 examMaxPoints: 10,
                 numberOfExercisesInExam: 1,
             };
@@ -276,21 +272,21 @@ describe('Exam participation', () => {
                     exerciseArray.push(response);
                 });
 
-                examAPIRequests.registerStudentForExam(exam, studentOne);
+                examAPIRequests.registerStudentForExam(exam, studentFour);
                 examAPIRequests.generateMissingIndividualExams(exam);
                 examAPIRequests.prepareExerciseStartForExam(exam);
             });
         });
 
         it('Participates as a student in a registered exam', () => {
-            examParticipation.startParticipation(studentOne, course, exam);
+            examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
             examParticipation.clickSaveAndContinue();
             examParticipation.checkExamFullnameInputExists();
-            examParticipation.checkYourFullname(studentOneName);
+            examParticipation.checkYourFullname(studentFourName);
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
@@ -299,7 +295,7 @@ describe('Exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
-            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
     });
 

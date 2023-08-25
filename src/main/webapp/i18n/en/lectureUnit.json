@@ -128,11 +128,13 @@
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "removeBreakSlide": "Remove Break slides",
-                "removeBreakSlideTooltip": "If the slide contains the word 'Break' it will remove the slide from the unit.",
-                "removeBreakSlideInfo": "All Break slides will be removed from all units.",
+                "removeBreakSlideInfo": "All Break slides that contain the following keyphrase will be removed from all units.",
+                "removeBreakSlideKeyphrase": "Break",
+                "removeBreakSlideTooltip": "If a Break slide contains the keyphrase, it will be removed from the unit.",
                 "removeSolutionSlide": "Remove Example Solution slides",
-                "removeSolutionSlideTooltip": "If the slide contains 'Example solution' it will remove the slide from the unit.",
-                "removeSolutionSlideInfo": "All Example solution slides will be removed from all units.",
+                "removeSolutionSlideInfo": "All Example solution slides that contain the following keyphrase will be removed from all units.",
+                "removeSolutionSlideKeyphrase": "Example solution",
+                "removeSolutionSlideTooltip": "If an Example solution slide contains the keyphrase, it will be removed from the unit.",
                 "validation": {
                     "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
                     "empty": {

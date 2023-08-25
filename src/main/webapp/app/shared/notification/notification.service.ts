@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, ReplaySubject } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -36,13 +36,25 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+
+const notificationsPerPage = 25;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = 'api/notifications';
+    notificationSubject: ReplaySubject<Notification[]>;
+    singleNotificationSubject: Subject<Notification>;
+    notifications: Notification[] = [];
+    totalNotifications = 0;
+    totalNotificationsSubject: ReplaySubject<number>;
+    page = 0;
+    loadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+    initialized = false;
+    loadTimeout: ReturnType<typeof setTimeout>;
     subscribedTopics: string[] = [];
-    notificationObserver: ReplaySubject<Notification>;
-    cachedNotifications: Observable<HttpResponse<Notification[]>>;
+    wsSubscriptions: Subscription[] = [];
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -51,8 +63,122 @@ export class NotificationService {
         private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
+        private notificationSettingsService: NotificationSettingsService,
     ) {
         this.initNotificationObserver();
+
+        this.notificationSettingsService.getNotificationSettingsUpdates().subscribe(() => {
+            this.resetAndLoad();
+        });
+
+        this.accountService.getAuthenticationState().subscribe((user) => this.onUserIdentityChange(user));
+    }
+
+    private onUserIdentityChange(user: User | undefined) {
+        if (user && !this.initialized) {
+            this.subscribeToSingleUserNotificationUpdates(user);
+            this.subscribeToTutorialGroupNotificationUpdates(user);
+            this.subscribeToConversationNotificationUpdates(user);
+
+            // Delay to prevent load if someone spam clicks the refresh button
+            this.loadTimeout = setTimeout(() => {
+                this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+                    if (courses && this.initialized) {
+                        this.subscribeToGroupNotificationUpdates(courses);
+                        this.subscribeToQuizUpdates(courses);
+                    }
+                });
+                this.notificationSettingsService.refreshNotificationSettings();
+            }, 15 * 1000);
+
+            this.initialized = true;
+        } else if (!user && this.initialized) {
+            this.notifications = [];
+            this.notificationSubject.next([]);
+            this.page = 0;
+            this.totalNotifications = 0;
+            this.totalNotificationsSubject.next(0);
+            clearTimeout(this.loadTimeout);
+
+            this.subscribedTopics.forEach((topic) => this.jhiWebsocketService.unsubscribe(topic));
+            this.wsSubscriptions.forEach((subscription) => subscription.unsubscribe());
+            this.subscribedTopics = [];
+            this.wsSubscriptions = [];
+
+            this.initialized = false;
+        }
+    }
+
+    private setTotalNotificationCount(newCount: number): void {
+        this.totalNotifications = newCount;
+        this.totalNotificationsSubject.next(newCount);
+    }
+
+    public incrementPageAndLoad(): void {
+        // Avoid repeated calls as this is called on scroll
+        if (this.loadingSubject.value) {
+            return;
+        }
+        this.page += 1;
+        this.loadNotifications();
+    }
+
+    public resetAndLoad(): void {
+        this.page = 0;
+        this.notifications = [];
+        this.totalNotifications = 0;
+        this.loadNotifications();
+    }
+
+    private loadNotifications(): void {
+        if (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications) {
+            this.loadingSubject.next(true);
+            this.queryNotificationsFilteredBySettings({
+                page: this.page,
+                size: notificationsPerPage,
+                sort: ['notificationDate,desc'],
+            }).subscribe({
+                next: (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
+            });
+        }
+    }
+
+    private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        this.addNotifications(notifications, false);
+        this.setTotalNotificationCount(Number(headers.get('X-Total-Count')!));
+        this.loadingSubject.next(false);
+    }
+
+    private addNotification(notification: Notification): void {
+        this.addNotifications([notification]);
+
+        // Single notifications should also be sent through the single notification subject for the notifcation popup
+        this.singleNotificationSubject.next(notification);
+    }
+
+    private addNotifications(notifications: Notification[], addToCount = true): void {
+        if (notifications) {
+            let countPushed = 0;
+            notifications.forEach((notification: Notification) => {
+                if (notification.notificationDate) {
+                    notification.notificationDate = convertDateFromServer(notification.notificationDate);
+                }
+
+                if (
+                    this.notificationSettingsService.isNotificationAllowedBySettings(notification) &&
+                    !this.notifications.some(({ id }) => id === notification.id) &&
+                    notification.notificationDate
+                ) {
+                    this.notifications.push(notification);
+                    countPushed++;
+                }
+            });
+
+            this.notificationSubject.next(notifications);
+            if (addToCount) {
+                this.setTotalNotificationCount(this.totalNotifications + countPushed);
+            }
+        }
     }
 
     /**
@@ -162,35 +288,20 @@ export class NotificationService {
         });
     }
 
-    /**
-     * Init new observer for notifications and reset topics.
-     */
-    cleanUp(): void {
-        this.cachedNotifications = new Observable<HttpResponse<Notification[]>>();
-        this.initNotificationObserver();
-        this.subscribedTopics = [];
+    subscribeToNotificationUpdates(): Observable<Notification[]> {
+        return this.notificationSubject.asObservable();
     }
 
-    /**
-     * Subscribe to single user notification, group notification and quiz updates if it was not already subscribed.
-     * Then it returns a BehaviorSubject the calling component can listen on to actually receive the notifications.
-     * @returns {ReplaySubject<Notification>}
-     */
-    subscribeToNotificationUpdates(): ReplaySubject<Notification> {
-        this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
-            if (courses) {
-                this.subscribeToGroupNotificationUpdates(courses);
-                this.subscribeToQuizUpdates(courses);
-            }
-        });
-        this.accountService.identity().then((user: User | undefined) => {
-            if (user) {
-                this.subscribeToSingleUserNotificationUpdates(user);
-                this.subscribeToTutorialGroupNotificationUpdates(user);
-                this.subscribeToConversationNotificationUpdates(user);
-            }
-        });
-        return this.notificationObserver;
+    subscribeToSingleIncomingNotifications(): Observable<Notification> {
+        return this.singleNotificationSubject.asObservable();
+    }
+
+    subscribeToLoadingStateUpdates(): Observable<boolean> {
+        return this.loadingSubject.asObservable();
+    }
+
+    subscribeToTotalNotificationCountUpdates(): Observable<number> {
+        return this.totalNotificationsSubject.asObservable();
     }
 
     private subscribeToSingleUserNotificationUpdates(user: User): void {
@@ -198,13 +309,14 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(userTopic)) {
             this.subscribedTopics.push(userTopic);
             this.jhiWebsocketService.subscribe(userTopic);
-            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+            const subscription = this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
                 // Do not add notification to observer if it is a one-to-one conversation creation notification
                 // and if the author is the current user
                 if (notification.title !== CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE && user.id !== notification.author?.id) {
-                    this.addNotificationToObserver(notification);
+                    this.addNotification(notification);
                 }
             });
+            this.wsSubscriptions.push(subscription);
         }
     }
 
@@ -229,9 +341,10 @@ export class NotificationService {
             if (!this.subscribedTopics.includes(courseTopic)) {
                 this.subscribedTopics.push(courseTopic);
                 this.jhiWebsocketService.subscribe(courseTopic);
-                this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
-                    this.addNotificationToObserver(notification);
+                const subscription = this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
+                    this.addNotification(notification);
                 });
+                this.wsSubscriptions.push(subscription);
             }
         });
     }
@@ -241,9 +354,10 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
             this.subscribedTopics.push(tutorialGroupTopic);
             this.jhiWebsocketService.subscribe(tutorialGroupTopic);
-            this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
-                this.addNotificationToObserver(notification);
+            const subscription = this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
+                this.addNotification(notification);
             });
+            this.wsSubscriptions.push(subscription);
         }
     }
 
@@ -252,16 +366,17 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(conversationTopic)) {
             this.subscribedTopics.push(conversationTopic);
             this.jhiWebsocketService.subscribe(conversationTopic);
-            this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
+            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
                 if (notification.target) {
                     const target = JSON.parse(notification.target);
                     const targetCourseId = target.course;
                     // Only add notification if it is not from the current user and the user is not already in the messages tab
                     if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
-                        this.addNotificationToObserver(notification);
+                        this.addNotification(notification);
                     }
                 }
             });
+            this.wsSubscriptions.push(subscription);
         }
     }
 
@@ -271,16 +386,17 @@ export class NotificationService {
             if (!this.subscribedTopics.includes(quizExerciseTopic)) {
                 this.subscribedTopics.push(quizExerciseTopic);
                 this.jhiWebsocketService.subscribe(quizExerciseTopic);
-                this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
+                const subscription = this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
                     if (
                         quizExercise.visibleToStudents &&
                         quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
                         quizExercise.quizBatches?.[0]?.started &&
                         !quizExercise.isOpenForPractice
                     ) {
-                        this.addNotificationToObserver(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
+                        this.addNotification(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });
+                this.wsSubscriptions.push(subscription);
             }
         });
     }
@@ -301,13 +417,6 @@ export class NotificationService {
         } as GroupNotification;
     }
 
-    private addNotificationToObserver(notification: Notification): void {
-        if (notification && notification.notificationDate) {
-            notification.notificationDate = dayjs(notification.notificationDate);
-            this.notificationObserver.next(notification);
-        }
-    }
-
     private convertNotificationResponseArrayDateFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
@@ -321,6 +430,8 @@ export class NotificationService {
      * Set new notification observer.
      */
     private initNotificationObserver(): void {
-        this.notificationObserver = new ReplaySubject<Notification>();
+        this.notificationSubject = new ReplaySubject<Notification[]>(1);
+        this.totalNotificationsSubject = new ReplaySubject<number>(1);
+        this.singleNotificationSubject = new Subject<Notification>();
     }
 }
