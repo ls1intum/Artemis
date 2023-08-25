@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.util.parallelTestExecution;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +20,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final InheritableThreadLocal<Class<?>> localTestGroup = new InheritableThreadLocal<>();
 
-    private static final ConcurrentMap<Class<?>, List<byte[]>> testGroupToEncodedLogs = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Class<?>, ByteArrayOutputStream> testGroupToEncodedLogs = new ConcurrentHashMap<>();
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {
@@ -29,30 +28,32 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
         // Add the logging Event to the corresponding List in the Map
         if (testClass != null && !loggingEvent.getThreadName().contains("event")) {
-            List<byte[]> logs = testGroupToEncodedLogs.putIfAbsent(testClass, new ArrayList<>());
-            if (logs == null) {
-                logs = testGroupToEncodedLogs.get(testClass);
+            if (testGroupToEncodedLogs.containsKey(testClass)) {
+                testGroupToEncodedLogs.get(testClass).writeBytes(encoder.encode(loggingEvent));
             }
-            logs.add(encoder.encode(loggingEvent));
+            else {
+                ByteArrayOutputStream logs = new ByteArrayOutputStream();
+                logs.writeBytes(encoder.encode(loggingEvent));
+                testGroupToEncodedLogs.put(testClass, logs);
+            }
             return;
         }
 
         // If the thread id is not assigned to a TestGroup, we add the logging event for all active TestGroups
-        for (var logs : testGroupToEncodedLogs.values()) {
-            logs.add(encoder.encode(loggingEvent));
+        for (ByteArrayOutputStream logs : testGroupToEncodedLogs.values()) {
+            logs.writeBytes(encoder.encode(loggingEvent));
         }
     }
 
     public static synchronized void printLogsForGroup(Class<?> testClass) {
         Class<?> testGroupClass = TestGroup.fromClass(testClass);
-        List<byte[]> logs = testGroupToEncodedLogs.remove(testGroupClass);
+        ByteArrayOutputStream logs = testGroupToEncodedLogs.remove(testGroupClass);
         if (logs == null) {
             return;
         }
 
-        for (byte[] log : logs) {
-            System.out.writeBytes(log);
-        }
+        System.out.writeBytes(logs.toByteArray());
+        logs.reset();
         System.out.flush();
     }
 
@@ -61,17 +62,20 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
         // Add the logging Event to the corresponding List in the Map
         if (testClass != null) {
-            List<byte[]> logs = testGroupToEncodedLogs.putIfAbsent(testClass, new ArrayList<>());
-            if (logs == null) {
-                logs = testGroupToEncodedLogs.get(testClass);
+            if (testGroupToEncodedLogs.containsKey(testClass)) {
+                testGroupToEncodedLogs.get(testClass).writeBytes(string.getBytes());
             }
-            logs.add(string.getBytes());
+            else {
+                ByteArrayOutputStream logs = new ByteArrayOutputStream();
+                logs.writeBytes(string.getBytes());
+                testGroupToEncodedLogs.put(testClass, logs);
+            }
             return;
         }
 
         // If the thread id is not assigned to a TestGroup, we add the logging event for all active TestGroups
-        for (var logs : testGroupToEncodedLogs.values()) {
-            logs.add(string.getBytes());
+        for (ByteArrayOutputStream logs : testGroupToEncodedLogs.values()) {
+            logs.writeBytes(string.getBytes());
         }
 
     }
@@ -84,10 +88,6 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
         testGroupToEncodedLogs.remove(testClass);
         localTestGroup.remove();
     }
-
-    // public Encoder<ILoggingEvent> getEncoder() {
-    // return encoder;
-    // }
 
     // Used by logback
     public void setEncoder(PatternLayoutEncoder encoder) {
