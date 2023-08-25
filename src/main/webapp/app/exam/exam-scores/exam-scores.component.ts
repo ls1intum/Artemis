@@ -40,6 +40,7 @@ import { VERSION } from 'app/app.constants';
 import {
     BONUS_GRADE_KEY,
     BONUS_KEY,
+    BONUS_POINTS_KEY,
     EMAIL_KEY,
     EXAM_ACHIEVED_POINTS,
     EXAM_ACHIEVED_SCORE,
@@ -57,6 +58,7 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
+import { BonusStrategy } from 'app/entities/bonus.model';
 
 export enum MedianType {
     PASSED,
@@ -98,6 +100,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
     readonly ButtonSize = ButtonSize;
+    readonly BonusStrategy = BonusStrategy;
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -111,7 +114,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
-    hasBonus?: boolean;
+    hasBonus?: BonusStrategy;
     hasPlagiarismVerdicts?: boolean;
     hasPlagiarismVerdictsInBonusSource?: boolean;
     hasSecondCorrectionAndStarted: boolean;
@@ -186,7 +189,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScaleExists = true;
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
-                        this.hasBonus = !!this.studentResults?.some((studentResult) => studentResult?.gradeWithBonus);
+                        this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
                         this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
                         this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
@@ -697,7 +700,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.presentationScoreThreshold != undefined) {
                     headers.push(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold}`);
                 }
-                headers.push(BONUS_GRADE_KEY);
+                headers.push(this.hasBonus === BonusStrategy.POINTS ? BONUS_POINTS_KEY : BONUS_GRADE_KEY);
                 headers.push(FINAL_GRADE_KEY);
             }
         }
@@ -760,7 +763,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.presentationScoreThreshold != undefined) {
                     rowData.set(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold}`, studentResult.gradeWithBonus?.achievedPresentationScore);
                 }
-                rowData.set(BONUS_GRADE_KEY, studentResult.gradeWithBonus?.bonusGrade);
+                rowData.set(this.hasBonus === BonusStrategy.POINTS ? BONUS_POINTS_KEY : BONUS_GRADE_KEY, studentResult.gradeWithBonus?.bonusGrade);
                 rowData.set(FINAL_GRADE_KEY, studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade);
             }
         }
