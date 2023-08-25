@@ -638,7 +638,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Adds a link to an exercise to the breadcrumbs array. The link depends on the type of the exercise, so we need to fetch it first
      * @param exerciseId the id of the exercise
      * @param currentPath the initial path for the breadcrumb
-     * @private
      */
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb

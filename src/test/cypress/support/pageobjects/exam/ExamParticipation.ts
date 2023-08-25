@@ -1,8 +1,8 @@
-import { Exam } from 'app/entities/exam.model';
+import { Interception } from 'cypress/types/net-stubbing';
+
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExerciseType } from '../../constants';
-import { getExercise } from '../../utils';
+import { Exam } from 'app/entities/exam.model';
+
 import {
     courseList,
     courseOverview,
@@ -13,10 +13,10 @@ import {
     quizExerciseMultipleChoice,
     textExerciseEditor,
 } from '../../artemis';
-import { Interception } from 'cypress/types/net-stubbing';
+import { AdditionalData, ExerciseType } from '../../constants';
 import { CypressCredentials } from '../../users';
+import { getExercise } from '../../utils';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { ProgrammingExerciseAssessmentType } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -79,6 +79,7 @@ export class ExamParticipation {
 
     startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
         cy.login(student, '/');
+        cy.visit('/courses');
         courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
@@ -136,20 +137,3 @@ export class ExamParticipation {
         });
     }
 }
-
-export class AdditionalData {
-    quizExerciseID?: number;
-    submission?: ProgrammingExerciseSubmission;
-    expectedScore?: number;
-    textFixture?: string;
-    practiceMode?: boolean;
-    progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
-}
-
-export type Exercise = {
-    title: string;
-    type: ExerciseType;
-    id: number;
-    additionalData?: AdditionalData;
-    exerciseGroup?: ExerciseGroup;
-};

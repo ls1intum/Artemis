@@ -38,9 +38,12 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private modalService: NgbModal) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private appRef: ApplicationRef,
+        private modalService: NgbModal,
+    ) {}
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set tests(tests: string[]) {
         this.testsValue = tests;
         const {
@@ -57,7 +60,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     /**
      * Checks if any of the feedbacks have a detailText associated to them.
      * @param tests the feedback names this should be checked for
-     * @private
      */
     private hasTestMessage(tests: string[]): boolean {
         if (!this.latestResult || !this.latestResult.feedbacks) {
