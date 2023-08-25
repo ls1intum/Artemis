@@ -510,7 +510,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the ResponseEntity with result as body
      */
     default Result submitManualAssessment(long resultId) {
-        Result result = findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        Result result = findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
         result.setCompletionDate(ZonedDateTime.now());
         save(result);
         return result;
@@ -648,6 +648,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
         return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+    }
+
+    default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
