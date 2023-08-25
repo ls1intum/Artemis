@@ -58,7 +58,7 @@ public class DataExportScheduleService {
      */
     // TODO change again after testing. As long as we do not use this cron expression one server test always fails
     // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */10 * * * *")
     public void createDataExportsAndDeleteOldOnes() {
         if (profileService.isDev()) {
             // do not execute this in a development environment
