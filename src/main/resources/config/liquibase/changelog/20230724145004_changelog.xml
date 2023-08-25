@@ -4,7 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="jakubriegel" id="1690203011296-205">
         <addColumn tableName="plagiarism_checks_config">
-            <column name="continuous_plagiarism_control_post_due_date_checks_enabled" type="boolean" defaultValueBoolean="false"/>
+            <column name="continuous_plagiarism_control_post_due_date_checks_enabled" type="boolean" defaultValueNumeric="0" >
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

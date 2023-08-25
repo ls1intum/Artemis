@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlFeedbackHelper.isCpcFeedback;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismChecksConfig;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlResultsHelper;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -576,8 +577,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     private static Set<Result> findOnlyCpcResultsOrEmpty(Participation participation) {
-        return participation.getResults().stream().filter(result -> result.getFeedbacks().size() == 1).filter(result -> isCpcFeedback(result.getFeedbacks().get(0)))
-                .max(Comparator.naturalOrder()).map(Set::of).orElse(Set.of());
+        return participation.getResults().stream().filter(ContinuousPlagiarismControlResultsHelper::isCpcResult).collect(toUnmodifiableSet());
     }
 
     /**
@@ -934,12 +934,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         // at least one is set, so we have to check the three possible errors
         //@formatter:off
         boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
-                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
-                && isNotAfterAndNotNull(getStartDate(), getDueDate())
-                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+            && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
+            && isNotAfterAndNotNull(getStartDate(), getDueDate())
+            && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
+            && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+            && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
+            && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
         //@formatter:on
 
         if (!areDatesValid) {

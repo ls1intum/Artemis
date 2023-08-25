@@ -1005,6 +1005,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
             isImportFromFile: this.isImportFromFile,
+            isImportFromExistingExercise: this.isImportFromExistingExercise,
             showSummary: false,
             isEdit: this.isEdit,
             isExamMode: this.isExamMode,
@@ -1048,7 +1049,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
-            isImportFromExistingExercise: this.isImportFromExistingExercise,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
         };

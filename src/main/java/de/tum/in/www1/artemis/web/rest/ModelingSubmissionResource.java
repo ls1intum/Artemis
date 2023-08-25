@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static java.util.Collections.emptyList;
+import static de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlResultsHelper.isCpcResult;
 
 import java.util.*;
 
@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
-import de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlFeedbackHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -237,7 +236,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+                                                                                     @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -322,9 +321,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         participation.setResults(null);
 
         // do not send the result to the client if the assessment is not finished and plagiarism is not detected
-        var containsCpcResult = Optional.ofNullable(modelingSubmission.getLatestResult()).map(Result::getFeedbacks).orElse(emptyList()).stream()
-                .anyMatch(ContinuousPlagiarismControlFeedbackHelper::isCpcFeedback);
-        if (!containsCpcResult && modelingSubmission.getLatestResult() != null
+        if (!isCpcResult(modelingSubmission.getLatestResult()) && modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
         }

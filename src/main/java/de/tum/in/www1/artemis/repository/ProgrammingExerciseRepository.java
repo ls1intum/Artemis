@@ -453,7 +453,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismChecksConfig" })
-    Optional<ProgrammingExercise> findWithPlagiarismChecksConfigById(long id);
+    Optional<ProgrammingExercise> findWithPlagiarismChecksConfigById(long programmingExerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 

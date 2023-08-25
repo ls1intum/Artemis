@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.plagiarism.ContinuousPlagiarismControlResultsHelper.containsCpcResult;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -351,7 +353,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !containsCpcResult(participation.getResults())) {
                 textSubmission.setResults(Collections.emptyList());
                 participation.setResults(Collections.emptySet());
             }

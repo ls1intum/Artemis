@@ -99,8 +99,8 @@ export abstract class Exercise implements BaseEntity {
     public competencies?: Competency[];
 
     public plagiarismChecksConfig?: PlagiarismChecksConfig = {
-        continuousPlagiarismControlEnabled: true,
-        continuousPlagiarismControlPostDueDateChecksEnabled: false,
+        continuousPlagiarismControlEnabled: false,
+        continuousPlagiarismControlPostDueDateChecksEnabled: true,
         continuousPlagiarismControlDetectionsLimit: 3,
         similarityThreshold: 0.5,
         minimumSize: 0,
