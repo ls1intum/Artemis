@@ -184,7 +184,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
-        Path safePath = checkIfPathIsValidAndExistsAndReturnSafePath(repository, filePath, false);
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
@@ -200,7 +200,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
-        Path safePath = checkIfPathIsValidAndExistsAndReturnSafePath(repository, folderPath, false);
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, folderPath, false);
         checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         Files.createDirectory(repository.getLocalPath().resolve(safePath));
         // We need to add an empty keep file so that the folder can be added to the git repository
@@ -210,6 +210,14 @@ public class RepositoryService {
         inputStream.close();
     }
 
+    /**
+     * Checks if the path is valid within the repository context and returns the absolute path.
+     *
+     * @param repository the repository
+     * @param path       the relative path
+     * @return the full safe path
+     * @throws IllegalArgumentException if the path reaches outside of the repository
+     */
     private Path checkIfPathIsValidAndReturnSafePath(Repository repository, String path) {
         String unescapedPath = StringEscapeUtils.unescapeJava(path);
         Path unknownInputPath = Paths.get(unescapedPath).normalize();
@@ -221,10 +229,19 @@ public class RepositoryService {
         return unknownInputPath;
     }
 
-    private Path checkIfPathIsValidAndExistsAndReturnSafePath(Repository repository, String path, boolean exists) {
+    /**
+     * Checks if the path is valid and if the file exists or not.
+     *
+     * @param repository  the repository
+     * @param path        the relative path
+     * @param shouldExist if the file should exist or not
+     * @return the full safe path
+     * @throws IllegalArgumentException if the existence check fails
+     */
+    private Path checkIfPathIsValidAndExistanceAndReturnSafePath(Repository repository, String path, boolean shouldExist) {
         Path safePath = checkIfPathIsValidAndReturnSafePath(repository, path);
         Path fullPath = repository.getLocalPath().resolve(safePath);
-        if ((exists && !fullPath.toFile().exists()) || (!exists && fullPath.toFile().exists())) {
+        if ((shouldExist && !fullPath.toFile().exists()) || (!shouldExist && fullPath.toFile().exists())) {
             throw new IllegalArgumentException("Path is not valid");
         }
         return safePath;
@@ -259,7 +276,7 @@ public class RepositoryService {
      * @throws IllegalArgumentException   if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Path currentSafePath = checkIfPathIsValidAndExistsAndReturnSafePath(repository, fileMove.currentFilePath(), true);
+        Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
         String newFilename = FileService.removeIllegalCharacters(fileMove.newFilename());
 
         Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
@@ -294,7 +311,7 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the filename contains forbidden sequences (e.g. .. or /../).
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
-        Path safePath = checkIfPathIsValidAndExistsAndReturnSafePath(repository, filename, true);
+        Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filename, true);
         Optional<File> file = gitService.getFileByName(repository, safePath.toString());
 
         if (file.isEmpty()) {
