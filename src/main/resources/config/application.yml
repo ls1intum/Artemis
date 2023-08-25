@@ -21,6 +21,7 @@ logging:
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
         liquibase: INFO
+        de.jplag.Submission: ERROR
     logback:
         rollingpolicy:
             max-history: 90

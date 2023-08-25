@@ -57,6 +57,7 @@ import {
 } from 'app/shared/export/export-constants';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { BonusStrategy } from 'app/entities/bonus.model';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -210,20 +211,36 @@ describe('ExamScoresComponent', () => {
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
 
-    const studentResultsWithBonusAndPlagiarism = [
+    const studentResultsWithBonusGradesAndPlagiarism = [
         {
             ...studentResult1,
-            gradeWithBonus: { bonusGrade: 1, finalGrade: '2.0' },
+            gradeWithBonus: { bonusGrade: 1, finalGrade: '2.0', bonusStrategy: BonusStrategy.GRADES_DISCRETE },
             mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
         },
-        { ...studentResult2, gradeWithBonus: { bonusGrade: 2, finalGrade: '1.0' } },
+        { ...studentResult2, gradeWithBonus: { bonusGrade: 2, finalGrade: '1.0', bonusStrategy: BonusStrategy.GRADES_DISCRETE } },
         {
             ...studentResult3,
             gradeWithBonus: {
                 bonusGrade: 2,
                 finalGrade: '5.0',
+                bonusStrategy: BonusStrategy.GRADES_DISCRETE,
                 mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
             },
+        },
+    ];
+
+    const studentResultsWithBonusPoints = [
+        {
+            ...studentResult1,
+            gradeWithBonus: { bonusGrade: 20, finalGrade: '2.0', bonusStrategy: BonusStrategy.POINTS },
+        },
+        {
+            ...studentResult2,
+            gradeWithBonus: { bonusGrade: 40, finalGrade: '1.0', bonusStrategy: BonusStrategy.POINTS },
+        },
+        {
+            ...studentResult3,
+            gradeWithBonus: { bonusGrade: 40, finalGrade: '5.0', bonusStrategy: BonusStrategy.POINTS },
         },
     ];
 
@@ -344,6 +361,7 @@ describe('ExamScoresComponent', () => {
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
+
     it('should log error on sentry when wrong points calculation', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = cloneDeep(examScoreStudent1);
@@ -616,22 +634,34 @@ describe('ExamScoresComponent', () => {
         );
     });
 
-    it('should initialize correctly with bonus and plagiarism', () => {
+    it('should initialize correctly with bonus grades and plagiarism', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusAndPlagiarism } as ExamScoreDTO })),
+            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
         );
         fixture.detectChanges();
-        const finalGrades = studentResultsWithBonusAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
-        expect(comp.hasBonus).toBeTrue();
+        const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
+        expect(comp.hasBonus).toEqual(BonusStrategy.GRADES_DISCRETE);
         expect(comp.hasPlagiarismVerdicts).toBeTrue();
         expect(comp.hasPlagiarismVerdictsInBonusSource).toBeTrue();
         expect(comp.gradesWithBonus).toEqual(finalGrades);
     });
 
-    it('should generate csv correctly with bonus and plagiarism', () => {
+    it('should initialize correctly with bonus points', () => {
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(
+            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })),
+        );
+        fixture.detectChanges();
+        const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
+        expect(comp.hasBonus).toEqual(BonusStrategy.POINTS);
+        expect(comp.hasPlagiarismVerdicts).toBeFalse();
+        expect(comp.hasPlagiarismVerdictsInBonusSource).toBeFalse();
+        expect(comp.gradesWithBonus).toEqual(finalGrades);
+    });
+
+    it('should generate csv correctly with bonus grades and plagiarism', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusAndPlagiarism } as ExamScoreDTO })),
+            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
         );
         fixture.detectChanges();
         comp.gradingScale = gradingScale;
@@ -662,9 +692,9 @@ describe('ExamScoresComponent', () => {
             '100',
             '100%',
             studentResult1.submitted ? 'yes' : 'no',
-            studentResultsWithBonusAndPlagiarism[0].gradeWithBonus.bonusGrade,
-            studentResultsWithBonusAndPlagiarism[0].gradeWithBonus.finalGrade,
-            studentResultsWithBonusAndPlagiarism[0].mostSeverePlagiarismVerdict,
+            studentResultsWithBonusGradesAndPlagiarism[0].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusGradesAndPlagiarism[0].gradeWithBonus.finalGrade,
+            studentResultsWithBonusGradesAndPlagiarism[0].mostSeverePlagiarismVerdict,
             '',
         );
         const user2Row = generatedRows[1];
@@ -680,8 +710,8 @@ describe('ExamScoresComponent', () => {
             '20',
             '20%',
             studentResult2.submitted ? 'yes' : 'no',
-            studentResultsWithBonusAndPlagiarism[1].gradeWithBonus.bonusGrade,
-            studentResultsWithBonusAndPlagiarism[1].gradeWithBonus.finalGrade,
+            studentResultsWithBonusGradesAndPlagiarism[1].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusGradesAndPlagiarism[1].gradeWithBonus.finalGrade,
             '',
             '',
         );
@@ -698,10 +728,10 @@ describe('ExamScoresComponent', () => {
             '50',
             '50%',
             studentResult3.submitted ? 'yes' : 'no',
-            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.bonusGrade,
-            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.finalGrade,
+            studentResultsWithBonusGradesAndPlagiarism[2].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusGradesAndPlagiarism[2].gradeWithBonus.finalGrade,
             '',
-            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.mostSeverePlagiarismVerdict,
+            studentResultsWithBonusGradesAndPlagiarism[2].gradeWithBonus.mostSeverePlagiarismVerdict,
         );
     });
 

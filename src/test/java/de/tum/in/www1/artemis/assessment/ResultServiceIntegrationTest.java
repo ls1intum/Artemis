@@ -131,11 +131,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private StudentParticipation studentParticipation;
 
-    private final int numberOfStudents = 4;
+    private final int NUMBER_OF_STUDENTS = 3;
 
     @BeforeEach
     void setupTest() {
-        userUtilService.addUsers(TEST_PREFIX, numberOfStudents, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
@@ -291,7 +291,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
@@ -314,7 +314,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
@@ -347,7 +347,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(fileUploadExercise);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));
@@ -445,7 +445,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
@@ -466,7 +466,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private List<Result> setupExamModelingExerciseWithResults() {
         List<Result> results = new ArrayList<>();
         var now = ZonedDateTime.now();
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
             modelingSubmission.model("TestingSubmission");
             modelingSubmission.submitted(true);
