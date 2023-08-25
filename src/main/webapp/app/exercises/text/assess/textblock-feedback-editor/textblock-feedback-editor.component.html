@@ -1,7 +1,7 @@
 <div>
-    <span class="badge" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
-        <fa-icon [icon]="faRobot"></fa-icon>
-        <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
+    <span class="badge" title="{{ 'artemisApp.assessment.suggestionTitle' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
+        <fa-icon [icon]="faLightbulb"></fa-icon>
+        <span [jhiTranslate]="'artemisApp.assessment.suggestion'">Suggestion</span>
     </span>
 
     <div class="close" *ngIf="!readOnly">

@@ -9,7 +9,8 @@
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
-            "automaticGenerated": "Automatically generated feedback",
+            "suggestion": "Suggestion",
+            "suggestionTitle": "Automatically generated feedback suggestion, not applied yet",
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
