@@ -431,7 +431,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
-        testRepo.localGit.commit().setMessage("local").call();
+        GitService.commit(testRepo.localGit).setMessage("local").call();
 
         // Create file in the remote repository and commit it
         Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);

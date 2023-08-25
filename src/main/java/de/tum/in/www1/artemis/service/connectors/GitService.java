@@ -708,7 +708,7 @@ public class GitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
@@ -1037,7 +1037,7 @@ public class GitService {
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
+            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -1091,7 +1091,7 @@ public class GitService {
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
             // Delete copy branch
@@ -1240,7 +1240,7 @@ public class GitService {
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
-                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
             }
