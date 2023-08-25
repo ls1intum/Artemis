@@ -64,6 +64,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -309,11 +310,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // files are already created in beforeEach
         // first commit
         studentRepository.localGit.add().addFilepattern(".").call();
-        studentRepository.localGit.commit().setMessage("my commit 1").call();
+        GitService.commit(studentRepository.localGit).setMessage("my commit 1").call();
         // second commit
         Files.createFile(Path.of(studentRepository.localRepoFile + "/" + "dummy.txt"));
         studentRepository.localGit.add().addFilepattern(".").call();
-        studentRepository.localGit.commit().setMessage("my commit 2").call();
+        GitService.commit(studentRepository.localGit).setMessage("my commit 2").call();
     }
 
     @NotNull
@@ -759,7 +760,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
-        studentRepository.localGit.commit().setMessage("local").call();
+        GitService.commit(studentRepository.localGit).setMessage("local").call();
 
         // Create file in the remote repository and commit it
         Path remoteFilePath = Path.of(studentRepository.originRepoFile + "/" + fileName);

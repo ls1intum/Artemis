@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -73,7 +74,7 @@ public class GitUtilService {
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
-            remoteGit.commit().setMessage("initial commit").call();
+            GitService.commit(remoteGit).setMessage("initial commit").call();
 
             // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
@@ -205,7 +206,7 @@ public class GitUtilService {
         try {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
-            git.commit().setMessage(commitMsg).call();
+            GitService.commit(git).setMessage(commitMsg).call();
         }
         catch (GitAPIException ignored) {
         }

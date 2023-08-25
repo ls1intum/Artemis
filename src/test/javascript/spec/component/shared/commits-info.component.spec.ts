@@ -28,18 +28,18 @@ describe('CommitsInfoComponent', () => {
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseParticipationServiceSpy = jest
             .spyOn(programmingExerciseParticipationService, 'retrieveCommitsInfoForParticipation')
-            .mockReturnValue(of([commitInfo1, commitInfo2] as CommitInfo[]));
+            .mockReturnValue(of([commitInfo2, commitInfo1] as CommitInfo[]));
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should call participation service to retrieve commits onInit if no commits are passed as input and sort the commits ascending by timestamp', () => {
+    it('should call participation service to retrieve commits onInit if no commits are passed as input and sort the commits descending by timestamp', () => {
         component.participationId = 1;
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(component.commits).toEqual([commitInfo2, commitInfo1]);
+        expect(component.commits).toEqual([commitInfo1, commitInfo2]);
     });
 
     it('should do nothing onInit if commits are passed as input', () => {

@@ -679,8 +679,20 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         }
+    }
+
+    /**
+     * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
+     * commits is enabled, tests will fail because it will not be able to actually sign the commit.
+     * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     *
+     * @param git Git Repository Object.
+     * @return CommitCommand with signing set to false.
+     */
+    public static CommitCommand commit(Git git) {
+        return git.commit().setSign(false);
     }
 
     /**
