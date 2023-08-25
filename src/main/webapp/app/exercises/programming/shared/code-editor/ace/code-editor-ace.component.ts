@@ -43,6 +43,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 export type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
@@ -59,6 +60,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editor: AceEditorComponent;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
     inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
+    inlineFeedbackSuggestionsComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent>;
     @Input()
     selectedFile: string;
     @Input()
@@ -497,7 +500,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component is located
      */
     getInlineFeedbackNode(line: number): Element | undefined {
-        return this.inlineFeedbackComponents.find((c) => c.codeLine === line)?.elementRef.nativeElement;
+        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionsComponents].find((c) => c.codeLine === line)?.elementRef.nativeElement;
     }
 
     /**
@@ -617,4 +620,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     updateTabSize(event: number) {
         this.tabSize = event;
     }
+
+    protected readonly Feedback = Feedback;
 }

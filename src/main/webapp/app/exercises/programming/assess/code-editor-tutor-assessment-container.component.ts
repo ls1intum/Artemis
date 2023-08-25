@@ -39,6 +39,7 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -90,6 +91,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
+    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     totalScoreBeforeAssessment: number;
 
     isFirstAssessment = false;
@@ -125,6 +127,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
         private profileService: ProfileService,
+        private athenaService: AthenaService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -248,6 +251,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
+        this.loadFeedbackSuggestions();
         this.getComplaint();
         this.calculateTotalScore();
     }
@@ -260,6 +264,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
+    }
+
+    private async loadFeedbackSuggestions(): Promise<void> {
+        const feedbackSuggestions = await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise();
+        this.feedbackSuggestions = feedbackSuggestions ?? [];
+        this.setFeedbacksForManualResult();
+        this.participation.results![0] = this.manualResult!;
     }
 
     /**
@@ -582,7 +593,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private setFeedbacksForManualResult() {
-        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback, ...this.feedbackSuggestions];
     }
 
     private setAttributesForManualResult(totalScore: number) {

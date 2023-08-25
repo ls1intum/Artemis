@@ -1,0 +1,21 @@
+<div class="alert p-1 border rounded" [style.max-width]="'780px'">
+    <span class="badge suggestion-badge" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}">
+        <fa-icon [icon]="faRobot"></fa-icon>
+        <span [jhiTranslate]="'artemisApp.AssessmentType.AUTOMATIC'"></span>
+    </span>
+    <div class="container">
+        <div class="row align-items-top m-1">
+            <div class="col-auto ps-0">
+                <h5 class="d-inline">
+                    <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
+                        roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
+                    }}</span>
+                </h5>
+            </div>
+            <div class="col ps-0 pt-1">
+                <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestion">Feedback Suggestion:</h6>
+                <p [innerHTML]="buildFeedbackTextForReview(feedback, false)" class="mt-2"></p>
+            </div>
+        </div>
+    </div>
+</div>

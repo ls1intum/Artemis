@@ -1,0 +1,10 @@
+.alert {
+    background-color: var(--feedback-suggestions-background);
+}
+
+.suggestion-badge {
+    display: inline;
+    position: relative;
+    top: -14px;
+    background-color: var(--feedback-suggestions-primary);
+}

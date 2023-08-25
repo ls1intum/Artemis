@@ -21,6 +21,7 @@ export enum FeedbackType {
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
+export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -61,9 +62,6 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
-    public suggestedFeedbackReference?: string;
-    public suggestedFeedbackOriginSubmissionReference?: number;
-    public suggestedFeedbackParticipationReference?: number;
 
     // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
@@ -88,21 +86,28 @@ export class Feedback implements BaseEntity {
         if (!feedback.text) {
             return true;
         }
-        return !feedback.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0) && !feedback.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return !feedback.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && !feedback.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
     }
 
     public static isSubmissionPolicyFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
+    }
+
+    public static isFeedbackSuggestion(that: Feedback): boolean {
+        if (!that.text) {
+            return false;
+        }
+        return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
     public static hasDetailText(that: Feedback): boolean {

@@ -44,6 +44,7 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
+                "feedbackSuggestion": "Feedback-Vorschlag:",
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"

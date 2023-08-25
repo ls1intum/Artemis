@@ -1,5 +1,5 @@
 <div>
-    <span class="badge bg-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
+    <span class="badge" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
         <fa-icon [icon]="faRobot"></fa-icon>
         <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
     </span>

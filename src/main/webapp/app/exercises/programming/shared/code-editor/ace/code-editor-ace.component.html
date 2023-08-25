@@ -6,7 +6,10 @@
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
         <div *ngFor="let line of linesWithInlineFeedbackShown" class="inline-feedback">
+            <span>line: {{ line }}</span>
+            <span>file feedback: {{ fileFeedbackPerLine[line] }}</span>
             <jhi-code-editor-tutor-assessment-inline-feedback
+                *ngIf="!fileFeedbackPerLine[line] || !Feedback.isFeedbackSuggestion(fileFeedbackPerLine[line])"
                 [selectedFile]="selectedFile"
                 [codeLine]="line"
                 [feedback]="fileFeedbackPerLine[line]"
@@ -19,6 +22,13 @@
                 (onEditFeedback)="adjustLineWidgetHeight($event)"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
+            <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
+                *ngIf="fileFeedbackPerLine[line] && Feedback.isFeedbackSuggestion(fileFeedbackPerLine[line])"
+                [codeLine]="line"
+                [feedback]="fileFeedbackPerLine[line]"
+                [course]="course"
+            >
+            </jhi-code-editor-tutor-assessment-inline-feedback-suggestion>
         </div>
         <jhi-ace-editor
             #editor
