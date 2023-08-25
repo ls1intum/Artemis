@@ -288,7 +288,6 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
-        auxRepo.resetLocalRepo();
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
@@ -1739,7 +1738,7 @@ public class ProgrammingExerciseTestService {
             Files.createFile(file);
         }
         localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
-        GitService.commit(localRepository.localGit).setMessage("Added testfile").call();
+        localRepository.localGit.commit().setMessage("Added testfile").call();
     }
 
     // Test

@@ -9,7 +9,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChangeContext, Options, SliderComponent } from 'ngx-slider-v2';
@@ -47,7 +47,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     programmingSubmissions: ProgrammingSubmission[] = [];
     fileUploadSubmissions: FileUploadSubmission[] = [];
 
-    commitInfosPerExercise: Map<Exercise, CommitInfo[]> = new Map<Exercise, CommitInfo[]>();
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
@@ -66,7 +65,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {
             this.studentExam = studentExamWithGrade.studentExam;
-            // this.retrieveCommitInfos();
         });
         this.exerciseIndex = 0;
         this.pageComponentVisited = new Array(this.studentExam.exercises!.length).fill(false);

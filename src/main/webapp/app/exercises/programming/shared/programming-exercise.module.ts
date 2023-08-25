@@ -14,7 +14,6 @@ import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programmi
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
 import { CommitsInfoComponent } from './commits-info/commits-info.component';
-import { CommitInfoComponent } from './commits-info/commit-info/commit-info.component';
 
 @NgModule({
     imports: [
@@ -35,7 +34,6 @@ import { CommitInfoComponent } from './commits-info/commit-info/commit-info.comp
         ProgrammingExerciseResetButtonDirective,
         ProgrammingExerciseResetDialogComponent,
         CommitsInfoComponent,
-        CommitInfoComponent,
     ],
     exports: [
         ProgrammingExerciseComponent,

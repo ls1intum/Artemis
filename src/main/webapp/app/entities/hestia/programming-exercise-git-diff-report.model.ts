@@ -9,6 +9,8 @@ export class ProgrammingExerciseGitDiffReport implements BaseEntity {
     public firstCommitHash?: string;
     public secondCommitHash?: string;
     public entries: ProgrammingExerciseGitDiffEntry[];
+    public participationIdForFirstCommit?: number;
+    public participationIdForSecondCommit?: number;
 
     constructor() {}
 }

@@ -424,6 +424,12 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
-        return gitService.getCommitInfos(participation.getVcsRepositoryUrl());
+        try {
+            return gitService.getCommitInfos(participation.getVcsRepositoryUrl());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for participation " + participation.getId() + " with repository url " + participation.getVcsRepositoryUrl());
+            return List.of();
+        }
     }
 }

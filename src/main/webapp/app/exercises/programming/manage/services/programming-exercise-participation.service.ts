@@ -71,8 +71,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             }
         }
     }
-    getParticipationRepositoryFilesWithContent(exerciseId: number, participationId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/participations/${participationId}/files-content`).pipe(
+    getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}${participationId}/files-content/${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -80,7 +80,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             }),
         );
     }
-    retrieveCommitsInfoForParticipation(exerciseId: number, participationId: number): Observable<CommitInfo[]> {
-        return this.http.get<CommitInfo[]>(`${this.resourceUrl}/${participationId}/commits-info`);
+    retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-info`);
     }
 }

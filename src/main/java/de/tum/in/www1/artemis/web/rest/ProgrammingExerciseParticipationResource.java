@@ -225,13 +225,13 @@ public class ProgrammingExerciseParticipationResource {
         return programmingExerciseParticipationService.getCommitInfos(participation);
     }
 
-    @GetMapping("programming-exercise-participations/{participationId}/files-content")
+    @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
     @EnforceAtLeastInstructor
-    public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId) {
+    public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByParticipationId(participationId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
     }
 
 }

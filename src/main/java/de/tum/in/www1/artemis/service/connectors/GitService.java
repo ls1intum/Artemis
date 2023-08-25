@@ -376,16 +376,43 @@ public class GitService {
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepositoryAtCommit(VcsRepositoryUrl repoUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
-        var repo = getOrCheckoutRepository(repoUrl, pullOnGet);
-        try (Git git = new Git(repo)) {
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * After retrieving the repository, the commit for the given hash will be checked out.
+     *
+     * @param repository the repository to check out the commit in
+     * @param commitHash the hash of the commit to check out
+     * @return the repository checked out at the given commit
+     */
+    public Repository checkoutRepositoryAtCommit(Repository repository, String commitHash) {
+        try (Git git = new Git(repository)) {
             git.checkout().setName(commitHash).call();
-            return repo;
         }
         catch (GitAPIException e) {
-            throw new GitException("Could not checkout commit " + commitHash + " in repository " + repoUrl, e);
+            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
         }
+        return repository;
+    }
 
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * After the checkout, the repository the commit for the given hash will be checked out.
+     *
+     * @param vcsRepositoryUrl the url of the remote repository
+     * @param commitHash       the hash of the commit to checkout
+     * @param pullOnGet        pull from the remote on the checked out repository, if it does not need to be cloned
+     * @return the repository if it could be checked out
+     * @throws GitAPIException if the repository could not be checked out
+     */
+    public Repository checkoutRepositoryAtCommit(VcsRepositoryUrl vcsRepositoryUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
+        var repository = getOrCheckoutRepository(vcsRepositoryUrl, pullOnGet);
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(commitHash).call();
+        }
+        catch (GitAPIException e) {
+            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
+        }
+        return repository;
     }
 
     /**
@@ -623,7 +650,6 @@ public class GitService {
             StoredConfig gitRepoConfig = repository.getConfig();
             gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
@@ -653,20 +679,8 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         }
-    }
-
-    /**
-     * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
-     * commits is enabled, tests will fail because it will not be able to actually sign the commit.
-     * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
-     *
-     * @param git Git Repository Object.
-     * @return CommitCommand with signing set to false.
-     */
-    public static CommitCommand commit(Git git) {
-        return git.commit().setSign(false);
     }
 
     /**
@@ -682,7 +696,7 @@ public class GitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            git.commit().setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
@@ -1011,7 +1025,7 @@ public class GitService {
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
+            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -1065,7 +1079,7 @@ public class GitService {
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
             // Delete copy branch
@@ -1214,7 +1228,7 @@ public class GitService {
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
-                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
             }
@@ -1389,11 +1403,11 @@ public class GitService {
         return command.setTransportConfigCallback(sshCallback);
     }
 
-    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) {
+    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
-        try {
-            var repo = getOrCheckoutRepository(vcsRepositoryUrl, false);
-            var git = new Git(repo);
+        var repo = getOrCheckoutRepository(vcsRepositoryUrl, true);
+
+        try (var git = new Git(repo)) {
             var commits = git.log().call();
             commits.forEach(commit -> {
                 var commitInfo = CommitInfoDTO.of(commit);
