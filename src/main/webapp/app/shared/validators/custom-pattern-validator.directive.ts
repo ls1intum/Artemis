@@ -15,7 +15,6 @@ export class CustomPatternValidatorDirective implements Validator {
             return null;
         }
         try {
-            // eslint-disable-next-line
             new RegExp(control.value);
             return null;
         } catch (e) {
