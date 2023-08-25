@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.service.DragAndDropQuizAnswerConversionService;
 
 /**
- * A service to create the data export for quiz exercise participations
+ * A service to create the data export for quiz exercise participations.
  * This includes creating a pdf highlighting the submitted answers for drag and drop questions and
  * txt files containing the submitted answers for multiple choice and short answer questions.
  * Additionally, the results can be included in the export if the due date is over.
@@ -84,7 +84,7 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Creates a txt file containing the submitted answers for a multiple choice question + information if the answer was correct or not if includeResults is true
+     * Creates a txt file containing the submitted answers for a multiple choice question and information if the answer was correct or not if includeResults is true.
      *
      * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
      * @param includeResults                true if the results should be included in the export (if the assessment due date or result publication date is over)
@@ -116,8 +116,9 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Adds an explanation to the answer option if no result should be included in the export
-     * The explanation contains information if the answer option was selected or not or it is invalid
+     * Adds an explanation to the answer option if no result should be included in the export.
+     * <p>
+     * The explanation contains information if the answer option was selected or not or if it is invalid.
      *
      * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
      * @param stringBuilder                 the string builder user to create the txt file content
@@ -136,8 +137,9 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Adds an explanation to the answer option if a result should be included in the export
-     * The explanation contains information if the answer option was selected or not or it is invalid and if the answer option is correct or not
+     * Adds an explanation to the answer option if a result should be included in the export.
+     * <p>
+     * The explanation contains information if the answer option was selected or not or it is invalid and if the answer option is correct or not.
      *
      * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
      * @param stringBuilder                 the string builder user to create the txt file content
@@ -162,7 +164,7 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Creates a txt file containing the submitted answers for a short answer question + information if the answer was correct or not if includeResults is true
+     * Creates a txt file containing the submitted answers for a short answer question and information if the answer was correct or not if includeResults is true.
      *
      * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
      * @param includeResults             true if the results should be included in the export (if the assessment due date or result publication date is over)
@@ -179,7 +181,7 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Replaces the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question with the submitted answers
+     * Replaces the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question with the submitted answers.
      *
      * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
      * @param submittedAnswer            the string builder user to create the txt file content
@@ -202,7 +204,7 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Adds the submitted answer to the string builder if the answer is correct or incorrect
+     * Adds the submitted answer to the string builder if the answer is correct or incorrect.
      *
      * @param submittedAnswer the string builder user to create the txt file content
      * @param includeResults  true if the results should be included in the export (if the assessment due date or result publication date is over)
@@ -237,7 +239,7 @@ public class DataExportQuizExerciseCreationService {
     }
 
     /**
-     * Builds a map from the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question to the submitted answers
+     * Builds a map from the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question to the submitted answers.
      *
      * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
      * @return a map from the spots (represented as the string in text) to the submitted answers

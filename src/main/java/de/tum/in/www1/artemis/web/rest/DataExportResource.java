@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * REST controller for data exports
+ * REST controller for data exports.
  * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
 @RestController
@@ -65,6 +65,7 @@ public class DataExportResource {
 
     /**
      * Checks if the user can request a new data export.
+     * <p>
      * This is the case if the user has not requested a data export yet or if the last data export was created more than DAYS_BETWEEN_DATA_EXPORTS days ago.
      *
      * @return true if the user can request a new data export, false otherwise
@@ -111,6 +112,7 @@ public class DataExportResource {
 
     /**
      * Checks if the data export can be downloaded.
+     * <p>
      * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
      *
      * @param dataExport the data export to check
@@ -123,7 +125,7 @@ public class DataExportResource {
     }
 
     /**
-     * Checks if the currently logged-in user is the owner of the given data export
+     * Checks if the currently logged-in user is the owner of the given data export.
      *
      * @param dataExport the data export that needs to be checked
      * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
@@ -135,7 +137,7 @@ public class DataExportResource {
     }
 
     /**
-     * Checks if the currently logged-in user is owner of the given data export
+     * Checks if the currently logged-in user is owner of the given data export.
      *
      * @param dataExport the data export that needs to be checked
      * @return true if the user is the owner of the data export, false otherwise
@@ -150,7 +152,7 @@ public class DataExportResource {
     }
 
     /**
-     * GET /data-exports/can-request: Check if the logged-in user can request a data export
+     * GET /data-exports/can-request: Check if the logged-in user can request a data export.
      *
      * @return true if the user can request a data export, false otherwise
      */

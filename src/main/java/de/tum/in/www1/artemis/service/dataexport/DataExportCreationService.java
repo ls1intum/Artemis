@@ -179,6 +179,7 @@ public class DataExportCreationService {
 
     /**
      * Prepares the data export by creating the working directory, scheduling it for deletion and setting the state to IN_CREATION.
+     * <p>
      * If the path where the data exports are stored does not exist yet, it will be created.
      *
      * @param dataExport the data export to be prepared
@@ -199,6 +200,7 @@ public class DataExportCreationService {
 
     /**
      * Adds the general user information to the data export.
+     * <p>
      * This includes the login, name, email, and registration number (matriculation number).
      *
      * @param user             the user for which the information should be added

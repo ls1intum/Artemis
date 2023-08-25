@@ -78,6 +78,7 @@ public class DataExportExamCreationService {
 
     /**
      * Creates the data export for the given student exam.
+     * <p>
      * This includes extracting all exercise participations, general exam information such as working time, and the results if the results are published.
      *
      * @param studentExam    the student exam belonging to the user for which the data export should be created
@@ -158,6 +159,7 @@ public class DataExportExamCreationService {
 
     /**
      * Adds general information about the student exam to the data export.
+     * <p>
      * This includes information such as if the exam was started, if it is a test exam, when it was started, if it was submitted, when it was submitted, the working time, and the
      * individual end of the working time.
      *

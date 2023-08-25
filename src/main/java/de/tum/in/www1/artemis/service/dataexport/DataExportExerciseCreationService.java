@@ -117,7 +117,9 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates an export for a given programming exercise. Includes submission information, the repository from the VCS and potential plagiarism cases.
+     * Creates an export for a given programming exercise.
+     * <p>
+     * Includes submission information, the repository from the VCS and potential plagiarism cases.
      *
      * @param programmingExercise the programming exercise for which the export should be created
      * @param exercisesDir        the directory where all exercises of a course should be stored
@@ -170,7 +172,9 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Creates the export for the submission of the user to the given exercise. Includes the submission information and the submission content and the results if the results are
+     * Creates the export for the submission of the user to the given exercise.
+     * <p>
+     * Includes the submission information and the submission content and the results if the results are
      * published.
      * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
      *
@@ -232,6 +236,7 @@ public class DataExportExerciseCreationService {
 
     /**
      * Stores the given model as json file and adds a markdown file with an explanation how to view the model.
+     * <p>
      * Used if the Apollon Conversion Service is not available or an error occurs while using it.
      *
      * @param model     the model belonging to the submission as JSON string
@@ -311,6 +316,7 @@ public class DataExportExerciseCreationService {
 
     /**
      * Creates a CSV file containing the complaint data.
+     * <p>
      * Complaint can be either a complaint or a more feedback request.
      *
      * @param complaint the complaint for which the data should be stored
@@ -424,6 +430,7 @@ public class DataExportExerciseCreationService {
 
     /**
      * Creates a CSV file containing the submission information.
+     * <p>
      * This includes the id, the submission date and the commit hash if it is a programming exercise.
      *
      * @param submission the submission for which the information should be stored
@@ -447,6 +454,7 @@ public class DataExportExerciseCreationService {
 
     /**
      * Returns a stream of the submission information that should be included in the CSV file.
+     * <p>
      * This includes the id, the submission date and the commit hash if it is a programming exercise.
      *
      * @param submission the submission for which the information should be stored
