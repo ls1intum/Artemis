@@ -106,6 +106,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
         ZonedDateTime submissionDate = ZonedDateTime.now();
+        VersionControlService versionControl = versionControlService.orElseThrow();
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -113,7 +114,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
-            commit = versionControlService.orElseThrow().getLastCommitDetails(requestBody);
+            commit = versionControl.getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());
         }
@@ -122,7 +123,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(participation);
+        String branch = versionControl.getOrRetrieveBranchOfParticipation(participation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
             throw new VersionControlException(

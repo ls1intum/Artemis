@@ -416,9 +416,10 @@ public class ParticipationService {
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
-            String templateBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            VersionControlService vcs = versionControlService.orElseThrow();
+            String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
+            var newRepoUrl = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
@@ -687,10 +688,11 @@ public class ParticipationService {
         final List<StudentParticipation> changedParticipations = new ArrayList<>();
 
         for (final StudentParticipation toBeUpdated : participations) {
-            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
-            if (originalParticipation.isEmpty()) {
+            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (optionalOriginalParticipation.isEmpty()) {
                 continue;
             }
+            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
 
             // individual due dates can only exist if the exercise has a due date
             // they also have to be after the exercise due date
@@ -702,9 +704,9 @@ public class ParticipationService {
                 newIndividualDueDate = toBeUpdated.getIndividualDueDate();
             }
 
-            if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation.get());
+            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation);
             }
         }
 
@@ -760,12 +762,8 @@ public class ParticipationService {
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
         if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getStudent().isPresent()) {
-                studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), studentParticipation.getStudent().get());
-            }
-            if (studentParticipation.getTeam().isPresent()) {
-                teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), studentParticipation.getTeam().get());
-            }
+            studentParticipation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
+            studentParticipation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
         }
 
         Set<Submission> submissions = participation.getSubmissions();
