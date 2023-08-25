@@ -32,7 +32,6 @@ import { GradeStepsDTO } from 'app/entities/grade-step.model';
             </div>
         </ng-container>
     `,
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class PresentationScoreComponent implements DoCheck, OnDestroy {
     @Input() exercise: Exercise;

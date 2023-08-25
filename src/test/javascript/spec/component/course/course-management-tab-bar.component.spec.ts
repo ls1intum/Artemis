@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -16,6 +16,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -24,6 +25,9 @@ describe('Course Management Tab Bar Component', () => {
     let courseManagementService: CourseManagementService;
     let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
+
+    const router = new MockRouter();
+    router.setUrl('');
 
     const course: Course = {
         id: 42,
@@ -54,6 +58,7 @@ describe('Course Management Tab Bar Component', () => {
                         },
                     },
                 },
+                { provide: Router, useValue: router },
                 MockProvider(CourseManagementService),
             ],
         })
@@ -103,4 +108,52 @@ describe('Course Management Tab Bar Component', () => {
             content: 'Deleted an course',
         });
     });
+
+    it('should correctly highlight tutorial link', () => {
+        // tutorial groups management
+        testFuncReturnValueForLink('course-management/1/tutorial-groups', true, () => component.shouldHighlightTutorialsLink());
+
+        // tutorial groups checklist
+        testFuncReturnValueForLink('course-management/1/tutorial-groups-checklist', true, () => component.shouldHighlightTutorialsLink());
+
+        // tutorial groups configuration
+        testFuncReturnValueForLink('course-management/1/create-tutorial-groups-configuration', true, () => component.shouldHighlightTutorialsLink());
+
+        // other link (should not highlight)
+        testFuncReturnValueForLink('course-management/1/exams', false, () => component.shouldHighlightTutorialsLink());
+    });
+
+    it('should correctly highlight assessment link', () => {
+        // assessment dashboard
+        testFuncReturnValueForLink('course-management/1/assessment-dashboard', true, () => component.shouldHighlightAssessmentLink());
+
+        // grading key
+        testFuncReturnValueForLink('course-management/1/grading-system', true, () => component.shouldHighlightAssessmentLink());
+
+        // plagiarism cases
+        testFuncReturnValueForLink('course-management/1/plagiarism-cases', true, () => component.shouldHighlightAssessmentLink());
+
+        // exam assessment dashboard (should not highlight)
+        testFuncReturnValueForLink('course-management/1/exams/1/assessment-dashboard', false, () => component.shouldHighlightAssessmentLink());
+
+        // exam grading key (should not highlight)
+        testFuncReturnValueForLink('course-management/1/exams/1/grading-system', false, () => component.shouldHighlightAssessmentLink());
+    });
+
+    it('should correctly display control buttons', () => {
+        // course management dashboard
+        testFuncReturnValueForLink('course-management/1', true, () => component.shouldShowControlButtons());
+
+        // course edit page
+        testFuncReturnValueForLink('course-management/1/edit', true, () => component.shouldShowControlButtons());
+
+        // other link (should not highlight)
+        testFuncReturnValueForLink('course-management/1/exams', false, () => component.shouldShowControlButtons());
+    });
+
+    function testFuncReturnValueForLink(link: string, expected: boolean, func: () => boolean) {
+        router.setUrl(link);
+        componentFixture.detectChanges();
+        expect(func()).toBe(expected);
+    }
 });
