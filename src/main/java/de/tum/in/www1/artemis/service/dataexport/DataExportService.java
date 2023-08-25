@@ -115,6 +115,7 @@ public class DataExportService {
 
     /**
      * Calculates the next date when the user can request a data export.
+     * <p>
      * This is the date when the last data export was requested (stored in the createdDate) + the constant DAYS_BETWEEN_DATA_EXPORTS.
      * By default, DAYS_BETWEEN_DATA_EXPORTS is set to 14 days.
      * This can be changed by setting the property artemis.data-export.days-between-data-exports in the application.yml file.
