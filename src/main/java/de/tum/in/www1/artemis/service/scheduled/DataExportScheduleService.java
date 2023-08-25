@@ -59,7 +59,7 @@ public class DataExportScheduleService {
     // TODO change again after testing. As long as we do not use this cron expression one server test always fails
     // @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
     @Scheduled(cron = "0 */10 * * * *")
-    public void createDataExportsAndDeleteOldOnes() {
+    public void createDataExportsAndDeleteOldOnes() throws InterruptedException {
         if (profileService.isDev()) {
             // do not execute this in a development environment
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
@@ -72,12 +72,17 @@ public class DataExportScheduleService {
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
         ExecutorService executor = Executors.newFixedThreadPool(10);
         dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
+        executor.shutdown();
         var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
         dataExportsToBeDeleted.forEach(this::deleteDataExport);
         Optional<User> admin = userService.findInternalAdminUser();
         if (admin.isEmpty()) {
             log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
             return;
+        }
+        if (!executor.awaitTermination(15, java.util.concurrent.TimeUnit.MINUTES)) {
+            log.warn("Data export creation did not finish within 15 minutes.");
+            executor.shutdownNow();
         }
         if (!successfulDataExports.isEmpty()) {
             mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);

@@ -52,7 +52,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest
     @MethodSource("provideDataExportStatesAndExpectedToBeCreated")
-    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) {
+    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) throws InterruptedException {
         dataExportRepository.deleteAll();
         var dataExport = createDataExportWithState(state);
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
@@ -69,7 +69,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() {
+    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() throws InterruptedException {
         dataExportRepository.deleteAll();
         createDataExportWithState(DataExportState.REQUESTED);
         createDataExportWithState(DataExportState.REQUESTED);
@@ -89,7 +89,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest
     @MethodSource("provideCreationDatesAndExpectedToDelete")
-    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
+    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) throws InterruptedException {
         var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
         doNothing().when(fileService).scheduleForDeletion(any(), anyLong());
         var dataExportId = dataExport.getId();
