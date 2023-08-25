@@ -198,6 +198,7 @@
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
             "bonusGradeColumn": "Bonus Grade",
+            "bonusPointsColumn": "Bonus Points",
             "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
             "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
@@ -407,7 +408,7 @@
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
-                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",

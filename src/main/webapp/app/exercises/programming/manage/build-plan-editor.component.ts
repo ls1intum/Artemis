@@ -1,6 +1,8 @@
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 import { BuildPlan } from 'app/entities/build-plan.model';
 import { ActivatedRoute } from '@angular/router';
@@ -31,6 +33,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     constructor(
         private buildPlanService: BuildPlanService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private alertService: AlertService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
@@ -52,7 +55,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     ngAfterViewInit(): void {
         this.editor.getEditor().setOptions({
             animatedScroll: true,
-            maxLines: 80,
+            maxLines: 45,
         });
         this.loadBuildPlan(this.activatedRoute.snapshot.params.exerciseId);
     }
@@ -71,10 +74,22 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      */
     private loadBuildPlan(exerciseId: number) {
         this.isLoading = true;
-        this.buildPlanService.getBuildPlan(exerciseId).subscribe((buildPlan) => {
-            this.buildPlan = buildPlan.body!;
-            this.initEditor();
-            this.isLoading = false;
+        this.buildPlanService.getBuildPlan(exerciseId).subscribe({
+            next: (buildPlan) => {
+                this.buildPlan = buildPlan.body!;
+                this.initEditor();
+                this.isLoading = false;
+            },
+            error: (error) => {
+                this.buildPlan = undefined;
+                this.isLoading = false;
+
+                if (error.status == 404) {
+                    this.alertService.error('artemisApp.programmingExercise.buildPlanFetchError');
+                } else {
+                    onError(this.alertService, error);
+                }
+            },
         });
     }
 

@@ -179,8 +179,9 @@ public class ProgrammingExerciseRepositoryService {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             final var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            final String templateBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
-            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
+            VersionControlService versionControl = versionControlService.orElseThrow();
+            final String templateBranch = versionControl.getOrRetrieveBranchOfExercise(programmingExercise);
+            versionControl.unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
             setupTestTemplateAndPush(testResources, programmingExercise, exerciseCreator);
