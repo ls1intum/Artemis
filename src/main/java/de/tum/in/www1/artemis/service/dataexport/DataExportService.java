@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -145,6 +146,20 @@ public class DataExportService {
             dataExport.setDataExportState(DataExportState.DELETED);
         }
         dataExportRepository.save(dataExport);
+    }
+
+    /**
+     * Checks if the data export can be downloaded.
+     * <p>
+     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
+     *
+     * @param dataExport the data export to check
+     * @throws AccessForbiddenException if the data export is not in a downloadable state
+     */
+    public void checkDataExportCanBeDownloadedElseThrow(DataExport dataExport) {
+        if (!dataExport.getDataExportState().isDownloadable()) {
+            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
+        }
     }
 
 }

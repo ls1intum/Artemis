@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportServi
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 /**
- * A service to create the data export for exercise participations of the user
+ * A service to create the data export for exercise participations of the user.
  * It is responsible for creating the export for programming exercises and modeling, text, and file upload exercises.
  * For quiz exercises it delegates the creation of the export to {@link DataExportQuizExerciseCreationService}.
  */

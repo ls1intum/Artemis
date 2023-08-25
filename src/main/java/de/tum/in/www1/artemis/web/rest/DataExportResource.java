@@ -100,7 +100,7 @@ public class DataExportResource {
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
         DataExport dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
-        checkDataExportCanBeDownloadedElseThrow(dataExport);
+        dataExportService.checkDataExportCanBeDownloadedElseThrow(dataExport);
         Resource resource = dataExportService.downloadDataExport(dataExport);
         File finalZipFile = Path.of(dataExport.getFilePath()).toFile();
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(finalZipFile.getName()).build();
@@ -108,20 +108,6 @@ public class DataExportResource {
         headers.setContentDisposition(contentDisposition);
         return ResponseEntity.ok().contentLength(finalZipFile.length()).headers(headers).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName())
                 .body(resource);
-    }
-
-    /**
-     * Checks if the data export can be downloaded.
-     * <p>
-     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
-     *
-     * @param dataExport the data export to check
-     * @throws AccessForbiddenException if the data export is not in a downloadable state
-     */
-    private void checkDataExportCanBeDownloadedElseThrow(DataExport dataExport) {
-        if (!dataExport.getDataExportState().isDownloadable()) {
-            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
-        }
     }
 
     /**
