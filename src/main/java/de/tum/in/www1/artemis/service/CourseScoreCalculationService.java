@@ -484,4 +484,15 @@ public class CourseScoreCalculationService {
         var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
         return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
     }
+
+    /**
+     * Calculates the reachable points for a course given its grading scale and exercises.
+     *
+     * @param gradingScale the grading scale of the course.
+     * @param exercises    the exercises of the course.
+     * @return the reachable points for a course excluding bonus and optional points.
+     */
+    public double calculateReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+        return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints;
+    }
 }

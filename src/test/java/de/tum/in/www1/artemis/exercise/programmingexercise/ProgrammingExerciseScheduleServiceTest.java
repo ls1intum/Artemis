@@ -94,7 +94,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         gitlabRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
-        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();

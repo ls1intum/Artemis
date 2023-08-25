@@ -61,7 +61,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationTe
 
     @BeforeEach
     void initTestCases() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
