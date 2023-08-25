@@ -38,7 +38,7 @@ describe('DataExportService', () => {
         const user = new User();
         user.login = 'ge12abc';
         service.requestDataExportForAnotherUser(user.login).subscribe((resp) => expect(resp).toEqual(dataExport));
-        const req = httpMock.expectOne({ method: 'POST', url: `api/data-exports/ge12abc` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/admin/data-exports/ge12abc` });
         req.flush(dataExport);
         tick();
     }));

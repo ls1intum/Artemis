@@ -30,6 +30,6 @@ export class DataExportService {
     }
 
     requestDataExportForAnotherUser(login: string): Observable<DataExport> {
-        return this.http.post<DataExport>(`api/data-exports/${login}`, {});
+        return this.http.post<DataExport>(`api/admin/data-exports/${login}`, {});
     }
 }
