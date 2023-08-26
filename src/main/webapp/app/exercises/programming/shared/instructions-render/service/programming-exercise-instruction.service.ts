@@ -81,7 +81,7 @@ export class ProgrammingExerciseInstructionService {
     }
 
     public convertTestListToIds(testList: string, testCases: ProgrammingExerciseTestCase[] | undefined): number[] {
-        // If there are test names (e.g. during the markdown preview), map the test to its corresponding id using the given testCases array.
+        // If there are test names, e.g., during the markdown preview, map the test to its corresponding id using the given testCases array.
         // Otherwise, use the id directly provided within the <testid> section.
         // split the tests by "," only when there is not a closing bracket without a previous opening bracket
         return testList

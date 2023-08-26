@@ -285,7 +285,7 @@ public class ProgrammingExerciseTaskService {
     private Long extractTestId(String test) {
         var matcher = TESTID_PATTERN.matcher(test);
         if (!matcher.find()) {
-            // This not a test id but a name that got not replaced previously (e.g. due to a typo)
+            // This not a test id but a name that got not replaced previously, e.g., due to a typo
             return null;
         }
 
@@ -351,7 +351,7 @@ public class ProgrammingExerciseTaskService {
      * Input: [task][Implement BubbleSort](testBubbleSort, testClass[BubbleSort])
      * Output: [task][Implement BubbleSort](<testid>15</testid>,<testid>18</testid>)
      *
-     * @param exercise the exercise to replaces the test names in the problem statement
+     * @param exercise the exercise to replace the test names in the problem statement
      */
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
         // Only replace active test cases (tests that actually exist in the repository).
@@ -367,7 +367,7 @@ public class ProgrammingExerciseTaskService {
      * @param exercise The exercise where its problem statement is updated
      */
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
-        // Also replace inactive test cases, don't send testids to the editor.
+        // Also replace inactive test cases; don't send any testids (e.g. ids referring to previoulsy active test cases) to the editor.
         // The client will then show a warning that the mentioned test name no longer exists.
         replaceInProblemStatement(exercise, this::extractTestNamesFromIds, false);
     }
