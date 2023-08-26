@@ -21,9 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -227,9 +225,10 @@ public class SubmissionResource {
 
     @GetMapping("/submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
-    public List<SubmissionVersion> getSubmissionVersions(@PathVariable long submissionId) {
+    public List<SubmissionVersionDTO> getSubmissionVersions(@PathVariable long submissionId) {
         var submission = submissionRepository.findByIdElseThrow(submissionId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
-        return submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submission.getId());
+        var submissionVersions = submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submission.getId());
+        return submissionVersions.stream().map(SubmissionVersionDTO::of).toList();
     }
 }
