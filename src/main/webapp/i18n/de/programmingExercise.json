@@ -99,6 +99,7 @@
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -508,6 +509,7 @@
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
                 "submissionLimitWarning": {
                     "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
