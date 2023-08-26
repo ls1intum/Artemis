@@ -46,6 +46,8 @@
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
                 "feedbackSuggestion": "Feedback-Vorschlag:",
+                "accept": "Annehmen",
+                "discard": "Verwerfen",
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"

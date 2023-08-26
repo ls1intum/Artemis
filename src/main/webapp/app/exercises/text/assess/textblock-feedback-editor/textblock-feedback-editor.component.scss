@@ -32,7 +32,9 @@ label {
     display: inline;
     position: relative;
     top: -25px;
-    background-color: var(--purple);
+    vertical-align: middle;
+    background-color: var(--feedback-suggestions-primary);
+    cursor: default;
 }
 
 .close {

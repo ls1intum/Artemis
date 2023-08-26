@@ -20,7 +20,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     @Output()
     onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output()
-    onRejectSuggestion = new EventEmitter<Feedback>();
+    onDiscardSuggestion = new EventEmitter<Feedback>();
 
     // Expose functions to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
