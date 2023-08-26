@@ -10,6 +10,12 @@ export class ExamStartEndPage {
         cy.get('#confirmBox', { timeout }).check();
     }
 
+    pressStartWithWait() {
+        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/conduction').as('startExam');
+        cy.get('#start-exam').click();
+        return cy.wait('@startExam');
+    }
+
     pressStart() {
         cy.get('#start-exam').click();
     }
@@ -24,10 +30,14 @@ export class ExamStartEndPage {
         return cy.wait('@finishExam');
     }
 
-    startExam() {
+    startExam(withWait = false) {
         this.setConfirmCheckmark();
         this.enterFirstnameLastname();
-        this.pressStart();
+        if (withWait) {
+            this.pressStartWithWait();
+        } else {
+            this.pressStart();
+        }
     }
 
     finishExam(timeout?: number) {
