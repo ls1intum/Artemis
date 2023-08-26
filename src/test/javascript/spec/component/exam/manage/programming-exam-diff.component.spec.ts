@@ -12,6 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;
@@ -21,13 +22,14 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [{ provide: NgbModal, useValue: new MockNgbModalService() }],
         });
         fixture = TestBed.createComponent(ProgrammingExerciseExamDiffComponent);
         component = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modal = TestBed.inject(NgbModal);
+        component.exercise = { id: 3, title: 'prog' } as ProgrammingExercise;
         fixture.detectChanges();
     });
 
@@ -55,7 +57,6 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         );
         component.previousSubmission = { id: 1 };
         component.currentSubmission = { id: 2 };
-        component.exercise = { id: 3 } as ProgrammingExercise;
         component.loadGitDiffReport();
         expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);
         expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
