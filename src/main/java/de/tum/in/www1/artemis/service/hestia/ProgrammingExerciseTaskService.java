@@ -308,7 +308,10 @@ public class ProgrammingExerciseTaskService {
 
             // check potential split
             if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
-                testCaseNames.add(currentTestCaseName.toString().trim());
+                String currentName = currentTestCaseName.toString().strip();
+                if (!currentName.isEmpty()) {
+                    testCaseNames.add(currentName);
+                }
                 currentTestCaseName = new StringBuilder();
                 continue;
             }

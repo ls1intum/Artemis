@@ -247,11 +247,26 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
         var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
-        final var actualTask = actualTasks.stream().findAny().orElseThrow().getId();
+        final var actualTask = actualTasks.iterator().next().getId();
         var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testIgnoreEmptyTests() {
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        updateProblemStatement("[task][Task 1](,test1,    ,,test2,)");
+
+        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(actualTasks).hasSize(1);
+        var actualTask = actualTasks.iterator().next();
+        assertThat(actualTask.getTaskName()).isEqualTo("Task 1");
+        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask.getId());
+        var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        assertThat(actualTestCaseNames).hasSize(2).containsExactlyInAnyOrder("test1", "test2");
     }
 
     @Test
