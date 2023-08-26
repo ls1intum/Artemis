@@ -67,7 +67,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (this.elementCounts) {
             await this.updateElementCounts(this.elementCounts);
         }
-        this.applyStateConfiguration();
+        await this.applyStateConfiguration();
         this.setupInteract();
     }
 
@@ -85,13 +85,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
-            this.applyStateConfiguration();
+            await this.applyStateConfiguration();
         }
         if (changes.highlightedElements) {
             this.highlightedElements = changes.highlightedElements.currentValue;
 
             if (this.apollonEditor) {
-                this.applyStateConfiguration();
+                await this.applyStateConfiguration();
             }
         }
         if (changes.highlightDifferences) {
@@ -130,9 +130,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    private applyStateConfiguration() {
+    private async applyStateConfiguration() {
         if (this.highlightedElements) {
-            this.updateHighlightedElements(this.highlightedElements);
+            await this.updateHighlightedElements(this.highlightedElements);
         }
     }
 
