@@ -574,10 +574,12 @@
                 "commitHash": "Commit-Hash",
                 "author": "Autor",
                 "date": "Datum",
-                "message": "Nachricht"
+                "message": "Nachricht",
+                "previousSubmission": "Vorherige Abgabe",
+                "currentSubmission": "Aktuelle Abgabe",
+                "template": "Vorlage"
             }
         },
-
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
         }

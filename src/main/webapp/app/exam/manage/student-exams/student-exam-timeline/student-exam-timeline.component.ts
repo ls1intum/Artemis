@@ -243,7 +243,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
-        //TODO does this work or do we need to set these two properties after activating the component?
         this.currentExercise = exercise;
         this.currentSubmission = submission;
         this.activateActiveComponent();

@@ -569,7 +569,10 @@
                 "commitHash": "Commit Hash",
                 "author": "Author",
                 "date": "Date",
-                "message": "Message"
+                "message": "Message",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
+                "template": "Template"
             }
         },
         "error": {

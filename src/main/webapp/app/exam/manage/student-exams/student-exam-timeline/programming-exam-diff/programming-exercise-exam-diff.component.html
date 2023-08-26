@@ -1,6 +1,19 @@
-<h5 class="mb-2">{{ exercise?.title }}</h5>
-
-<jhi-commits-info class="mb-2" [activeCommitHash]="currentSubmission?.commitHash" [participationId]="studentParticipation?.id" />
+<h4 class="exercise-title">
+    {{ exercise.title }}
+    <span
+        >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+        <jhi-included-in-score-badge
+            *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+            [includedInOverallScore]="exercise.includedInOverallScore"
+        ></jhi-included-in-score-badge
+    ></span>
+</h4>
+<jhi-commits-info
+    class="mb-2"
+    [currentSubmissionHash]="currentSubmission?.commitHash"
+    [previousSubmissionHash]="previousSubmission?.commitHash"
+    [participationId]="studentParticipation?.id"
+/>
 <div *ngIf="exercise?.gitDiffReport">
     <dt>
         <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabel">Lines added/removed between current submission and previous submission</span>

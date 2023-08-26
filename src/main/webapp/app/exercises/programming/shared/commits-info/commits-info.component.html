@@ -15,7 +15,12 @@
                 <tr>
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
-                        {{ commit.hash }}
+                        <span *ngIf="localVC; else hashWithUrl">
+                            {{ commit.hash }}
+                        </span>
+                        <ng-template #hashWithUrl>
+                            <a [href]="getCommitUrl(commit)"> {{ commit.hash }} </a>
+                        </ng-template>
                     </td>
                     <td>
                         {{ commit.author }}
@@ -25,6 +30,18 @@
                     </td>
                     <td>
                         {{ commit.message }}
+                        <ng-container *ngIf="currentSubmissionHash === commit.hash">
+                            <span class="badge bg-info">
+                                {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
+                            </span>
+                        </ng-container>
+                        <ng-container *ngIf="previousSubmissionHash === commit.hash">
+                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
+                        </ng-container>
+
+                        <ng-container *ngIf="!previousSubmissionHash && i === commits?.length! - 1">
+                            <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
+                        </ng-container>
                     </td>
                 </tr>
             </ng-container>

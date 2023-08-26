@@ -6,7 +6,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -32,6 +32,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
     readonly faEye = faEye;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
