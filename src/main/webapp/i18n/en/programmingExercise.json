@@ -105,6 +105,7 @@
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
             "buildPlanEditor": "Build Plan Editor",
+            "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
@@ -363,6 +364,7 @@
             "resultETA": "Result ETA: {{eta}}",
             "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
+            "channelNameTooltip": "A course-wide channel will be created automatically with this name. The name can be changed any time.",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
             "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
             "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
@@ -396,7 +398,7 @@
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
-                "releaseTestsWithExampleSolution": "Publish tests",
+                "releaseTestsWithExampleSolution": "Include tests into example solution",
                 "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
             },
             "repositoryIsLocked": {
@@ -502,6 +504,7 @@
                 "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
+                "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
                 "submissionLimitWarning": {
                     "pattern": "The submission limit must be and integer between 1 and 500!",
                     "required": "The submission limit must be set!"
