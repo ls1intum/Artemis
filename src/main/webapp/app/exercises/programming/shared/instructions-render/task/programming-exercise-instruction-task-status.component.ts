@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -47,7 +47,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private appRef: ApplicationRef,
         private modalService: NgbModal,
     ) {}
 

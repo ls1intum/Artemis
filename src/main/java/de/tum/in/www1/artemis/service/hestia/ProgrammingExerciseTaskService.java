@@ -250,8 +250,13 @@ public class ProgrammingExerciseTaskService {
     }
 
     private String convertTestNameToTestId(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        return testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).map(id -> TESTID_START + id + TESTID_END)
-                .orElse(testName);
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            if (testName.equals(testCase.getTestName())) {
+                String id = testCase.getId().toString();
+                return TESTID_START + id + TESTID_END;
+            }
+        }
+        return testName;
     }
 
     private String extractTestNamesFromIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
@@ -268,7 +273,13 @@ public class ProgrammingExerciseTaskService {
             return testId;
         }
 
-        return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst().map(ProgrammingExerciseTestCase::getTestName).orElse(testId);
+        for (ProgrammingExerciseTestCase tc : testCases) {
+            if (tc.getId().equals(id)) {
+                String testName = tc.getTestName();
+                return Objects.requireNonNullElse(testName, testId);
+            }
+        }
+        return testId;
     }
 
     private Long extractTestId(String test) {
