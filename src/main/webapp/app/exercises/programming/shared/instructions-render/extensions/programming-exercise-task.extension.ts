@@ -15,7 +15,7 @@ import { ShowdownExtension } from 'showdown';
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     // E.g. [task][Implement BubbleSort](testBubbleSort)
     // const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
-    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^()]+(?:\([^()]*\))?)*\)/g;
+    private readonly taskRegex = /\[task]\[[^[\]]+]\([^()]*(?:\([^()]*\))*\)/g;
     // E.g. Implement BubbleSort, testBubbleSort
     private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:[^()]+(?:\([^()]*\))?)*)\)({(.*)})?/;
 
