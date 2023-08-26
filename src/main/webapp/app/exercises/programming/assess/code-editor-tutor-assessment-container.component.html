@@ -54,14 +54,16 @@
                 *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
                 [editable]="false"
                 [participation]="participation"
+                [feedbackSuggestions]="feedbackSuggestions"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
-                [fileBadges]="fileBadges"
                 [course]="getCourseFromExercise(exercise)"
                 (onUpdateFeedback)="onUpdateFeedback($event)"
+                (onAcceptSuggestion)="removeSuggestion($event)"
+                (onDiscardSuggestion)="removeSuggestion($event)"
                 (onFileLoad)="onFileLoad($event)"
             >
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>

@@ -11,9 +11,9 @@ import { faCheck, faLightbulb, faTrash } from '@fortawesome/free-solid-svg-icons
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     @Input()
-    feedback: Feedback;
+    codeLine: number; // Needed for the outer editor to handle the DOM node of the component
     @Input()
-    codeLine: number;
+    feedback: Feedback;
     @Input()
     course?: Course; // needed for credit rounding settings
 

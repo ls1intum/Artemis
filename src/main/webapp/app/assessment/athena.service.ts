@@ -25,9 +25,9 @@ export class AthenaService {
         referencedFeedbackSuggestion.id = 1;
         referencedFeedbackSuggestion.credits = 1;
         referencedFeedbackSuggestion.text = 'FeedbackSuggestion:';
-        referencedFeedbackSuggestion.detailText = 'This is a referenced feedback suggestion';
+        referencedFeedbackSuggestion.detailText = 'This is a referenced feedback suggestion - test test';
         referencedFeedbackSuggestion.gradingInstruction = undefined;
-        referencedFeedbackSuggestion.reference = 'file:src/de/athena/BubbleSort.java_line:13';
+        referencedFeedbackSuggestion.reference = 'file:src/de/athena/BubbleSort.java_line:14';
         referencedFeedbackSuggestion.type = FeedbackType.AUTOMATIC;
         const unreferencedFeedbackSuggestion = new Feedback();
         unreferencedFeedbackSuggestion.id = 2;

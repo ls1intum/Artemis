@@ -56,11 +56,11 @@ describe('CodeEditorAceComponent', () => {
     });
 
     it('should know the lines in which inline feedback is shown', () => {
-        expect(comp.linesWithInlineFeedbackShown).toEqual([]);
+        expect(comp.linesToRenderInlineFeedback).toEqual([]);
         comp.linesWithNewFeedback = [15, 5];
-        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15]);
+        expect(comp.linesToRenderInlineFeedback).toEqual([5, 15]);
         comp.fileFeedbackPerLine = { 50: {}, 1050: {} };
-        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15, 50, 1050]);
+        expect(comp.linesToRenderInlineFeedback).toEqual([5, 15, 50, 1050]);
     });
 
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
@@ -162,7 +162,7 @@ describe('CodeEditorAceComponent', () => {
         const getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
         getInlineFeedbackNodeStub.mockReturnValue(undefined);
         comp.addLineWidgetWithFeedback(16);
-        comp.initEditorAfterFileChange();
+        comp.initEditor();
         expect(comp.linesWithNewFeedback).toEqual([]);
     });
 

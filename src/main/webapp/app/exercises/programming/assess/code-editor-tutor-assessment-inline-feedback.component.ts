@@ -17,7 +17,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     get feedback(): Feedback {
         return this._feedback;
     }
-    set feedback(feedback: Feedback) {
+    set feedback(feedback: Feedback | undefined) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
@@ -133,4 +133,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         return buildFeedbackTextForReview(feedback, false);
     }
+
+    protected readonly Feedback = Feedback;
 }

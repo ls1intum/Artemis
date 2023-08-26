@@ -120,6 +120,30 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Get the referenced file path for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     */
+    public static getReferenceFilePath(feedback: Feedback): string | undefined {
+        if (!feedback.reference?.startsWith('file:')) {
+            // No programming feedback
+            return undefined;
+        }
+        return feedback.reference.substring(5).split('_')[0];
+    }
+
+    /**
+     * Get the referenced line for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     */
+    public static getReferenceLine(feedback: Feedback): number | undefined {
+        if (!feedback?.reference?.startsWith('file:')) {
+            // No programming feedback
+            return undefined;
+        }
+        return parseInt(feedback.reference.split('_line:')[1]);
+    }
+
+    /**
      * Feedback is empty if it has 0 credits and the comment is empty.
      * @param that
      */

@@ -5,14 +5,14 @@
         <div class="btn-inline-comment">
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
-        <div *ngFor="let line of linesWithInlineFeedbackShown" class="inline-feedback">
-            <span>line: {{ line }}</span>
-            <span>file feedback: {{ fileFeedbackPerLine[line] }}</span>
+        <div style="display: none">
+            <!-- DOM nodes will be taken out from here by the ACE editor anyway -->
+            <!-- New feedback (not saved yet, but still has to be displayed -->
             <jhi-code-editor-tutor-assessment-inline-feedback
-                *ngIf="!fileFeedbackPerLine[line] || !Feedback.isFeedbackSuggestion(fileFeedbackPerLine[line])"
+                *ngFor="let line of newFeedbackLines"
                 [selectedFile]="selectedFile"
                 [codeLine]="line"
-                [feedback]="fileFeedbackPerLine[line]"
+                [feedback]="undefined"
                 [readOnly]="readOnlyManualFeedback"
                 [highlightDifferences]="highlightDifferences"
                 [course]="course"
@@ -22,14 +22,31 @@
                 (onEditFeedback)="adjustLineWidgetHeight($event)"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
-            <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
-                *ngIf="fileFeedbackPerLine[line] && Feedback.isFeedbackSuggestion(fileFeedbackPerLine[line])"
-                [codeLine]="line"
-                [feedback]="fileFeedbackPerLine[line]"
+            <!-- Existing, saved feedback -->
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                *ngFor="let feedback of filterFeedbackForFile(feedbacks)"
+                [selectedFile]="selectedFile"
+                [codeLine]="Feedback.getReferenceLine(feedback)!"
+                [feedback]="feedback"
+                [readOnly]="readOnlyManualFeedback"
+                [highlightDifferences]="highlightDifferences"
                 [course]="course"
-            >
-            </jhi-code-editor-tutor-assessment-inline-feedback-suggestion>
+                (onUpdateFeedback)="updateFeedback($event)"
+                (onDeleteFeedback)="deleteFeedback($event)"
+                (onCancelFeedback)="cancelFeedback($event)"
+                (onEditFeedback)="adjustLineWidgetHeight($event)"
+            ></jhi-code-editor-tutor-assessment-inline-feedback>
+            <!-- Feedback suggestions -->
+            <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
+                *ngFor="let suggestion of filterFeedbackForFile(feedbackSuggestions)"
+                [codeLine]="Feedback.getReferenceLine(suggestion)!"
+                [feedback]="suggestion"
+                [course]="course"
+                (onAcceptSuggestion)="acceptSuggestion($event)"
+                (onDiscardSuggestion)="discardSuggestion($event)"
+            ></jhi-code-editor-tutor-assessment-inline-feedback-suggestion>
         </div>
+
         <jhi-ace-editor
             #editor
             id="ace-code-editor"

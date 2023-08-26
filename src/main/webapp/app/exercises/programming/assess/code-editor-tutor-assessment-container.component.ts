@@ -4,13 +4,12 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType, FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -85,7 +84,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
-    fileBadges: { [path: string]: FileBadge[] } = {};
 
     localVCEnabled = false;
 
@@ -119,7 +117,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private accountService: AccountService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private complaintService: ComplaintService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
@@ -267,33 +264,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    /**
-     * Counts the number of feedback suggestions for the given file in the submission
-     * @param path the path of the file
-     */
-    private countFeedbackSuggestions(path: string): number {
-        return this.feedbackSuggestions.filter((feedback) => feedback.reference?.startsWith('file:' + path + '_line:')).length;
-    }
-
-    /**
-     * Updates the file badges for the code editor (currently only feedback suggestions)
-     */
-    private updateFileBadges(): void {
-        this.fileBadges = {};
-        const filePathsWithSuggestions = this.feedbackSuggestions
-            .filter((feedback) => feedback.reference?.startsWith('file:'))
-            .map((feedback) => feedback.reference!.split('_line:')[0].substring(5)); // get file paths from feedback suggestions
-        for (const filePath of filePathsWithSuggestions) {
-            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, this.countFeedbackSuggestions(filePath))];
-        }
-    }
-
     private async loadFeedbackSuggestions(): Promise<void> {
-        const feedbackSuggestions = await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise();
-        this.feedbackSuggestions = feedbackSuggestions ?? [];
-        this.updateFileBadges();
-        this.setFeedbacksForManualResult();
-        this.participation.results![0] = this.manualResult!;
+        this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
     }
 
     /**
@@ -518,6 +490,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
+     * Remove a suggestion because it was accepted or discarded.
+     * The actual accept/discard happens in code-editor-ace-component because only it has full control over the suggestion card.
+     * @param feedback Feedback suggestion that is removed
+     */
+    removeSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion.id !== feedback.id);
+    }
+
+    /**
      * Show an error as an alert in the top of the editor html.
      * Used by other components to display errors.
      * The error must already be provided translated by the emitting component.
@@ -616,7 +597,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private setFeedbacksForManualResult() {
-        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback, ...this.feedbackSuggestions];
+        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
     private setAttributesForManualResult(totalScore: number) {

@@ -10,6 +10,7 @@ import {
     DeleteFileChange,
     EditorState,
     FileBadge,
+    FileBadgeType,
     FileChange,
     FileType,
     RenameFileChange,
@@ -59,7 +60,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Input()
     highlightFileChanges = false;
     @Input()
-    fileBadges: { [path: string]: FileBadge[] } = {};
+    feedbackSuggestions: Feedback[] = [];
     @Input()
     readOnlyManualFeedback = false;
     @Input()
@@ -77,6 +78,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
     onFileLoad = new EventEmitter<string>();
+    @Output()
+    onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output()
+    onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
 
@@ -130,6 +135,24 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
+    }
+
+    /**
+     * Get the file badges for the code editor (currently only feedback suggestions)
+     */
+    get fileBadges(): { [path: string]: FileBadge[] } {
+        const fileBadges = {};
+        // Create badges for feedback suggestions
+        // Get file paths from feedback suggestions:
+        const filePathsWithSuggestions = this.feedbackSuggestions
+            .map((feedback) => Feedback.getReferenceFilePath(feedback))
+            .filter((filePath) => filePath !== undefined) as string[];
+        for (const filePath of filePathsWithSuggestions) {
+            // Count the number of suggestions for this file
+            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => feedback.reference?.startsWith('file:' + filePath + '_line:')).length;
+            fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+        }
+        return fileBadges;
     }
 
     /**
@@ -203,10 +226,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
         this.onFileChanged.emit();
-    }
-
-    updateFeedback(feedbacks: Feedback[]) {
-        this.onUpdateFeedback.emit(feedbacks);
     }
 
     fileLoad(selectedFile: string) {
