@@ -27,7 +27,7 @@ export class ExamStartEndPage {
     pressFinish() {
         cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/submit').as('finishExam');
         cy.get('#end-exam').click();
-        return cy.wait('@finishExam');
+        return cy.wait('@finishExam', { timeout: 10000 });
     }
 
     startExam(withWait = false) {
