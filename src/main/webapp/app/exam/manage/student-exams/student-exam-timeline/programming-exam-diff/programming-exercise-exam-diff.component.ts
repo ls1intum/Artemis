@@ -25,6 +25,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
     @Input() previousSubmission: ProgrammingSubmission | undefined;
     @Input() currentSubmission: ProgrammingSubmission;
     @Input() studentParticipation: ProgrammingExerciseStudentParticipation;
+    @Input() submissions: ProgrammingSubmission[];
 
     isLoadingDiffReport: boolean;
     addedLineCount: number;
@@ -60,8 +61,8 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
                 gitDiffReport.programmingExercise = this.exercise;
                 gitDiffReport.participationIdForFirstCommit = this.previousSubmission?.participation?.id;
                 gitDiffReport.participationIdForSecondCommit = this.currentSubmission.participation?.id;
-                gitDiffReport.firstCommitHash = this.previousSubmission?.commitHash;
-                gitDiffReport.secondCommitHash = this.currentSubmission.commitHash;
+                gitDiffReport.leftCommitHash = this.previousSubmission?.commitHash;
+                gitDiffReport.rightCommitHash = this.currentSubmission.commitHash;
                 this.calculateLineCount(gitDiffReport);
             }
             this.isLoadingDiffReport = false;
@@ -69,16 +70,18 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
     }
 
     private calculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
-        this.addedLineCount = gitDiffReport.entries
-            .map((entry) => entry.lineCount)
-            .filter((lineCount) => lineCount)
-            .map((lineCount) => lineCount!)
-            .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-        this.removedLineCount = gitDiffReport.entries
-            .map((entry) => entry.previousLineCount)
-            .filter((lineCount) => lineCount)
-            .map((lineCount) => lineCount!)
-            .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+        this.addedLineCount =
+            gitDiffReport?.entries
+                ?.map((entry) => entry.lineCount)
+                .filter((lineCount) => lineCount)
+                .map((lineCount) => lineCount!)
+                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+        this.removedLineCount =
+            gitDiffReport?.entries
+                ?.map((entry) => entry.previousLineCount)
+                .filter((lineCount) => lineCount)
+                .map((lineCount) => lineCount!)
+                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
     }
 
     /**

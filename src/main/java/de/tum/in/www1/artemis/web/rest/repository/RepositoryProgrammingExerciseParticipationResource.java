@@ -117,6 +117,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUrl();
     }
 
+    /**
+     * Get a programming exercise participation with the given id from the database.
+     *
+     * @param participationId the id of the participation to retrieve
+     * @throws IllegalArgumentException if the participation is not a programming exercise participation
+     * @return a programming exercise participation with the given id
+     */
     private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(long participationId) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 

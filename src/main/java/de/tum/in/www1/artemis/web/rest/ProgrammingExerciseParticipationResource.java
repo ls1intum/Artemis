@@ -217,14 +217,28 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /programming-exercise-participations/{participationId}/commits-info : Get the commits information (author, timestamp, message, hash) of a programming exercise
+     * participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the commits information
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
     @GetMapping("programming-exercise-participations/{participationId}/commits-info")
     @EnforceAtLeastInstructor
     List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
         return programmingExerciseParticipationService.getCommitInfos(participation);
     }
 
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
     @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
     @EnforceAtLeastInstructor
     public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {

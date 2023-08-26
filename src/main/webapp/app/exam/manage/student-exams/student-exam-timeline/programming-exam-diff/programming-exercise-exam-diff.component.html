@@ -13,6 +13,8 @@
     [currentSubmissionHash]="currentSubmission?.commitHash"
     [previousSubmissionHash]="previousSubmission?.commitHash"
     [participationId]="studentParticipation?.id"
+    [submissions]="submissions"
+    [exerciseProjectKey]="exercise?.projectKey"
 />
 <div *ngIf="exercise?.gitDiffReport">
     <dt>
@@ -26,6 +28,7 @@
                 ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
             ></jhi-git-diff-line-stat>
             <jhi-button
+                *ngIf="addedLineCount > 0 || removedLineCount > 0"
                 [featureToggle]="FeatureToggle.ProgrammingExercises"
                 [isLoading]="isLoadingDiffReport"
                 [btnSize]="ButtonSize.SMALL"

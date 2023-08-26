@@ -207,6 +207,13 @@ public class ProgrammingExerciseGitDiffReportService {
         return createReport(templateRepo, oldTreeParser, newTreeParser);
     }
 
+    /**
+     * Prepares the template repository for the git diff calculation by checking it out and resetting it to the origin head.
+     *
+     * @param templateParticipation The participation for the template
+     * @return The checked out template repository
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     */
     private Repository prepareTemplateRepository(TemplateProgrammingExerciseParticipation templateParticipation) throws GitAPIException {
         var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
         gitService.resetToOriginHead(templateRepo);
@@ -214,6 +221,15 @@ public class ProgrammingExerciseGitDiffReportService {
         return templateRepo;
     }
 
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff for two submissions.
+     *
+     * @param submission1 The first submission (older)
+     * @param submission2 The second submission (newer)
+     * @return The report with the changes between the two submissions
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     * @throws IOException     If an error occurs while accessing the file system
+     */
     private ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2)
             throws GitAPIException, IOException {
         var repositoryUrl = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl();
@@ -228,6 +244,15 @@ public class ProgrammingExerciseGitDiffReportService {
 
     }
 
+    /**
+     * Parses the files of the given repositories and creates a new ProgrammingExerciseGitDiffReport containing the git-diff.
+     *
+     * @param repo1 The first repository
+     * @param repo2 The second repository
+     * @return The report with the changes between the two repositories at their checked out state
+     * @throws IOException     If an error occurs while accessing the file system
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     */
     @NotNull
     private ProgrammingExerciseGitDiffReport parseFilesAndCreateReport(Repository repo1, Repository repo2) throws IOException, GitAPIException {
         var oldTreeParser = new FileTreeIterator(repo1);
@@ -239,6 +264,19 @@ public class ProgrammingExerciseGitDiffReportService {
         return report;
     }
 
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport containing the git-diff.
+     * <p>
+     * It parses all files of the repositories in their directories on the file system and creates a report containing the changes.
+     * Both repositories have to be checked out at the commit that should be compared and be in different directories
+     *
+     * @param repo1         The first repository
+     * @param oldTreeParser The tree parser for the first repository
+     * @param newTreeParser The tree parser for the second repository
+     * @return The report with the changes between the two repositories at their checked out state
+     * @throws IOException     If an error occurs while accessing the file system
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     */
     @NotNull
     private ProgrammingExerciseGitDiffReport createReport(Repository repo1, FileTreeIterator oldTreeParser, FileTreeIterator newTreeParser) throws IOException, GitAPIException {
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(repo1)) {

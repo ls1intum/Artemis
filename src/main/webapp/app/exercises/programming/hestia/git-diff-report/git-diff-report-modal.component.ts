@@ -52,7 +52,7 @@ export class GitDiffReportModalComponent implements OnInit {
     private loadRepositoryFilesForParticipations() {
         if (this.report.participationIdForFirstCommit) {
             this.programmingExerciseParticipationService
-                .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForFirstCommit!, this.report.firstCommitHash!)
+                .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForFirstCommit!, this.report.leftCommitHash!)
                 .subscribe({
                     next: (filesWithContent: Map<string, string>) => {
                         this.firstCommitFileContentByPath = filesWithContent;
@@ -73,7 +73,7 @@ export class GitDiffReportModalComponent implements OnInit {
             });
         }
         this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForSecondCommit!, this.report.secondCommitHash!)
+            .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForSecondCommit!, this.report.rightCommitHash!)
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
                     this.secondCommitFileContentByPath = filesWithContent;

@@ -406,13 +406,7 @@ public class GitService {
      */
     public Repository checkoutRepositoryAtCommit(VcsRepositoryUrl vcsRepositoryUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
         var repository = getOrCheckoutRepository(vcsRepositoryUrl, pullOnGet);
-        try (Git git = new Git(repository)) {
-            git.checkout().setName(commitHash).call();
-        }
-        catch (GitAPIException e) {
-            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
-        }
-        return repository;
+        return checkoutRepositoryAtCommit(repository, commitHash);
     }
 
     /**
@@ -1415,21 +1409,25 @@ public class GitService {
         return command.setTransportConfigCallback(sshCallback);
     }
 
+    /**
+     * Checkout a repository and get the git log for a given repository url
+     *
+     * @param vcsRepositoryUrl the repository url for which the git log should be retrieved
+     * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
+     * @throws GitAPIException if an error occurs while retrieving the git log
+     */
     public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
-        var repo = getOrCheckoutRepository(vcsRepositoryUrl, true);
 
-        try (var git = new Git(repo)) {
-            var commits = git.log().call();
-            commits.forEach(commit -> {
-                var commitInfo = CommitInfoDTO.of(commit);
-                commitInfos.add(commitInfo);
-            });
+        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true)) {
+            try (var git = new Git(repo)) {
+                var commits = git.log().call();
+                commits.forEach(commit -> {
+                    var commitInfo = CommitInfoDTO.of(commit);
+                    commitInfos.add(commitInfo);
+                });
+            }
+            return commitInfos;
         }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for repository " + vcsRepositoryUrl, e);
-            return Collections.emptyList();
-        }
-        return commitInfos;
     }
 }

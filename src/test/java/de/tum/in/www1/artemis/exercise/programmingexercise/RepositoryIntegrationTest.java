@@ -306,6 +306,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
+        request.getMap(studentRepoBaseUrl + UUID.randomUUID().getLeastSignificantBits() + "/files-content/" + "abc", HttpStatus.NOT_FOUND, String.class, String.class);
+    }
+
     private void prepareRepository() throws GitAPIException, IOException {
         // files are already created in beforeEach
         // first commit

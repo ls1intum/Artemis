@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,6 +17,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -119,7 +120,7 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
         // first commit
         prepareRepositoryContent();
-        String commitHash = getCommitHash();
+        String commitHash = getCommitHash("my first commit");
         if (withUrl) {
             gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL), commitHash, true);
         }
@@ -133,9 +134,15 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
+    void testCheckoutRepositoryAtCommitGitApiExceptionThrowsGitException() {
+        String commitHash = "someHash";
+        assertThatThrownBy(() -> gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash)).isInstanceOf(GitException.class);
+    }
+
+    @Test
     void testSwitchBackToDefaultBranchHead() throws GitAPIException {
         prepareRepositoryContent();
-        String commitHash = getCommitHash();
+        String commitHash = getCommitHash("my first commit");
         // switch to different commit at branch
         gitService.checkoutRepositoryAtCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL), commitHash);
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
@@ -153,11 +160,32 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     }
 
+    @Test
+    void testGetCommitsInfo() throws GitAPIException {
+        prepareRepositoryContent();
+        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL));
+        assertThat(commitsInfos).hasSize(3);
+        assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
+        assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");
+        assertThat(commitsInfos.get(1).hash()).isEqualTo(getCommitHash("my first commit"));
+        assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
+        assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
+        assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
+
+    }
+
+    @Test
+    void testGetCommitsInfoGitApiExceptionThrowsGitException() throws GitAPIException {
+        doThrow(new NoHeadException("error")).doThrow(new NoHeadException("error")).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        assertThatNoException().isThrownBy(() -> gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL)));
+        assertThat(gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL))).isEmpty();
+    }
+
     @NotNull
-    private String getCommitHash() {
+    private String getCommitHash(String msg) {
         AtomicReference<String> commitHash = new AtomicReference<>();
         gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {
-            if ("my first commit".equals(revCommit.getFullMessage())) {
+            if (msg.equals(revCommit.getFullMessage())) {
                 commitHash.set(revCommit.getId().getName());
             }
         });

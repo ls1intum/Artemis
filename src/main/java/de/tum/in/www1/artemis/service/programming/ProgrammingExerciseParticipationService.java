@@ -423,6 +423,12 @@ public class ProgrammingExerciseParticipationService {
         return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository, withSubmissions);
     }
 
+    /**
+     * Get the commits information for the given participation.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
     public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
         try {
             return gitService.getCommitInfos(participation.getVcsRepositoryUrl());
