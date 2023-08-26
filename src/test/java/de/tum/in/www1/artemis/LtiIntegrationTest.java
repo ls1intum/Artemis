@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -170,6 +173,16 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
+    private void addBitbucketMock(String requestBody) throws URISyntaxException {
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+
+        Matcher matcher = Pattern.compile("lis_person_sourcedid=([^&#]*)").matcher(requestBody);
+        if (matcher.find()) {
+            String username = "prefix_" + matcher.group(1);
+            bitbucketRequestMockProvider.mockUserExists(username);
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
@@ -190,6 +203,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         String email = generateEmail("launchAsAnonymousUser_WithoutExistingEmail");
         requestBody = replaceEmail(requestBody, email);
         addJiraMocks(email, null);
+        addBitbucketMock(requestBody);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
