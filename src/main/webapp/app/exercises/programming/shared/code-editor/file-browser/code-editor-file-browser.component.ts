@@ -9,6 +9,8 @@ import {
     CommitState,
     CreateFileChange,
     EditorState,
+    FileBadge,
+    FileBadgeType,
     FileChange,
     FileType,
     GitConflictState,
@@ -72,6 +74,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+    @Input()
+    fileBadges: { [path: string]: FileBadge[] } = {};
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();
@@ -285,7 +289,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function setupTreeView
+     * @function setupTreeview
      * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
      */
     setupTreeview() {
@@ -592,5 +596,26 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
         const fileSplit = fileName.split('.');
         return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
+    }
+
+    /**
+     * Aggregate the file badges for the given folder. The numbers of the badges are summed up.
+     * The folder badges will only be shown on collapsed folders (otherwise you can see the file badges already and we don't want to clutter the UI)
+     */
+    getFolderBadges(folder: TreeviewItem<string>): FileBadge[] {
+        if (!folder.collapsed) {
+            return []; // Only show folder badges on collapsed folders
+        }
+        const folderBadgesMap: Map<FileBadgeType, number> = new Map(); // Use a Map to preserve order
+        for (const [fileName, fileBadges] of Object.entries(this.fileBadges)) {
+            if (fileName.startsWith(folder.value)) {
+                // file is in folder
+                for (const fileBadge of fileBadges) {
+                    const folderBadgeCount = folderBadgesMap.get(fileBadge.type) || 0;
+                    folderBadgesMap.set(fileBadge.type, folderBadgeCount + fileBadge.count);
+                }
+            }
+        }
+        return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
     }
 }

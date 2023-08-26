@@ -9,6 +9,7 @@ import {
     CreateFileChange,
     DeleteFileChange,
     EditorState,
+    FileBadge,
     FileChange,
     FileType,
     RenameFileChange,
@@ -57,6 +58,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+    @Input()
+    fileBadges: { [path: string]: FileBadge[] } = {};
     @Input()
     readOnlyManualFeedback = false;
     @Input()

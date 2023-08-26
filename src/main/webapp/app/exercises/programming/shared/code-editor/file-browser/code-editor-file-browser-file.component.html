@@ -19,12 +19,14 @@
             (keyup.esc)="clearRenamingNode($event)"
             class="list-group-item__input"
     /></span>
+    <!-- File badges -->
+    <jhi-file-browser-badge *ngFor="let badge of badges" [badge]="badge" [onColoredBackground]="item.checked || hasError || hasChanges"></jhi-file-browser-badge>
     <!-- File level actions -->
-    <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-        <button [disabled]="disableActions" (click)="setRenamingNode($event)" class="btn btn-small">
+    <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'" *ngIf="!disableActions">
+        <button (click)="setRenamingNode($event)" class="btn btn-small">
             <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}"></fa-icon>
         </button>
-        <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
+        <button (click)="deleteNode($event)" class="btn btn-small">
             <fa-icon id="file-browser-file-delete" [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}"></fa-icon>
         </button>
     </span>

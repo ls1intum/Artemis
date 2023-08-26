@@ -10,7 +10,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -85,6 +85,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    fileBadges: { [path: string]: FileBadge[] } = {};
 
     localVCEnabled = false;
 
@@ -266,9 +267,31 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    /**
+     * Counts the number of feedback suggestions for the given file in the submission
+     * @param path the path of the file
+     */
+    private countFeedbackSuggestions(path: string): number {
+        return this.feedbackSuggestions.filter((feedback) => feedback.reference?.startsWith('file:' + path + '_line:')).length;
+    }
+
+    /**
+     * Updates the file badges for the code editor (currently only feedback suggestions)
+     */
+    private updateFileBadges(): void {
+        this.fileBadges = {};
+        const filePathsWithSuggestions = this.feedbackSuggestions
+            .filter((feedback) => feedback.reference?.startsWith('file:'))
+            .map((feedback) => feedback.reference!.split('_line:')[0].substring(5)); // get file paths from feedback suggestions
+        for (const filePath of filePathsWithSuggestions) {
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, this.countFeedbackSuggestions(filePath))];
+        }
+    }
+
     private async loadFeedbackSuggestions(): Promise<void> {
         const feedbackSuggestions = await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise();
         this.feedbackSuggestions = feedbackSuggestions ?? [];
+        this.updateFileBadges();
         this.setFeedbacksForManualResult();
         this.participation.results![0] = this.manualResult!;
     }
