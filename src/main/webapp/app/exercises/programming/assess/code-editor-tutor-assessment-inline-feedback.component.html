@@ -7,6 +7,7 @@
     [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
     [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
+    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
         <div class="row align-items-start">
             <div class="form-group col-8 m-0">

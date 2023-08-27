@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -74,7 +74,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
-        this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
+        if (Feedback.isFeedbackSuggestion(this.feedback)) {
+            // Mark as modified feedback suggestion
+            this.feedback.text = (this.feedback.text || FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
+                FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+                FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+            );
+        } else {
+            this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
+        }
         this.viewOnly = true;
         if (this.feedback.credits && this.feedback.credits > 0) {
             this.feedback.positive = true;

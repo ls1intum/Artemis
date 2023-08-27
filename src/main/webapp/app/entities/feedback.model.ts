@@ -19,9 +19,18 @@ export enum FeedbackType {
     AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 
+export enum FeedbackSuggestionType {
+    NO_SUGGESTION = 'NO_SUGGESTION',
+    SUGGESTED = 'SUGGESTED',
+    ACCEPTED = 'ACCEPTED',
+    ADAPTED = 'ADAPTED',
+}
+
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
 export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
+export const FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER = 'FeedbackSuggestion:accepted:';
+export const FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER = 'FeedbackSuggestion:adapted:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -108,6 +117,19 @@ export class Feedback implements BaseEntity {
             return false;
         }
         return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
+    }
+
+    public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
+        if (!Feedback.isFeedbackSuggestion(that)) {
+            return FeedbackSuggestionType.NO_SUGGESTION;
+        }
+        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ACCEPTED;
+        }
+        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ADAPTED;
+        }
+        return FeedbackSuggestionType.SUGGESTED;
     }
 
     public static hasDetailText(that: Feedback): boolean {

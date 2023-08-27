@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/cor
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { faCheck, faLightbulb, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback-suggestion',
@@ -27,7 +27,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     // Icons
-    faLightbulb = faLightbulb;
     faCheck = faCheck;
     faTrash = faTrash;
 

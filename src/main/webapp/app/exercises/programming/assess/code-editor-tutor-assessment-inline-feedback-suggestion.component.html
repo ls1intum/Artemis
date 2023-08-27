@@ -1,8 +1,5 @@
 <div class="alert p-1 mb-1 border rounded" [style.max-width]="'780px'">
-    <span class="badge suggestion-badge" title="{{ 'artemisApp.assessment.suggestionTitle' | artemisTranslate }}">
-        <fa-icon [icon]="faLightbulb"></fa-icon>
-        <span [jhiTranslate]="'artemisApp.assessment.suggestion'">Suggestion</span>
-    </span>
+    <jhi-feedback-suggestion-badge [feedback]="feedback"></jhi-feedback-suggestion-badge>
     <div class="container flex-container px-4">
         <div class="row left-section">
             <div class="col-auto ps-0">

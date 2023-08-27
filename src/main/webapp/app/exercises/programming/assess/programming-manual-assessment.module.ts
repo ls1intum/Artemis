@@ -6,9 +6,17 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, ArtemisAssessmentSharedModule, ArtemisGradingInstructionLinkIconModule],
+    imports: [
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        FormDateTimePickerModule,
+        ArtemisAssessmentSharedModule,
+        ArtemisGradingInstructionLinkIconModule,
+        ArtemisFeedbackModule,
+    ],
     declarations: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],
     exports: [CodeEditorTutorAssessmentInlineFeedbackComponent, CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent],
 })
