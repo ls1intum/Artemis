@@ -112,16 +112,7 @@ export class IrisStateStore implements OnDestroy {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        if (state.error != null && state.error.fatal) {
-            return {
-                messages: [...state.messages],
-                sessionId: state.sessionId,
-                numNewMessages: state.numNewMessages,
-                isLoading: false,
-                error: state.error,
-                serverResponseTimeout: null,
-            };
-        }
+        const defaultError: IrisErrorType | null = state.error != null && state.error.fatal ? state.error : null;
 
         if (state.sessionId == null && !(isSessionReceivedAction(action) || isConversationErrorOccurredAction(action))) {
             return {
@@ -143,7 +134,7 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: [...state.messages, castedAction.message],
                 isLoading: false,
-                error: null,
+                error: defaultError,
                 serverResponseTimeout: null,
             };
         }
@@ -157,7 +148,7 @@ export class IrisStateStore implements OnDestroy {
                 sessionId: state.sessionId,
                 isLoading: false,
                 numNewMessages: state.numNewMessages + 1,
-                error: null,
+                error: defaultError,
                 serverResponseTimeout: null,
             };
         }
@@ -179,7 +170,7 @@ export class IrisStateStore implements OnDestroy {
                 ...state,
                 messages: castedAction.messages,
                 sessionId: castedAction.sessionId,
-                error: null,
+                error: defaultError,
                 serverResponseTimeout: null,
             };
         }
@@ -203,14 +194,14 @@ export class IrisStateStore implements OnDestroy {
                 return {
                     ...state,
                     isLoading: true,
-                    error: null,
+                    error: defaultError,
                 };
             }
             return {
                 ...state,
                 messages: [...state.messages, castedAction.message],
                 isLoading: true,
-                error: null,
+                error: defaultError,
                 serverResponseTimeout: castedAction.timeoutId,
             };
         }
