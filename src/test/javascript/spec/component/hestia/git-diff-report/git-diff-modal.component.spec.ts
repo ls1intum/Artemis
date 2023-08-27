@@ -56,7 +56,7 @@ describe('GitDiffReportModalComponent', () => {
 
     it('should call correct service method onInit', fakeAsync(() => {
         // case 1: diff for template and solution
-        comp.report = { programmingExercise: { id: 1 }, participationIdForSecondCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
+        comp.report = { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
         comp.diffForTemplateAndSolution = true;
         comp.ngOnInit();
         flush();
@@ -68,7 +68,7 @@ describe('GitDiffReportModalComponent', () => {
     }));
 
     it('should retrieve files for template and submission if diffForTemplateAndSolution is false and firstParticipationId is undefined', () => {
-        comp.report = { programmingExercise: { id: 1 }, participationIdForSecondCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
+        comp.report = { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
         // case 2: diff for submission with template
         comp.diffForTemplateAndSolution = false;
         comp.ngOnInit();
@@ -82,9 +82,9 @@ describe('GitDiffReportModalComponent', () => {
         // case 3: diff for two submissions
         comp.report = {
             programmingExercise: { id: 1 },
-            participationIdForSecondCommit: 3,
+            participationIdForRightCommit: 3,
             rightCommitHash: 'abc',
-            participationIdForFirstCommit: 2,
+            participationIdForLeftCommit: 2,
             leftCommitHash: 'def',
         } as ProgrammingExerciseGitDiffReport;
         comp.diffForTemplateAndSolution = false;
@@ -100,7 +100,7 @@ describe('GitDiffReportModalComponent', () => {
         jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
         jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(throwError('error'));
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommit').mockReturnValue(throwError('error'));
-        comp.report = { programmingExercise: { id: 1 }, participationIdForSecondCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
+        comp.report = { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport;
         comp.diffForTemplateAndSolution = true;
         comp.ngOnInit();
         expect(comp.errorWhileFetchingRepos).toBeTrue();
@@ -113,7 +113,7 @@ describe('GitDiffReportModalComponent', () => {
 
         //reset value
         comp.errorWhileFetchingRepos = false;
-        comp.report = { ...comp.report, participationIdForFirstCommit: 2, leftCommitHash: 'def' } as ProgrammingExerciseGitDiffReport;
+        comp.report = { ...comp.report, participationIdForLeftCommit: 2, leftCommitHash: 'def' } as ProgrammingExerciseGitDiffReport;
         comp.ngOnInit();
         expect(comp.errorWhileFetchingRepos).toBeTrue();
     });

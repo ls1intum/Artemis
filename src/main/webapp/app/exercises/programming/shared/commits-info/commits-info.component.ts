@@ -9,7 +9,6 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
-    styleUrls: ['./commits-info.component.scss'],
 })
 export class CommitsInfoComponent implements OnInit {
     @Input() commits?: CommitInfo[];

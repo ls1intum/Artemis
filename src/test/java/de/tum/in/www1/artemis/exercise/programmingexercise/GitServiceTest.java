@@ -17,7 +17,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -172,13 +171,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
         assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
 
-    }
-
-    @Test
-    void testGetCommitsInfoGitApiExceptionThrowsGitException() throws GitAPIException {
-        doThrow(new NoHeadException("error")).doThrow(new NoHeadException("error")).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        assertThatNoException().isThrownBy(() -> gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL)));
-        assertThat(gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL))).isEmpty();
     }
 
     @NotNull

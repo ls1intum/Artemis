@@ -17,7 +17,6 @@ import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.comp
 @Component({
     selector: 'jhi-programming-exam-diff',
     templateUrl: './programming-exercise-exam-diff.component.html',
-    styleUrls: ['./programming-exercise-exam-diff.component.scss'],
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
 })
 export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
@@ -59,8 +58,8 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent {
             if (gitDiffReport) {
                 this.exercise.gitDiffReport = gitDiffReport;
                 gitDiffReport.programmingExercise = this.exercise;
-                gitDiffReport.participationIdForFirstCommit = this.previousSubmission?.participation?.id;
-                gitDiffReport.participationIdForSecondCommit = this.currentSubmission.participation?.id;
+                gitDiffReport.participationIdForLeftCommit = this.previousSubmission?.participation?.id;
+                gitDiffReport.participationIdForRightCommit = this.currentSubmission.participation?.id;
                 gitDiffReport.leftCommitHash = this.previousSubmission?.commitHash;
                 gitDiffReport.rightCommitHash = this.currentSubmission.commitHash;
                 this.calculateLineCount(gitDiffReport);

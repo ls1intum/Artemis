@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
@@ -32,11 +33,14 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ProgrammingExerciseGitDiffReportService gitDiffReportService;
 
+    private final ProgrammingSubmissionRepository submissionRepository;
+
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseGitDiffReportService gitDiffReportService) {
+            ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitDiffReportService = gitDiffReportService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -75,7 +79,12 @@ public class ProgrammingExerciseGitDiffReportResource {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} and submission {} of exercise {}", submissionId1, submissionId2, exerciseId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        var report = gitDiffReportService.createReportForSubmissions(submissionId1, submissionId2);
+        var submission1 = submissionRepository.findById(submissionId1).orElseThrow();
+        var submission2 = submissionRepository.findById(submissionId2).orElseThrow();
+        if (!submission1.getParticipation().getExercise().getId().equals(exerciseId) || !submission2.getParticipation().getExercise().getId().equals(exerciseId)) {
+            throw new IllegalArgumentException("The submissions do not belong to the exercise");
+        }
+        var report = gitDiffReportService.generateReportForSubmissions(submission1, submission2);
         return ResponseEntity.ok(ProgrammingExerciseGitDiffReportDTO.of(report));
     }
 
@@ -96,7 +105,11 @@ public class ProgrammingExerciseGitDiffReportResource {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} with the template of exercise {}", submissionId1, exerciseId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submissionId1);
+        var submission = submissionRepository.findById(submissionId1).orElseThrow();
+        if (!submission.getParticipation().getExercise().getId().equals(exerciseId)) {
+            throw new IllegalArgumentException("The submission does not belong to the exercise");
+        }
+        var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submission);
         return ResponseEntity.ok(ProgrammingExerciseGitDiffReportDTO.of(report));
     }
 }

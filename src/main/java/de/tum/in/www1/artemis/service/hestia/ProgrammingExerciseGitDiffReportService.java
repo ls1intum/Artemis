@@ -165,18 +165,21 @@ public class ProgrammingExerciseGitDiffReportService {
         }
     }
 
-    public ProgrammingExerciseGitDiffReport createReportForSubmissions(long submissionId1, long submissionId2) throws GitAPIException, IOException {
-        var submission1 = programmingSubmissionRepository.findById(submissionId1).orElseThrow();
-        var submission2 = programmingSubmissionRepository.findById(submissionId2).orElseThrow();
-        return generateReportForSubmissions(submission1, submission2);
-    }
-
-    public ProgrammingExerciseGitDiffReport createReportForSubmissionWithTemplate(ProgrammingExercise exercise, long submissionId1) throws GitAPIException, IOException {
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport for a submission with the template repository.
+     *
+     * @param exercise   The exercise for which the report should be created
+     * @param submission The submission for which the report should be created
+     * @return The report with the changes between the submission and the template
+     * @throws GitAPIException If an error occurs while accessing the git repository
+     * @throws IOException     If an error occurs while accessing the file system
+     */
+    public ProgrammingExerciseGitDiffReport createReportForSubmissionWithTemplate(ProgrammingExercise exercise, ProgrammingSubmission submission)
+            throws GitAPIException, IOException {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         Repository templateRepo = prepareTemplateRepository(templateParticipation);
-        var submission1 = programmingSubmissionRepository.findById(submissionId1).orElseThrow();
 
-        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl(), submission1.getCommitHash(),
+        var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUrl(), submission.getCommitHash(),
                 false);
         var oldTreeParser = new FileTreeIterator(repo1);
         var newTreeParser = new FileTreeIterator(templateRepo);
@@ -230,8 +233,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If an error occurs while accessing the git repository
      * @throws IOException     If an error occurs while accessing the file system
      */
-    private ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2)
-            throws GitAPIException, IOException {
+    public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
         var repositoryUrl = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl();
         var repo1 = gitService.getOrCheckoutRepository(repositoryUrl, true);
         var repo1Path = repo1.getLocalPath();
@@ -241,7 +243,6 @@ public class ProgrammingExerciseGitDiffReportService {
         var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUrl);
         repo2 = gitService.checkoutRepositoryAtCommit(repo2, submission2.getCommitHash());
         return parseFilesAndCreateReport(repo1, repo2);
-
     }
 
     /**

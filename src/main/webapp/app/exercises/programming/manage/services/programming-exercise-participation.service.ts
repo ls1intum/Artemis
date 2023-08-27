@@ -71,6 +71,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             }
         }
     }
+
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
         return this.http.get(`${this.resourceUrl}${participationId}/files-content/${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
