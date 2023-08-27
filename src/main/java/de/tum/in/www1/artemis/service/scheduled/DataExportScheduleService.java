@@ -65,7 +65,6 @@ public class DataExportScheduleService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
         Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
@@ -97,6 +96,7 @@ public class DataExportScheduleService {
      * @param dataExport the data export to be created
      */
     private void createDataExport(DataExport dataExport, Set<DataExport> successfulDataExports) {
+        checkSecurityUtils();
         log.info("Creating data export for {}", dataExport.getUser().getLogin());
         var successful = dataExportCreationService.createDataExport(dataExport);
         if (successful) {
