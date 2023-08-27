@@ -218,23 +218,15 @@ public class DataExportQuizExerciseCreationService {
             StringBuilder replacement) {
         int start = matcher.start();
         int end = matcher.end();
-        if (submittedText.isIsCorrect() != null && submittedText.isIsCorrect()) {
-            replacement.append(submittedText.getText());
-            if (includeResults) {
-                replacement.append(" (Correct)");
-            }
+        replacement.append(submittedText.getText());
+        if (submittedText.isIsCorrect() != null && submittedText.isIsCorrect() && includeResults) {
+            replacement.append(" (Correct)");
         }
-        else if (submittedText.isIsCorrect() != null && !submittedText.isIsCorrect()) {
-            replacement.append(submittedText.getText());
-            if (includeResults) {
-                replacement.append(" (Incorrect)");
-            }
-            else {
-                replacement.append(submittedText.getText());
-            }
-            submittedAnswer.replace(start, end, replacement.toString());
-            matcher = pattern.matcher(submittedAnswer);
+        else if (submittedText.isIsCorrect() != null && !submittedText.isIsCorrect() && includeResults) {
+            replacement.append(" (Incorrect)");
         }
+        submittedAnswer.replace(start, end, replacement.toString());
+        matcher = pattern.matcher(submittedAnswer);
         return matcher;
     }
 

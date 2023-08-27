@@ -318,7 +318,7 @@ public class QuizExerciseFactory {
 
     private static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
         var shortAnswerQuestion = createShortAnswerQuestion();
-        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        shortAnswerQuestion.setText("This [-spot0] a [-spot 2] answer text");
         return shortAnswerQuestion;
     }
 

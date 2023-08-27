@@ -80,7 +80,7 @@ public class DataExportScheduleService {
             return;
         }
         // This job runs at 4 am by default and the next scheduled job runs at 5 am, so we should allow 60 minutes for the creation.
-        // If the creation doesn't finish within 60 minutes, it will be picked up when the job runs the next time.
+        // If the creation doesn't finish within 60 minutes, all pending exports will be picked up when the job runs the next time.
         if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
             log.info("Not all pending data exports could be created within 60 minutes.");
             executor.shutdownNow();

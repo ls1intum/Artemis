@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -182,8 +185,10 @@ public class DataExportExerciseCreationService {
      * @param exerciseDir the directory in which the export should be created
      */
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
+        // quizzes do not have an assessment due date, so we need to check the due date
         boolean includeResults = exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
-                || exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise);
+                || exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)
+                || exercise.isCourseExercise() && exercise instanceof QuizExercise && exercise.getDueDate().isBefore(ZonedDateTime.now());
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
@@ -199,8 +204,10 @@ public class DataExportExerciseCreationService {
                 else if (submission instanceof QuizSubmission) {
                     dataExportQuizExerciseCreationService.createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir, includeResults);
                 }
-                if (includeResults) {
-                    createResultsAndComplaintFiles(submission, exerciseDir);
+                // for a programming exercise, we want to include the results that are visible for the assessment due date
+                if (includeResults || exercise instanceof ProgrammingExercise) {
+                    boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !includeResults;
+                    createResultsAndComplaintFiles(submission, exerciseDir, programmingExerciseBeforeAssessmentDueDate);
                 }
             }
         }
@@ -277,7 +284,7 @@ public class DataExportExerciseCreationService {
      * @param outputDir  the directory in which the results should be stored
      * @throws IOException if the file cannot be written
      */
-    private void createResultsAndComplaintFiles(Submission submission, Path outputDir) throws IOException {
+    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, boolean programmingExerciseBeforeAssessmentDueDate) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
@@ -289,8 +296,16 @@ public class DataExportExerciseCreationService {
                 if (submission instanceof ProgrammingSubmission && result.getPassedTestCaseCount() != null && result.getTestCaseCount() != null && result.getTestCaseCount() > 0) {
                     resultScoreAndFeedbacks.append("Passed test cases: ").append(result.getPassedTestCaseCount()).append("/").append(result.getTestCaseCount()).append("\n");
                 }
+                if (submission instanceof ProgrammingSubmission programmingSubmission && programmingSubmission.isBuildFailed()) {
+                    resultScoreAndFeedbacks.append("Build failed").append("\n");
+                }
                 for (var feedback : result.getFeedbacks()) {
+                    if ((feedback.getType() != FeedbackType.AUTOMATIC || feedback.getVisibility() != Visibility.ALWAYS) && programmingExerciseBeforeAssessmentDueDate) {
+                        // we do not want to include manual or hidden feedback before the assessment due date
+                        continue;
+                    }
                     resultScoreAndFeedbacks.append("- Feedback: ");
+
                     // null if it's manual feedback
                     if (feedback.getText() != null) {
                         resultScoreAndFeedbacks.append(feedback.getText()).append("\t");

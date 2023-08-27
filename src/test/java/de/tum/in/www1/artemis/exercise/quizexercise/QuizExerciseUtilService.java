@@ -275,10 +275,10 @@ public class QuizExerciseUtilService {
         quizBatchRepository.save(batch);
     }
 
-    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean assessmentDueDateInTheFuture) throws IOException {
+    public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
         QuizExercise quizExercise;
-        if (assessmentDueDateInTheFuture) {
-            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
+        if (dueDateInTheFuture) {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, futureTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
         }
         else {
             quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, pastTimestamp, QuizMode.SYNCHRONIZED);
@@ -380,7 +380,7 @@ public class QuizExerciseUtilService {
         quizExercise.addParticipation(studentParticipation);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        return quizExercise;
+        return quizSubmission;
     }
 
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {

@@ -8,9 +8,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.*;
@@ -27,8 +29,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -179,7 +180,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
         assertCommunicationDataCsvFile(courseDirPath);
-        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        for (var exercisePath : getExerciseDirectoryPaths(exercisesDirPath)) {
+            assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
+        }
 
     }
 
@@ -200,7 +203,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         else {
             course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
-        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         ProgrammingExercise programmingExercise;
         if (assessmentDueDateInTheFuture) {
@@ -212,14 +216,30 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
-        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "def");
+        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
         participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setVisibility(Visibility.ALWAYS);
+        var hiddenFeedback = new Feedback();
+        hiddenFeedback.setCredits(1.0);
+        hiddenFeedback.setDetailText("hidden detailed feedback");
+        hiddenFeedback.setText("hidden feedback");
+        hiddenFeedback.setType(FeedbackType.AUTOMATIC);
+        var feedback2 = new Feedback();
+        feedback2.setCredits(2.0);
+        feedback2.setDetailText("detailed feedback 2");
+        feedback2.setText("feedback 2");
+        feedback2.setType(FeedbackType.MANUAL);
+        submission.getFirstResult().setTestCaseCount(2);
+        submission.getFirstResult().setPassedTestCaseCount(1);
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
+        participationUtilService.addFeedbackToResult(hiddenFeedback, submission.getFirstResult());
+        participationUtilService.addFeedbackToResult(feedback2, submission2.getFirstResult());
         participationUtilService.addSubmission(participation, submission);
         participationUtilService.addSubmission(participation, submission2);
         var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
@@ -286,15 +306,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(exerciseDirPath).isDirectoryNotContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result"));
     }
 
-    private void assertCorrectContentForExercise(Path exerciseDirPath, boolean courseExercise, boolean assessmentDueDateInTheFuture) {
+    private void assertCorrectContentForExercise(Path exerciseDirPath, boolean courseExercise, boolean assessmentDueDateInTheFuture) throws IOException {
         Predicate<Path> resultsFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result");
         Predicate<Path> submissionFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("submission");
         assertThat(exerciseDirPath).isDirectoryContaining(submissionFile);
-        if (assessmentDueDateInTheFuture) {
+        // programming exercises have a results with the automatic test feedback
+        if (assessmentDueDateInTheFuture && !exerciseDirPath.toString().contains("Programming")) {
             assertThat(exerciseDirPath).isDirectoryNotContaining(resultsFile);
         }
-        // quizzes do not have a result file
-        if (!exerciseDirPath.toString().contains("quiz") && !assessmentDueDateInTheFuture) {
+        if (!assessmentDueDateInTheFuture) {
             assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
         }
         if (exerciseDirPath.toString().contains("Programming")) {
@@ -305,6 +325,30 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                 assertThat(exerciseDirPath)
                         .isDirectoryContaining(path -> path.getFileName().toString().contains("plagiarism_case") && path.getFileName().toString().endsWith(FILE_FORMAT_CSV));
             }
+        }
+        // only include automatic test feedback if the assessment due date is in the future
+        if (exerciseDirPath.toString().contains("Programming") && assessmentDueDateInTheFuture && courseExercise) {
+            var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
+            var fileContentResult2 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, false));
+            // automatic feedback
+            assertThat(fileContentResult1).contains("1.0");
+            assertThat(fileContentResult1).contains("feedback");
+            // automatic hidden feedback
+            assertThat(fileContentResult1).doesNotContain("hidden feedback");
+            assertThat(fileContentResult1).doesNotContain("hidden detailed feedback");
+            // manual feedback
+            assertThat(fileContentResult2).doesNotContain("2.0");
+            assertThat(fileContentResult2).doesNotContain("detailed feedback2");
+        }
+        else if (exerciseDirPath.toString().contains("Programming") && !assessmentDueDateInTheFuture && courseExercise) {
+            var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
+            var fileContentResult2 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, false));
+            // automatic feedback
+            assertThat(fileContentResult1).contains("1.0");
+            assertThat(fileContentResult1).contains("feedback");
+            // manual feedback
+            assertThat(fileContentResult2).contains("2.0");
+            assertThat(fileContentResult2).contains("detailed feedback 2");
         }
         if (exerciseDirPath.toString().contains("Modeling")) {
             // model as pdf file
@@ -324,10 +368,62 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                     .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT))
                     .isDirectoryContaining(path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
         }
+        if (exerciseDirPath.toString().contains("quiz") && assessmentDueDateInTheFuture) {
+            var fileContentMC = Files.readString(getMCQuestionsAnswersFilePath(exerciseDirPath));
+            var fileContentSA = Files.readString(getSAQuestionsAnswersFilePath(exerciseDirPath));
+            assertThat(fileContentMC).doesNotContain("Correct");
+            assertThat(fileContentMC).doesNotContain("Incorrect");
+            assertThat(fileContentSA).doesNotContain("Correct");
+            assertThat(fileContentSA).doesNotContain("Incorrect");
+
+        }
+        else if (exerciseDirPath.toString().contains("quiz") && !assessmentDueDateInTheFuture) {
+            var fileContentMC = Files.readString(getMCQuestionsAnswersFilePath(exerciseDirPath));
+            var fileContentSA = Files.readString(getSAQuestionsAnswersFilePath(exerciseDirPath));
+            assertThat(fileContentMC).contains("Correct");
+            assertThat(fileContentMC).contains("Incorrect");
+            assertThat(fileContentSA).contains("Correct");
+            assertThat(fileContentSA).contains("Incorrect");
+        }
         boolean notQuizOrProgramming = !exerciseDirPath.toString().contains("quiz") && !exerciseDirPath.toString().contains("Programming");
         if (notQuizOrProgramming && courseExercise && !assessmentDueDateInTheFuture) {
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().contains("complaint"));
         }
+    }
+
+    private Path getMCQuestionsAnswersFilePath(Path exerciseDirPath) {
+        try (var files = Files.list(exerciseDirPath)) {
+            return files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("multiple_choice")).findFirst()
+                    .orElseThrow();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Path getSAQuestionsAnswersFilePath(Path exerciseDirPath) {
+        try (var files = Files.list(exerciseDirPath)) {
+            return files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("short_answer")).findFirst()
+                    .orElseThrow();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Path getProgrammingResultsFilePath(Path exerciseDirPath, boolean firstResult) {
+        List<Path> paths;
+        try (var files = Files.list(exerciseDirPath)) {
+            paths = files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result")).collect(Collectors.toList());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        paths.sort(Comparator.comparing(Path::getFileName));
+        if (firstResult) {
+            return paths.get(0);
+        }
+        return paths.get(1);
     }
 
     private Path getCourseOrExamDirectoryPath(Path rootPath, String shortName) throws IOException {
@@ -361,8 +457,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var examsDirPath = courseDirPath.resolve("exams");
         assertThat(courseDirPath).isDirectoryContaining(examsDirPath::equals);
         var examDirPath = getCourseOrExamDirectoryPath(examsDirPath, "exam");
-        getExerciseDirectoryPaths(examDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, false, false));
-
+        for (var exerciseDirPath : getExerciseDirectoryPaths(examDirPath)) {
+            assertCorrectContentForExercise(exerciseDirPath, false, false);
+        }
     }
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
@@ -405,7 +502,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertCommunicationDataCsvFile(courseDirPath);
         var exercisesDirPath = courseDirPath.resolve("exercises");
         assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
-        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        for (var exerciseDirectory : getExerciseDirectoryPaths(exercisesDirPath)) {
+            assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
+        }
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
@@ -456,7 +555,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         var exercisesDirPath = courseDirPath.resolve("exercises");
         assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
-        getExerciseDirectoryPaths(exercisesDirPath).forEach(exercise -> assertCorrectContentForExercise(exercise, true, assessmentDueDateInTheFuture));
+        for (var exerciseDirectory : getExerciseDirectoryPaths(exercisesDirPath)) {
+            assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
+        }
     }
 
     private DataExport initDataExport() {
