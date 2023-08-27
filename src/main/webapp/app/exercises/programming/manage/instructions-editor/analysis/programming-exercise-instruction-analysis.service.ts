@@ -13,7 +13,7 @@ import {
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = /.*?\[.*]\((.*)\)/;
+    private readonly TEST_CASE_REGEX = /\[[^[\]]+]\(([^()]*(?:\([^()]*\))*)\)/;
     private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
 
     constructor(private translateService: TranslateService) {}
@@ -78,7 +78,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
-            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+            const issueValues = lineNumberValues ? lineNumberValues[issueType] ?? [] : [];
             acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
             return acc;
         };
