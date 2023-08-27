@@ -1,4 +1,4 @@
-<div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" [class.is-suggestion]="isSuggestion" id="assessment-detail">
+<div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" [class.is-suggestion]="isSuggestion" id="unreferenced-feedback-detail">
     <div class="card-header">
         <jhi-feedback-suggestion-badge *ngIf="isSuggestion || Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
         <jhi-grading-instruction-link-icon *ngIf="feedback.gradingInstruction" [feedback]="feedback"></jhi-grading-instruction-link-icon>
