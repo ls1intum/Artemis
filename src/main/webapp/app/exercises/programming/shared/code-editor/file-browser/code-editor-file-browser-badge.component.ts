@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { IconDefinition, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
@@ -13,7 +14,18 @@ export class CodeEditorFileBrowserBadgeComponent {
     @Input() badge: FileBadge;
     @Input() onColoredBackground: boolean = false; // Only slightly darken the background and use white text
 
-    getIcon(): IconDefinition | undefined {
+    constructor(private translateService: TranslateService) {}
+
+    get tooltip(): string | undefined {
+        switch (this.badge.type) {
+            case FileBadgeType.FEEDBACK_SUGGESTION:
+                return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.feedbackSuggestions');
+            default:
+                return undefined;
+        }
+    }
+
+    get icon(): IconDefinition | undefined {
         switch (this.badge.type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
                 return faLightbulb;

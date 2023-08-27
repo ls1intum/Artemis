@@ -72,7 +72,10 @@
                 "renameFolderDisabledTooltip": "Um Verzeichnisse umzubenennen, deaktiviere das Zusammenfassen von Verzeichnissen in der obigen Leiste.",
                 "deleteFolder": "Verzeichnis löschen",
                 "deleteFile": "Datei löschen",
-                "compressTree": "Leere Verzeichnisse zusammenfassen"
+                "compressTree": "Leere Verzeichnisse zusammenfassen",
+                "fileBadgeTooltips": {
+                    "feedbackSuggestions": "Anzahl von Feedback-Vorschlägen in dieser Datei / diesem Ordner"
+                }
             },
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
