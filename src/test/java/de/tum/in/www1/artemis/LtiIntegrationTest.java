@@ -176,11 +176,18 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private void addBitbucketMock(String requestBody) throws URISyntaxException {
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        Matcher matcher = Pattern.compile("lis_person_sourcedid=([^&#]*)").matcher(requestBody);
-        if (matcher.find()) {
-            String username = "prefix_" + matcher.group(1);
-            bitbucketRequestMockProvider.mockUserExists(username);
+        String username = "prefix_";
+        Matcher matcher = Pattern.compile("lis_person_sourcedid=([^&#]+)").matcher(requestBody);
+        if (matcher.find() && !matcher.group(1).isEmpty()) {
+            username += matcher.group(1);
         }
+        else {
+            matcher = Pattern.compile("ext_user_username=([^&#]+)").matcher(requestBody);
+            if (matcher.find()) {
+                username += matcher.group(1);
+            }
+        }
+        bitbucketRequestMockProvider.mockUserExists(username);
     }
 
     @ParameterizedTest
@@ -197,7 +204,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
         String email = generateEmail("launchAsAnonymousUser_WithoutExistingEmail");
@@ -232,7 +239,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
         String email = generateEmail("launchAsAnonymousUser_RequireExistingUser");
