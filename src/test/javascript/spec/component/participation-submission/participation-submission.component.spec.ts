@@ -7,7 +7,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -89,7 +89,7 @@ describe('ParticipationSubmissionComponent', () => {
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(AssessmentDetailComponent),
+                MockComponent(UnreferencedFeedbackDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),

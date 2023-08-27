@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('UnreferencedFeedbackComponent', () => {
@@ -16,7 +16,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AssessmentDetailComponent)],
+            declarations: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(UnreferencedFeedbackDetailComponent)],
             providers: [],
         })
             .compileComponents()
@@ -65,7 +65,7 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.unreferencedFeedback = [feedback];
         const newFeedbackText = 'updated text';
         feedback.text = newFeedbackText;
-        comp.updateAssessment(feedback);
+        comp.updateFeedback(feedback);
 
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(newFeedbackText);
@@ -74,7 +74,7 @@ describe('UnreferencedFeedbackComponent', () => {
     it('should delete unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];
-        comp.deleteAssessment(feedback);
+        comp.deleteFeedback(feedback);
 
         expect(comp.unreferencedFeedback).toHaveLength(0);
     });

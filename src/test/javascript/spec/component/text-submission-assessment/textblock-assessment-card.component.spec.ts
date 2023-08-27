@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';

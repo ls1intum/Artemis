@@ -110,6 +110,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Icons
     faTimesCircle = faTimesCircle;
 
+    /**
+     * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
+     */
+    get unreferencedFeedbackSuggestions() {
+        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -118,7 +125,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
         private complaintService: ComplaintService,
-        private translateService: TranslateService,
+        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -491,7 +498,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * Remove a suggestion because it was accepted or discarded.
-     * The actual accept/discard happens in code-editor-ace-component because only it has full control over the suggestion card.
+     * The actual accept/discard happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
      * @param feedback Feedback suggestion that is removed
      */
     removeSuggestion(feedback: Feedback) {
