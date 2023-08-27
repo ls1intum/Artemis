@@ -148,4 +148,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
         this.didChange();
     }
+
+    protected readonly Feedback = Feedback;
 }

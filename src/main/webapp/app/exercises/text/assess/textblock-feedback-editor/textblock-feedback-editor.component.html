@@ -1,8 +1,5 @@
 <div>
-    <span class="badge" title="{{ 'artemisApp.assessment.suggestionTitle' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
-        <fa-icon [icon]="faLightbulb"></fa-icon>
-        <span [jhiTranslate]="'artemisApp.assessment.suggestion'">Suggestion</span>
-    </span>
+    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
 
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
