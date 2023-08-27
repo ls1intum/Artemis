@@ -70,7 +70,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     }
 
     computeNumberOfPages(totalComparisons: number) {
-        return Math.floor(totalComparisons / this.pageSize);
+        return totalComparisons < this.pageSize ? 0 : Math.ceil(totalComparisons / this.pageSize) - 1;
     }
 
     getPagedComparisons() {

@@ -47,6 +47,16 @@ describe('Plagiarism Sidebar Component', () => {
         expect(numberOfPages).toBe(0);
     });
 
+    it('computes the number of pages with number of comparisons equal to page size', () => {
+        const numberOfPages = comp.computeNumberOfPages(10);
+        expect(numberOfPages).toBe(0);
+    });
+
+    it('computes the number of pages with number of comparisons higher than page size', () => {
+        const numberOfPages = comp.computeNumberOfPages(11);
+        expect(numberOfPages).toBe(1);
+    });
+
     it('computes the paged index', () => {
         comp.currentPage = 2;
         const pagedIndex = comp.getPagedIndex(1);
