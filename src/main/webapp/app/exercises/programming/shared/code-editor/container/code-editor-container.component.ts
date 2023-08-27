@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -94,7 +94,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
-    unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
+    unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
+    fileBadges: { [fileName: string]: FileBadge[] };
 
     /** Code Editor State Variables **/
     editorState: EditorState;
@@ -109,6 +110,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        // Update file badges when feedback suggestions change
+        if (changes.feedbackSuggestions) {
+            this.updateFileBadges();
+        }
     }
 
     get unsavedFiles() {
@@ -138,10 +146,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     /**
-     * Get the file badges for the code editor (currently only feedback suggestions)
+     * Update the file badges for the code editor (currently only feedback suggestions)
      */
-    get fileBadges(): { [path: string]: FileBadge[] } {
-        const fileBadges = {};
+    updateFileBadges() {
+        this.fileBadges = {};
         // Create badges for feedback suggestions
         // Get file paths from feedback suggestions:
         const filePathsWithSuggestions = this.feedbackSuggestions
@@ -150,9 +158,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         for (const filePath of filePathsWithSuggestions) {
             // Count the number of suggestions for this file
             const suggestionsCount = this.feedbackSuggestions.filter((feedback) => feedback.reference?.startsWith('file:' + filePath + '_line:')).length;
-            fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
         }
-        return fileBadges;
     }
 
     /**
@@ -163,6 +170,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
+        this.fileBadges = {};
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
