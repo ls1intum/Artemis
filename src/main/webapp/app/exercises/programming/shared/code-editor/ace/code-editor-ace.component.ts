@@ -16,7 +16,21 @@ import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    Output,
+    QueryList,
+    SimpleChanges,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
 import { Subscription, fromEvent } from 'rxjs';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -125,6 +139,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         private repositoryFileService: CodeEditorRepositoryFileService,
         private fileService: CodeEditorFileService,
         protected localStorageService: LocalStorageService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     /**
@@ -173,6 +188,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.setReadOnly(true);
         } else if (changes.commitState && changes.commitState.previousValue === CommitState.CONFLICT && changes.commitState.currentValue !== CommitState.CONFLICT) {
             this.editor.setReadOnly(false);
+        }
+        if (changes.feedback || changes.feedbackSuggestions) {
+            // on changes to these props
+            if (this.editorSession) {
+                // initEditor should already be called, otherwise there is no need to init this anyways
+                this.updateLineWidgets();
+            }
         }
     }
 
@@ -453,7 +475,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Get the wrapper div of an inline feedback as a DOM node
+     * Get the component of an inline feedback DOM node.
      * @param line line of code where the feedback inline component is located
      */
     getInlineFeedbackNode(line: number): Element | undefined {
@@ -475,7 +497,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             row: line,
             fixedWidth: true,
             coverGutter: true,
-            el: inlineFeedbackNode!,
+            el: inlineFeedbackNode,
+            pixelHeight: 100,
         };
         const displayedWidget = this.editorSession.lineWidgets?.find((w: any) => w && w.row === lineWidget.row);
         if (!displayedWidget) {
@@ -490,7 +513,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component will be added to.
      */
     removeLineWidget(line: number) {
-        const widget = this.editorSession.lineWidgets.filter((w: any) => w?.el === this.getInlineFeedbackNode(line))[0];
+        const widget = this.editorSession.lineWidgets[line];
         if (widget) {
             this.editorSession.widgetManager.removeLineWidget(widget);
         }
@@ -500,6 +523,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Sync the line widgets of the ACE editor to the current feedbacks.
      */
     async updateLineWidgets() {
+        // Make Angular update the DOM
+        this.changeDetectorRef.detectChanges();
         // Wait for one render cycle for all DOM updates to be done
         await new Promise((resolve) => setTimeout(resolve, 0));
         // Remove all existing line widgets
@@ -509,11 +534,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         // Add line widgets for all feedbacks
         for (const feedback of this.filterFeedbackForFile([...this.feedbacks, ...this.feedbackSuggestions])) {
-            this.addLineWidgetWithFeedback(Feedback.getReferenceLine(feedback)!);
+            const line = Feedback.getReferenceLine(feedback)!;
+            this.addLineWidgetWithFeedback(line);
         }
         // Add line widgets for new feedback that is not yet saved
-        for (const feedback of this.newFeedbackLines) {
-            this.addLineWidgetWithFeedback(feedback);
+        for (const line of this.newFeedbackLines) {
+            this.addLineWidgetWithFeedback(line);
         }
     }
 
@@ -522,7 +548,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line Line of code which has inline feedback (lineWidget)
      */
     adjustLineWidgetHeight(line: number) {
-        const widget = this.editorSession.lineWidgets.find((w: any) => w?.el === this.getInlineFeedbackNode(line));
+        const widget = this.editorSession.lineWidgets[line];
         this.editorSession.widgetManager.removeLineWidget(widget);
         this.editorSession.widgetManager.addLineWidget(widget);
     }

@@ -109,6 +109,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     editFeedback(line: number) {
         this.viewOnly = false;
+        // Save the old feedback in case the user cancels later
+        this.oldFeedback = cloneDeep(this.feedback);
         this.onEditFeedback.emit(line);
         setTimeout(() => (this.textareaRef.nativeElement as HTMLTextAreaElement).focus());
     }

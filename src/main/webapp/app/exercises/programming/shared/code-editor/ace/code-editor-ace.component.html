@@ -6,7 +6,28 @@
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
         <div style="display: none">
-            <!-- DOM nodes will be taken out from here by the ACE editor anyway -->
+            <!-- DOM nodes will be taken out from here by the ACE editor anyway => display: none -->
+            <!--
+            List of all inline feedback components to render so that ACE can take the DOM nodes:
+            Order actually matters here! The existing/saved feedback has to be before the new feedback:
+            When a new feedback is created and then saved for the first time, both DOM nodes will exist temporarily.
+            In addLineWidgetWithFeedback, we always choose the first one as the one to keep in this case.
+            Therefore, the existing feedback has to be before the new feedback in the DOM.
+            -->
+            <!-- Existing, saved feedback -->
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                *ngFor="let feedback of filterFeedbackForFile(feedbacks)"
+                [selectedFile]="selectedFile"
+                [codeLine]="Feedback.getReferenceLine(feedback)!"
+                [feedback]="feedback"
+                [readOnly]="readOnlyManualFeedback"
+                [highlightDifferences]="highlightDifferences"
+                [course]="course"
+                (onUpdateFeedback)="updateFeedback($event)"
+                (onDeleteFeedback)="deleteFeedback($event)"
+                (onCancelFeedback)="cancelFeedback($event)"
+                (onEditFeedback)="adjustLineWidgetHeight($event)"
+            ></jhi-code-editor-tutor-assessment-inline-feedback>
             <!-- New feedback (not saved yet, but still has to be displayed -->
             <jhi-code-editor-tutor-assessment-inline-feedback
                 *ngFor="let line of newFeedbackLines"
@@ -22,20 +43,6 @@
                 (onEditFeedback)="adjustLineWidgetHeight($event)"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
-            <!-- Existing, saved feedback -->
-            <jhi-code-editor-tutor-assessment-inline-feedback
-                *ngFor="let feedback of filterFeedbackForFile(feedbacks)"
-                [selectedFile]="selectedFile"
-                [codeLine]="Feedback.getReferenceLine(feedback)!"
-                [feedback]="feedback"
-                [readOnly]="readOnlyManualFeedback"
-                [highlightDifferences]="highlightDifferences"
-                [course]="course"
-                (onUpdateFeedback)="updateFeedback($event)"
-                (onDeleteFeedback)="deleteFeedback($event)"
-                (onCancelFeedback)="cancelFeedback($event)"
-                (onEditFeedback)="adjustLineWidgetHeight($event)"
-            ></jhi-code-editor-tutor-assessment-inline-feedback>
             <!-- Feedback suggestions -->
             <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
                 *ngFor="let suggestion of filterFeedbackForFile(feedbackSuggestions)"
