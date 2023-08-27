@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,16 +98,15 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         course1 = courseUtilService.addEmptyCourse();
 
         // same registration number as in test pdf file
-        student1.setGroups(Set.of(course1.getStudentGroupName()));
         student1.setRegistrationNumber("03756882");
         userRepo.save(student1);
-        student2.setGroups(Set.of(course1.getStudentGroupName()));
+
         student2.setRegistrationNumber("03756883");
         userRepo.save(student2);
-        student3.setGroups(Set.of(course1.getStudentGroupName()));
+
         student3.setRegistrationNumber("03756884");
         userRepo.save(student3);
-        student4.setGroups(Set.of(course1.getStudentGroupName()));
+
         student4.setRegistrationNumber("03756885");
         userRepo.save(student4);
 
@@ -117,6 +117,11 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
     }
 
     @Test

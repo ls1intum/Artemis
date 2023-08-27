@@ -41,7 +41,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let audit of audits">
-                    <td>{{ audit.timestamp | artemisDate : 'long' : true }}</td>
+                    <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
                     <td>
                         <small>{{ audit.principal }}</small>
                     </td>

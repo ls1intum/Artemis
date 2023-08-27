@@ -47,7 +47,8 @@
     <div class="bonus-calculated">
         <ng-container *ngIf="bonus.sourceGradingScale?.gradeSteps">
             <div class="mb-0 ms-2 fs-6 fw-bold no-flex-shrink">
-                {{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}
+                <span>{{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}</span>
+                <jhi-help-icon *ngIf="bonus.sourceGradingScale?.course" text="artemisApp.bonus.bonusSource.maxPointsCourseHelpText"></jhi-help-icon>
             </div>
             <div class="mb-4 fs-6">
                 <table class="table table-striped">
@@ -62,10 +63,10 @@
                         <tr *ngFor="let gradeStep of bonus.sourceGradingScale?.gradeSteps; let i = index; let last = last">
                             <td>{{ gradeStep.gradeName }}</td>
                             <td>
-                                <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
+                                <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                             </td>
                             <td *ngIf="hasPointsSet()">
-                                <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
+                                <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
                             </td>
                         </tr>
                     </tbody>
@@ -97,7 +98,7 @@
                     {{ 'artemisApp.bonus.formula.finalGradeFromPoints' | artemisTranslate }}
                 </div>
                 <div class="row fs-6 ps-2">
-                    {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate : { maxPossibleGrade: maxPossibleGrade() } }}
+                    {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
                 </div>
             </div>
             <div *ngIf="hasBonusStrategyWeightMismatch" class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch"></div>

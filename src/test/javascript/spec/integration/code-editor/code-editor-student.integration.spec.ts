@@ -80,7 +80,7 @@ describe('CodeEditorStudentIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let routeSubject: Subject<Params>;
 
-    const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
+    const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -166,22 +166,19 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
         container.ngOnInit();
-        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
+        result.feedbacks = feedbacks;
+        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
         const findWithLatestResultSubject = new Subject<Participation>();
-        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
-        getFeedbackDetailsForResultStub.mockReturnValue(getFeedbackDetailsForResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
         expect(container.loadingParticipation).toBeTrue();
 
         findWithLatestResultSubject.next(participation);
-        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
-        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result);
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });

@@ -2,11 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-
-// False-positives:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
@@ -26,7 +22,10 @@ export class PlagiarismHeaderComponent {
     readonly plagiarismStatus = PlagiarismStatus;
     disableConfirmDenyButton = false;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal) {}
+    constructor(
+        private plagiarismCasesService: PlagiarismCasesService,
+        private modalService: NgbModal,
+    ) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
