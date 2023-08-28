@@ -225,6 +225,7 @@ public class ResultService {
      *
      * @param participation the results belong to.
      * @param results       collection of results of this participation
+     * @param user          the user for which the information should be filtered if it is an empty optional, the currently logged-in user is used
      */
     public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results, Optional<User> user) {
         results.forEach(Result::filterSensitiveInformation);
