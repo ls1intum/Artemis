@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 @Service
@@ -22,12 +21,12 @@ public class LtiNewResultService {
      *
      * @param participation The exercise participation for which a new build result is available
      */
-    public void onNewResult(Participation participation) {
+    public void onNewResult(StudentParticipation participation) {
         if (!participation.getExercise().getCourseViaExerciseGroupOrCourseMember().isOnlineCourse()) {
             return;
         }
 
-        lti10Service.onNewResult((StudentParticipation) participation);
-        lti13Service.onNewResult((StudentParticipation) participation);
+        lti10Service.onNewResult(participation);
+        lti13Service.onNewResult(participation);
     }
 }
