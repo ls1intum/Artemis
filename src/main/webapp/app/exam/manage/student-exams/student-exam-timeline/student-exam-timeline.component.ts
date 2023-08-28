@@ -121,7 +121,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             const submission = this.programmingSubmissions[i];
             if (
                 submission.submissionDate!.isBefore(comparisonTimestamp) &&
-                submission.submissionDate!.diff(comparisonTimestamp) < smallestDiff &&
+                Math.abs(submission.submissionDate!.diff(comparisonTimestamp)) < smallestDiff &&
                 submission.participation?.exercise?.id === currentExercise.id
             ) {
                 smallestDiff = submission.submissionDate!.diff(comparisonTimestamp);
