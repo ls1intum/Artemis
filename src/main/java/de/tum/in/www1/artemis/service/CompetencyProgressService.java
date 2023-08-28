@@ -234,7 +234,7 @@ public class CompetencyProgressService {
      * @return The percentage of completed learning objects by the user
      */
     private double calculateProgress(@NotNull List<LearningObject> learningObjects, @NotNull User user) {
-        return learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).mapToInt(completed -> completed ? 100 : 0).summaryStatistics().getAverage();
+        return learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).mapToInt(completed -> completed ? 100 : 0).average().orElse(0.);
     }
 
     /**
