@@ -20,9 +20,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +36,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
+@TestMethodOrder(value = MethodOrderer.OrderAnnotation.class)
 class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -156,21 +155,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         gitService.switchBackToDefaultBranchHead(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isEqualTo("lorem ipsum");
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2)).isEqualTo("lorem ipsum solet");
-
-    }
-
-    @Test
-    void testGetCommitsInfo() throws GitAPIException {
-        prepareRepositoryContent();
-        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL));
-        assertThat(commitsInfos).hasSize(3);
-        assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
-        assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");
-        assertThat(commitsInfos.get(1).hash()).isEqualTo(getCommitHash("my first commit"));
-        assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
-        assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
-        assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
-
     }
 
     @NotNull
@@ -371,5 +355,20 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             assertThat(fileContent2).isEqualTo(oldFileContent2);
             assertThat(fileContent3).isEqualTo(oldFileContent3);
         });
+    }
+
+    // run this test last otherwise testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() fails
+    @Test
+    @Order(Integer.MAX_VALUE)
+    void testGetCommitsInfo() throws GitAPIException {
+        prepareRepositoryContent();
+        var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL));
+        assertThat(commitsInfos).hasSize(3);
+        assertThat(commitsInfos.get(0).hash()).isEqualTo(getCommitHash("my second commit"));
+        assertThat(commitsInfos.get(0).message()).isEqualTo("my second commit");
+        assertThat(commitsInfos.get(1).hash()).isEqualTo(getCommitHash("my first commit"));
+        assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
+        assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
+        assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
     }
 }
