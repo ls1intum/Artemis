@@ -47,7 +47,7 @@ public class ConversationFactory {
         return generatePublicChannel(course, "test", true);
     }
 
-    public static Channel generatePublicChannel(Course course, String channelName, Boolean isCourseWide) {
+    public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide) {
         Channel channel = new Channel();
         channel.setCourse(course);
         channel.setName(channelName);

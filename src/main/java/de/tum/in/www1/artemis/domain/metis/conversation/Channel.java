@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -77,7 +73,7 @@ public class Channel extends Conversation {
      */
     @Column(name = "is_course_wide")
     @NotNull
-    private Boolean isCourseWide = false;
+    private boolean isCourseWide = false;
 
     @OneToOne
     @JoinColumn(unique = true, name = "lecture_id")
@@ -146,11 +142,11 @@ public class Channel extends Conversation {
         isAnnouncementChannel = announcementChannel;
     }
 
-    public Boolean getIsCourseWide() {
+    public boolean getIsCourseWide() {
         return isCourseWide;
     }
 
-    public void setIsCourseWide(Boolean isCourseWide) {
+    public void setIsCourseWide(boolean isCourseWide) {
         this.isCourseWide = isCourseWide;
     }
 
