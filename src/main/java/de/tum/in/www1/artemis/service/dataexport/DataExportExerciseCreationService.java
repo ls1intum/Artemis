@@ -309,20 +309,22 @@ public class DataExportExerciseCreationService {
                     resultScoreAndFeedbacks.append("Build failed").append("\n");
                 }
                 for (var feedback : result.getFeedbacks()) {
-                    resultScoreAndFeedbacks.append("- Feedback: ");
+                    if (feedback != null) {
+                        resultScoreAndFeedbacks.append("- Feedback: ");
 
-                    // null if it's manual feedback
-                    if (feedback.getText() != null) {
-                        resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
+                        // null if it's manual feedback
+                        if (feedback.getText() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
+                        }
+                        // null if the test case passes
+                        if (feedback.getDetailText() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
+                        }
+                        if (feedback.getCredits() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getCredits());
+                        }
+                        resultScoreAndFeedbacks.append("\n");
                     }
-                    // null if the test case passes
-                    if (feedback.getDetailText() != null) {
-                        resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
-                    }
-                    if (feedback.getCredits() != null) {
-                        resultScoreAndFeedbacks.append(feedback.getCredits());
-                    }
-                    resultScoreAndFeedbacks.append("\n");
                 }
                 Files.writeString(outputDir.resolve("submission_" + submission.getId() + "_result_" + result.getId() + TXT_FILE_EXTENSION), resultScoreAndFeedbacks);
             }
