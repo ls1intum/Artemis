@@ -253,7 +253,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
-            "action": "Aktion"
+            "action": "Aktion",
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
         }
     }
 }

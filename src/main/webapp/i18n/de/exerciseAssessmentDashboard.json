@@ -105,7 +105,8 @@
             "correctionRoundNotYetEnabled": "Diese Korrekturrunde wurde noch nicht freigegeben.",
             "openAssessments": "Offene Abgaben",
             "closedAssessments": "Bewertete Abgaben",
-            "ratings": "Ratings"
+            "ratings": "Ratings",
+            "exerciseDetails": "Aufgabendetails"
         }
     }
 }
