@@ -49,7 +49,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationTest 
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
         final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getId()).isEqualTo(feedback.getId());
+        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
     }
 
     @Test
@@ -58,7 +58,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationTest 
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
         final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getId()).isEqualTo(feedback.getId());
+        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
     }
 
     @Test
