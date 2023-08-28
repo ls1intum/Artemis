@@ -165,6 +165,8 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch,
             List<String> triggeredByRepositories);
 
+    void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey);
+
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
