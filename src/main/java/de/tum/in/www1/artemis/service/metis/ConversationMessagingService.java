@@ -137,7 +137,6 @@ public class ConversationMessagingService extends PostingService {
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
         var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
-
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
         conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, notificationRecipients);

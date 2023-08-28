@@ -8,5 +8,4 @@ package de.tum.in.www1.artemis.domain;
  * @param isConversationHidden
  */
 public record ConversationWebSocketRecipientSummary(User user, boolean isConversationHidden) {
-
 }

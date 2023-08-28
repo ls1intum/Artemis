@@ -120,13 +120,8 @@ public abstract class PostingService {
      * @return users that should receive the new message
      */
     protected Stream<ConversationWebSocketRecipientSummary> getWebSocketRecipients(Conversation conversation) {
-
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            var courseMembers = userRepository.findAllInCourse(channel.getCourse().getId());
-            var existingParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            var participantChannelVisibility = existingParticipants.stream()
-                    .collect(Collectors.toMap(participant -> participant.getUser().getId(), participant -> participant.getIsHidden() != null ? participant.getIsHidden() : false));
-            return courseMembers.stream().map(user -> new ConversationWebSocketRecipientSummary(user, participantChannelVisibility.getOrDefault(user.getId(), false)));
+            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getCourse().getId(), conversation.getId()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
