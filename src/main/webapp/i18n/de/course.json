@@ -67,7 +67,7 @@
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
-                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
+                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
             "defaultProgrammingLanguage": "Standard-Programmiersprache",

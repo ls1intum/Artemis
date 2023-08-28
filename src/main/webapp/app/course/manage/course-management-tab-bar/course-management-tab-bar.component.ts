@@ -130,16 +130,30 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/course-management']);
     }
 
+    /**
+     * Checks if the current route contains 'tutorial-groups'.
+     * @return true if the current route is part of the tutorial management
+     */
     shouldHighlightTutorialsLink(): boolean {
         const tutorialsRegex = /tutorial-groups/;
         return tutorialsRegex.test(this.router.url);
     }
 
+    /**
+     * Checks if the current route contains 'grading-system' or 'plagiarism-cases' but not 'exams'.
+     * @return true if the current route is part of the assessment management
+     */
     shouldHighlightAssessmentLink(): boolean {
-        const assessmentLinkRegex = /grading-system|plagiarism-cases/;
+        // Exclude exam related links from the assessment link highlighting.
+        // Example that should not highlight the assessment link: /course-management/{courseId}/exams/{examId}/grading-system/interval
+        const assessmentLinkRegex = /^(?!.*exams).*(grading-system|plagiarism-cases|assessment-dashboard)/;
         return assessmentLinkRegex.test(this.router.url);
     }
 
+    /**
+     * Checks if the current route is 'course-management/{courseId}/edit' or 'course-management/{courseId}'.
+     * @return true if the control buttons, e.g., delete & edit, should be shown
+     */
     shouldShowControlButtons(): boolean {
         const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
         return courseManagementRegex.test(this.router.url);

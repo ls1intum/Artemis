@@ -725,14 +725,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCourse_tutorNotInCourse() throws Exception {
-        var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
-        request.getList("/api/courses/" + courses.get(0).getId(), HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
+        Course course = courseUtilService.createCourse();
+        request.getList("/api/courses/" + course.getId(), HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + course.getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCoursesWithPermission() throws Exception {
-        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
 
         for (Course course : coursesCreated) {
@@ -748,7 +748,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
-        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
 
@@ -1114,7 +1114,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course course = testCourses.get(0);
         course.setStudentGroupName(userPrefix + "student");
         course.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -1239,15 +1239,15 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        Course testCourse = courseUtilService.createCourse();
+        request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
+        Course testCourse = courseUtilService.createCourse();
+        request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
@@ -1471,7 +1471,7 @@ public class CourseTestService {
     // Test
     public void testGetCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         for (Course testCourse : testCourses) {
             testCourse.setInstructorGroupName(userPrefix + "instructor");
             testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -1512,7 +1512,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
@@ -1523,8 +1523,8 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
+        Course testCourse = courseUtilService.createCourse();
+        request.get("/api/courses/" + testCourse.getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
 
     // Test
@@ -2323,7 +2323,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForManagementOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -2350,7 +2350,7 @@ public class CourseTestService {
     public void testGetExercisesForCourseOverview() throws Exception {
 
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -2825,7 +2825,7 @@ public class CourseTestService {
 
     // Test
     public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
-        var course = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
+        var course = courseUtilService.createCourse();
         StudentDTO dto1 = new StudentDTO().registrationNumber(registrationNumber1);
         dto1.setLogin("newstudent1");
         StudentDTO dto2 = new StudentDTO().registrationNumber(registrationNumber2);
