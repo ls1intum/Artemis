@@ -181,8 +181,8 @@ public class ProgrammingExerciseGitDiffReportService {
 
         var repo1 = gitService.checkoutRepositoryAtCommit(((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUrl(), submission.getCommitHash(),
                 false);
-        var oldTreeParser = new FileTreeIterator(repo1);
-        var newTreeParser = new FileTreeIterator(templateRepo);
+        var oldTreeParser = new FileTreeIterator(templateRepo);
+        var newTreeParser = new FileTreeIterator(repo1);
         var report = createReport(templateRepo, oldTreeParser, newTreeParser);
         gitService.switchBackToDefaultBranchHead(repo1);
         return report;
