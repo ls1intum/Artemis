@@ -1,11 +1,11 @@
-.is-suggestion .card-header,
-.is-suggestion .card-body {
-    background-color: var(--feedback-suggestions-background);
-}
-
 .card-body {
     padding-top: 5px;
     padding-bottom: 5px;
+}
+
+.is-suggestion .card-header,
+.is-suggestion .card-body {
+    background-color: var(--feedback-suggestions-background);
 }
 
 .is-suggestion input,
