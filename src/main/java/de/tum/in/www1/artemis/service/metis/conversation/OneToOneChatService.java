@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import java.time.ZonedDateTime;
 import java.util.List;
-
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
@@ -51,23 +48,9 @@ public class OneToOneChatService {
         oneToOneChat.setCreator(requestingUser);
         var savedChat = oneToOneChatRepository.save(oneToOneChat);
 
-        ConversationParticipant participationOfUserA = createChatParticipant(userA, oneToOneChat);
-        ConversationParticipant participationOfUserB = createChatParticipant(userB, oneToOneChat);
+        ConversationParticipant participationOfUserA = ConversationParticipant.createWithDefaultValues(userA, oneToOneChat);
+        ConversationParticipant participationOfUserB = ConversationParticipant.createWithDefaultValues(userB, oneToOneChat);
         conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
         return oneToOneChatRepository.save(savedChat);
-    }
-
-    @NotNull
-    private ConversationParticipant createChatParticipant(User user, OneToOneChat oneToOneChat) {
-        var participant = new ConversationParticipant();
-        participant.setUser(user);
-        participant.setConversation(oneToOneChat);
-        participant.setIsModerator(false);
-        participant.setIsHidden(false);
-        participant.setIsFavorite(false);
-        // set the last reading time of a participant in the past when creating conversation for the first time!
-        participant.setLastRead(ZonedDateTime.now().minusYears(2));
-        participant.setUnreadMessagesCount(0L);
-        return participant;
     }
 }

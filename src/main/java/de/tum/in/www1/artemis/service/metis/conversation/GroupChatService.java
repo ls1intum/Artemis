@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
@@ -54,24 +52,9 @@ public class GroupChatService {
         groupChat.setCourse(course);
         groupChat.setCreator(requestingUser);
         var savedGroupChat = groupChatRepository.save(groupChat);
-        var participantsToCreate = startingMembers.stream().map(user -> createChatParticipant(user, groupChat)).toList();
+        var participantsToCreate = startingMembers.stream().map(user -> ConversationParticipant.createWithDefaultValues(user, groupChat)).toList();
         conversationParticipantRepository.saveAll(participantsToCreate);
         return savedGroupChat;
-    }
-
-    @NotNull
-    private ConversationParticipant createChatParticipant(User user, GroupChat groupChat) {
-        var participant = new ConversationParticipant();
-        participant.setUser(user);
-        participant.setConversation(groupChat);
-        // makes no sense for group chats
-        participant.setIsModerator(false);
-        participant.setIsFavorite(false);
-        participant.setIsHidden(false);
-        // set the last reading time of a participant in the past when creating conversation for the first time!
-        participant.setLastRead(ZonedDateTime.now().minusYears(2));
-        participant.setUnreadMessagesCount(0L);
-        return participant;
     }
 
     /**

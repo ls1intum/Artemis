@@ -164,14 +164,9 @@ public class ConversationMessagingService extends PostingService {
             Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = new ConversationParticipant();
-                conversationParticipant.setUser(requestingUser);
-                conversationParticipant.setConversation(channel);
-                conversationParticipant.setIsModerator(false);
-                conversationParticipant.setIsHidden(false);
-                conversationParticipant.setIsFavorite(false);
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+                // Mark messages as read
                 conversationParticipant.setLastRead(ZonedDateTime.now());
-                conversationParticipant.setUnreadMessagesCount(0L);
                 conversationParticipantRepository.saveAndFlush(conversationParticipant);
             }
             else {
