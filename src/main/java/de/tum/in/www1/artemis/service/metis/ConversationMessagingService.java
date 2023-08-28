@@ -120,7 +120,7 @@ public class ConversationMessagingService extends PostingService {
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::getUser).collect(Collectors.toSet());
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
@@ -160,7 +160,7 @@ public class ConversationMessagingService extends PostingService {
      */
     private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
         // Initialize filter with check for author
-        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.getUser().getId(), author.getId());
+        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.user().getId(), author.getId());
 
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
@@ -170,11 +170,11 @@ public class ConversationMessagingService extends PostingService {
 
             // If a channel is not visible to students, filter out participants that are only students
             if (!conversationService.isChannelVisibleToStudents(channel)) {
-                filter = filter.and(recipientSummary -> authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), recipientSummary.getUser()));
+                filter = filter.and(recipientSummary -> authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), recipientSummary.user()));
             }
         }
 
-        return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::getUser).collect(Collectors.toSet());
+        return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
     }
 
     /**
