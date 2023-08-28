@@ -411,6 +411,7 @@ $code-editor-file-browser-header-border: $neutral-dark-l-10;
 $code-editor-file-browser-tree-hover: $neutral-dark-l-5;
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
+$code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
 $code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
 
