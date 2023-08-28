@@ -239,7 +239,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
-        expect(comp.unreferencedFeedbackSuggestions).toHaveLength(2);
+        expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
