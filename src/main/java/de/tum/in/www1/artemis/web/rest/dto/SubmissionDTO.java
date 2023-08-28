@@ -16,6 +16,12 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
         Boolean buildArtifact, DomainObjectIdDTO participation, String submissionExerciseType) {
 
+    /**
+     * Converts a Submission into a SubmissionDTO.
+     *
+     * @param submission to convert
+     * @return the converted DTO
+     */
     public static SubmissionDTO of(Submission submission) {
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
             return new SubmissionDTO(programmingSubmission.getId(), programmingSubmission.isSubmitted(), programmingSubmission.getType(),

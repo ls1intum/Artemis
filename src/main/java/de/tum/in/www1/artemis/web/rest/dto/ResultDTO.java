@@ -44,6 +44,13 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         return of(result, result.getFeedbacks());
     }
 
+    /**
+     * Converts a Result into a ResultDTO
+     *
+     * @param result           to convert
+     * @param filteredFeedback feedback that should get send to the client, will get converted into {@link FeedbackDTO} objects.
+     * @return the converted DTO
+     */
     public static ResultDTO of(Result result, List<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
