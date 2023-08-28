@@ -189,7 +189,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         } else if (changes.commitState && changes.commitState.previousValue === CommitState.CONFLICT && changes.commitState.currentValue !== CommitState.CONFLICT) {
             this.editor.setReadOnly(false);
         }
-        if (changes.feedback || changes.feedbackSuggestions) {
+        if (changes.feedbacks || changes.feedbackSuggestions) {
             // on changes to these props
             if (this.editorSession) {
                 // initEditor should already be called, otherwise there is no need to init this anyways
