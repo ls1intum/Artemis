@@ -3,12 +3,12 @@ package de.tum.in.www1.artemis.service.dataexport;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,9 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -37,6 +35,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -74,10 +73,12 @@ public class DataExportExerciseCreationService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ResultService resultService;
+
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, ResultService resultService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -86,19 +87,20 @@ public class DataExportExerciseCreationService {
         this.complaintRepository = complaintRepository;
         this.exerciseRepository = exerciseRepository;
         this.repoClonePath = repoClonePath;
+        this.resultService = resultService;
     }
 
     /**
      * Creates the export for all exercises the user participated in.
      *
      * @param workingDirectory the directory the export should be created in
-     * @param userId           the id of the user that requested the export
+     * @param user             the user for which the export should be created
      * @throws IOException if an error occurs while accessing the file system
      */
-    public void createExercisesExport(Path workingDirectory, long userId) throws IOException {
+    public void createExercisesExport(Path workingDirectory, User user) throws IOException {
         // retrieve all exercises as we cannot retrieve the exercises by course because a user might have participated in a course they are no longer a member of (they have
         // unenrolled)
-        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(userId);
+        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(user.getId());
         var exerciseParticipationsPerCourse = allExerciseParticipations.stream().collect(Collectors.groupingBy(Exercise::getCourseViaExerciseGroupOrCourseMember));
         for (var entry : exerciseParticipationsPerCourse.entrySet()) {
             var course = entry.getKey();
@@ -110,10 +112,10 @@ public class DataExportExerciseCreationService {
             }
             for (var exercise : exercises) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    createProgrammingExerciseExport(programmingExercise, exercisesDir, userId);
+                    createProgrammingExerciseExport(programmingExercise, exercisesDir, user);
                 }
                 else {
-                    createNonProgrammingExerciseExport(exercise, exercisesDir, userId);
+                    createNonProgrammingExerciseExport(exercise, exercisesDir, user);
                 }
             }
         }
@@ -126,15 +128,15 @@ public class DataExportExerciseCreationService {
      *
      * @param programmingExercise the programming exercise for which the export should be created
      * @param exercisesDir        the directory where all exercises of a course should be stored
-     * @param userId              the id of the user that requested the export
+     * @param user                the user for which the export should be created
      * @throws IOException if an error occurs while accessing the file system
      */
-    public void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path exercisesDir, long userId) throws IOException {
+    public void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path exercisesDir, User user) throws IOException {
         Path exerciseDir = exercisesDir.resolve(EXERCISE_PREFIX + programmingExercise.getSanitizedExerciseTitle());
         if (!Files.exists(exerciseDir)) {
             Files.createDirectory(exerciseDir);
         }
-        createSubmissionsResultsExport(programmingExercise, exerciseDir);
+        createSubmissionsResultsExport(programmingExercise, exerciseDir, user);
         RepositoryExportOptionsDTO repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setExportAllParticipants(false);
         repositoryExportOptions.setAnonymizeRepository(false);
@@ -153,7 +155,7 @@ public class DataExportExerciseCreationService {
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
 
-        createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
+        createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
 
     }
 
@@ -162,16 +164,16 @@ public class DataExportExerciseCreationService {
      *
      * @param exercise  the exercise for which the export should be created
      * @param courseDir the directory that is used for the course the exercise belongs to
-     * @param userId    the id of the user that requested the export
+     * @param user      the user for which the export should be created
      * @throws IOException if an error occurs while accessing the file system
      */
-    public void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, long userId) throws IOException {
+    public void createNonProgrammingExerciseExport(Exercise exercise, Path courseDir, User user) throws IOException {
         Path exercisePath = courseDir.resolve(EXERCISE_PREFIX + exercise.getSanitizedExerciseTitle());
         if (!Files.exists(exercisePath)) {
             Files.createDirectory(exercisePath);
         }
-        createSubmissionsResultsExport(exercise, exercisePath);
-        createPlagiarismCaseInfoExport(exercise, exercisePath, userId);
+        createSubmissionsResultsExport(exercise, exercisePath, user);
+        createPlagiarismCaseInfoExport(exercise, exercisePath, user.getId());
     }
 
     /**
@@ -183,12 +185,13 @@ public class DataExportExerciseCreationService {
      *
      * @param exercise    the exercise for which the export should be created
      * @param exerciseDir the directory in which the export should be created
+     * @param user        the user for which the export should be created
      */
-    private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
-        // quizzes do not have an assessment due date, so we need to check the due date
-        boolean includeResults = exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
-                || exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)
-                || exercise.isCourseExercise() && exercise instanceof QuizExercise && exercise.getDueDate().isBefore(ZonedDateTime.now());
+    private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir, User user) throws IOException {
+        // quizzes do not have an assessment due date, so we need to check if they have ended according to their due date
+        boolean includeResults = (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished())
+                || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
+                || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded());
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
@@ -206,8 +209,8 @@ public class DataExportExerciseCreationService {
                 }
                 // for a programming exercise, we want to include the results that are visible for the assessment due date
                 if (includeResults || exercise instanceof ProgrammingExercise) {
-                    boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !includeResults;
-                    createResultsAndComplaintFiles(submission, exerciseDir, programmingExerciseBeforeAssessmentDueDate);
+                    boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !ExerciseDateService.isAfterAssessmentDueDate(exercise);
+                    createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate);
                 }
             }
         }
@@ -280,18 +283,24 @@ public class DataExportExerciseCreationService {
      * Creates a txt file containing the results with the score, the number of passed test cases if it is a programming exercise
      * and the feedbacks (both manual and automatic).
      *
-     * @param submission the submission for which the results should be stored
-     * @param outputDir  the directory in which the results should be stored
+     * @param submission                                 the submission for which the results should be stored
+     * @param outputDir                                  the directory in which the results should be stored
+     * @param user                                       the user for which the export should be created
+     * @param programmingExerciseBeforeAssessmentDueDate whether the programming exercise is before the assessment due date
      * @throws IOException if the file cannot be written
      */
-    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, boolean programmingExerciseBeforeAssessmentDueDate) throws IOException {
+    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, User user, boolean programmingExerciseBeforeAssessmentDueDate) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
+                if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                    continue;
+                }
+                resultService.filterSensitiveInformationIfNecessary(submission.getParticipation(), List.of(result), Optional.of(user));
                 var score = result.getScore();
                 if (score != null) {
                     resultScoreAndFeedbacks.append("Score of submission: ").append(score).append("%").append(" ")
-                            .append(score * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                            .append(roundToNDecimalPlaces(score * submission.getParticipation().getExercise().getMaxPoints() / 100, 2)).append(" Points").append("\n");
                 }
                 if (submission instanceof ProgrammingSubmission && result.getPassedTestCaseCount() != null && result.getTestCaseCount() != null && result.getTestCaseCount() > 0) {
                     resultScoreAndFeedbacks.append("Passed test cases: ").append(result.getPassedTestCaseCount()).append("/").append(result.getTestCaseCount()).append("\n");
@@ -300,10 +309,6 @@ public class DataExportExerciseCreationService {
                     resultScoreAndFeedbacks.append("Build failed").append("\n");
                 }
                 for (var feedback : result.getFeedbacks()) {
-                    if ((feedback.getType() != FeedbackType.AUTOMATIC || feedback.getVisibility() != Visibility.ALWAYS) && programmingExerciseBeforeAssessmentDueDate) {
-                        // we do not want to include manual or hidden feedback before the assessment due date
-                        continue;
-                    }
                     resultScoreAndFeedbacks.append("- Feedback: ");
 
                     // null if it's manual feedback

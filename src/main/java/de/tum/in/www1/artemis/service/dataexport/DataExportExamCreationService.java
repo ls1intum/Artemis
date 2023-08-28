@@ -91,10 +91,10 @@ public class DataExportExamCreationService {
                 continue;
             }
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser().getId());
+                dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser());
             }
             else {
-                dataExportExerciseCreationService.createNonProgrammingExerciseExport(exercise, examWorkingDir, studentExam.getUser().getId());
+                dataExportExerciseCreationService.createNonProgrammingExerciseExport(exercise, examWorkingDir, studentExam.getUser());
             }
         }
         // leave out the results if the results are not published yet to avoid leaking information through the data export

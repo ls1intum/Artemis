@@ -90,7 +90,7 @@ public class DataExportCreationService {
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
         var workingDirectory = prepareDataExport(dataExport);
-        dataExportExerciseCreationService.createExercisesExport(workingDirectory, userId);
+        dataExportExerciseCreationService.createExercisesExport(workingDirectory, user);
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);

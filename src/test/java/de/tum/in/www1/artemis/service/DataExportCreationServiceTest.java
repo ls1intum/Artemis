@@ -218,7 +218,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
-        participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        participationUtilService.addResultToSubmission(submission2, AssessmentType.SEMI_AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setDetailText("detailed feedback");
@@ -333,12 +333,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
             // automatic feedback
             assertThat(fileContentResult1).contains("1.0");
             assertThat(fileContentResult1).contains("feedback");
-            // automatic hidden feedback
-            assertThat(fileContentResult1).doesNotContain("hidden feedback");
-            assertThat(fileContentResult1).doesNotContain("hidden detailed feedback");
             // manual feedback
             assertThat(fileContentResult2).doesNotContain("2.0");
-            assertThat(fileContentResult2).doesNotContain("detailed feedback2");
+            assertThat(fileContentResult2).doesNotContain("detailed feedback 2");
         }
         else if (exerciseDirPath.toString().contains("Programming") && !assessmentDueDateInTheFuture && courseExercise) {
             var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
@@ -346,6 +343,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
             // automatic feedback
             assertThat(fileContentResult1).contains("1.0");
             assertThat(fileContentResult1).contains("feedback");
+            // automatic hidden feedback
+            assertThat(fileContentResult1).contains("hidden feedback");
+            assertThat(fileContentResult1).contains("hidden detailed feedback");
             // manual feedback
             assertThat(fileContentResult2).contains("2.0");
             assertThat(fileContentResult2).contains("detailed feedback 2");
