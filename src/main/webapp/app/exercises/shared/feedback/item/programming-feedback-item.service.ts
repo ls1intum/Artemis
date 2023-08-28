@@ -114,7 +114,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             }
         }
         return {
-            type: 'Feedback Suggestion',
+            type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: titleWithoutIdentifier,
             text: feedback.detailText,
