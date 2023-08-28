@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -518,9 +518,10 @@ export class ProgrammingExerciseService {
      * @param exerciseId The id of a programming exercise
      */
     getDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+        return this.http.get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' }).pipe(
+            debounceTime(800),
+            map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined),
+        );
     }
 
     /**
@@ -532,7 +533,10 @@ export class ProgrammingExerciseService {
     getDiffReportForSubmissions(exerciseId: number, olderSubmissionId: number, newerSubmissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report/${newerSubmissionId}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+            .pipe(
+                debounceTime(800),
+                map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined),
+            );
     }
 
     /**

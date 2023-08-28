@@ -16,6 +16,8 @@ export class GitDiffReportModalComponent implements OnInit {
     firstCommitFileContentByPath: Map<string, string>;
     secondCommitFileContentByPath: Map<string, string>;
 
+    title: string;
+
     constructor(
         protected activeModal: NgbActiveModal,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -25,8 +27,10 @@ export class GitDiffReportModalComponent implements OnInit {
     ngOnInit(): void {
         if (this.diffForTemplateAndSolution) {
             this.loadFilesForTemplateAndSolution();
+            this.title = 'artemisApp.programmingExercise.gitDiffReportModal.title';
         } else {
             this.loadRepositoryFilesForParticipations();
+            this.title = 'artemisApp.programmingExercise.gitDiffReportModal.titleForSubmissions';
         }
     }
 
