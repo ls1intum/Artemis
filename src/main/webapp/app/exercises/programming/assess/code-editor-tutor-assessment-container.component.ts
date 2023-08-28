@@ -231,7 +231,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
     }
 
-    private handleReceivedSubmission(submission: ProgrammingSubmission) {
+    private handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
 
         // Set domain to correctly fetch data
@@ -256,9 +256,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
-        this.loadFeedbackSuggestions();
         this.getComplaint();
         this.calculateTotalScore();
+        return this.loadFeedbackSuggestions();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -276,9 +276,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private async loadFeedbackSuggestions(): Promise<void> {
         this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
-        // Don't show feedback suggestions that are in the same file & line as existing feedback
+        // Don't show feedback suggestions that have the same title, description and reference - probably it is coming from an earlier suggestion anyways
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
-            return !this.referencedFeedback.some((feedback) => feedback.reference === suggestion.reference);
+            for (const feedback of [...this.referencedFeedback, ...this.unreferencedFeedback]) {
+                if (feedback.text === suggestion.text && feedback.detailText === suggestion.detailText && feedback.reference === suggestion.reference) {
+                    return false; // exclude this suggestion
+                }
+            }
+            return true; // include this suggestion
         });
     }
 

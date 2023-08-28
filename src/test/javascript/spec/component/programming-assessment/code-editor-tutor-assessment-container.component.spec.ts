@@ -68,6 +68,8 @@ import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treev
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
+import { AthenaService } from 'app/assessment/athena.service';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -191,6 +193,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
             ],
@@ -240,6 +243,22 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should show unreferenced feedback suggestions', () => {
         comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
         expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
+    });
+
+    it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
+        comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
+        comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
+        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestions');
+        feedbackSuggestionsStub.mockReturnValue(
+            of([
+                { text: 'unreferenced test', detailText: 'some detail', reference: undefined },
+                { text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
+                { text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+            ]),
+        );
+        comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
+        await comp['loadFeedbackSuggestions']();
+        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
