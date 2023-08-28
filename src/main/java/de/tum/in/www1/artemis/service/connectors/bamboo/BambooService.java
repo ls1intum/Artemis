@@ -488,6 +488,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 triggeredByRepositories);
     }
 
+    @Override
+    public void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
+        // not needed for Bamboo
+    }
+
     /**
      * Extract the plan key from the Bamboo requestBody.
      *
