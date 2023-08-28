@@ -202,9 +202,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         checkCreatedMessagePost(postToSave, createdPost);
 
         // participants who hid the conversation should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(eq(TEST_PREFIX + "student2"), anyString(), any(ConversationWebsocketDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(recipientWithHiddenTrue.getUser().getLogin()), anyString(), any(ConversationWebsocketDTO.class));
         // participants who have not hidden the conversation should be notified
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessageToUser(eq(TEST_PREFIX + "tutor1"), anyString(), any(ConversationWebsocketDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessageToUser(eq(recipientWithHiddenFalse.getUser().getLogin()), anyString(),
+                any(ConversationWebsocketDTO.class));
     }
 
     @ParameterizedTest
