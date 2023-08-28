@@ -12,14 +12,22 @@ NUM_RUNS="$1"
 # Define spring profiles.
 SPRING_PROFILES=("none" "mysql" "postgres")
 
-# Create the 'supporting_scripts/test-results' directory, if it doesn't exist.
-mkdir -p supporting_scripts/test-results
+DIRECTORY='./build/flaky-test-detection-results'
+
+# Create the directory, if it doesn't exist.
+mkdir -p ${DIRECTORY}
+
+# ==================== #
+# FLAKY TEST DETECTION #
+# ==================== #
 
 for ((run = 1; run <= NUM_RUNS; run++)); do
     # Generate a random number between 1 and 13.
     spring_profile_chance=$((RANDOM % 13 + 1))
 
-    # Determine the active spring profile based on the random number 10/13 chance of no profile, 2/13 chance of MYSQL, 1/13 chance of POSTGRES.
+    # Determine the active spring profile based on the random number:
+    # 10/13 chance of no profile, 2/13 chance of MYSQL, 1/13 chance of POSTGRES.
+    # (Should result in similar execution times for each profile).
     profile_index=0
     if [[ $spring_profile_chance -gt 10 ]]; then
         profile_index=1
@@ -30,31 +38,46 @@ for ((run = 1; run <= NUM_RUNS; run++)); do
     fi
     active_profile="${SPRING_PROFILES[$profile_index]}"
 
-    # Generate a random number of maximum concurrent tests between 1 and 6
-    max_concurrent_tests=$((RANDOM % 6 + 1))
-
     # Generate output file name
     TIME=$(date +"%Y-%m-%d_%H:%M:%S")
-    output_file="${active_profile}_${TIME}_threads${max_concurrent_tests}_run${run}.log"
+    output_file="${active_profile}_${TIME}_run${run}.log"
 
     # Run tests with gradlew
-    echo "Running tests with Spring Profile: $active_profile, Threads: $max_concurrent_tests (Run $run)"
+    echo "Running tests with Spring Profile: $active_profile (Run $run)"
     set -o pipefail && SPRING_PROFILES_INCLUDE="$active_profile" ./gradlew --console=plain \
-        -Djunit.jupiter.execution.parallel.config.fixed.parallelism="$max_concurrent_tests" \
-        test --rerun jacocoTestReport -x webapp jacocoTestCoverageVerification > "./supporting_scripts/test-results/$output_file"
+        test --rerun jacocoTestReport -x webapp jacocoTestCoverageVerification > "${DIRECTORY}/$output_file"
 
-    # Check if tests were successful
-    if grep -q "BUILD SUCCESSFUL" "./supporting_scripts/test-results/$output_file"; then
-        # TODO: Remove file, if the test run was successful
-        mv "./supporting_scripts/test-results/$output_file" "./supporting_scripts/test-results/SUCCESS_${output_file}"
+    # Check if tests were successful. If not, rename the output file to indicate failure. Delete the output file if tests were successful.
+    if grep -q "BUILD SUCCESSFUL" "${DIRECTORY}/$output_file"; then
+        rm "${DIRECTORY}/$output_file"
     else
-        mv "./supporting_scripts/test-results/$output_file" "./supporting_scripts/test-results/FAILURE_${output_file}"
+        mv "${DIRECTORY}/$output_file" "${DIRECTORY}/FAILURE_${output_file}"
     fi
 
     # Wait a bit before the next run
     sleep 10
 done
 
-# TODO: Create a summary of failing tests, including the number of times they failed and the corresponding file names
+# ================== #
+# FLAKY TEST SUMMARY #
+# ================== #
+
+echo "Generating flaky test summary..."
+
+SUMMARY_DIRECTORY="${DIRECTORY}/summary"
+mkdir -p "$SUMMARY_DIRECTORY"
+
+SUMMARY_FILE="${SUMMARY_DIRECTORY}/run-summary.txt"
+printf "Logfile and Failed Tests\n" > "$SUMMARY_FILE"
+for file in "$DIRECTORY"/*.log; do
+    if [ -f "$file" ]; then
+        printf "\nFailed tests in $(basename "$file"):\n" >> "$SUMMARY_FILE"
+        grep "Test >.* FAILED" "$file" >> "$SUMMARY_FILE"
+    fi
+done
+
+COUNT_FILE="${SUMMARY_DIRECTORY}/failure-count.txt"
+printf "Count of Failed Tests\n" > "$COUNT_FILE"
+grep "Test >.* FAILED" "$SUMMARY_FILE" | sort | uniq -c | sort -nr >> "$COUNT_FILE"
 
 echo "Tests completed for $NUM_RUNS run(s)."
