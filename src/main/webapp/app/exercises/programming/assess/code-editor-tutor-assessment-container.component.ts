@@ -276,6 +276,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private async loadFeedbackSuggestions(): Promise<void> {
         this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
+        // Don't show feedback suggestions that are in the same file & line as existing feedback
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
+            return !this.referencedFeedback.some((feedback) => feedback.reference === suggestion.reference);
+        });
     }
 
     /**
