@@ -111,7 +111,7 @@ public class JenkinsBuildPlanService {
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofgit(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
                 buildPlanUrl);
 
         // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
