@@ -237,6 +237,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(assessmentLayout).toBeDefined();
     });
 
+    it('should show unreferenced feedback suggestions', () => {
+        comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
+        expect(comp.unreferencedFeedbackSuggestions).toHaveLength(2);
+    });
+
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
@@ -612,6 +617,22 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         },
     );
+
+    it('should update and validate referenced feedback', () => {
+        const feedbacks = [
+            { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL },
+            { reference: 'file:src/Test.java_line:2', type: FeedbackType.MANUAL },
+            { reference: undefined, type: FeedbackType.MANUAL },
+        ];
+        const validateFeedbackStub = jest.spyOn(comp, 'validateFeedback');
+        validateFeedbackStub.mockReturnValue(undefined);
+        comp.onUpdateFeedback(feedbacks);
+        expect(comp.referencedFeedback).toEqual([
+            { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL },
+            { reference: 'file:src/Test.java_line:2', type: FeedbackType.MANUAL },
+        ]);
+        expect(validateFeedbackStub).toHaveBeenCalled();
+    });
 
     it('should correctly remove feedback suggestions', () => {
         comp.feedbackSuggestions = [
