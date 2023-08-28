@@ -49,10 +49,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final UserRepository userRepository;
 
+    private final AuxiliaryRepositoryService auxiliaryRepositoryService;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, AuxiliaryRepositoryService auxiliaryRepositoryService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -62,6 +64,7 @@ public class ProgrammingExerciseParticipationService {
         this.gitService = gitService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.auxiliaryRepositoryService = auxiliaryRepositoryService;
     }
 
     /**
@@ -378,10 +381,11 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseParticipation getParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
             boolean withSubmissions) {
 
+        boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
+
         // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
         // Can possibly be used by auxiliary repositories
-        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || isAuxiliaryRepository) {
             if (withSubmissions) {
                 return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }

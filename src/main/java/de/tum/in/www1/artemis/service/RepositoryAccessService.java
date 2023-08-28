@@ -154,12 +154,33 @@ public class RepositoryAccessService {
     public void checkAccessTestRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user) {
         if (atLeastEditor) {
             if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                throw new AccessForbiddenException("You are not allowed to access the test repository of this programming exercise.");
+                throw new AccessForbiddenException("You are not allowed to push to the test repository of this programming exercise.");
             }
         }
         else {
             if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                throw new AccessForbiddenException("You are not allowed to push to the test repository of this programming exercise.");
+                throw new AccessForbiddenException("You are not allowed to access the test repository of this programming exercise.");
+            }
+        }
+    }
+
+    /**
+     * Checks if the user has access to the auxiliary repository of the given programming exercise.
+     * Throws an {@link AccessForbiddenException} otherwise.
+     *
+     * @param atLeastEditor if true, the user needs at least editor permissions, otherwise only teaching assistant permissions are required.
+     * @param exercise      the programming exercise the auxiliary repository belongs to.
+     * @param user          the user that wants to access the auxiliary repository.
+     */
+    public void checkAccessAuxiliaryRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user) {
+        if (atLeastEditor) {
+            if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                throw new AccessForbiddenException("You are not allowed to push to the auxiliary repository of this programming exercise.");
+            }
+        }
+        else {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                throw new AccessForbiddenException("You are not allowed to access the auxiliary repository of this programming exercise.");
             }
         }
     }
