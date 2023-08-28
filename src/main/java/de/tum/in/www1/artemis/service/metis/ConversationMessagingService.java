@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -159,7 +158,6 @@ public class ConversationMessagingService extends PostingService {
      * @param webSocketRecipients the list of users that should be filtered
      * @return filtered list of users that are supposed to receive a notification
      */
-    @NotNull
     private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
         // Initialize filter with check for author
         Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.getUser().getId(), author.getId());

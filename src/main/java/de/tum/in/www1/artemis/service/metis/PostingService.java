@@ -124,12 +124,13 @@ public abstract class PostingService {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             var users = userRepository.findAllInCourse(channel.getCourse().getId());
             var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            var hiddenMap = participants.stream().collect(Collectors.toMap(participant -> participant.getUser().getId(), ConversationParticipant::getIsHidden));
+            var hiddenMap = participants.stream()
+                    .collect(Collectors.toMap(participant -> participant.getUser().getId(), participant -> participant.getIsHidden() != null ? participant.getIsHidden() : false));
             return users.stream().map(user -> new ConversationWebSocketRecipientSummary(user, hiddenMap.getOrDefault(user.getId(), false)));
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden()));
+                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null ? participant.getIsHidden() : false));
     }
 
     /**
