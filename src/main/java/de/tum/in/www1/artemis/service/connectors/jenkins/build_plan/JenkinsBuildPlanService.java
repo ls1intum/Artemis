@@ -111,7 +111,7 @@ public class JenkinsBuildPlanService {
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofgit(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
                 buildPlanUrl);
 
         // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
@@ -196,6 +196,33 @@ public class JenkinsBuildPlanService {
             log.error("Pipeline Script not found", e);
         }
 
+        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+    }
+
+    public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
+        final String buildProjectKey = newExercise.getProjectKey();
+
+        final Long previousExerciseId = templateExercise.getId();
+        final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
+        final Long newExerciseId = newExercise.getId();
+        final String newBuildPlanAccessSecret = newExercise.getBuildPlanAccessSecret();
+
+        String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
+        String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
+
+        final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
+
+        try {
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Pipeline Script not found", e);
+        }
+
+        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+    }
+
+    private void postBuildPlanConfigChange(String buildPlanKey, String buildProjectKey, Document jobConfig) {
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
@@ -246,8 +273,8 @@ public class JenkinsBuildPlanService {
      */
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetPlanName) {
         buildPlanRepository.copyBetweenExercises(sourceExercise, targetExercise);
-        targetExercise.generateAndSetBuildPlanAccessSecret();
-        targetExercise = programmingExerciseRepository.save(targetExercise);
+
+        targetExercise = setNewBuildPlanAccessSecretIfRequiredAndReturn(sourceExercise, targetExercise);
 
         String sourceProjectKey = sourceExercise.getProjectKey();
         String targetProjectKey = targetExercise.getProjectKey();
@@ -259,6 +286,21 @@ public class JenkinsBuildPlanService {
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
+    }
+
+    private ProgrammingExercise setNewBuildPlanAccessSecretIfRequiredAndReturn(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
+        if (!targetExercise.hasBuildPlanAccessSecretSet() || areBuildPlanAccessSecretsTheSameFor(sourceExercise, targetExercise)) {
+            targetExercise.generateAndSetBuildPlanAccessSecret();
+            targetExercise = programmingExerciseRepository.save(targetExercise);
+        }
+        return targetExercise;
+    }
+
+    private boolean areBuildPlanAccessSecretsTheSameFor(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
+        if (!sourceExercise.hasBuildPlanAccessSecretSet() || !targetExercise.hasBuildPlanAccessSecretSet())
+            return false;
+        assert sourceExercise.getBuildPlanAccessSecret() != null && targetExercise.getBuildPlanAccessSecret() != null;
+        return sourceExercise.getBuildPlanAccessSecret().equals(targetExercise.getBuildPlanAccessSecret());
     }
 
     private String getCleanPlanName(String name) {
