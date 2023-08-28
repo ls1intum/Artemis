@@ -17,6 +17,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CommitInfoDTO(String hash, String message, ZonedDateTime timestamp, String author) {
 
+    /**
+     * Creates a CommitInfoDTO from a RevCommit.
+     *
+     * @param commit the commit to create the DTO from
+     * @return the created DTO
+     */
     public static CommitInfoDTO of(RevCommit commit) {
         var authorIdent = commit.getAuthorIdent();
         var commitTime = authorIdent.getWhen();
