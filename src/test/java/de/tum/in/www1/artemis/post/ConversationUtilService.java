@@ -341,6 +341,7 @@ public class ConversationUtilService {
         conversationParticipant.setConversation(conversation);
         conversationParticipant.setLastRead(conversation.getLastMessageDate());
         conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
+        conversationParticipant.setIsHidden(false);
 
         return conversationParticipantRepository.save(conversationParticipant);
     }

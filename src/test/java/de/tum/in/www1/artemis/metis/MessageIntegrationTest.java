@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatReposito
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -181,6 +182,29 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId + "/conversations/" + channel.getId()), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNoNotificationIfConversationHidden() throws Exception {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        ConversationParticipant recipientWithHiddenTrue = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        recipientWithHiddenTrue.setIsHidden(true);
+        conversationParticipantRepository.save(recipientWithHiddenTrue);
+        ConversationParticipant recipientWithHiddenFalse = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        checkCreatedMessagePost(postToSave, createdPost);
+
+        // participants who hid the conversation should not be notified
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(TEST_PREFIX + "student2"), anyString(), any(ConversationWebsocketDTO.class));
+        // participants who have not hidden the conversation should be notified
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessageToUser(eq(TEST_PREFIX + "tutor1"), anyString(), any(ConversationWebsocketDTO.class));
     }
 
     @ParameterizedTest
