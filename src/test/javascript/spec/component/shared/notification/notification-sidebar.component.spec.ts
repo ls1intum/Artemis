@@ -1,17 +1,17 @@
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, ReplaySubject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { ATTACHMENT_CHANGE_TITLE, EXERCISE_SUBMISSION_ASSESSED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
@@ -39,8 +39,8 @@ describe('Notification Sidebar Component', () => {
     let sessionStorageService: SessionStorageService;
     let artemisTranslatePipe: ArtemisTranslatePipe;
 
-    const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
-    const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day'), title: NEW_MESSAGE_TITLE } as Notification;
+    const notificationNow = { id: 1, notificationDate: dayjs(), title: EXERCISE_SUBMISSION_ASSESSED_TITLE } as Notification;
+    const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day'), title: ATTACHMENT_CHANGE_TITLE } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const notificationSettingA: NotificationSetting = {
@@ -56,15 +56,6 @@ describe('Notification Sidebar Component', () => {
         settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED,
     };
     const receivedNotificationSettings: NotificationSetting[] = [notificationSettingA, notificationSettingB];
-
-    const generateQueryResponse = (ns: Notification[]) => {
-        return {
-            body: ns,
-            headers: new HttpHeaders({
-                'X-Total-Count': ns.length.toString(),
-            }),
-        } as HttpResponse<Notification[]>;
-    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -126,18 +117,16 @@ describe('Notification Sidebar Component', () => {
             expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
         });
 
-        it('should query notifications', () => {
-            jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
-        });
-
         it('should subscribe to notification updates for user', () => {
-            jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(of(notifications));
+            jest.spyOn(notificationService, 'subscribeToTotalNotificationCountUpdates');
+            jest.spyOn(notificationService, 'subscribeToLoadingStateUpdates');
             jest.spyOn(notificationSettingsService, 'isNotificationAllowedBySettings').mockReturnValue(true);
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
-            expect(notificationSettingsService.isNotificationAllowedBySettings).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToTotalNotificationCountUpdates).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToLoadingStateUpdates).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.sortedNotifications).toHaveLength(notifications.length);
         });
     });
 
@@ -280,54 +269,44 @@ describe('Notification Sidebar Component', () => {
     describe('Load notifications', () => {
         const replaceSubscribeToNotificationUpdates = () => {
             const subscribeToNotificationUpdatesStub = jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
-            subscribeToNotificationUpdatesStub.mockReturnValue(new BehaviorSubject(notificationNow).asObservable() as ReplaySubject<Notification>);
+            subscribeToNotificationUpdatesStub.mockReturnValue(new BehaviorSubject([notificationNow]).asObservable() as ReplaySubject<Notification[]>);
         };
 
         it('should not add already existing notifications', () => {
-            notificationSidebarComponent.notifications = [notificationNow];
-            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
+            notificationSidebarComponent.sortedNotifications = [notificationNow];
+            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            queryNotificationsFilteredBySettingsStub.mockReturnValue(of([notificationNow]));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications).toHaveLength(notifications.length);
+            expect(notificationSidebarComponent.sortedNotifications).toEqual([notificationNow]);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
-            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse([notificationPast, notificationNow])));
+            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            queryNotificationsFilteredBySettingsStub.mockReturnValue(of([notificationPast, notificationNow]));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
-            expect(notificationSidebarComponent.sortedNotifications[0]).toBe(notificationNow);
-            expect(notificationSidebarComponent.sortedNotifications[1]).toBe(notificationPast);
+            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.sortedNotifications).toEqual([notificationNow, notificationPast]);
         });
 
         it('should set total notification count to received X-Total-Count header', () => {
-            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
+            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'subscribeToTotalNotificationCountUpdates');
+            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(notifications.length));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToTotalNotificationCountUpdates).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.totalNotifications).toBe(notifications.length);
         });
 
-        it('should increase total notification count if a new notification is received via websocket', () => {
-            replaceSubscribeToNotificationUpdates();
-            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse([notificationNow])));
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications).toHaveLength(1);
-            expect(notificationSidebarComponent.totalNotifications).toBe(1);
-        });
-
         it('should not add already existing notification received via websocket', () => {
-            notificationSidebarComponent.notifications = [notificationNow];
+            notificationSidebarComponent.sortedNotifications = [notificationNow];
             notificationSidebarComponent.totalNotifications = 1;
             replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications).toHaveLength(1);
+            expect(notificationSidebarComponent.sortedNotifications).toHaveLength(1);
             expect(notificationSidebarComponent.totalNotifications).toBe(1);
         });
 
         it('should load more notifications only if not all are already loaded', () => {
-            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponent.totalNotifications = 2;
             jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
@@ -338,16 +317,16 @@ describe('Notification Sidebar Component', () => {
     describe('Recent notifications', () => {
         it('should evaluate recent notifications correctly', () => {
             notificationSidebarComponent.lastNotificationRead = dayjs().subtract(1, 'day');
-            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
-            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
+            const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            queryNotificationsFilteredBySettingsStub.mockReturnValue(of(notifications));
 
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.recentNotificationCount).toBe(1);
         });
 
         it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
-            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
             const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
@@ -357,7 +336,7 @@ describe('Notification Sidebar Component', () => {
 
     describe('UI', () => {
         it('should show no notifications message', () => {
-            notificationSidebarComponent.notifications = [];
+            notificationSidebarComponent.sortedNotifications = [];
             notificationSidebarComponentFixture.detectChanges();
             const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
             expect(noNotificationsMessage).not.toBeNull();
@@ -371,7 +350,7 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should show all notifications loaded message when all notifications are loaded', () => {
-            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponent.totalNotifications = 1;
             notificationSidebarComponentFixture.detectChanges();
             const allLoadedMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.all-loaded');
@@ -387,7 +366,7 @@ describe('Notification Sidebar Component', () => {
 
         it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {
             notificationSidebarComponent.ngOnInit();
-            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.sortedNotifications = notifications;
             expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeTrue();
             jest.spyOn(notificationSidebarComponent, 'toggleNotificationDisplay');
             jest.spyOn(userService, 'updateNotificationVisibility');
@@ -408,16 +387,18 @@ describe('Notification Sidebar Component', () => {
 
             notificationSidebarComponent.ngOnInit();
 
-            // fake status before reloading the side bar
-            notificationSidebarComponent.notifications = notifications;
+            // fake status before reloading the sidebar
+            notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponent.totalNotifications = notifications.length;
             const priorNumberOfNotifications = notifications.length;
 
-            // reload the side bar
-            userSettingsService.sendApplyChangesEvent(reloadNotificationSideBarMessage);
+            // reload the sidebar
+            const subscribeToTotalNotificationCountUpdatesStub = jest.spyOn(notificationService, 'subscribeToTotalNotificationCountUpdates');
+            subscribeToTotalNotificationCountUpdatesStub.mockReturnValue(of(0));
+            notificationSidebarComponent.ngOnInit();
 
             // test the reloading behavior
-            expect(userSettingsService.loadSettings).toHaveBeenCalledTimes(2);
+            expect(userSettingsService.loadSettings).not.toHaveBeenCalled();
             expect(priorNumberOfNotifications).not.toBe(notificationSidebarComponent.totalNotifications);
         });
     });
