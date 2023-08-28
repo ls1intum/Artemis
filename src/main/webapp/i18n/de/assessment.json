@@ -9,8 +9,13 @@
             "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
+            "suggestion": {
+                "suggested": "Feedback-Vorschlag (nicht akzeptiert)",
+                "accepted": "Akzeptierter Feedback-Vorschlag",
+                "adapted": "Angepasster Feedback-Vorschlag"
+            },
             "suggestionTitle": {
-                "suggested": "Automatisch erstellter Feedback-Vorschlag, noch nicht gespeichert",
+                "suggested": "Dieser automatisch erstellte Feedback-Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
                 "accepted": "Automatisch erstellter Feedback-Vorschlag",
                 "adapted": "Automatisch erstellter Feedback-Vorschlag, bearbeitet"
             },
