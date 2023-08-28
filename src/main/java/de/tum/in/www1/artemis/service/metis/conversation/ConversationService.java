@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -192,15 +191,8 @@ public class ConversationService {
         }
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
         for (User user : usersToBeRegistered) {
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(conversation);
-            conversationParticipant.setIsModerator(false);
-            conversationParticipant.setIsHidden(false);
-            conversationParticipant.setIsFavorite(false);
             // set the last reading time of a participant in the past when creating conversation for the first time!
-            conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(2));
-            conversationParticipant.setUnreadMessagesCount(0L);
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, conversation);
             newConversationParticipants.add(conversationParticipant);
         }
         if (!newConversationParticipants.isEmpty()) {
@@ -388,14 +380,8 @@ public class ConversationService {
             Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = new ConversationParticipant();
-                conversationParticipant.setUser(requestingUser);
-                conversationParticipant.setConversation(conversation);
-                conversationParticipant.setIsModerator(false);
-                conversationParticipant.setIsHidden(false);
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
                 conversationParticipant.setIsFavorite(favoriteStatus);
-                conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(10));
-                conversationParticipant.setUnreadMessagesCount(0L);
                 conversationParticipantRepository.save(conversationParticipant);
             }
             else {
@@ -424,14 +410,8 @@ public class ConversationService {
             Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
 
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = new ConversationParticipant();
-                conversationParticipant.setUser(requestingUser);
-                conversationParticipant.setConversation(conversation);
-                conversationParticipant.setIsModerator(false);
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
                 conversationParticipant.setIsHidden(hiddenStatus);
-                conversationParticipant.setIsFavorite(false);
-                conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(10));
-                conversationParticipant.setUnreadMessagesCount(0L);
                 conversationParticipantRepository.save(conversationParticipant);
             }
             else {

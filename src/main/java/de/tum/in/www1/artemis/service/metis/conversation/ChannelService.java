@@ -12,10 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
@@ -74,14 +71,7 @@ public class ChannelService {
             var matchingParticipantIds = matchingParticipants.stream().map(participant -> participant.getUser().getId()).collect(Collectors.toSet());
             var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
             missingUsers.forEach(user -> {
-                ConversationParticipant conversationParticipant = new ConversationParticipant();
-                conversationParticipant.setUser(user);
-                conversationParticipant.setConversation(channel);
-                conversationParticipant.setIsModerator(true);
-                conversationParticipant.setIsHidden(false);
-                conversationParticipant.setIsFavorite(false);
-                conversationParticipant.setLastRead(ZonedDateTime.now());
-                conversationParticipant.setUnreadMessagesCount(0L);
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
                 matchingParticipants.add(conversationParticipant);
             });
         }

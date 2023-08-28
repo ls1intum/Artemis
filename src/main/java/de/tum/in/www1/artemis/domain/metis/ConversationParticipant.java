@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +44,19 @@ public class ConversationParticipant extends DomainObject {
 
     @Column(name = "unread_messages_count")
     private Long unreadMessagesCount;
+
+    public static ConversationParticipant createWithDefaultValues(User user, Conversation conversation) {
+        ConversationParticipant participant = new ConversationParticipant();
+        participant.setUser(user);
+        participant.setConversation(conversation);
+        participant.setIsModerator(false);
+        participant.setIsHidden(false);
+        participant.setIsFavorite(false);
+        // set the last reading time of a participant in the past when creating conversation for the first time!
+        participant.setLastRead(ZonedDateTime.now().minusYears(2));
+        participant.setUnreadMessagesCount(0L);
+        return participant;
+    }
 
     public Long getUnreadMessagesCount() {
         return unreadMessagesCount;
