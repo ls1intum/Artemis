@@ -210,10 +210,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
             this.editorSession.widgetManager.attach(this.editor.getEditor());
         }
-        // Remove open inline feedback widgets for new feedback
-        this.newFeedbackLines = [];
-        // Remove previous lineWidgets and create new ones
-        await this.updateLineWidgets();
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
@@ -244,6 +240,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
             this.onFileLoad.emit(this.selectedFile);
         }
+        // Remove open inline feedback widgets for new feedback
+        this.newFeedbackLines = [];
+        // Remove previous lineWidgets and create new ones
+        await this.updateLineWidgets();
     }
 
     /**
