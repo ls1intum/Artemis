@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -38,7 +38,7 @@ export enum CollapsableCodeEditorElement {
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
     readonly CommitState = CommitState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
@@ -157,7 +157,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             .filter((filePath) => filePath !== undefined) as string[];
         for (const filePath of filePathsWithSuggestions) {
             // Count the number of suggestions for this file
-            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => feedback.reference?.startsWith('file:' + filePath + '_line:')).length;
+            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
         }
     }

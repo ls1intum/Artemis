@@ -2,6 +2,12 @@
 .is-suggestion .card-body {
     background-color: var(--feedback-suggestions-background);
 }
+
+.card-body {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 .is-suggestion input,
 .is-suggestion textarea {
     background-color: var(--feedback-suggestions-input-background);
@@ -9,11 +15,12 @@
 
 /* Slight opacity for suggestions until they are hovered */
 .is-suggestion .card-body > * {
-    opacity: 0.6;
+    opacity: 0.6; /* grey out the suggestion content to indicate that it is not saved yet */
     transition: opacity 0.2s ease-in-out;
 }
+
 .is-suggestion:hover .card-body > * {
-    opacity: 1;
+    opacity: 1; /* make the suggestion more readable on hover */
 }
 
 .suggestion-action-buttons button {
@@ -23,9 +30,4 @@
 .assessment-label {
     padding-left: 5px;
     padding-right: 5px;
-}
-
-.card-body {
-    padding-top: 5px;
-    padding-bottom: 5px;
 }

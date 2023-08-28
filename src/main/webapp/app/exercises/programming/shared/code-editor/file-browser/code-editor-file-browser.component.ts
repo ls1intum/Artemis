@@ -156,10 +156,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     * After the view was initialized, we create an interact.js resizable object,
+     * designate the edges which can be used to resize the target element and set min and max values.
+     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.resizableMinWidth = window.screen.width / 6;
@@ -167,8 +166,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function ngOnInit
-     * @desc When the commitState is undefined, fetch the repository status and load the files if possible.
+     * When the commitState is undefined, fetch the repository status and load the files if possible.
      * When this is done, render the file tree.
      * @param changes
      */
@@ -228,8 +226,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     };
 
     /**
-     * @function checkIfRepositoryIsClean
-     * @desc Calls the repository service to see if the repository has uncommitted changes
+     * Calls the repository service to see if the repository has uncommitted changes
      */
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
         return this.repositoryService.getStatus().pipe(
@@ -254,8 +251,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function onFileDeleted
-     * @desc Emmiter function for when a file was deleted; notifies the parent component
+     * Emmiter function for when a file was deleted; notifies the parent component
      * @param fileChange
      */
     onFileDeleted(fileChange: FileChange) {
@@ -263,9 +259,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function handleNodeSelected
-     * @desc Callback function for when a node in the file tree view has been selected
-     * @param item: Corresponding event object, holds the selected TreeViewItem
+     * Callback function for when a node in the file tree view has been selected
+     * @param item Corresponding event object, holds the selected TreeViewItem
      */
     handleNodeSelected(item: TreeviewItem<string>) {
         if (item && item.value !== this.selectedFile) {
@@ -289,8 +284,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function setupTreeview
-     * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
+     * Process the file array, compress it and then transforms it to a TreeViewItem
      */
     setupTreeview() {
         let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
@@ -301,9 +295,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function transformTreeToTreeViewItem
-     * @desc Converts a parsed file tree to a TreeViewItem[] which will then be used by the Treeviewer
-     * @param tree: File tree obtained by parsing the repository file list
+     * Converts a parsed file tree to a TreeViewItem[] which will then be used by the Treeviewer
+     * @param tree File tree obtained by parsing the repository file list
      */
     transformTreeToTreeViewItem(tree: FileTreeItem[]): TreeviewItem<string>[] {
         const treeViewItem = new Array<TreeviewItem<string>>();
@@ -314,8 +307,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function buildTree
-     * @desc Parses the provided list of repository files
+     * Parses the provided list of repository files
      * @param files {array of strings} Filepath strings to process
      * @param tree {array of objects} Current tree structure
      * @param folder {string} Folder name
@@ -376,8 +368,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function compressTree
-     * @desc Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
+     * Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
      * @param node Tree node
      */
     compressTree(node: FileTreeItem): FileTreeItem {
@@ -396,8 +387,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * @function toggleEditorCollapse
-     * @desc Calls the parent (editorComponent) toggleCollapse method
+     * Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
     toggleEditorCollapse(event: any) {
@@ -555,8 +545,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     };
 
     /**
-     * @function openDeleteFileModal
-     * @desc Opens a popup to delete the selected repository file
+     * Opens a popup to delete the selected repository file
      */
     openDeleteFileModal(item: TreeviewItem<string>) {
         const { value: filePath } = item;

@@ -15,7 +15,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     @Input()
     feedback: Feedback;
     @Input()
-    course?: Course; // needed for credit rounding settings
+    course?: Course; // Needed for credit rounding settings
 
     @Output()
     onAcceptSuggestion = new EventEmitter<Feedback>();
@@ -30,7 +30,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     faCheck = faCheck;
     faTrash = faTrash;
 
-    public elementRef: ElementRef;
+    public elementRef: ElementRef; // Needed for the outer editor to access the DOM node of this component
 
     constructor(elementRef: ElementRef) {
         this.elementRef = elementRef;

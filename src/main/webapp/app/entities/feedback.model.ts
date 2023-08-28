@@ -20,12 +20,13 @@ export enum FeedbackType {
 }
 
 export enum FeedbackSuggestionType {
-    NO_SUGGESTION = 'NO_SUGGESTION',
-    SUGGESTED = 'SUGGESTED',
-    ACCEPTED = 'ACCEPTED',
-    ADAPTED = 'ADAPTED',
+    NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
+    SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
+    ACCEPTED = 'ACCEPTED', // Suggestion is accepted
+    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
 }
 
+// Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
 export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
@@ -119,10 +120,15 @@ export class Feedback implements BaseEntity {
         return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
+    /**
+     * Determine the type of the feedback suggestion. See FeedbackSuggestionType for more details on the meanings.
+     * @param that feedback to determine the type of
+     */
     public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
         if (!Feedback.isFeedbackSuggestion(that)) {
             return FeedbackSuggestionType.NO_SUGGESTION;
         }
+        // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
         if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return FeedbackSuggestionType.ACCEPTED;
         }
@@ -144,6 +150,7 @@ export class Feedback implements BaseEntity {
     /**
      * Get the referenced file path for referenced programming feedbacks, or undefined.
      * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     * Example output in this case: `src/com/example/package/MyClass.java`
      */
     public static getReferenceFilePath(feedback: Feedback): string | undefined {
         if (!feedback.reference?.startsWith('file:')) {
@@ -156,6 +163,7 @@ export class Feedback implements BaseEntity {
     /**
      * Get the referenced line for referenced programming feedbacks, or undefined.
      * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
         if (!feedback?.reference?.startsWith('file:')) {

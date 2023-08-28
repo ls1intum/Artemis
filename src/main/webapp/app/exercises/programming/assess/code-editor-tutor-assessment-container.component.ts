@@ -271,6 +271,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    /**
+     * Load the feedback suggestions for the current submission from Athena.
+     */
     private async loadFeedbackSuggestions(): Promise<void> {
         this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
     }
@@ -497,8 +500,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Remove a suggestion because it was accepted or discarded.
-     * The actual accept/discard happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
+     * Remove a feedback suggestion because it was accepted or discarded.
+     * The actual feedback creation when accepting happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
      * @param feedback Feedback suggestion that is removed
      */
     removeSuggestion(feedback: Feedback) {

@@ -112,7 +112,7 @@ export enum FileBadgeType {
 }
 
 /**
- * Class describing a file badge (badge next to files with icon and number).
+ * A file badge is a badge in the file tree of the code editor with an icon and a count.
  */
 export class FileBadge {
     constructor(

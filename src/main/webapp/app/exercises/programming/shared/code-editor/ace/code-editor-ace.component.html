@@ -6,9 +6,10 @@
             <fa-icon [icon]="faPlusSquare" size="lg"></fa-icon>
         </div>
         <div style="display: none">
-            <!-- DOM nodes will be taken out from here by the ACE editor anyway => display: none -->
             <!--
-            List of all inline feedback components to render so that ACE can take the DOM nodes:
+            The ACE editor will get a reference to the DOM nodes of the components in this container.
+            It will then take them out of here to render in the editor itself.
+
             Order actually matters here! The existing/saved feedback has to be before the new feedback:
             When a new feedback is created and then saved for the first time, both DOM nodes will exist temporarily.
             In addLineWidgetWithFeedback, we always choose the first one as the one to keep in this case.
