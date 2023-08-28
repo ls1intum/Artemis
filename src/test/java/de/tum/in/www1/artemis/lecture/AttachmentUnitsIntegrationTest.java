@@ -56,7 +56,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true, false);
+        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true, "Break", false, "Example solution");
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -106,7 +106,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false, false);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false, "Break", false, "Example solution");
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
@@ -153,7 +153,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, false);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, "Break", false, "Example solution");
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
@@ -183,7 +183,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, true);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, "Break", true, "Example solution");
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));

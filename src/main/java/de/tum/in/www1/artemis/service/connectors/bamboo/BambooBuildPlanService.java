@@ -390,18 +390,19 @@ public class BambooBuildPlanService {
             vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
         }
 
+        VersionControlService versionControl = versionControlService.orElseThrow();
+
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName,
-                versionControlService.orElseThrow().getDefaultBranchOfRepository(projectKey, repositoryName)));
-        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug,
-                versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsTestRepositorySlug)));
+        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName, versionControl.getDefaultBranchOfRepository(projectKey, repositoryName)));
+        planRepositories
+                .add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug, versionControl.getDefaultBranchOfRepository(projectKey, vcsTestRepositorySlug)));
         for (var repo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(),
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, repo.repositorySlug())));
+            planRepositories
+                    .add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(), versionControl.getDefaultBranchOfRepository(projectKey, repo.repositorySlug())));
         }
         if (checkoutSolutionRepository) {
             planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug,
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsSolutionRepositorySlug)));
+                    versionControl.getDefaultBranchOfRepository(projectKey, vcsSolutionRepositorySlug)));
         }
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
