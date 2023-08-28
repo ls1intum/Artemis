@@ -8,7 +8,7 @@
         <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
     </div>
     <!--  Temporary solution until #6593 is fixed  -->
-    <div class="filter-disclaimer" *ngIf="comparisons?.length === 1">
+    <div class="filter-disclaimer" *ngIf="comparisons?.length === 100">
         <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
         <span>{{ 'artemisApp.plagiarism.casesTrimmed' | artemisTranslate }}</span>
     </div>
