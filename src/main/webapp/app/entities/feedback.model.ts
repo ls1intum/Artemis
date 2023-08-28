@@ -170,7 +170,11 @@ export class Feedback implements BaseEntity {
             // No programming feedback
             return undefined;
         }
-        return parseInt(feedback.reference.split('_line:')[1]);
+        const line = parseInt(feedback.reference.split('_line:')[1]);
+        if (isNaN(line)) {
+            return undefined;
+        }
+        return line;
     }
 
     /**

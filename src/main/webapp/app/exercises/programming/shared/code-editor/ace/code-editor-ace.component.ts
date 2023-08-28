@@ -161,7 +161,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * New selectedFile      => load the file from the repository and open it in the editor
      * @param {SimpleChanges} changes
      */
-    ngOnChanges(changes: SimpleChanges): void {
+    async ngOnChanges(changes: SimpleChanges): Promise<void> {
         if (
             (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
@@ -181,7 +181,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if ((this.selectedFile && !this.fileSession[this.selectedFile]) || this.fileSession[this.selectedFile].loadingError) {
                 this.loadFile(this.selectedFile);
             } else {
-                this.initEditor();
+                await this.initEditor();
             }
         }
         if (changes.commitState && changes.commitState.currentValue === CommitState.CONFLICT) {
@@ -193,7 +193,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // on changes to these props
             if (this.editorSession) {
                 // initEditor should already be called, otherwise there is no need to init this anyways
-                this.updateLineWidgets();
+                await this.updateLineWidgets();
             }
         }
     }
@@ -202,7 +202,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Set up the ace editor after a file change occurred or the file finished loading.
      * Makes sure potential previous settings are restored and the correct language service is used.
      **/
-    initEditor() {
+    async initEditor() {
         // Set up editorSession for inline feedback using lineWidgets
         this.editorSession = this.editor.getEditor().getSession();
 
@@ -213,7 +213,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         // Remove open inline feedback widgets for new feedback
         this.newFeedbackLines = [];
         // Remove previous lineWidgets and create new ones
-        this.updateLineWidgets();
+        await this.updateLineWidgets();
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
@@ -269,13 +269,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         });
     }
 
-    finalizeLoading(fileName: string) {
+    async finalizeLoading(fileName: string) {
+        this.isLoading = false;
         // Only initialize the editor if the selected file has not changed in between
         // - prevents console errors (see https://github.com/ls1intum/Artemis/pull/603)
         if (this.selectedFile === fileName) {
-            this.initEditor();
+            await this.initEditor();
         }
-        this.isLoading = false;
     }
 
     /**
@@ -283,14 +283,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.
      * @param event {string} Current editor code
      */
-    onFileTextChanged(event: any) {
+    async onFileTextChanged(event: any) {
         const code = event as string;
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
             if (!this.readOnlyManualFeedback) {
                 this.setupLineIcons();
             }
-            this.updateLineWidgets();
+            await this.updateLineWidgets();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -391,7 +391,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * by the parent container.
      * @param fileChange
      */
-    onFileChange(fileChange: FileChange) {
+    async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
             this.annotationsArray = this.annotationsArray.map((a) =>
@@ -409,7 +409,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
             this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
-            this.initEditor();
+            await this.initEditor();
         }
         this.displayAnnotations();
     }
@@ -461,10 +461,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             const buttonInlineComment = document.querySelector('.btn-inline-comment');
             gutters.forEach((gutter: HTMLElement) => {
                 const clone = buttonInlineComment!.cloneNode(true);
-                clone.addEventListener('click', () => {
+                clone.addEventListener('click', async () => {
                     const lineToAddFeedbackIn = parseInt(gutter.innerText) - 1;
                     this.newFeedbackLines.push(lineToAddFeedbackIn);
-                    this.updateLineWidgets();
+                    await this.updateLineWidgets();
                 });
                 // TODO: Check whether this causes an issue when having annotations
                 if (gutter.childElementCount < 1) {
@@ -479,7 +479,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component is located
      */
     getInlineFeedbackNode(line: number): Element | undefined {
-        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionsComponents].find((c) => c.codeLine === line)?.elementRef.nativeElement;
+        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionsComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
     }
 
     /**
@@ -498,9 +498,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             fixedWidth: true,
             coverGutter: true,
             el: inlineFeedbackNode,
-            pixelHeight: 100,
         };
-        const displayedWidget = this.editorSession.lineWidgets?.find((w: any) => w && w.row === lineWidget.row);
+        const displayedWidget = (this.editorSession.lineWidgets ?? [])[line];
         if (!displayedWidget) {
             this.editorSession.widgetManager.addLineWidget(lineWidget);
             lineWidget.el.querySelector('textarea')?.focus();
@@ -513,7 +512,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component will be added to.
      */
     removeLineWidget(line: number) {
-        const widget = this.editorSession.lineWidgets[line];
+        const widget = (this.editorSession.lineWidgets ?? [])[line];
         if (widget) {
             this.editorSession.widgetManager.removeLineWidget(widget);
         }
@@ -557,7 +556,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Called whenever an inline feedback element is emitted. Updates existing feedbacks or adds onto it
      * @param feedback Newly created inline feedback.
      */
-    updateFeedback(feedback: Feedback) {
+    async updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback)!;
         // Check if feedback already exists and update it, else append it to feedbacks of the file
         if (this.feedbacks.some((f) => f.reference === feedback.reference)) {
@@ -568,7 +567,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // the feedback isn't new anymore
             this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
         }
-        this.updateLineWidgets();
+        await this.updateLineWidgets();
         this.onUpdateFeedback.emit(this.feedbacks);
     }
 
@@ -576,11 +575,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Called whenever an inline feedback is cancelled. Removes it from ace editor or just aligns height.
      * @param line
      */
-    cancelFeedback(line: number) {
+    async cancelFeedback(line: number) {
         if (this.newFeedbackLines.includes(line)) {
             // Just remove the new feedback
             this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
-            this.updateLineWidgets();
+            await this.updateLineWidgets();
         } else {
             // Feedback exists (not new) and we keep it, just re-align height
             this.adjustLineWidgetHeight(line);
@@ -600,15 +599,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
      */
-    acceptSuggestion(feedback: Feedback) {
+    async acceptSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
+        this.removeLineWidget(Feedback.getReferenceLine(feedback)!);
         // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
         feedback.text = (feedback.text || FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback); // Make it "real" feedback
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
-        this.removeLineWidget(Feedback.getReferenceLine(feedback)!);
+        await this.updateFeedback(feedback); // Make it "real" feedback
         this.onAcceptSuggestion.emit(feedback);
     }
 

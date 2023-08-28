@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -72,5 +72,24 @@ describe('Assessment Detail Component', () => {
 
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(confirmStub).toHaveBeenCalledOnce();
+    });
+
+    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
+        comp.feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'FeedbackSuggestion:accepted:feedback1',
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        const emitSpy = jest.spyOn(comp.onFeedbackChange, 'emit');
+        comp.emitChanges();
+        expect(emitSpy).toHaveBeenCalledWith({
+            id: 1,
+            type: FeedbackType.AUTOMATIC_ADAPTED,
+            text: 'FeedbackSuggestion:adapted:feedback1',
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback);
     });
 });

@@ -612,4 +612,17 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         },
     );
+
+    it('should correctly remove feedback suggestions', () => {
+        comp.feedbackSuggestions = [
+            { id: 1, credits: 1 },
+            { id: 2, credits: 2 },
+            { id: 3, credits: 3 },
+        ];
+        comp.removeSuggestion({ id: 2, credits: 2 });
+        expect(comp.feedbackSuggestions).toEqual([
+            { id: 1, credits: 1 },
+            { id: 3, credits: 3 },
+        ]);
+    });
 });
