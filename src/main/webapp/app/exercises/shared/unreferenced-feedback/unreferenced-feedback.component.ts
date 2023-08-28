@@ -108,13 +108,13 @@ export class UnreferencedFeedbackComponent {
      * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
      */
     acceptSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
         // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
         feedback.text = (feedback.text || FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         this.updateFeedback(feedback); // Make it "real" feedback
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
         this.onAcceptSuggestion.emit(feedback);
     }
 

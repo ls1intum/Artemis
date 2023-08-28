@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -820,4 +820,32 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         loadFiles.unsubscribe();
     }));
+
+    describe('getFolderBadges', () => {
+        // Mock fileBadges data
+        const mockFileBadges = {
+            'folderA/file': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
+            'folderB/file1': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
+            'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+        };
+
+        beforeEach(() => {
+            comp.fileBadges = mockFileBadges;
+        });
+
+        it('should return an empty array if folder is not collapsed', () => {
+            const result = comp.getFolderBadges({ value: 'folderA', collapsed: false } as TreeviewItem<string>);
+            expect(result).toEqual([]);
+        });
+
+        it('should work for single file badge for a collapsed folder', () => {
+            const result = comp.getFolderBadges({ value: 'folderA', collapsed: true } as TreeviewItem<string>);
+            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)]);
+        });
+
+        it('should aggregate file badges for a collapsed folder', () => {
+            const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeviewItem<string>);
+            expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
+        });
+    });
 });
