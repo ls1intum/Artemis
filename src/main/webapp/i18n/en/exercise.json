@@ -100,8 +100,8 @@
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus Points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
-            "includedInOverallScoreCourseLabel": "Should this exercise be included in the course score calculation?",
-            "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",
+            "includedInOverallScoreCourseLabel": "Include this exercise in the course score calculation",
+            "includedInOverallScoreExamLabel": "Include this exercise in the exam score calculation",
             "includedInOverallScore": "Included in Score",
             "includedCompletely": "Included",
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students.",
@@ -253,7 +253,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor needs to review",
-            "action": "Action"
+            "action": "Action",
+            "exerciseAssessmentDashboard": "Assessment Dashboard"
         }
     }
 }
