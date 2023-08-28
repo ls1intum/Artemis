@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -397,8 +398,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                     .orElseThrow();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            fail(e);
         }
+        return null;
     }
 
     private Path getSAQuestionsAnswersFilePath(Path exerciseDirPath) {
@@ -407,8 +409,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                     .orElseThrow();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            fail(e);
         }
+        return null;
     }
 
     private Path getProgrammingResultsFilePath(Path exerciseDirPath, boolean firstResult) {
@@ -417,7 +420,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
             paths = files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result")).collect(Collectors.toList());
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            fail(e);
+            return null;
         }
         paths.sort(Comparator.comparing(Path::getFileName));
         if (firstResult) {
