@@ -65,7 +65,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testCheckoutRepositoryAlreadyOnServer() {
         gitUtilService.initRepo(defaultBranch);
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
         // Note: the test updates the file, but does not commit the update to the remote repository...
