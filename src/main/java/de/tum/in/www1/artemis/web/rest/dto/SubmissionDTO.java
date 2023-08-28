@@ -8,6 +8,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 
+/**
+ * DTO containing {@link Submission} information.
+ * This does not include large reference attributes in order to send minimal data to the client.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
         Boolean buildArtifact, DomainObjectIdDTO participation, String submissionExerciseType) {
