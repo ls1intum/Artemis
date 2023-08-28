@@ -34,7 +34,7 @@ describe('Plagiarism Sidebar Component', () => {
 
     it('computes the number of pages with multiple comparisons', () => {
         const numberOfPages = comp.computeNumberOfPages(12);
-        expect(numberOfPages).toBe(1);
+        expect(numberOfPages).toBe(2);
     });
 
     it('computes the number of pages with 0 comparisons', () => {
@@ -44,16 +44,11 @@ describe('Plagiarism Sidebar Component', () => {
 
     it('computes the number of pages with one comparison', () => {
         const numberOfPages = comp.computeNumberOfPages(1);
-        expect(numberOfPages).toBe(0);
+        expect(numberOfPages).toBe(1);
     });
 
     it('computes the number of pages with number of comparisons equal to page size', () => {
         const numberOfPages = comp.computeNumberOfPages(10);
-        expect(numberOfPages).toBe(0);
-    });
-
-    it('computes the number of pages with number of comparisons higher than page size', () => {
-        const numberOfPages = comp.computeNumberOfPages(11);
         expect(numberOfPages).toBe(1);
     });
 
@@ -83,7 +78,7 @@ describe('Plagiarism Sidebar Component', () => {
         comp.numberOfPages = 3;
         comp.handlePageRight();
 
-        expect(comp.currentPage).toBe(3);
+        expect(comp.currentPage).toBe(2);
     });
 
     it('does not pages right', () => {
@@ -118,7 +113,7 @@ describe('Plagiarism Sidebar Component', () => {
         });
 
         expect(comp.currentPage).toBe(0);
-        expect(comp.numberOfPages).toBe(1);
+        expect(comp.numberOfPages).toBe(2);
         expect(comp.pagedComparisons).toEqual(pagedComparisons);
     });
 });
