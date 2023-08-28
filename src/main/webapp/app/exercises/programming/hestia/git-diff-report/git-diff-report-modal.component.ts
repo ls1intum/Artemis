@@ -31,14 +31,7 @@ export class GitDiffReportModalComponent implements OnInit {
     }
 
     private loadFilesForTemplateAndSolution() {
-        this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.firstCommitFileContentByPath = response;
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
+        this.fetchTemplateRepoFiles();
         this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
             next: (response: Map<string, string>) => {
                 this.secondCommitFileContentByPath = response;
@@ -56,22 +49,31 @@ export class GitDiffReportModalComponent implements OnInit {
                 .subscribe({
                     next: (filesWithContent: Map<string, string>) => {
                         this.firstCommitFileContentByPath = filesWithContent;
+                        this.fetchParticipationRepoFilesAtRightCommit();
                     },
                     error: () => {
                         this.errorWhileFetchingRepos = true;
                     },
                 });
         } else {
-            // if there is no first commit, we want to see the diff between the current submission and the template
-            this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-                next: (response: Map<string, string>) => {
-                    this.firstCommitFileContentByPath = response;
-                },
-                error: () => {
-                    this.errorWhileFetchingRepos = true;
-                },
-            });
+            // if there is no left commit, we want to see the diff between the current submission and the template
+            this.fetchTemplateRepoFiles();
+            this.fetchParticipationRepoFilesAtRightCommit();
         }
+    }
+
+    private fetchTemplateRepoFiles() {
+        this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
+            next: (response: Map<string, string>) => {
+                this.firstCommitFileContentByPath = response;
+            },
+            error: () => {
+                this.errorWhileFetchingRepos = true;
+            },
+        });
+    }
+
+    private fetchParticipationRepoFilesAtRightCommit() {
         this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForRightCommit!, this.report.rightCommitHash!)
             .subscribe({
