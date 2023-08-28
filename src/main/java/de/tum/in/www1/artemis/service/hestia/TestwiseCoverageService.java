@@ -294,10 +294,11 @@ public class TestwiseCoverageService {
      *         if a report exists for the latest submission, otherwise an empty Optional
      */
     public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var optionalLazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
-        if (optionalLazyReport.isEmpty()) {
+        var reports = coverageReportRepository.getLatestCoverageReportsForLegalSubmissionsForProgrammingExerciseWithEagerFileReportsAndEntries(programmingExercise.getId(),
+                Pageable.ofSize(1));
+        if (reports.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(optionalLazyReport.get().getId()));
+        return Optional.of(reports.get(0));
     }
 }
