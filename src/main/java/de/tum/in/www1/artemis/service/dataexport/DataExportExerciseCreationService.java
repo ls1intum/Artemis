@@ -73,12 +73,10 @@ public class DataExportExerciseCreationService {
 
     private final ResultService resultService;
 
-    private final AuthorizationCheckService authCheckService;
-
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ExerciseRepository exerciseRepository, ResultService resultService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -88,7 +86,6 @@ public class DataExportExerciseCreationService {
         this.exerciseRepository = exerciseRepository;
         this.repoClonePath = repoClonePath;
         this.resultService = resultService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -211,8 +208,7 @@ public class DataExportExerciseCreationService {
                 // for a programming exercise, we want to include the results that are visible for the assessment due date
                 if (includeResults || exercise instanceof ProgrammingExercise) {
                     boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !ExerciseDateService.isAfterAssessmentDueDate(exercise);
-                    boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-                    createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate, isAtLeastTutor);
+                    createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate);
                 }
             }
         }
@@ -289,15 +285,13 @@ public class DataExportExerciseCreationService {
      * @param outputDir                                  the directory in which the results should be stored
      * @param user                                       the user for which the export should be created
      * @param programmingExerciseBeforeAssessmentDueDate whether the programming exercise is before the assessment due date
-     * @param isAtLeastTutor                             whether the user is at least a tutor for the exercise
      * @throws IOException if the file cannot be written
      */
-    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, User user, boolean programmingExerciseBeforeAssessmentDueDate, boolean isAtLeastTutor)
-            throws IOException {
+    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, User user, boolean programmingExerciseBeforeAssessmentDueDate) throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
-                if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isAtLeastTutor) {
+                if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
                     continue;
                 }
                 resultService.filterSensitiveInformationIfNecessary(submission.getParticipation(), List.of(result), Optional.of(user));
