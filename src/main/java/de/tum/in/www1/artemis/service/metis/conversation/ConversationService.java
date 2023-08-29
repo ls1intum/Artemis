@@ -373,26 +373,9 @@ public class ConversationService {
      * @param favoriteStatus the new favorite status
      */
     public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
-
-        if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-                conversationParticipant.setIsFavorite(favoriteStatus);
-                conversationParticipantRepository.save(conversationParticipant);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
-        }
-        else {
-            ConversationParticipant conversationParticipant = participation.get();
-            conversationParticipant.setIsFavorite(favoriteStatus);
-            conversationParticipantRepository.save(conversationParticipant);
-        }
-
+        ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsFavorite(favoriteStatus);
+        conversationParticipantRepository.save(conversationParticipant);
     }
 
     /**
@@ -403,25 +386,9 @@ public class ConversationService {
      * @param hiddenStatus   the new hidden status
      */
     public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
-
-        if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-                conversationParticipant.setIsHidden(hiddenStatus);
-                conversationParticipantRepository.save(conversationParticipant);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
-        }
-        else {
-            ConversationParticipant conversationParticipant = participation.get();
-            conversationParticipant.setIsHidden(hiddenStatus);
-            conversationParticipantRepository.save(conversationParticipant);
-        }
+        ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
     }
 
     /**
@@ -492,5 +459,23 @@ public class ConversationService {
             }
             return true;
         });
+    }
+
+    private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+
+        if (participation.isEmpty()) {
+            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+        }
+        else {
+            return participation.get();
+        }
     }
 }
