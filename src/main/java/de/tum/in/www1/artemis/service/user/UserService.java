@@ -341,8 +341,6 @@ public class UserService {
         throw new AccountRegistrationBlockedException(existingUser.getEmail());
     }
 
-    // TODO use this code
-
     /**
      * Creates a new Artemis user from LDAP in case this is active and a user with the login can be found
      *

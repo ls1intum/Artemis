@@ -62,7 +62,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
-        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
+        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from LDAP
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
@@ -105,7 +105,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         return optionalUser.orElseGet(() -> {
             User newUser = userCreationService.createUser(ldapUserDto.getUsername(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                     ldapUserDto.getRegistrationNumber(), null, "en", false);
-            // TODO: is it ok if a new user does not have any groups?
+
             newUser.setGroups(Set.of());
             newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 

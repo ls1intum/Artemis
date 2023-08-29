@@ -1172,7 +1172,7 @@ public class GitService {
             log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
         }
         catch (GitAPIException ex) {
-            log.error("Could not combine repository {} due to exception: {}", repo, ex, ex);
+            log.error("Could not combine repository {} due to exception:", repo, ex);
             throw ex;
         }
     }

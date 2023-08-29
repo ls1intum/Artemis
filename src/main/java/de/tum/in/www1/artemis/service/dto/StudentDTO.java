@@ -28,4 +28,9 @@ public record StudentDTO(@Size(max = 50) String login, @Size(max = 50) String fi
         StudentDTO that = (StudentDTO) obj;
         return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login) || Objects.equals(email, that.email);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(registrationNumber) ^ Objects.hash(login) ^ Objects.hash(email);
+    }
 }
