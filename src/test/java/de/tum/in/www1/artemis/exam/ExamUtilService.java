@@ -765,4 +765,23 @@ public class ExamUtilService {
 
         return studentExamRepository.save(studentExam);
     }
+
+    /**
+     * gets the number of programming exercises in the exam
+     *
+     * @param exam to search for programming exercises
+     * @return number of programming exercises in the exams
+     */
+    public int getNumberOfProgrammingExercises(Exam exam) {
+        exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        int count = 0;
+        for (var exerciseGroup : exam.getExerciseGroups()) {
+            for (var exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 }
