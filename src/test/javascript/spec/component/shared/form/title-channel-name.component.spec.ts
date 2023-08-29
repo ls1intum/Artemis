@@ -61,7 +61,7 @@ describe('TitleChannelNameComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long';
+        const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long name that is more than 30 characters';
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
         titleInput.nativeElement.value = newTitle;
         titleInput.nativeElement.dispatchEvent(new Event('input'));
@@ -70,7 +70,7 @@ describe('TitleChannelNameComponent', () => {
         tick();
 
         expect(component.title).toBe(newTitle);
-        expect(component.channelName).toBe('new-0123-@()[]{}-!?.-_-$%&-too');
+        expect(component.channelName).toBe('new-0123-too-long-name-that-is');
     }));
 
     it('init prefix if undefined', () => {
