@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.ldap;
 
+import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +106,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
             User newUser = userCreationService.createUser(ldapUserDto.getUsername(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                     ldapUserDto.getRegistrationNumber(), null, "en", false);
 
-            newUser.setGroups(Set.of());
+            newUser.setGroups(new HashSet<>());
             newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
             if (!newUser.getActivated()) {
