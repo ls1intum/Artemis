@@ -56,7 +56,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             WHERE s.user = :user
                 AND s.exercise IN :exercises
             """)
-    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
+    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
     @Query("""
             SELECT s
