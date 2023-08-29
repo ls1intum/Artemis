@@ -49,7 +49,7 @@ public class LectureUnitService {
     public void setLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user, boolean completed) {
         Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
         if (completed) {
-            if (!existingCompletion.isPresent()) {
+            if (existingCompletion.isEmpty()) {
                 // Create a completion status for this lecture unit (only if it does not exist)
                 LectureUnitCompletion completion = new LectureUnitCompletion();
                 completion.setLectureUnit(lectureUnit);

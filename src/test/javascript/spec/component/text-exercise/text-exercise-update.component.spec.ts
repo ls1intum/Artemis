@@ -15,10 +15,9 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -35,7 +34,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
-            declarations: [TextExerciseUpdateComponent, MockComponent(TitleChannelNameComponent)],
+            declarations: [TextExerciseUpdateComponent],
         })
             .overrideTemplate(TextExerciseUpdateComponent, '')
             .compileComponents();
