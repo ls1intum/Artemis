@@ -25,8 +25,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * If you change the regex, make sure to change it in all places!
      */
     private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*\w[^(),]*(?:\([^()]*\)[^(),]*)?)*)?\)/g;
-    // E.g. Implement BubbleSort, testBubbleSort
-    private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*\w[^(),]*(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
@@ -116,7 +114,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         const extension: ShowdownExtension = {
             type: 'lang',
             filter: (problemStatement: string) => {
-                const tasks = problemStatement.match(this.taskRegex);
+                const tasks = Array.from(problemStatement.matchAll(this.taskRegex));
                 if (tasks) {
                     return this.createTasks(problemStatement, tasks);
                 }
@@ -126,11 +124,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         return extension;
     }
 
-    private createTasks(problemStatement: string, tasks: RegExpMatchArray): string {
+    private createTasks(problemStatement: string, tasks: RegExpMatchArray[]): string {
         const testsForTask: TaskArray = tasks
-            .map((task) => {
-                return this.innerTaskRegex.exec(task);
-            })
             .filter((testMatch) => testMatch?.length === 3)
             .map((testMatch: RegExpMatchArray | null) => {
                 const nextIndex = this.taskIndex;
