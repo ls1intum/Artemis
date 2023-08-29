@@ -5,11 +5,11 @@
         <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
         <!-- Accept/Discard for feedback suggestions -->
         <div class="row float-end suggestion-action-buttons" *ngIf="isSuggestion">
-            <button class="btn btn-success m-1" (click)="onAcceptSuggestion.emit(feedback)">
+            <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
                 <fa-icon [icon]="faCheck"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.detail.accept">Accept</span>
             </button>
-            <button class="btn btn-danger m-1" (click)="onDiscardSuggestion.emit(feedback)">
+            <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
                 <fa-icon [icon]="faTrash"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.detail.discard">Discard</span>
             </button>
