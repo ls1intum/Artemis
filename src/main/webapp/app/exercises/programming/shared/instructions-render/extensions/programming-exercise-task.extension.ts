@@ -24,7 +24,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * This is coupled to the value used in `ProgrammingExerciseTaskService` in the server.
      * If you change the regex, make sure to change it in all places!
      */
-    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*\w[^(),]*(?:\([^()]*\)[^(),]*)?)*)?\)/g;
+    private readonly taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
 
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
