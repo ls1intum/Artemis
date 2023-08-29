@@ -56,7 +56,7 @@ public class DataExportResource {
      */
     @PostMapping("data-exports")
     @EnforceAtLeastStudent
-    public RequestDataExportDTO requestDataExport() throws IOException {
+    public RequestDataExportDTO requestDataExport() {
         if (!canRequestDataExport()) {
             throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
@@ -79,7 +79,6 @@ public class DataExportResource {
                 .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 
         return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState() == DataExportState.FAILED;
-
     }
 
     /**
