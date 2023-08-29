@@ -193,9 +193,10 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateNotActivatedHintForAnExerciseForbidden() throws Exception {
+        long sizeBefore = exerciseHintActivationRepository.count();
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + exerciseHint.getId() + "/rating/" + 4, null, HttpStatus.NOT_FOUND,
                 null);
-        assertThat(exerciseHintActivationRepository.count()).isZero();
+        assertThat(exerciseHintActivationRepository.count()).isEqualTo(sizeBefore);
     }
 
     @Test
