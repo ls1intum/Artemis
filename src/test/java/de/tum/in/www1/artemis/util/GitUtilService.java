@@ -48,10 +48,6 @@ public class GitUtilService {
 
     private Repository localRepo;
 
-    private Git localGit;
-
-    private Git remoteGit;
-
     /**
      * Initializes the repository with three dummy files
      */
@@ -68,7 +64,8 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
+            Files.createDirectories(remotePath);
+            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
@@ -77,10 +74,13 @@ public class GitUtilService {
             GitService.commit(remoteGit).setMessage("initial commit").call();
 
             // clone remote repository
-            localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
+            Git localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
 
             reinitializeLocalRepository();
             reinitializeRemoteRepository();
+
+            localGit.close();
+            remoteGit.close();
         }
         catch (IOException | GitAPIException ex) {
             ex.printStackTrace();
@@ -103,16 +103,10 @@ public class GitUtilService {
 
     public void deleteRepos() {
         if (remoteRepo != null) {
-            remoteRepo.close();
+            remoteRepo.closeBeforeDelete();
         }
         if (localRepo != null) {
-            localRepo.close();
-        }
-        if (localGit != null) {
-            localGit.close();
-        }
-        if (remoteGit != null) {
-            remoteGit.close();
+            localRepo.closeBeforeDelete();
         }
 
         try {
@@ -172,11 +166,9 @@ public class GitUtilService {
     }
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
-        try {
-            var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
-            PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
+        var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
+        try (PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8)) {
             writer.print(content);
-            writer.close();
         }
         catch (IOException ignored) {
         }

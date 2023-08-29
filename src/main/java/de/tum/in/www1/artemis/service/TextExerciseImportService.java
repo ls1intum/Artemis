@@ -59,7 +59,7 @@ public class TextExerciseImportService extends ExerciseImportService {
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         channelService.registerUsersToChannelAsynchronously(true, newTextExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
