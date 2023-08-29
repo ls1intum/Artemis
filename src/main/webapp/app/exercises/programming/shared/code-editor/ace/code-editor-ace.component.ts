@@ -123,6 +123,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
     tabSize = 4;
 
+    // Detecting editor resize events
+    resizeObserver: ResizeObserver;
+
     // Icons
     readonly faPlusSquare = faPlusSquare;
     readonly faCircleNotch = faCircleNotch;
@@ -153,6 +156,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         });
         if (this.isTutorAssessment) {
             this.editor.getEditor().setShowFoldWidgets(false);
+        }
+        if (!this.resizeObserver) {
+            // When the editor is resized in width, the inline feedback text could wrap. This would cause its height to change and we need to adapt it:
+            this.resizeObserver = new ResizeObserver(() => {
+                if (!this.editorSession) return; // not yet initialized, nothing to do
+                // Adjust height of all feedback line widgets
+                this.updateLineWidgets();
+            });
+            this.resizeObserver.observe(this.editor.elementRef.nativeElement);
         }
     }
 
@@ -312,6 +324,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.editorSession.widgetManager.removeLineWidget(widget);
             }
         }
+        this.resizeObserver?.disconnect();
     }
 
     /**
