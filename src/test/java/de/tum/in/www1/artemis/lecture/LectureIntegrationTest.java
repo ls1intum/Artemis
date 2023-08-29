@@ -150,7 +150,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         conversationUtilService.createChannel(course, "loremipsum");
 
         Lecture lecture = new Lecture();
-        lecture.setTitle("loremIpsum");
+        lecture.setTitle("loremIpsum-()!?");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
         lecture.setChannelName(channelName);
