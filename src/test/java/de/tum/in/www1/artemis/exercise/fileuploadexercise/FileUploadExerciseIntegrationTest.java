@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -176,14 +178,16 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "exercise-new-fileupload-exerci", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFileUploadExercise() throws Exception {
+    void createFileUploadExercise(String channelName) throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse().get(0);
         courseUtilService.enableMessagingForCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
         fileUploadExercise.setFilePattern(creationFilePattern);
-        String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
-        fileUploadExercise.setChannelName(uniqueChannelName);
+        fileUploadExercise.setTitle("new fileupload exercise");
+        fileUploadExercise.setChannelName(channelName);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
@@ -206,7 +210,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isEqualTo("created first instruction with empty criteria for testing");
 
         assertThat(channelFromDB).isNotNull();
-        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+        assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
 
         // Check that the conversation participants are added correctly to the exercise channel
         await().until(() -> {
