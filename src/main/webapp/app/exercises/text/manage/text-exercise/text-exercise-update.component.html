@@ -10,15 +10,13 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
         </div>
-        <jhi-title-channel-name
-            [(title)]="textExercise.title"
-            [(channelName)]="textExercise.channelName"
-            channelNamePrefix="exercise-"
+        <jhi-exercise-title-channel-name
+            [exercise]="textExercise"
+            [course]="textExercise.course"
             [minTitleLength]="3"
-            [emphasizeLabels]="true"
-            [hideChannelName]="isExamMode || (!isImport && textExercise.channelName === undefined)"
-            [initChannelName]="isImport || textExercise.id === undefined"
-        ></jhi-title-channel-name>
+            [isImport]="isImport"
+            [isExamMode]="isExamMode"
+        ></jhi-exercise-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>

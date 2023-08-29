@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.dataexport;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -58,10 +57,25 @@ public class DataExportService {
      *
      * @return the created DataExport object
      */
-    public RequestDataExportDTO requestDataExport() throws IOException {
+    public RequestDataExportDTO requestDataExport() {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
         User user = userRepository.getUser();
+        dataExport.setUser(user);
+        dataExport = dataExportRepository.save(dataExport);
+        return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
+    }
+
+    /**
+     * Request a data export for another user (not yourself) as admin.
+     *
+     * @param login the login of the user to create the data export for, not the login of the requesting admin user
+     * @return a RequestDataExportDTO containing the id of the data export and the state of the data export
+     */
+    public RequestDataExportDTO requestDataExportForUserAsAdmin(String login) {
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        User user = userRepository.getUserByLoginElseThrow(login);
         dataExport.setUser(user);
         dataExport = dataExportRepository.save(dataExport);
         return new RequestDataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()));
@@ -105,8 +119,7 @@ public class DataExportService {
         }
         for (var dataExport : dataExportsFromUser) {
             if (dataExport.getDataExportState().isDownloadable()) {
-                ZonedDateTime nextRequestDate;
-                nextRequestDate = retrieveNextRequestDate(dataExport);
+                ZonedDateTime nextRequestDate = retrieveNextRequestDate(dataExport);
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }

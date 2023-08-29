@@ -379,7 +379,7 @@ describe('Course messages', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
                 const messageText = 'Student Test Message';
                 courseMessages.writeMessage(messageText);
-                courseMessages.save().then((interception) => {
+                courseMessages.save(true).then((interception) => {
                     const message = interception.response!.body;
                     courseMessages.checkMessage(message.id, messageText);
                 });

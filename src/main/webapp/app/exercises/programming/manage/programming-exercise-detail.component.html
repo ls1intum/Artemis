@@ -81,8 +81,8 @@
                         class="btn btn-info btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
-                        <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <fa-icon [icon]="faUserCheck"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
@@ -272,10 +272,13 @@
                     </dd>
                 </ng-container>
                 <ng-container *ngIf="programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.exceedingPenalty">
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
-                    </dd>
+                    <dt>
+                        <span>{{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                | artemisTranslate: { points: programmingExercise.submissionPolicy.exceedingPenalty }
+                        }}</span>
+                    </dt>
+                    <dd></dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
                 <dd>

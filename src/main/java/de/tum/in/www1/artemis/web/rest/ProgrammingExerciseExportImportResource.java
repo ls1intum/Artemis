@@ -190,6 +190,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // If the new exercise has a submission policy, it must be validated.
         if (newExercise.getSubmissionPolicy() != null) {
+            newExercise.getSubmissionPolicy().setActive(true);
             submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
         }
 

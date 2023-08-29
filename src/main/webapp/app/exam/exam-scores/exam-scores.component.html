@@ -454,12 +454,16 @@
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <ng-container *ngIf="hasBonus">
-                            <th *ngIf="presentationScoreThreshold != undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
+                            <th *ngIf="presentationScoreThreshold !== undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
                                 <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="gradeWithBonus.bonusGrade">
-                                <span>{{ 'artemisApp.examScores.bonusGradeColumn' | artemisTranslate }}</span>
+                                <span>{{
+                                    hasBonus === BonusStrategy.POINTS
+                                        ? ('artemisApp.examScores.bonusPointsColumn' | artemisTranslate)
+                                        : ('artemisApp.examScores.bonusGradeColumn' | artemisTranslate)
+                                }}</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="gradeWithBonus.finalGrade">

@@ -155,6 +155,18 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseLockRepositorySubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseLockRepositorySubmissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseNoneSubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseNoneSubmissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
