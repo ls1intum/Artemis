@@ -127,6 +127,12 @@
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">{{ ratingsDashboardInfo.total }} | {{ ratingsDashboardInfo.tutor }}</div>
                 </div>
+                <div class="row g-0 mb-1">
+                    <a [routerLink]="getExerciseDetailsLink()" [queryParams]="" class="btn btn-info btn-sm me-1 mb-3" id="exercise-details">
+                        <fa-icon [icon]="faListAlt" [fixedWidth]="true"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exerciseAssessmentDashboard.exerciseDetails' | artemisTranslate }}</span>
+                    </a>
+                </div>
             </jhi-side-panel>
 
             <div class="me-2 d-block float-end">

@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -199,9 +201,11 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "exercise-new-text-exercise", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createTextExercise() throws Exception {
+    void createTextExercise(String channelName) throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         courseUtilService.enableMessagingForCourse(course);
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -212,7 +216,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setId(null);
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
-        textExercise.setChannelName("new-text-exercise");
+        textExercise.setChannelName(channelName);
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
@@ -223,7 +227,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
-        assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
+        assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("exercise-new-text-exercise");
 
         // Check that the conversation participants are added correctly to the exercise channel
         await().until(() -> {
