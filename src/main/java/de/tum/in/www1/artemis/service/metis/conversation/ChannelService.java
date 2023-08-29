@@ -487,9 +487,9 @@ public class ChannelService {
         String channelName = prefix + title.orElse("");
         // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
         String specialCharacters = "[^a-z0-9]+";
-        // -+$ matches all hyphens at the end of a string
-        String leadingTrailingHyphens = "-+$";
-        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceAll(leadingTrailingHyphens, "");
+        // -+$ matches a trailing hyphen at the end of a string
+        String leadingTrailingHyphens = "-$";
+        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
         if (channelName.length() > 30) {
             channelName = channelName.substring(0, 30);
         }
