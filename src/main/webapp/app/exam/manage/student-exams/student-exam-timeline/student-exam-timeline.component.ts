@@ -116,7 +116,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
         }
     }
 
-    private findPreviousSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
+    findPreviousSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
         const comparisonTimestamp: dayjs.Dayjs = currentSubmission.submissionDate!;
         let smallestDiff = Number.MAX_VALUE;
         let correspondingSubmission: ProgrammingSubmission | undefined;
