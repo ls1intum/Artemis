@@ -16,7 +16,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // E.g. [task][Implement BubbleSort](testBubbleSort)
     private readonly taskRegex = /\[task]\[[^[\]]+]\((?:,?\s*[^()\s]+(?:\([^()]*\))?)*\)/g;
     // E.g. Implement BubbleSort, testBubbleSort
-    private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:,?\s*[^()\s]+(?:\([^()]*\))?)*)\)({(.*)})?/;
+    private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:,?\s*[^()\s]+(?:\([^()]*\))?)*)\)/;
 
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
@@ -121,7 +121,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             .map((task) => {
                 return this.innerTaskRegex.exec(task);
             })
-            .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
+            .filter((testMatch) => testMatch?.length === 3)
             .map((testMatch: RegExpMatchArray | null) => {
                 const nextIndex = this.taskIndex;
                 this.taskIndex++;
