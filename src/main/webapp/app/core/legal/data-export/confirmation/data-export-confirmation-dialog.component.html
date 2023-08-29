@@ -1,0 +1,47 @@
+<form name="dataExportConfirmationForm" (ngSubmit)="confirmDataExportRequest()" #dataExportConfirmationForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.dataExport.confirmationHeader">Confirm data export request</span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <p [jhiTranslate]="'artemisApp.dataExport.confirmationQuestion'">Are you sure you want to request?</p>
+        <div *ngIf="adminDialog">
+            <div class="checkbox" *ngIf="adminDialog">
+                <div class="control-label form-check">
+                    <input
+                        id="request-for-other-user"
+                        type="checkbox"
+                        name="checkbox"
+                        class="form-check-input"
+                        (change)="onRequestDataExportForOtherUserChanged($event)"
+                        [(ngModel)]="requestForAnotherUser"
+                    />
+                    <label for="request-for-other-user" class="form-check-label">{{ 'artemisApp.dataExport.requestForAnotherUser' | artemisTranslate }}</label>
+                </div>
+                <jhi-type-ahead-user-search-field *ngIf="requestForAnotherUser" [(loginOrName)]="expectedLogin"></jhi-type-ahead-user-search-field>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="confirm-login" [jhiTranslate]="confirmationTextHint">Please type in your login to confirm</label>
+            <input id="confirm-login" type="text" class="form-control" name="confirmLogin" [(ngModel)]="enteredLogin" />
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button
+            id="request"
+            type="submit"
+            class="btn btn-primary"
+            [style.cursor]="dataExportConfirmationForm.form.invalid || this.enteredLogin !== this.expectedLogin || submitDisabled ? 'not-allowed' : 'pointer'"
+            [disabled]="dataExportConfirmationForm.form.invalid || this.enteredLogin !== this.expectedLogin || this.enteredLogin?.trim()?.length === 0 || submitDisabled"
+        >
+            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            <fa-icon [icon]="faCheck"></fa-icon>&nbsp;
+            <span [jhiTranslate]="'artemisApp.dataExport.request'"> Request</span>
+        </button>
+    </div>
+</form>
