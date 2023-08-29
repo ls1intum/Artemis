@@ -33,18 +33,16 @@ public class ProgrammingExerciseTaskService {
      * <li>tests: {@code testBubbleSort,testBubbleSortHidden}
      * </ul>
      * <p>
-     * The first section captures the task identifier {@code [task]}.<br>
-     * The second section {@code name} matches the task name, allowing any characters but square brackets.<br>
-     * The third and last section {@code tests} captures the test cases within round brackets. Each test case may be prefixed by a comma and whitespace, contain a test name without
-     * round brackets or whitespace and then optional parameters in round brackets with any characters but round brackets.<br>
-     * Therefore, allowed test names are {@code testName}, {@code testName()}, {@code testName(1234, 12)}.<br>
+     * The first section - withing square brackets - captures the task identifier {@code [task]}.<br>
+     * The second section {@code name} - within square brackets - matches the task name, allowing any characters but square brackets.<br>
+     * The third and last section {@code tests} - within round brackets - captures zero, one or multiple test cases. Multiple test cases get separated by a comma and optional
+     * whitespace. Each test case contains a test name with or without round brackets. These round brackets may contain method parameters. Test names may contain any characters but
+     * round brackets, whitespace or commas. Method parameters only exclude round brackets. After round brackets a test case may contain additional characters excluding round
+     * brackets or commas.<br>
+     * Therefore, allowed test names are among others {@code testName}, {@code testName()}, {@code testName(1234, 12)}, {@code testName(testValue)[1]}, {@code Test Name}.<br>
      * For multiple testcases it's {@code testName,otherTestName()} or {@code testName,     otherTestName()}.<br>
-     * Technically {@code ,testName} would also be valid, but the empty test case just gets ignored.
      * <p>
-     * To avoid stack overflows, we use possessive quantifiers (*+, ++, ...) within the loop for the test cases.
-     * See <a href="https://rules.sonarsource.com/java/tag/regex/RSPEC-5998/">this article</a> for more details
-     * <p>
-     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client.
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper`, `ProgrammingExerciseInstructionAnalysisService`, and `TaskCommand` in the client
      * If you change the regex, make sure to change it in all places!
      */
     private static final Pattern TASK_PATTERN = Pattern

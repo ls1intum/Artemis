@@ -256,21 +256,6 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testIgnoreEmptyTests() {
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        updateProblemStatement("[task][Task 1](,test1,    ,,test2,)");
-
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(actualTasks).hasSize(1);
-        var actualTask = actualTasks.iterator().next();
-        assertThat(actualTask.getTaskName()).isEqualTo("Task 1");
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask.getId());
-        var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
-        assertThat(actualTestCaseNames).hasSize(2).containsExactlyInAnyOrder("test1", "test2");
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExtractTasksFromTestIds() {
         var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();

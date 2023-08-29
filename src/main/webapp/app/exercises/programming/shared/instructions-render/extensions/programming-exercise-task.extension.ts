@@ -20,7 +20,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @example [task][Implement BubbleSort](testBubbleSort)
      *
      * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
-     * It does not contain any capturing groups.
+     *
+     * This is coupled to the value used in `ProgrammingExerciseTaskService` in the server.
+     * If you change the regex, make sure to change it in all places!
      */
     private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*\w[^(),]*(?:\([^()]*\)[^(),]*)?)*)?\)/g;
     // E.g. Implement BubbleSort, testBubbleSort

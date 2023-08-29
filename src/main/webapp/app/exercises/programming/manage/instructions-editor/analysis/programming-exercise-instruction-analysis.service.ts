@@ -13,7 +13,7 @@ import {
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^()\s,]+(?:\([^()]*\))?(?:,\s*[^()\s,]+(?:\([^()]*\))?)*)?)\)/;
+    private readonly TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,\s*\w[^(),]*(?:\([^()]*\)[^(),]*)?)*)?)\)/;
     private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
 
     constructor(private translateService: TranslateService) {}
