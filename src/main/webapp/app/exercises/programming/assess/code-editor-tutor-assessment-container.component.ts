@@ -276,10 +276,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private async loadFeedbackSuggestions(): Promise<void> {
         this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
-        // Don't show feedback suggestions that have the same title, description and reference - probably it is coming from an earlier suggestion anyways
+        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
             for (const feedback of [...this.referencedFeedback, ...this.unreferencedFeedback]) {
-                if (feedback.text === suggestion.text && feedback.detailText === suggestion.detailText && feedback.reference === suggestion.reference) {
+                if (feedback.detailText === suggestion.detailText && feedback.reference === suggestion.reference) {
                     return false; // exclude this suggestion
                 }
             }
