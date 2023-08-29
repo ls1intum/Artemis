@@ -1,0 +1,35 @@
+.search-container {
+    position: relative;
+    flex: 1;
+}
+
+.search-info {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0.75rem;
+    font-size: 18px;
+    pointer-events: none;
+
+    opacity: 0;
+    transition: 0.1s ease-out opacity;
+
+    &.active {
+        opacity: 1;
+        transition: 0.2s ease-in opacity;
+    }
+}
+
+ngb-typeahead-window.dropdown-menu.show {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto !important;
+    will-change: unset !important;
+}
+
+.dropdown-item.selected {
+    background-color: var(--data-table-dropdown-item-selected-background-color);
+}

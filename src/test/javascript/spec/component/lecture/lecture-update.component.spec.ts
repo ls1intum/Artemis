@@ -22,7 +22,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -48,7 +48,7 @@ describe('LectureUpdateComponent', () => {
             imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 LectureUpdateComponent,
-                MockComponent(TitleChannelNameComponent),
+                MockComponent(LectureTitleChannelNameComponent),
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),

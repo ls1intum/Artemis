@@ -6,7 +6,7 @@
         <input
             required
             [minlength]="minTitleLength"
-            [pattern]="pattern"
+            [pattern]="titlePattern"
             type="text"
             class="form-control"
             name="title"
@@ -29,7 +29,7 @@
             name="channelName"
             id="field_channel_name"
             [ngModel]="channelName"
-            (ngModelChange)="formatChannelName($event)"
+            (ngModelChange)="formatChannelName($event, true)"
             maxlength="30"
         />
     </div>
