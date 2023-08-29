@@ -33,6 +33,7 @@ export class DataExportComponent implements OnInit {
     description: string;
     state?: DataExportState;
     dataExport: DataExport = new DataExport();
+    isAdmin = false;
 
     constructor(
         private dataExportService: DataExportService,
@@ -43,6 +44,7 @@ export class DataExportComponent implements OnInit {
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;
+        this.isAdmin = this.accountService.isAdmin();
         this.route.params.subscribe((params) => {
             if (params['id']) {
                 this.downloadMode = true;
@@ -97,6 +99,19 @@ export class DataExportComponent implements OnInit {
         this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response: HttpResponse<Blob>) => {
             downloadZipFileFromResponse(response);
             this.alertService.success('artemisApp.dataExport.downloadSuccess');
+        });
+    }
+
+    requestExportForAnotherUser(login: string) {
+        this.dataExportService.requestDataExportForAnotherUser(login).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.alertService.success('artemisApp.dataExport.requestForUserSuccess', { login });
+            },
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                this.alertService.error('artemisApp.dataExport.requestForUserError', { login });
+            },
         });
     }
 }

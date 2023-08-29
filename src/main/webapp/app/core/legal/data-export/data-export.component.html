@@ -10,19 +10,14 @@
     <div class="column d-flex justify-content-center align-content-center">
         <button
             *ngIf="!downloadMode"
-            id="request-data-export-btn"
-            jhiDeleteButton
-            [actionType]="ActionType.RequestDataExport"
-            [buttonSize]="ButtonSize.LARGE"
-            [buttonType]="ButtonType.PRIMARY"
-            [entityTitle]="currentLogin!"
-            [disabled]="!canRequestDataExport"
-            deleteQuestion="artemisApp.dataExport.confirmationQuestion"
-            (delete)="requestExport()"
+            jhiDataExportRequestButton
+            [adminDialog]="isAdmin"
+            [expectedLogin]="currentLogin!"
             [dialogError]="dialogError$"
-            [animation]="false"
-            deleteConfirmationText="artemisApp.dataExport.typeLoginToConfirm"
+            (dataExportRequest)="requestExport()"
+            (dataExportRequestForAnotherUser)="requestExportForAnotherUser($event)"
             class="mb-1"
+            [disabled]="!canRequestDataExport && !isAdmin"
         ></button>
         <jhi-button
             *ngIf="canDownload"

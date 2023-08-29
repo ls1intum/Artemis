@@ -34,7 +34,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -57,7 +57,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         FitTextModule,
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
-        TitleChannelNameModule,
+        ExerciseTitleChannelNameModule,
     ],
     declarations: [
         QuizExerciseComponent,
