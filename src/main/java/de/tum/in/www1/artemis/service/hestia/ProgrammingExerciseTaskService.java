@@ -48,7 +48,7 @@ public class ProgrammingExerciseTaskService {
      * If you change the regex, make sure to change it in all places!
      */
     private static final Pattern TASK_PATTERN = Pattern
-            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^()\\s,]+(?:\\([^()]*\\))?(?:,\\s*[^()\\s,]+(?:\\([^()]*\\))?[^()\\s,]*)*)?)\\)");
+            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,\\s*\\w[^(),]*(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     /**
      * Regex to find PlantUML diagrams inside a problem statement.
