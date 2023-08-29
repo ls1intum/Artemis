@@ -112,9 +112,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.modelingExercise.id == undefined && this.modelingExercise.channelName == undefined) {
-                            this.modelingExercise.channelName = '';
-                        }
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
