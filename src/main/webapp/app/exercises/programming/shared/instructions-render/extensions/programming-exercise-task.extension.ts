@@ -22,9 +22,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
      * It does not contain any capturing groups.
      */
-    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^()\s,]*(?:\([^()]*\))?(?:,\s*[^()\s,]*(?:\([^()]*\))?[^()\s,]*)*)?\)/g;
+    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^()\s,]+(?:\([^()]*\))?(?:,\s*[^()\s,]+(?:\([^()]*\))?[^()\s,]*)*)?\)/g;
     // E.g. Implement BubbleSort, testBubbleSort
-    private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:[^()\s,]*(?:\([^()]*\))?(?:,\s*[^()\s,]*(?:\([^()]*\))?[^()\s,]*)*)?)\)/;
+    private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:[^()\s,]+(?:\([^()]*\))?(?:,\s*[^()\s,]+(?:\([^()]*\))?[^()\s,]*)*)?)\)/;
 
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
