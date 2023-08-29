@@ -13,8 +13,16 @@ import { ShowdownExtension } from 'showdown';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    // E.g. [task][Implement BubbleSort](testBubbleSort)
-    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^()\s,]+(?:\([^()]*\))?(?:,\s*[^()\s,]+(?:\([^()]*\))?)*)?\)/g;
+    /**
+     * Regular expression for finding tasks.
+     * A Task starts with the identifier `[task]` and the task name in square brackets.
+     * This gets followed by a list of test cases in parentheses.
+     * @example [task][Implement BubbleSort](testBubbleSort)
+     *
+     * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
+     * It does not contain any capturing groups.
+     */
+    private readonly taskRegex = /\[task]\[[^[\]]+]\((?:[^()\s,]*(?:\([^()]*\))?(?:,\s*[^()\s,]*(?:\([^()]*\))?)*)?\)/g;
     // E.g. Implement BubbleSort, testBubbleSort
     private readonly innerTaskRegex = /\[task]\[([^[\]]+)]\(((?:[^()\s,]+(?:\([^()]*\))?(?:,\s*[^()\s,]+(?:\([^()]*\))?)*)?)\)/;
 
