@@ -260,8 +260,7 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
-            "goBack": "Go back",
-            "requestDataExport": "Request data export"
+            "goBack": "Go back"
         },
         "detail": {
             "field": "Field",

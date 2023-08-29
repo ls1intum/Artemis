@@ -8,18 +8,24 @@
             "request": "Datenexport anfordern",
             "download": "Datenexport herunterladen",
             "requestSuccess": "Datenexport erfolgreich angefordert",
+            "requestForUserSuccess": "Datenexport erfolgreich angefordert für Nutzer {{ login }}",
             "downloadSuccess": "Datenexport erfolgreich heruntergeladen",
             "typeLoginToConfirm": "Bitte gib deine Login-Kennung ein, um den Datenexport zu bestätigen",
             "confirmationQuestion": "Willst du wirklich den Datenexport anfordern?",
             "confirmationHeader": "Datenexport anfordern",
+            "requestForAnotherUser": "Datenexport für einen anderen Nutzer anfordern",
             "requestError": "Datenexport konnte nicht angefordert werden. Bitte versuche es später erneut.",
+            "requestForUserError": "Datenexport konnte nicht angefordert werden für Nutzer {{ login }}. Bitte versuche es später erneut.",
             "downloadError": "Datenexport konnte nicht heruntergeladen werden. Bitte versuche es später erneut.",
             "recentlyRequested": "Du kannst aktuell keinen weiteren Datenexport anfordern, da du erst kürzlich einen Datenexport angefordert hast",
             "notDownloadable": "Dieser Datenexport kann nicht mehr heruntergeladen werden, da er nicht (mehr) existiert.",
             "mostRecentNotDownloadable": "Dein Datenexport kann nicht heruntergeladen werden, da er entweder bereits gelöscht wurde oder noch nicht erstellt wurde.",
             "isBeingCreated": "Dein angeforderter Datenexport wird aktuell noch erstellt.",
             "lastRequestDate": "Du hast deinen letzten Datenexport angefordert am ",
-            "nextRequestDate": "Du kannst wieder einen Datenexport anfordern am "
+            "nextRequestDate": "Du kannst wieder einen Datenexport anfordern am ",
+            "typeUserLoginToConfirm": "Bitte gib die Benutzerkennung des Nutzers ein, für den du den Datenexport anfordern möchtest um den Datenexport zu bestätigen",
+            "loginOrName": "Benutzerkennung oder Name des Nutzers",
+            "searchQueryTooShort": "Bitte gib mindestens {{ length }} Zeichen ein"
         }
     }
 }
