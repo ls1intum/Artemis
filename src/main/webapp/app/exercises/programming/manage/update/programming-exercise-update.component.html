@@ -1,4 +1,34 @@
 <div>
+    <div class="mb-5">
+        <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
+            <div class="d-flex flex flex-row align-items-center">
+                <h2
+                    *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
+                    id="jhi-programming-exercise-heading-create"
+                    jhiTranslate="artemisApp.programmingExercise.home.createLabel"
+                >
+                    Create Programming Exercise
+                </h2>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            </div>
+            <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
+                <div class="guided-mode-button">
+                    <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
+                        <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;
+                        <span *ngIf="!isShowingWizardMode" jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                        <span *ngIf="isShowingWizardMode" jhiTranslate="artemisApp.programmingExercise.home.switchToTraditionalModeLabel">Switch to normal mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <h2 *ngIf="!isImportFromExistingExercise && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
+            Edit Programming Exercise
+        </h2>
+        <h2 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
+            Import Programming Exercise
+        </h2>
+    </div>
+
     <jhi-programming-exercise-update-wizard
         *ngIf="isShowingWizardMode"
         (onNextStep)="nextWizardStep()"
@@ -13,35 +43,7 @@
     ></jhi-programming-exercise-update-wizard>
 
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
-        <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
-            <div class="d-flex flex flex-row align-items-center">
-                <h3
-                    class="fw-medium"
-                    *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
-                    id="jhi-programming-exercise-heading-create"
-                    jhiTranslate="artemisApp.programmingExercise.home.createLabel"
-                >
-                    Create Programming Exercise
-                </h3>
-                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
-            </div>
-            <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
-                <div class="guided-mode-button">
-                    <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
-                        <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel"
-                            >Switch to guided mode</span
-                        >
-                    </button>
-                </div>
-            </div>
-        </div>
-        <h4 *ngIf="!isImportFromExistingExercise && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
-            Edit Programming Exercise
-        </h4>
-        <h4 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
-            Import Programming Exercise
-        </h4>
-        <div class="update-programming-exercise mt-5">
+        <div class="update-programming-exercise">
             <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
@@ -50,6 +52,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode"
+                [isImport]="isImportFromExistingExercise || isImportFromFile"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty

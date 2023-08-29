@@ -11,8 +11,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -26,7 +26,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 DefaultValueAccessor,
                 NgModel,
                 MockComponent(HelpIconComponent),
-                MockComponent(TitleChannelNameComponent),
+                MockComponent(ExerciseTitleChannelNameComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(CategorySelectorComponent),
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),

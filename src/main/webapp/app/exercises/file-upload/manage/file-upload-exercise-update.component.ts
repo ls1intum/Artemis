@@ -24,7 +24,6 @@ import { switchMap, tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -100,11 +99,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (!this.isExamMode) {
-                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
-                            this.fileUploadExercise.channelName = '';
-                        }
-                    }
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),

@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -11,7 +12,7 @@ describe('TitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, ArtemisSharedComponentModule],
             declarations: [TitleChannelNameComponent],
             providers: [NgForm],
         }).compileComponents();
@@ -60,7 +61,7 @@ describe('TitleChannelNameComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long';
+        const newTitle = 'New 0123 @()[]{} !?.-_ $%& too long name that is more than 30 characters';
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
         titleInput.nativeElement.value = newTitle;
         titleInput.nativeElement.dispatchEvent(new Event('input'));
@@ -69,7 +70,7 @@ describe('TitleChannelNameComponent', () => {
         tick();
 
         expect(component.title).toBe(newTitle);
-        expect(component.channelName).toBe('new-0123-@()[]{}-!?.-_-$%&-too');
+        expect(component.channelName).toBe('new-0123-too-long-name-that-is');
     }));
 
     it('init prefix if undefined', () => {

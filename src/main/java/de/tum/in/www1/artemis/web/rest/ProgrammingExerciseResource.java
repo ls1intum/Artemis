@@ -152,18 +152,21 @@ public class ProgrammingExerciseResource {
      * @param exercise the exercise object we want to check for errors
      */
     private void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.orElseThrow().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        VersionControlService versionControl = versionControlService.orElseThrow();
+
+        if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
-        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.orElseThrow().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
+        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControl.repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
             throw new BadRequestAlertException("The Template Repository URL seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
-        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
             throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
         }
         var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
-        if (solutionRepositoryUrl != null && !versionControlService.get().repositoryUrlIsValid(solutionRepositoryUrl)) {
+        if (solutionRepositoryUrl != null && !versionControl.repositoryUrlIsValid(solutionRepositoryUrl)) {
             throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }

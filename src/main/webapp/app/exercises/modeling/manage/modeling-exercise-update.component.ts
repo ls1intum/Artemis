@@ -28,7 +28,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -113,9 +112,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.modelingExercise.id == undefined && this.modelingExercise.channelName == undefined) {
-                            this.modelingExercise.channelName = '';
-                        }
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({

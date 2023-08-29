@@ -1,0 +1,13 @@
+<jhi-title-channel-name
+    [title]="exercise.title"
+    [channelName]="exercise.channelName"
+    (titleChange)="updateTitle($event)"
+    (channelNameChange)="updateChannelName($event)"
+    channelNamePrefix="exercise-"
+    [titlePattern]="titlePattern"
+    [hideTitleLabel]="hideTitleLabel"
+    [emphasizeLabels]="true"
+    [hideChannelName]="hideChannelNameInput"
+    [minTitleLength]="minTitleLength"
+    [initChannelName]="isImport || exercise.id === undefined"
+></jhi-title-channel-name>
