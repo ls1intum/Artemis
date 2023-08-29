@@ -57,7 +57,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     faSave = faSave;
     faQuestionCircle = faQuestionCircle;
     faBan = faBan;
-
     constructor(
         private alertService: AlertService,
         private textExerciseService: TextExerciseService,
@@ -106,10 +105,6 @@ export class TextExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.textExercise.id == undefined && this.textExercise.channelName == undefined) {
-                            this.textExercise.channelName = '';
-                        }
-
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
                             this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({

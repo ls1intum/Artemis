@@ -257,7 +257,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor needs to review",
-            "action": "Action"
+            "action": "Action",
+            "exerciseAssessmentDashboard": "Assessment Dashboard"
         }
     }
 }
