@@ -61,6 +61,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationTest 
         course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         systemNotificationRepository.deleteAll();
+        notificationRepository.deleteAll();
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
