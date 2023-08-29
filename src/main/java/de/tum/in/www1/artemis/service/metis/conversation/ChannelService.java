@@ -72,6 +72,7 @@ public class ChannelService {
             var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
             missingUsers.forEach(user -> {
                 ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+                conversationParticipant.setIsModerator(true);
                 matchingParticipants.add(conversationParticipant);
             });
         }

@@ -191,7 +191,6 @@ public class ConversationService {
         }
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
         for (User user : usersToBeRegistered) {
-            // set the last reading time of a participant in the past when creating conversation for the first time!
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, conversation);
             newConversationParticipants.add(conversationParticipant);
         }
