@@ -125,7 +125,8 @@ public class LocalCIConfiguration {
         log.info("Docker client created with connection URI: " + dockerConnectionUri);
 
         // If the Docker image used for the local CI build job containers is not available on the local machine, pull it from Docker Hub.
-        pullDockerImage(dockerClient);
+        // Moved this to LocalCIBuildJobManagementService.java, so it does not get pulled on server startup
+        // pullDockerImage(dockerClient);
 
         return dockerClient;
     }
