@@ -19,6 +19,7 @@ import { SubmissionVersionService } from 'app/exercises/shared/submission-versio
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -50,6 +51,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
+    cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
+
     @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
     @ViewChild('slider') slider: SliderComponent;
@@ -109,22 +112,19 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit {
             activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
             activeProgrammingComponent.previousSubmission = this.findPreviousSubmission(this.currentExercise!, this.currentSubmission!);
             activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
-            activeProgrammingComponent.loadGitDiffReport();
+            activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
         }
     }
 
     private findPreviousSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
-        const comparisonTimestamp = currentSubmission.submissionDate;
+        const comparisonTimestamp: dayjs.Dayjs = currentSubmission.submissionDate!;
         let smallestDiff = Number.MAX_VALUE;
         let correspondingSubmission: ProgrammingSubmission | undefined;
         for (let i = 0; i < this.programmingSubmissions.length; i++) {
             const submission = this.programmingSubmissions[i];
-            if (
-                submission.submissionDate!.isBefore(comparisonTimestamp) &&
-                Math.abs(submission.submissionDate!.diff(comparisonTimestamp)) < smallestDiff &&
-                submission.participation?.exercise?.id === currentExercise.id
-            ) {
-                smallestDiff = submission.submissionDate!.diff(comparisonTimestamp);
+            const diff = Math.abs(submission.submissionDate!.diff(comparisonTimestamp));
+            if (submission.submissionDate!.isBefore(comparisonTimestamp) && diff < smallestDiff && submission.participation?.exercise?.id === currentExercise.id) {
+                smallestDiff = diff;
                 correspondingSubmission = submission;
             }
         }

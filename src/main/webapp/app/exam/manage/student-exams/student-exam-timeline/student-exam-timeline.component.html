@@ -48,6 +48,7 @@
                             *ngSwitchCase="ExerciseType.PROGRAMMING"
                             [exercise]="exercise"
                             [studentParticipation]="exercise.studentParticipations[0]"
+                            [(cachedDiffReports)]="cachedDiffReports"
                         ></jhi-programming-exam-diff>
                     </div>
                 </ng-container>

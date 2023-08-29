@@ -22,8 +22,10 @@ describe('GitDiffReportModalComponent', () => {
 
     const filesWithContentTemplate = new Map<string, string>();
     filesWithContentTemplate.set('test', 'test');
-    const filesWithContentParticipation = new Map<string, string>();
-    filesWithContentParticipation.set('test3', 'test3');
+    const filesWithContentParticipation1 = new Map<string, string>();
+    filesWithContentParticipation1.set('test3', 'test3');
+    const filesWithContentParticipation2 = new Map<string, string>();
+    filesWithContentParticipation2.set('test4', 'test4');
     const filesWithContentSolution = new Map<string, string>();
     filesWithContentSolution.set('test2', 'test2');
 
@@ -38,14 +40,10 @@ describe('GitDiffReportModalComponent', () => {
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
         loadSolutionFilesSpy = jest.spyOn(programmingExerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentSolution));
-        loadTemplateFilesSpy = jest
-            .spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent')
-            .mockReturnValue(of(filesWithContentTemplate))
-            .mockReturnValue(of(filesWithContentTemplate));
+        loadTemplateFilesSpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(filesWithContentTemplate));
         loadParticipationFilesSpy = jest
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommit')
-            .mockReturnValue(of(filesWithContentParticipation))
-            .mockReturnValue(of(filesWithContentParticipation));
+            .mockReturnValue(of(filesWithContentParticipation1));
 
         modal = TestBed.inject(NgbActiveModal);
     });
@@ -63,8 +61,8 @@ describe('GitDiffReportModalComponent', () => {
         expect(loadTemplateFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(loadSolutionFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
-        expect(comp.firstCommitFileContentByPath).toEqual(filesWithContentTemplate);
-        expect(comp.secondCommitFileContentByPath).toEqual(filesWithContentSolution);
+        expect(comp.leftCommitFileContentByPath).toEqual(filesWithContentTemplate);
+        expect(comp.rightCommitFileContentByPath).toEqual(filesWithContentSolution);
     }));
 
     it('should retrieve files for template and submission if diffForTemplateAndSolution is false and firstParticipationId is undefined', () => {
@@ -74,8 +72,8 @@ describe('GitDiffReportModalComponent', () => {
         comp.ngOnInit();
         expect(loadParticipationFilesSpy).toHaveBeenCalledExactlyOnceWith(3, 'abc');
         expect(loadTemplateFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(comp.firstCommitFileContentByPath).toEqual(filesWithContentTemplate);
-        expect(comp.secondCommitFileContentByPath).toEqual(filesWithContentParticipation);
+        expect(comp.leftCommitFileContentByPath).toEqual(filesWithContentTemplate);
+        expect(comp.rightCommitFileContentByPath).toEqual(filesWithContentParticipation1);
     });
 
     it('should retrieve files for both submissions if diffForTemplateAndSolution is false and firstParticipationId is defined', function () {
@@ -92,8 +90,8 @@ describe('GitDiffReportModalComponent', () => {
         expect(loadParticipationFilesSpy).toHaveBeenCalledTimes(2);
         expect(loadParticipationFilesSpy).toHaveBeenCalledWith(2, 'def');
         expect(loadParticipationFilesSpy).toHaveBeenCalledWith(3, 'abc');
-        expect(comp.firstCommitFileContentByPath).toEqual(filesWithContentParticipation);
-        expect(comp.secondCommitFileContentByPath).toEqual(filesWithContentParticipation);
+        expect(comp.leftCommitFileContentByPath).toEqual(filesWithContentParticipation1);
+        expect(comp.rightCommitFileContentByPath).toEqual(filesWithContentParticipation1);
     });
 
     it('should set error flag if loading files fails', () => {
@@ -122,5 +120,38 @@ describe('GitDiffReportModalComponent', () => {
         const modalServiceSpy = jest.spyOn(modal, 'dismiss');
         comp.close();
         expect(modalServiceSpy).toHaveBeenCalled();
+    });
+
+    it('should load files from cache if available for template and participation repo', () => {
+        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
+        cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
+        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
+        comp.cachedRepositoryFiles = cachedRepositoryFiles;
+        comp.report = { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport;
+        comp.diffForTemplateAndSolution = false;
+        comp.ngOnInit();
+        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
+        expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
+        expect(comp.leftCommitFileContentByPath).toEqual(filesWithContentTemplate);
+        expect(comp.rightCommitFileContentByPath).toEqual(filesWithContentParticipation1);
+    });
+
+    it('should load files from cache if available for participation repo at both commits', () => {
+        const cachedRepositoryFiles = new Map<string, Map<string, string>>();
+        cachedRepositoryFiles.set('def', filesWithContentParticipation1);
+        cachedRepositoryFiles.set('abc', filesWithContentParticipation2);
+        comp.cachedRepositoryFiles = cachedRepositoryFiles;
+        comp.report = {
+            programmingExercise: { id: 1 },
+            participationIdForRightCommit: 3,
+            rightCommitHash: 'abc',
+            participationIdForLeftCommit: 2,
+            leftCommitHash: 'def',
+        } as ProgrammingExerciseGitDiffReport;
+        comp.diffForTemplateAndSolution = false;
+        comp.ngOnInit();
+        expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
+        expect(comp.leftCommitFileContentByPath).toEqual(filesWithContentParticipation1);
+        expect(comp.rightCommitFileContentByPath).toEqual(filesWithContentParticipation2);
     });
 });

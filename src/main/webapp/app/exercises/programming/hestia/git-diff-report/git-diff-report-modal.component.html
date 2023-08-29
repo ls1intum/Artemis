@@ -1,17 +1,20 @@
 <div>
     <div class="modal-header">
         <h3 class="modal-title">
-            {{ this.title | artemisTranslate }}
+            {{
+                (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions')
+                    | artemisTranslate
+            }}
         </h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
     </div>
     <div class="modal-body">
-        <div *ngIf="firstCommitFileContentByPath && secondCommitFileContentByPath; else spinner" class="row mb-2">
+        <div *ngIf="leftCommitFileContentByPath && rightCommitFileContentByPath; else spinner" class="row mb-2">
             <jhi-git-diff-report
                 [report]="report"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-                [templateFileContentByPath]="firstCommitFileContentByPath"
-                [solutionFileContentByPath]="secondCommitFileContentByPath"
+                [templateFileContentByPath]="leftCommitFileContentByPath"
+                [solutionFileContentByPath]="rightCommitFileContentByPath"
             ></jhi-git-diff-report>
         </div>
         <ng-template #spinner>

@@ -533,10 +533,7 @@ export class ProgrammingExerciseService {
     getDiffReportForSubmissions(exerciseId: number, olderSubmissionId: number, newerSubmissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
         return this.http
             .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report/${newerSubmissionId}`, { observe: 'response' })
-            .pipe(
-                debounceTime(800),
-                map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined),
-            );
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
 
     /**
