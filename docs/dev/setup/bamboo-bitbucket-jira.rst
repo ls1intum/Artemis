@@ -121,7 +121,7 @@ under ``localhost:7990``.
    - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
    - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
 
-     **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
+     **You manually have to adjust the Display URLLLLfor the Bamboo → Bitbucket AND
      Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
      ``http://localhost:8085`` **.**
 
@@ -134,32 +134,32 @@ under ``localhost:7990``.
              - **Jira:**
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../../_images/bamboo_bitbucket_applicationLink.png
+                  :target: ../_images/bamboo_bitbucket_applicationLink.png
 
                   Bamboo → Bitbucket
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
                   :align: center
-                  :target: ../../_images/bitbucket_bamboo_applicationLink.png
+                  :target: ../_images/bitbucket_bamboo_applicationLink.png
 
                   Bitbucket → Bamboo
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
                   :align: center
-                  :target: ../../_images/jira_bamboo_applicationLink.png
+                  :target: ../_images/jira_bamboo_applicationLink.png
 
                   Jira → Bamboo
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
                   :align: center
-                  :target: ../../_images/bamboo_jira_applicationLink.png
+                  :target: ../_images/bamboo_jira_applicationLink.png
 
                   Bamboo → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
                   :align: center
-                  :target: ../../_images/bitbucket_jira_applicationLink.png
+                  :target: ../_images/bitbucket_jira_applicationLink.png
 
                   Bitbucket → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../../_images/jira_bitbucket_applicationLink.png
+                  :target: ../_images/jira_bitbucket_applicationLink.png
 
                   Jira → Bitbucket
 
@@ -225,7 +225,7 @@ under ``localhost:7990``.
    have a static IP address.
 
    .. figure:: setup/bamboo-bitbucket-jira/bamboo_agent_configuration.png
-      :target: ../../_images/bamboo_agent_configuration.png
+      :target: ../_images/bamboo_agent_configuration.png
       :align: center
 
 #. Generate a personal access token
