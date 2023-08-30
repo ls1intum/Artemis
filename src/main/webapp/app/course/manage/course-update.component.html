@@ -336,6 +336,26 @@
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
+                    <div class="form-group" *ngIf="messagingEnabled">
+                        <label
+                            class="form-control-label"
+                            jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.label"
+                            for="field_messagingCodeOfConduct"
+                            >Messaging Code of Conduct
+                        </label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.tooltip' | artemisTranslate }}"
+                        ></fa-icon>
+                        <textarea
+                            id="field_messagingCodeOfConduct"
+                            class="form-control"
+                            rows="2"
+                            formControlName="courseInformationSharingMessagingCodeOfConduct"
+                            [(ngModel)]="course.courseInformationSharingMessagingCodeOfConduct"
+                        ></textarea>
+                    </div>
                 </div>
                 <div class="form-check" *ngIf="!this.course.enrollmentEnabled">
                     <input

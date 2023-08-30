@@ -89,7 +89,11 @@
                 },
                 "messagingEnabled": {
                     "label": "Messaging Enabled",
-                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course."
+                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course.",
+                    "codeOfConduct": {
+                        "label": "Messages Code of Conduct",
+                        "tooltip": "The Messages Code of Conduct describes to users how best to collaborate and which consequences might be raised if there is misconduct, as well as, contact information for reporting."
+                    }
                 }
             },
             "registrationEnabled": {
