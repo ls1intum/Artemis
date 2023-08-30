@@ -202,7 +202,7 @@ public class LocalCIConnectorService {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult).orElseThrow();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult);
             programmingMessagingService.notifyUserAboutNewResult(result, solutionParticipation);
 
             // The solution participation received a new result, also trigger a build of the template repository.

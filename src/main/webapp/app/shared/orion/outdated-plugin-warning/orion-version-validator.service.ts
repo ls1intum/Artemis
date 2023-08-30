@@ -15,7 +15,10 @@ export class OrionVersionValidator {
     private minVersion: string;
     private isValidVersion: boolean;
 
-    constructor(private profileService: ProfileService, private router: Router) {}
+    constructor(
+        private profileService: ProfileService,
+        private router: Router,
+    ) {}
 
     /**
      * Validates the installed Orion plugin version against the allowed version range. This will not validate anything

@@ -33,7 +33,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private participationService: ParticipationService,
+    ) {}
 
     private getNotifyAllSubscribersPipe = () => {
         return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));

@@ -1,12 +1,14 @@
 import { Interception } from 'cypress/types/net-stubbing';
+import dayjs, { Dayjs } from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, ProgrammingExerciseAssessmentType, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+
 import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
-import dayjs, { Dayjs } from 'dayjs/esm';
 import {
     courseAssessment,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    examAPIRequests,
     examAssessment,
     examExerciseGroupCreation,
     examManagement,
@@ -17,9 +19,9 @@ import {
     modelingExerciseAssessment,
     studentAssessment,
 } from '../../support/artemis';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
-import { ExerciseType } from '../../support/constants';
-import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
+import { convertModelAfterMultiPart } from '../../support/utils';
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -38,11 +40,11 @@ describe('Exam assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
         });
         users.getUserInfo(studentOne.username, (userInfo) => {
             studentOneName = userInfo.name;
@@ -162,26 +164,26 @@ describe('Exam assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
 
 function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType) {
     cy.login(admin);
     const resultDate = end.add(1, 'second');
-    const examContent = new ExamBuilder(course)
-        .visibleDate(dayjs().subtract(1, 'hour'))
-        .startDate(dayjs())
-        .endDate(end)
-        .correctionRounds(1)
-        .examStudentReviewStart(resultDate.add(10, 'seconds'))
-        .examStudentReviewEnd(resultDate.add(1, 'minute'))
-        .publishResultsDate(resultDate)
-        .gracePeriod(10)
-        .build();
-    courseManagementRequest.createExam(examContent).then((examResponse) => {
+    const examConfig: Exam = {
+        course,
+        startDate: dayjs(),
+        endDate: end,
+        numberOfCorrectionRoundsInExam: 1,
+        examStudentReviewStart: resultDate.add(10, 'seconds'),
+        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        publishResultsDate: resultDate,
+        gracePeriod: 10,
+    };
+    examAPIRequests.createExam(examConfig).then((examResponse) => {
         exam = examResponse.body;
-        courseManagementRequest.registerStudentForExam(exam, studentOne);
+        examAPIRequests.registerStudentForExam(exam, studentOne);
         let additionalData = {};
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
@@ -196,8 +198,8 @@ function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseTyp
         }
 
         examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData).then((response) => {
-            courseManagementRequest.generateMissingIndividualExams(exam);
-            courseManagementRequest.prepareExerciseStartForExam(exam);
+            examAPIRequests.generateMissingIndividualExams(exam);
+            examAPIRequests.prepareExerciseStartForExam(exam);
             makeExamSubmission(course, exam, response);
         });
     });

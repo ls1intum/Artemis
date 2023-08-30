@@ -38,9 +38,12 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private modalService: NgbModal) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private appRef: ApplicationRef,
+        private modalService: NgbModal,
+    ) {}
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set tests(tests: string[]) {
         this.testsValue = tests;
         const {

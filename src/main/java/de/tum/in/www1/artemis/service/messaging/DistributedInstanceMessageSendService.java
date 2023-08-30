@@ -80,6 +80,12 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     @Override
     public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllStudentRepositories(Long exerciseId) {
+        log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
     }
 

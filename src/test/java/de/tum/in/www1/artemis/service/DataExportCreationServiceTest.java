@@ -148,6 +148,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @AfterEach
     void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
         apollonRequestMockProvider.reset();
     }
 
@@ -249,7 +250,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                 true);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
-        exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).get();
+        exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
@@ -329,7 +330,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private Path getCourseOrExamDirectoryPath(Path rootPath, String shortName) throws IOException {
         try (var files = Files.list(rootPath).filter(Files::isDirectory).filter(path -> path.getFileName().toString().contains(shortName))) {
-            return files.findFirst().get();
+            return files.findFirst().orElseThrow();
         }
     }
 

@@ -45,7 +45,10 @@ export class TeamsImportFromFileFormComponent {
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private changeDetector: ChangeDetectorRef, private translateService: TranslateService) {}
+    constructor(
+        private changeDetector: ChangeDetectorRef,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * Move file reader creation to separate function to be able to mock
@@ -149,7 +152,7 @@ export class TeamsImportFromFileFormComponent {
                         entry[csvColumns.nachname] ||
                         undefined,
                     teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || undefined,
-                } as StudentWithTeam),
+                }) as StudentWithTeam,
         );
     }
 

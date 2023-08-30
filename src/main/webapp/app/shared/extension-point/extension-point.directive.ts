@@ -32,7 +32,10 @@ export class ExtensionPointDirective implements OnChanges {
     @Input() public jhiExtensionPoint: TemplateRef<any> | undefined = undefined;
     @Input() public jhiExtensionPointContext?: any = undefined;
 
-    constructor(private viewContainerRef: ViewContainerRef, private templateRef: TemplateRef<any>) {}
+    constructor(
+        private viewContainerRef: ViewContainerRef,
+        private templateRef: TemplateRef<any>,
+    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['jhiExtensionPoint']) {

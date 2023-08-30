@@ -9,7 +9,10 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {
+    constructor(
+        private route: ActivatedRoute,
+        private http: HttpClient,
+    ) {
         this.isLaunching = true;
     }
 

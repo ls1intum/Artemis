@@ -408,6 +408,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
+    default Exercise findByIdWithEagerExampleSubmissionsElseThrow(Long exerciseId) {
+        return findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
     /**
      * Activates or deactivates the possibility for tutors to assess within the correction round
      *

@@ -62,7 +62,10 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
-    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
+    constructor(
+        private gradingSystemService: GradingSystemService,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit() {
         this.setupAxisLabels();

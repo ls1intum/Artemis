@@ -15,7 +15,13 @@ export class TutorIssue {
  * `TutorValueChecker` is an abstract class that wraps the verification logic whether or not the tutor value surpasses the allowed range.
  */
 abstract class TutorValueChecker {
-    constructor(public numberOfTutorItems: number, public averageTutorValue: number, public averageCourseValue: number, public tutorName: string, public tutorId: number) {
+    constructor(
+        public numberOfTutorItems: number,
+        public averageTutorValue: number,
+        public averageCourseValue: number,
+        public tutorName: string,
+        public tutorId: number,
+    ) {
         this.averageTutorValue = round(this.averageTutorValue, 1);
     }
 

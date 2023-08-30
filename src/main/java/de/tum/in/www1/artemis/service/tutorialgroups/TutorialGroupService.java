@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -50,8 +49,6 @@ public class TutorialGroupService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
-    private final CourseRepository courseRepository;
-
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
@@ -59,7 +56,7 @@ public class TutorialGroupService {
     private final ConversationDTOService conversationDTOService;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             ConversationDTOService conversationDTOService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
@@ -67,7 +64,6 @@ public class TutorialGroupService {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.courseRepository = courseRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -283,9 +279,8 @@ public class TutorialGroupService {
      * @param user The user for which to find the tutorial groups.
      * @return A list of tutorial groups for which the user should receive notifications.
      */
-    public List<TutorialGroup> findAllForNotifications(User user) {
-        return courseRepository.findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId()).stream()
-                .flatMap(course -> course.getTutorialGroups().stream()).toList();
+    public Set<Long> findAllForNotifications(User user) {
+        return tutorialGroupRepository.findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
     }
 
     /**

@@ -23,7 +23,12 @@ export class DeleteButtonDirective implements OnInit {
 
     deleteTextSpan: HTMLElement;
 
-    constructor(private deleteDialogService: DeleteDialogService, private renderer: Renderer2, private elementRef: ElementRef, private translateService: TranslateService) {}
+    constructor(
+        private deleteDialogService: DeleteDialogService,
+        private renderer: Renderer2,
+        private elementRef: ElementRef,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.

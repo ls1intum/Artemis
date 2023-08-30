@@ -11,7 +11,10 @@ export class ClusterStatisticsComponent implements OnInit {
     clusters: TextExerciseClusterStatistics[] = [];
     currentExerciseId: number;
 
-    constructor(private textExerciseService: TextExerciseService, private route: ActivatedRoute) {}
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {

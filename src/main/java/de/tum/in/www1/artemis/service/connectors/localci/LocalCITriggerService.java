@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -58,8 +60,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
-            programmingMessagingService.notifyUserAboutNewResult(result, participation);
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+            if (result != null) {
+                programmingMessagingService.notifyUserAboutNewResult(result, participation);
+            }
+            else {
+                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+            }
         });
     }
 }

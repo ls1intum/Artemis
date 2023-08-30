@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
+import static java.util.Comparator.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,7 +9,6 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -206,17 +204,17 @@ public class ProgrammingExerciseResultTestService {
             expectedTestCases.add(createTest("test3", 3L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
         }
 
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
-        assertThat(optionalResult).isPresent();
+        assertThat(result).isNotNull();
         if (withFailedTest) {
-            assertThat(optionalResult.get().getScore()).isEqualTo(75L);
+            assertThat(result.getScore()).isEqualTo(75L);
         }
         else {
-            assertThat(optionalResult.get().getScore()).isEqualTo(100L);
+            assertThat(result.getScore()).isEqualTo(100L);
         }
 
         // Call again and shouldn't re-create new submission.
@@ -231,26 +229,18 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.orElseThrow().getId());
+        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+        assertThat(result).isNotNull();
+        final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(result.getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
-        Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
-            if (Objects.equals(fb1.getDetailText(), fb2.getDetailText()) && Objects.equals(fb1.getText(), fb2.getText())
-                    && Objects.equals(fb1.getReference(), fb2.getReference())) {
-                return 0;
-            }
-            else {
-                return 1;
-            }
-        };
+        var scaFeedbackComparator = comparing(Feedback::getDetailText, nullsFirst(naturalOrder())).thenComparing(Feedback::getText, nullsFirst(naturalOrder()))
+                .thenComparing(Feedback::getReference, nullsFirst(naturalOrder()));
 
-        assertThat(optionalResult).isPresent();
-        var result = optionalResult.get();
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
                 .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
@@ -258,38 +248,6 @@ public class ProgrammingExerciseResultTestService {
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
-    }
-
-    // Test
-    // TODO: why is this test not invoked at all?
-    public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
-        var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification) - 3;  // 3 of those should be filtered
-        assertThat(((ProgrammingSubmission) optionalResult.orElseThrow().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
-    }
-
-    // Test
-    // TODO: why is this test not invoked at all?
-    public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
-        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.orElseThrow().getId());
-        var expectedNoOfLogs = 0; // No logs should be stored because the build was successful
-        assertThat(((ProgrammingSubmission) optionalResult.orElseThrow().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
-        assertThat(submissionWithLogs.orElseThrow().getBuildLogEntries()).hasSize(expectedNoOfLogs);
-
-        // Call again and should not re-create new submission.
-        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -331,11 +289,9 @@ public class ProgrammingExerciseResultTestService {
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
         resultRepository.save(programmingSubmission.getFirstResult());
 
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
-        assertThat(optionalResult).isPresent();
-
-        var result = optionalResult.get();
+        assertThat(result).isNotNull();
 
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks()).hasSize(6);
@@ -365,9 +321,8 @@ public class ProgrammingExerciseResultTestService {
 
         var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
 
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
-        assertThat(optionalResult).isPresent();
-        var result = optionalResult.get();
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        assertThat(result).isNotNull();
         var actualReportsByTestName = result.getCoverageFileReportsByTestCaseName();
         assertThat(actualReportsByTestName).usingRecursiveComparison().isEqualTo(expectedReportsByTestName);
 
@@ -391,7 +346,7 @@ public class ProgrammingExerciseResultTestService {
 
         var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
-        assertThat(result).isPresent();
+        assertThat(result).isNotNull();
     }
 
     // Test
@@ -411,23 +366,7 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
-        assertThat(result).isPresent();
-    }
-
-    // Test
-    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
-            throws Exception {
-        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
-        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
-
-        postResult(resultNotification);
-
-        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
-
-        Result result = resultArgumentCaptor.getValue();
-        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
+        assertThat(result).isNotNull();
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

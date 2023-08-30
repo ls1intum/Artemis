@@ -25,7 +25,12 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
     passwordForm: FormGroup;
 
-    constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private profileService: ProfileService, private fb: FormBuilder) {}
+    constructor(
+        private passwordResetFinishService: PasswordResetFinishService,
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+        private fb: FormBuilder,
+    ) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe((params) => {

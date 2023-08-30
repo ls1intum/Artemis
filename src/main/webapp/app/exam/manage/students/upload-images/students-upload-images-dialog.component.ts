@@ -44,7 +44,11 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faUpload = faUpload;
     faArrowRight = faArrowRight;
 
-    constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private examManagementService: ExamManagementService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private alertService: AlertService,
+        private examManagementService: ExamManagementService,
+    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

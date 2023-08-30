@@ -1,9 +1,10 @@
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
 import javaScaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, programmingExerciseEditor, programmingExerciseScaFeedback, programmingExercisesScaConfig } from '../../../support/artemis';
+import { courseManagementAPIRequest, exerciseAPIRequest, programmingExerciseEditor, programmingExerciseScaFeedback, programmingExercisesScaConfig } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Static code analysis tests', () => {
     let course: Course;
@@ -11,10 +12,10 @@ describe('Static code analysis tests', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.createProgrammingExercise({ course, scaMaxPenalty: 50 }).then((exerciseResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            exerciseAPIRequest.createProgrammingExercise({ course, scaMaxPenalty: 50 }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -43,6 +44,6 @@ describe('Static code analysis tests', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

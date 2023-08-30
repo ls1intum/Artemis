@@ -41,7 +41,11 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     // Icons
     faRedo = faRedo;
 
-    constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
+    constructor(
+        private submissionService: ProgrammingSubmissionService,
+        private programmingBuildRunService: ProgrammingBuildRunService,
+        private modalService: NgbModal,
+    ) {}
 
     ngOnInit() {
         // The info that the builds were triggered comes from a websocket channel.

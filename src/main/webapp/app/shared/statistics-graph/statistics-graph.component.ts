@@ -56,7 +56,10 @@ export class StatisticsGraphComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService) {
+    constructor(
+        private service: StatisticsService,
+        private translateService: TranslateService,
+    ) {
         this.translateService.onLangChange.subscribe(() => {
             this.onSystemLanguageChange();
         });

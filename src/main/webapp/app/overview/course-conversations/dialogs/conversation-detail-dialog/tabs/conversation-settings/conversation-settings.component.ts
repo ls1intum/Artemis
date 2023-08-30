@@ -49,7 +49,12 @@ export class ConversationSettingsComponent implements OnDestroy {
 
     faTimes = faTimes;
 
-    constructor(private modalService: NgbModal, private channelService: ChannelService, private groupChatService: GroupChatService, private alertService: AlertService) {}
+    constructor(
+        private modalService: NgbModal,
+        private channelService: ChannelService,
+        private groupChatService: GroupChatService,
+        private alertService: AlertService,
+    ) {}
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();

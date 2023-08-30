@@ -39,7 +39,11 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     affectedExerciseRouterLink: (string | number)[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private activatedRoute: ActivatedRoute) {}
+    constructor(
+        protected metisService: MetisService,
+        private plagiarismCasesService: PlagiarismCasesService,
+        private activatedRoute: ActivatedRoute,
+    ) {}
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({

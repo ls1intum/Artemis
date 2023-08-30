@@ -11,8 +11,12 @@
     &.dotstyle--scaleup {
         li {
             span {
-                -webkit-transition: -webkit-transform 0.3s ease, background-color 0.3s ease;
-                transition: transform 0.3s ease, background-color 0.3s ease;
+                -webkit-transition:
+                    -webkit-transform 0.3s ease,
+                    background-color 0.3s ease;
+                transition:
+                    transform 0.3s ease,
+                    background-color 0.3s ease;
             }
 
             &.p-small,

@@ -17,7 +17,11 @@ type EntityArrayResponseType = HttpResponse<Competency[]>;
 export class CompetencyService {
     private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient, private entityTitleService: EntityTitleService, private lectureUnitService: LectureUnitService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private entityTitleService: EntityTitleService,
+        private lectureUnitService: LectureUnitService,
+    ) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(

@@ -32,7 +32,10 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     // Icons
     faDownload = faDownload;
 
-    constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
+    constructor(
+        private programmingExerciseService: ProgrammingExerciseService,
+        private alertService: AlertService,
+    ) {}
 
     exportExercise() {
         if (this.exerciseId) {

@@ -93,6 +93,14 @@ public interface InstanceMessageSendService {
     void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId);
 
     /**
+     * Send a message to the main server that all student repositories of an exercise should be instantly unlocked.
+     * This does not unlock the participations associated with the repositories! See {@link #sendUnlockAllStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be unlocked
+     */
+    void sendUnlockAllStudentRepositories(Long exerciseId);
+
+    /**
      * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.
      *
      * @param exerciseId the id of the exercise that should be unlocked

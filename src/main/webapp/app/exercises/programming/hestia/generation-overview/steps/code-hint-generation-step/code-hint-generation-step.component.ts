@@ -23,7 +23,11 @@ export class CodeHintGenerationStepComponent implements OnInit {
 
     faWrench = faWrench;
 
-    constructor(private exerciseService: ProgrammingExerciseService, private codeHintService: CodeHintService, private alertService: AlertService) {}
+    constructor(
+        private exerciseService: ProgrammingExerciseService,
+        private codeHintService: CodeHintService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         this.isLoading = true;

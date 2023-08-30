@@ -27,7 +27,11 @@ export class SubmissionService {
     public resourceUrl = 'api/submissions';
     public resourceUrlParticipation = 'api/participations';
 
-    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private complaintResponseService: ComplaintResponseService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Delete an existing submission
