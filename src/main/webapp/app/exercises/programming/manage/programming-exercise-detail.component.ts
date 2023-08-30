@@ -184,7 +184,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 this.programmingExercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                        const feature = profileInfo.programmingLanguageFeatures.find((feature) => feature.programmingLanguage === this.programmingExercise.programmingLanguage);
+                        this.supportsAuxiliaryRepositories = feature?.auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     }
                 });
