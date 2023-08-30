@@ -248,7 +248,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
         comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
-        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestions');
+        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestionsForProgramming');
         feedbackSuggestionsStub.mockReturnValue(
             of([
                 { text: 'unreferenced test', detailText: 'some detail', reference: undefined },
