@@ -131,6 +131,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
     widgetHeight = localStorage.getItem('widgetHeight') || `${this.initialHeight}px`;
     public ButtonType = ButtonType;
+    readonly IrisLogoSize = IrisLogoSize;
     private navigationSubscription: Subscription;
 
     constructor(
@@ -623,6 +624,4 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
 }
