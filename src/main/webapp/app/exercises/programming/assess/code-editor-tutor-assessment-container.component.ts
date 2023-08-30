@@ -275,7 +275,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestions(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
+        this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
             for (const feedback of [...this.referencedFeedback, ...this.unreferencedFeedback]) {
