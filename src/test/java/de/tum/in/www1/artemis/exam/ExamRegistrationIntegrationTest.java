@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "examregistrationtest";
 

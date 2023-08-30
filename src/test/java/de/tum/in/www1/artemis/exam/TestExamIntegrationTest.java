@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "testexamintegration";
 

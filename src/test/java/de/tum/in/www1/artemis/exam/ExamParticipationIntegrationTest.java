@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exam;
 
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.withPrecision;
 import static org.awaitility.Awaitility.await;
@@ -60,7 +59,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 
-public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "examparticipationtest";
 
@@ -218,9 +217,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
             registeredUsers = Set.of(student1, student2);
             exam.setExamUsers(Set.of(new ExamUser()));
             // setting dates
-            exam.setStartDate(now().plusHours(2));
-            exam.setEndDate(now().plusHours(3));
-            exam.setVisibleDate(now().plusHours(1));
+            exam.setStartDate(ZonedDateTime.now().plusHours(2));
+            exam.setEndDate(ZonedDateTime.now().plusHours(3));
+            exam.setVisibleDate(ZonedDateTime.now().plusHours(1));
         }
 
         @AfterEach
@@ -349,7 +348,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         private List<Participation> invokePrepareExerciseStart() throws Exception {
             // invoke start exercises
             int noGeneratedParticipations = prepareExerciseStart(exam);
-            verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+            verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
             assertThat(noGeneratedParticipations).isEqualTo(exam.getStudentExams().size());
             return participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         }
@@ -375,7 +374,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         int numberOfGeneratedParticipations = prepareExerciseStart(exam);
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
@@ -423,7 +422,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         assertThat(exam.getExamUsers()).hasSize(3);
 
         int numberOfGeneratedParticipations = prepareExerciseStart(exam);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
@@ -489,7 +488,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         // Start the exam to create participations
         prepareExerciseStart(exam);
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Get the student exam of student2
         Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
         assertThat(optionalStudent1Exam.orElseThrow()).isNotNull();
@@ -571,7 +570,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
         // Start the exam to create participations
         prepareExerciseStart(exam);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
@@ -617,9 +616,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         User examTutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
-        var examVisibleDate = now().minusMinutes(5);
-        var examStartDate = now().plusMinutes(5);
-        var examEndDate = now().plusMinutes(20);
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
@@ -677,12 +676,12 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStartedAndStartDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
             studentExam.setSubmitted(true);
-            studentExam.setSubmissionDate(now().minusMinutes(1));
+            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
         });
         studentExamRepository.saveAll(studentExams);
 
@@ -706,7 +705,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 assertThat(participation.getSubmissions()).hasSize(1);
                 Submission submission = participation.getSubmissions().iterator().next();
                 submission.submitted(true);
-                submission.setSubmissionDate(now().minusMinutes(6));
+                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
                 submissionRepository.save(submission);
             }
         }
@@ -736,7 +735,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 // Create results
                 var result = new Result().score(resultScore);
                 if (exercise instanceof QuizExercise) {
-                    result.completionDate(now().minusMinutes(4));
+                    result.completionDate(ZonedDateTime.now().minusMinutes(4));
                     result.setRated(true);
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -771,8 +770,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
                             .inTime())
                     .reduce(Long::sum).orElseThrow();
-            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
                 assertThat(locks).isEqualTo(studentExams.size());
+            }
         });
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 10 done");
@@ -789,7 +789,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(now().minusMinutes(5));
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }
@@ -831,7 +831,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 // Create results
                 var result = new Result().score(50D).rated(true);
                 if (exercise instanceof QuizExercise) {
-                    result.completionDate(now().minusMinutes(3));
+                    result.completionDate(ZonedDateTime.now().minusMinutes(3));
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setParticipation(participation);
@@ -884,7 +884,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(now().minusMinutes(5));
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }
@@ -914,9 +914,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        var visibleDate = now().minusMinutes(5);
-        var startDate = now().plusMinutes(5);
-        var endDate = now().plusMinutes(20);
+        var visibleDate = ZonedDateTime.now().minusMinutes(5);
+        var startDate = ZonedDateTime.now().plusMinutes(5);
+        var endDate = ZonedDateTime.now().plusMinutes(20);
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = getRegisteredStudentsForExam();
@@ -927,7 +927,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
         Integer noGeneratedParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -951,9 +951,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
-            studentExam.setStartedAndStartDate(now().minusMinutes(2));
+            studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
             studentExam.setSubmitted(true);
-            studentExam.setSubmissionDate(now().minusMinutes(1));
+            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
         });
         studentExamRepository.saveAll(studentExams);
 
@@ -1006,7 +1006,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
                 // Create results
                 if (withSecondCorrectionAndStarted) {
-                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(now().minusMinutes(5));
+                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                     firstResult.setParticipation(participation);
                     firstResult.setAssessor(instructor);
                     firstResult = resultRepository.save(firstResult);
@@ -1014,7 +1014,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                     submission.addResult(firstResult);
                 }
 
-                var finalResult = new Result().score(resultScore).rated(true).completionDate(now().minusMinutes(5));
+                var finalResult = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                 finalResult.setParticipation(participation);
                 finalResult.setAssessor(instructor);
                 finalResult = resultRepository.save(finalResult);
@@ -1022,7 +1022,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                 submission.addResult(finalResult);
 
                 submission.submitted(true);
-                submission.setSubmissionDate(now().minusMinutes(6));
+                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
                 submissionRepository.save(submission);
             }
         }
@@ -1080,7 +1080,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
         // Compare exerciseGroups in DTO to exam exerciseGroups
         // Tolerated absolute difference for floating-point number comparisons
-        double EPSILON = 0000.1;
+        double epsilon = 0000.1;
         for (var exerciseGroupDTO : examScores.exerciseGroups()) {
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id())).findFirst()
@@ -1089,9 +1089,9 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().orElseThrow().getMaxPoints();
             assertThat(exerciseGroupDTO.maxPoints()).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().orElseThrow().getMaxPoints());
-            assertThat(groupMaxScoreFromExam).isEqualTo(exerciseGroupDTO.maxPoints(), withPrecision(EPSILON));
+            assertThat(groupMaxScoreFromExam).isEqualTo(exerciseGroupDTO.maxPoints(), withPrecision(epsilon));
 
-            // EPSILON
+            // epsilon
             // Compare exercise information
             long noOfExerciseGroupParticipations = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
@@ -1131,14 +1131,14 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
 
             var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
 
-            assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(EPSILON));
+            assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(EPSILON));
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
-            assertThat(studentResult.overallScoreAchieved()).isEqualTo(calculatedOverallScore, withPrecision(EPSILON));
+            assertThat(studentResult.overallScoreAchieved()).isEqualTo(calculatedOverallScore, withPrecision(epsilon));
 
             assertThat(studentResult.overallGrade()).isNotNull();
             assertThat(studentResult.hasPassed()).isNotNull();
@@ -1197,7 +1197,7 @@ public class ExamParticipationIntegrationTest extends AbstractSpringIntegrationB
                     assertThat(exerciseResult.hasNonEmptySubmission()).isFalse();
                 }
                 // TODO: create a test where hasNonEmptySubmission() is false for a quiz
-                assertThat(exerciseResult.achievedPoints()).isEqualTo(originalExercise.getMaxPoints() * resultScore / 100, withPrecision(EPSILON));
+                assertThat(exerciseResult.achievedPoints()).isEqualTo(originalExercise.getMaxPoints() * resultScore / 100, withPrecision(epsilon));
             }
         }
 

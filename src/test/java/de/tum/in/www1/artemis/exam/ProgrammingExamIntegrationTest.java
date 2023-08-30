@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 
-public class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
 
@@ -251,7 +251,7 @@ public class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBam
         // invoke prepare exercise start
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1))).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
     @Test
