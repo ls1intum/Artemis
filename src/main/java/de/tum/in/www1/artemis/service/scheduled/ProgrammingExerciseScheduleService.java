@@ -912,8 +912,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             });
         }
 
-        log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
-
-        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> failedOperations);
+        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
+            log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
+            if (!failedOperations.isEmpty()) {
+                var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));
+                log.warn("The (scheduled) task '{}' for programming exercise {} failed for these {} participations: {}", operation, programmingExercise.getId(),
+                        failedOperations.size(), failedIds);
+            }
+            return failedOperations;
+        });
     }
 }
