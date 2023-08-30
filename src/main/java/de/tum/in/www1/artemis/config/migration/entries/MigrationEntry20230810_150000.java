@@ -26,12 +26,12 @@ public class MigrationEntry20230810_150000 extends MigrationEntry {
     public void execute() {
         Pageable pageable = Pageable.ofSize(50);
         while (true) {
-            Page<ProgrammingExercise> exercises = programmingExerciseRepository.findAll(pageable);
-            for (ProgrammingExercise exercise : exercises.getContent()) {
+            Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(pageable);
+            for (ProgrammingExercise exercise : exercisePage.getContent()) {
                 taskService.replaceTestNamesWithIds(exercise);
             }
-            programmingExerciseRepository.saveAll(exercises.getContent());
-            if (exercises.isLast()) {
+            programmingExerciseRepository.saveAll(exercisePage.getContent());
+            if (exercisePage.isLast()) {
                 break;
             }
             pageable = pageable.next();
