@@ -135,7 +135,7 @@ describe('AttachmentUnitsComponent', () => {
     });
 
     it('should initialize with remove slides key phrases empty', () => {
-        expect(attachmentUnitsComponent.removeSlidesKeyphrases).toMatch('');
+        expect(attachmentUnitsComponent.removeSlidesCommaSeparatedKeyPhrases).toMatch('');
     });
 
     it('should create attachment units', fakeAsync(() => {
