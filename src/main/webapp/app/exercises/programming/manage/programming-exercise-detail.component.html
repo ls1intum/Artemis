@@ -380,9 +380,11 @@
                                 </div>
                             </dt>
                             <dd>
-                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                    auxiliaryRepository.repositoryUrl
-                                }}</a>
+                                <div *ngif="!localVCEnabled">
+                                    <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                        auxiliaryRepository.repositoryUrl
+                                    }}</a>
+                                </div>
                             </dd>
                         </li>
                     </ul>
