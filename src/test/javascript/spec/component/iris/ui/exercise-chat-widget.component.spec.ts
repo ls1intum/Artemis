@@ -386,7 +386,7 @@ describe('ExerciseChatWidgetComponent', () => {
             () =>
                 ({
                     lineHeight: '20px',
-                } as Partial<CSSStyleDeclaration> as any),
+                }) as Partial<CSSStyleDeclaration> as any,
         );
 
         jest.spyOn(component, 'adjustChatBodyHeight');
