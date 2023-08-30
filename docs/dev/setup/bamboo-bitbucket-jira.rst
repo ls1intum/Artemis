@@ -175,8 +175,8 @@ under ``localhost:7990``.
    Jira <https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html>`__
    to synchronize the users in bitbucket and bamboo:
 
-   -  Go to Jira → User management → Jira user server → Add application →
-      Create one application for bitbucket and one for bamboo → add the
+   -  Go to `Jira → User management → Jira user server <http://localhost:8081/secure/admin/ConfigureCrowdServer.jspa>`__
+      → Add application → Create one application for bitbucket and one for bamboo → add the
       IP-address ``0.0.0.0/0`` to IP Addresses
 
     .. list-table::
@@ -185,7 +185,9 @@ under ``localhost:7990``.
 
           - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
-   -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
+   -  Go to `Bitbucket <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
+      and `Bamboo <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
+      → User Directories → Add Directories →
       Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
       use the application name and password which you used in the previous
       step. Also, you should decrease the synchronisation period (e.g. to 2
@@ -217,10 +219,11 @@ under ``localhost:7990``.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
-   and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
+   and add it to bamboo. Go to `Bamboo → Manage apps <http://localhost:8085/plugins/servlet/upm>`__ → Upload app → select
    the downloaded .jar file → Upload
 
-#. Authorize the Bamboo agent. Bamboo Administration → Agents → Remote agents → Agent authentication
+#. Authorize the Bamboo agent. `Bamboo Administration → Agents <http://localhost:8085/admin/agent/configureAgents!doDefault.action>`__
+   → Remote agents → Agent authentication
 
    Approve the agent and edit the IP address in a development setup to ``*.*.*.*`` as the Docker container doesn't
    have a static IP address.
@@ -236,8 +239,8 @@ under ``localhost:7990``.
 
    #. Personal access token for Bamboo:
 
-      - Log in as the admin user and go to Bamboo → Profile (top right corner) → Personal access tokens →
-        Create token
+      - Log in as the admin user and go to `Bamboo → Profile (top right corner) → Personal access tokens →
+        Create token <http://localhost:8085/profile/createAccessToken.action>`__
 
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
@@ -254,8 +257,8 @@ under ``localhost:7990``.
 
    #. Personal access token for Bitbucket:
 
-      - Log in as the admin user and go to Bitbucket → Your profile image (top right corner) → Manage account →
-        HTTP access tokens → Create token
+      - Log in as the admin user and go to `Bitbucket → Your profile image (top right corner) → Manage account
+        <http://localhost:7990/account>`__ → HTTP access tokens → Create token
 
           .. figure:: setup/bamboo-bitbucket-jira/bitbucket_create_token.png
              :align: center
