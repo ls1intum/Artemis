@@ -39,6 +39,11 @@ public final class Constants {
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
+     * <p>
+     * This is needed because locking programming exercise repositories might take up to 60 seconds,
+     * especially for exercises with many participants.
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the push was a few seconds late.
      *
      * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
      */
