@@ -185,10 +185,9 @@ under ``localhost:7990``.
 
           - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
-   -  Go to `Bitbucket <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
-      and `Bamboo <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
-      → User Directories → Add Directories →
-      Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
+   -  Go to `Bitbucket → User Directories <http://localhost:7990/plugins/servlet/embedded-crowd/directories/list>`__
+      and `Bamboo → User Directories <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
+      → Add Directories → Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
       use the application name and password which you used in the previous
       step. Also, you should decrease the synchronisation period (e.g. to 2
       minutes).
