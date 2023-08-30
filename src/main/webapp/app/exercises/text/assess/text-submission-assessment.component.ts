@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -34,13 +34,17 @@ import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { AthenaService } from 'app/assessment/athena.service';
+import { TextBlock } from 'app/entities/text-block.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
 })
-export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit {
+export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
@@ -82,6 +86,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     exerciseDashboardLink: string[];
     isExamMode = false;
 
+    private feedbackSuggestionsObservable?: Subscription;
+
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
     }
@@ -106,6 +112,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
+        private athenaService: AthenaService,
     ) {
         super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -163,6 +170,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
+    ngOnDestroy(): void {
+        this.feedbackSuggestionsObservable?.unsubscribe();
+    }
+
     private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
@@ -196,6 +207,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = this.computeTotalScore(this.assessments);
         this.isLoading = false;
 
+        this.loadFeedbackSuggestions();
+
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
@@ -225,6 +238,102 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private checkPermissions(result?: Result): void {
         this.isAssessor = result?.assessor?.id === this.userId;
+    }
+
+    /**
+     * Adds a TextBlockRef, adjusting existing automatic text blocks to fit around the new text block if necessary (and possible).
+     * Example: There already are 2 text blocks:
+     *          - block 1 from index 0 to 10 (automatically generated)
+     *          - block 2 from index 10 to 20 (automatically generated)
+     *          Now, we add a new text block ref with feedback from index 5 to 15.
+     *          Then, we have three text blocks: 0-5, 5-15, 15-20.
+     * If the split conflicts with a manual feedback, we don't add the TextBlockRef at all.
+     *
+     * @param refToAdd The TextBlockRef to add (text block + feedback on it)
+     */
+    private addAutomaticTextBlockRef(refToAdd: TextBlockRef) {
+        const newTextBlockRefs: TextBlockRef[] = [];
+        const [start, end] = [refToAdd.block!.startIndex!, refToAdd.block!.endIndex!];
+        for (const existingBlockRef of this.textBlockRefs) {
+            const [exStart, exEnd] = [existingBlockRef.block!.startIndex!, existingBlockRef.block!.endIndex!];
+            if (exStart === start && exEnd === end) {
+                // existing: |---|
+                // to add:   |---|
+                // -> replace existing block (don't add existing one)
+            } else if (exEnd <= start || exStart >= end) {
+                // existing: |---|  or   |---|
+                // to add:         |---|
+                // -> no overlap, just add
+                newTextBlockRefs.push(existingBlockRef);
+            } else {
+                if (exStart < start) {
+                    // Existing text block starts before text block to add
+                    if (exEnd > end) {
+                        // existing: |----------|
+                        // to add:      |---|
+                        // ->        |--|---|---|
+                        //          (|ex|add|new|)
+                        // (split into three text blocks)
+                        const newBlockRef = new TextBlockRef(new TextBlock(), undefined);
+                        newBlockRef.block!.startIndex = end;
+                        newBlockRef.block!.endIndex = exEnd;
+                        newBlockRef.block!.submission = this.submission;
+                        newBlockRef.block!.computeId();
+
+                        existingBlockRef.block!.endIndex = start;
+                        newTextBlockRefs.push(existingBlockRef);
+                        newTextBlockRefs.push(newBlockRef);
+                    } else {
+                        // existing: |-----|
+                        // to add:      |-----|
+                        // ->        |--|-----|
+                        // ("squish" the existing text block)
+                        existingBlockRef.block!.endIndex = start;
+                        newTextBlockRefs.push(existingBlockRef);
+                    }
+                } else if (exEnd > end) {
+                    // existing:       |-----|
+                    // to add:    |------|
+                    // ->         |------|---|
+                    // ("squish" the existing text block)
+                    existingBlockRef.block!.startIndex = end;
+                    newTextBlockRefs.push(existingBlockRef);
+                }
+            }
+        }
+
+        // Add the text block to add
+        newTextBlockRefs.push(refToAdd);
+
+        // Sort the new text block refs by their start index
+        newTextBlockRefs.sort((ref1, ref2) => ref1.block!.startIndex! - ref2.block!.startIndex!);
+
+        // Update the text on all text block refs
+        for (const blockRef of newTextBlockRefs) {
+            blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex!);
+        }
+
+        this.textBlockRefs = newTextBlockRefs;
+        this.submission!.blocks = this.textBlockRefs.map((blockRef) => blockRef.block!);
+        this.result!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined) as Feedback[];
+    }
+
+    /**
+     * Start loading feedback suggestions from Athena
+     * (only if this is a fresh submission, i.e. no assessments exist yet)
+     */
+    loadFeedbackSuggestions(): void {
+        if (this.assessments.length > 0) {
+            return;
+        }
+        this.feedbackSuggestionsObservable = this.athenaService
+            .getFeedbackSuggestions(this.exercise!.id!, this.submission!.id!)
+            .subscribe((feedbackSuggestions: TextBlockRef[]) => {
+                for (const suggestion of feedbackSuggestions) {
+                    this.addAutomaticTextBlockRef(suggestion);
+                }
+                this.validateFeedback();
+            });
     }
 
     /**
