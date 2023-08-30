@@ -1,5 +1,4 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,14 +8,11 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, merge } from 'rxjs';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -69,14 +65,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     constructor(
         private route: ActivatedRoute,
-        private textExerciseService: TextExerciseService,
-        private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
-        private resultService: ResultService,
         private alertService: AlertService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
@@ -98,26 +89,29 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private updateParticipation(participation: StudentParticipation) {
+        console.log(participation);
         this.participation = participation;
         this.textExercise = this.participation.exercise as TextExercise;
         this.examMode = !!this.textExercise.exerciseGroup;
         this.textExercise.studentParticipations = [this.participation];
         this.checkIfSubmitAlwaysEnabled();
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
+        console.log(this.textExercise.exerciseGroup?.exam);
         this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
             this.submission = participation.submissions[0] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            if (this.submission && this.submission.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
+            console.log(this.isAfterAssessmentDueDate, this.isAfterPublishDate);
+            if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
 
-            if (this.submission && this.submission.text) {
+            if (this.submission?.text) {
                 this.answer = this.submission.text;
             }
         }
