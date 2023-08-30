@@ -121,7 +121,7 @@ under ``localhost:7990``.
    - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
    - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
 
-     **You manually have to adjust the Display URLLLLfor the Bamboo → Bitbucket AND
+     **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
      Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
      ``http://localhost:8085`` **.**
 
