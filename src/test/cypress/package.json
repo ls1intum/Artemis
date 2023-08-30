@@ -9,7 +9,7 @@
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.4",
         "@types/node": "20.5.6",
-        "cypress": "12.17.4",
+        "cypress": "13.0.0",
         "cypress-cloud": "1.9.3",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "2.0.1",
