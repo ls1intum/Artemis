@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 
 import javax.validation.constraints.NotNull;
 
@@ -72,11 +71,12 @@ public class DataExportResource {
      */
     private boolean canRequestDataExport() {
         var user = userRepository.getUser();
-        var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
+        var dataExports = dataExportRepository.findAllDataExportsByUserIdOrderByRequestDateDesc(user.getId());
         if (dataExports.isEmpty()) {
             return true;
         }
-        var latestDataExport = dataExports.stream().max(Comparator.comparing(DataExport::getCreatedDate)).get();
+        // because we order by request date desc, the first data export is the latest one
+        var latestDataExport = dataExports.get(0);
         var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
                 .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
 

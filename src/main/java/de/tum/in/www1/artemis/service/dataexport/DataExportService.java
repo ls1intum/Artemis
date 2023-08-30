@@ -112,8 +112,7 @@ public class DataExportService {
     public DataExportDTO canDownloadAnyDataExport() {
         var noDataExport = new DataExportDTO(null, null, null, null);
         var user = userRepository.getUser();
-        var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserId(user.getId());
-        Optional<DataExport> latestDataExport = dataExportsFromUser.stream().max(Comparator.comparing(DataExport::getCreatedDate));
+        var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserIdOrderByRequestDateDesc(user.getId());
         if (dataExportsFromUser.isEmpty()) {
             return noDataExport;
         }
@@ -123,8 +122,9 @@ public class DataExportService {
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        return new DataExportDTO(null, latestDataExport.get().getDataExportState(), latestDataExport.get().getCreatedDate().atZone(ZoneId.systemDefault()),
-                retrieveNextRequestDate(latestDataExport.get()));
+        var latestDataExport = dataExportsFromUser.get(0);
+        return new DataExportDTO(null, latestDataExport.getDataExportState(), latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()),
+                retrieveNextRequestDate(latestDataExport));
     }
 
     /**
