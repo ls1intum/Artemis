@@ -88,6 +88,32 @@ public class IrisMessageResource {
     }
 
     /**
+     * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
+     *
+     * @param sessionId of the session
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
+     *         not be found.
+     */
+    @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+        var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+            throw new BadRequestException("Only the last message can be resent");
+        }
+        if (message.getSender() != IrisMessageSender.USER) {
+            throw new BadRequestException("Only user messages can be resent");
+        }
+        irisSessionService.requestMessageFromIris(session);
+        message.setMessageDifferentiator(message.getMessageDifferentiator());
+
+        return ResponseEntity.ok(message);
+    }
+
+    /**
      * PUT sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
      *
      * @param sessionId of the session
