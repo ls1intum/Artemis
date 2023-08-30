@@ -277,7 +277,7 @@ public class RepositoryService {
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
-        String newFilename = FileService.removeIllegalCharacters(fileMove.newFilename());
+        String newFilename = FileService.sanitizeFilename(fileMove.newFilename());
 
         Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
         if (existingFile.isEmpty()) {
