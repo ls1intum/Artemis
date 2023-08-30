@@ -229,28 +229,32 @@
                     <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
                 </div>
                 <div class="plagiarism-option">
-                    <input
-                        type="checkbox"
-                        id="continuous_plagiarism_control_enabled"
-                        class="plagiarism-option-checkbox form-check-input"
-                        name="textExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
-                        #textExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
-                        [(ngModel)]="textExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
-                    />
-                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
+                    <div class="form-check form-check-inline">
+                        <input
+                            type="checkbox"
+                            id="continuous_plagiarism_control_enabled"
+                            class="plagiarism-option-checkbox form-check-input"
+                            name="modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled"
+                            #modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlEnabled="ngModel"
+                            [(ngModel)]="textExercise.plagiarismChecksConfig!.continuousPlagiarismControlEnabled"
+                        />
+                        <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
+                    </div>
                 </div>
                 <div class="plagiarism-option">
-                    <input
-                        type="checkbox"
-                        id="continuous_plagiarism_control_post_due_date_checks_enabled"
-                        class="plagiarism-option-checkbox form-check-input"
-                        name="textExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
-                        [disabled]="!textExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
-                        #textExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
-                        [(ngModel)]="textExercise.plagiarismChecksConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
-                    />
-                    <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlPostDueDateChecksEnabled">
-                        Run additional checks during the night after exercise's due date.
+                    <div class="form-check form-check-inline">
+                        <input
+                            type="checkbox"
+                            id="continuous_plagiarism_control_post_due_date_checks_enabled"
+                            class="plagiarism-option-checkbox form-check-input"
+                            name="modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
+                            [disabled]="!textExercise.plagiarismChecksConfig?.continuousPlagiarismControlEnabled"
+                            #modelingExercise.plagiarismChecksConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
+                            [(ngModel)]="textExercise.plagiarismChecksConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
+                        />
+                        <div class="plagiarism-option-label" jhiTranslate="artemisApp.exercise.continuousPlagiarismControlPostDueDateChecksEnabled">
+                            Run additional checks during the night after exercise's due date.
+                        </div>
                     </div>
                 </div>
             </div>
