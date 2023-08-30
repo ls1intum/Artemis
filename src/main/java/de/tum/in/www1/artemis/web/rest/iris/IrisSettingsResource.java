@@ -128,6 +128,7 @@ public class IrisSettingsResource {
      */
     @PutMapping("iris/global-iris-settings")
     @EnforceAdmin
+    @ManualConfig
     public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
         var updatedSettings = irisSettingsService.saveGlobalIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
