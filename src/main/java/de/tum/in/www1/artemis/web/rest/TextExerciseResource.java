@@ -377,6 +377,9 @@ public class TextExerciseResource {
         }
 
         textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExamViaExerciseGroupOrCourseMember().setCourse(null);
+        }
 
         return ResponseEntity.ok(participation);
     }
