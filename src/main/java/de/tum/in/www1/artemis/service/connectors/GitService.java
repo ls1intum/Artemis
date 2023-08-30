@@ -1278,7 +1278,7 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = FileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
