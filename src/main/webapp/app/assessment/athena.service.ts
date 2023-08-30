@@ -22,7 +22,6 @@ export class AthenaService {
     getFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<Feedback[]> {
         // For debugging: Return basic feedback suggestions for BubbleSort.java
         const referencedFeedbackSuggestion1 = new Feedback();
-        referencedFeedbackSuggestion1.id = 1;
         referencedFeedbackSuggestion1.credits = 1;
         referencedFeedbackSuggestion1.text = 'FeedbackSuggestion:';
         referencedFeedbackSuggestion1.detailText = 'This is a referenced feedback suggestion - test test';
@@ -30,7 +29,6 @@ export class AthenaService {
         referencedFeedbackSuggestion1.reference = 'file:src/de/athena/BubbleSort.java_line:9';
         referencedFeedbackSuggestion1.type = FeedbackType.AUTOMATIC;
         const referencedFeedbackSuggestion2 = new Feedback();
-        referencedFeedbackSuggestion2.id = 2;
         referencedFeedbackSuggestion2.credits = -1;
         referencedFeedbackSuggestion2.text = 'FeedbackSuggestion:';
         referencedFeedbackSuggestion2.detailText = 'Look at that TODO....';
@@ -38,7 +36,6 @@ export class AthenaService {
         referencedFeedbackSuggestion2.reference = 'file:src/de/athena/BubbleSort.java_line:13';
         referencedFeedbackSuggestion2.type = FeedbackType.AUTOMATIC;
         const referencedFeedbackSuggestion3 = new Feedback();
-        referencedFeedbackSuggestion3.id = 3;
         referencedFeedbackSuggestion3.credits = -4;
         referencedFeedbackSuggestion3.text = 'FeedbackSuggestion:';
         referencedFeedbackSuggestion3.detailText = 'You did not implement it correctly';
@@ -46,7 +43,6 @@ export class AthenaService {
         referencedFeedbackSuggestion3.reference = 'file:src/de/athena/MergeSort.java_line:13';
         referencedFeedbackSuggestion3.type = FeedbackType.AUTOMATIC;
         const unreferencedFeedbackSuggestion = new Feedback();
-        unreferencedFeedbackSuggestion.id = 4;
         unreferencedFeedbackSuggestion.credits = -2;
         unreferencedFeedbackSuggestion.text = 'FeedbackSuggestion:';
         unreferencedFeedbackSuggestion.detailText = 'You did not implement it correctly';
