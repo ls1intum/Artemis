@@ -514,7 +514,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
             competency = competencyUtilService.createCompetency(course);
-            competency.setMasteryThreshold(70);
+            competency.setMasteryThreshold(90);
             competency = competencyRepository.save(competency);
             expectedNodes = new HashSet<>(getExpectedNodesOfEmptyCompetency(competency));
             expectedEdges = new HashSet<>();
@@ -522,6 +522,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         @Test
         void testCompetencyWithLectureUnitAndExercise() {
+            competency.setMasteryThreshold(70);
+            competency = competencyRepository.save(competency);
+
             generateLectureUnits(1);
             generateExercises(1);
 
@@ -568,16 +571,21 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         @Test
         void testRecommendCorrectAmountOfLearningObjects() {
-            competency.setMasteryThreshold(70);
+            competency.setMasteryThreshold(55);
             competency = competencyRepository.save(competency);
 
             generateLectureUnits(1);
-            generateExercises(1);
+            generateExercises(10);
+            exercises[0].setDifficulty(DifficultyLevel.EASY);
+            exercises[1].setDifficulty(DifficultyLevel.MEDIUM);
+            exercises[2].setDifficulty(DifficultyLevel.HARD);
+            exerciseRepository.saveAll(List.of(exercises));
 
-            addNodes(lectureUnits);
-            addEdges(competency, lectureUnits);
-
-            generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges));
+            LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
+            learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
+            NgxLearningPathDTO actual = learningPathService.generateNgxPathRepresentation(learningPath);
+            // competenc start & end, lecture unit, and one exercise per difficulty level
+            assertThat(actual.nodes().size()).isEqualTo(6);
         }
 
         private void generateLectureUnits(int numberOfLectureUnits) {
