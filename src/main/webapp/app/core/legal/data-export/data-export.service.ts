@@ -28,4 +28,8 @@ export class DataExportService {
     canDownloadSpecificDataExport(dataExportId: number): Observable<boolean> {
         return this.http.get<boolean>(`api/data-exports/${dataExportId}/can-download`);
     }
+
+    requestDataExportForAnotherUser(login: string): Observable<DataExport> {
+        return this.http.post<DataExport>(`api/admin/data-exports/${login}`, {});
+    }
 }
