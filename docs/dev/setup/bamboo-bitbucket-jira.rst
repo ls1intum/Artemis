@@ -189,8 +189,7 @@ under ``localhost:7990``.
       Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
       use the application name and password which you used in the previous
       step. Also, you should decrease the synchronisation period (e.g. to 2
-      minutes). Press synchronise after adding the directory, the users and
-      groups should now be available.
+      minutes).
 
     .. list-table::
 
@@ -201,6 +200,8 @@ under ``localhost:7990``.
           - .. figure:: setup/bamboo-bitbucket-jira/user_directories_bamboo.png
 
                 Adding Crowd Server in **Bamboo**
+
+   - Press synchronise after adding the directory, the users and groups should now be available.
 
 #. Give the test users User access on Bitbucket: On the Administration interface (settings cogwheel on the top),
    go to the Global permissions. Type the names of all test users in the search field ("Add Users") and give them
