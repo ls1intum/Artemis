@@ -7,6 +7,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -25,6 +29,8 @@ import de.tum.in.www1.artemis.service.*;
  */
 @Service
 public class LearningPathRecommendationService {
+
+    private final Logger log = LoggerFactory.getLogger(LearningPathRecommendationService.class);
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
@@ -54,6 +60,7 @@ public class LearningPathRecommendationService {
      * <p>
      * Values can be reproduced by computing the cumulative normal distribution function (cdf) for the general normal distribution f(x|mean=[0.00...1.00], std_dev=0.35): {easy:
      * cdf(0.40), medium: cdf(0.85) - cdf(0.40), hard: 1 - cdf(0.85)}.
+     * Each array corresponds to the mean=idx/#distributions.
      */
     private final static double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
@@ -366,10 +373,17 @@ public class LearningPathRecommendationService {
     public List<LearningObject> getRecommendedOrderOfLearningObjects(LearningPath learningPath, Competency competency, RecommendationState state) {
         var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser())).toList();
         ArrayList<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
+
+        // early return if competency can be trivially mastered
+        if (canBeMasteredWithoutExercises(competency)) {
+            return recommendedOrder;
+        }
+
         final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
         final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
                 .collect(Collectors.toSet());
         final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(learningPath, competency, combinedPriorConfidence, pendingExercises.size());
+        log.warn("numberOfExercisesRequiredToMaster:" + numberOfExercisesRequiredToMaster);
         HashMap<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
         if (numberOfExercisesRequiredToMaster >= competency.getExercises().size()) {
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
@@ -383,6 +397,17 @@ public class LearningPathRecommendationService {
 
         scheduleExercisesByDistribution(recommendedOrder, recommendedExerciseDistribution, learningPath, competency);
         return recommendedOrder;
+    }
+
+    /**
+     * Checks if the competency can be mastered without completing any exercises.
+     *
+     * @param competency the competency to check
+     * @return true if the competency can be mastered without completing any exercises, false otherwise
+     */
+    private static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+        return ((double) competency.getLectureUnits().size()) / (3 * (competency.getLectureUnits().size() + competency.getExercises().size())) * 100 >= competency
+                .getMasteryThreshold();
     }
 
     private void scheduleAllExercises(ArrayList<LearningObject> recommendedOrder, HashMap<DifficultyLevel, Set<Exercise>> difficultyLevelMap) {
@@ -441,7 +466,7 @@ public class LearningPathRecommendationService {
                         return 0;
                     }
                     return competencyProgress.get().getConfidence();
-                }).sorted().summaryStatistics().getAverage();
+                }).sorted().average().orElse(100);
     }
 
     private int predictNumberOfExercisesRequiredToMaster(LearningPath learningPath, Competency competency, double priorConfidence, int numberOfPendingExercises) {
@@ -451,10 +476,15 @@ public class LearningPathRecommendationService {
         double LO = LU + EX;
         double MT = competency.getMasteryThreshold();
         double EXcomp = EX - numberOfPendingExercises;
-        double b = 3 * MT * LO + LU + EXcomp + scores.getCount() - 3 * LO * priorConfidence;
-        double c = -(3 * LO * (2 * scores.getSum() / 3d - scores.getCount() * MT) + scores.getCount() * (LU + EXcomp));
-        double D = Math.sqrt(Math.pow(b, 2) - 4 * c);
-        return (int) Math.round(Math.max((-b + D) / 2d, (-b - D) / 2d));
+        double a = 100d / (3d * LO);
+        double b = 100d * (LU + EXcomp + scores.getCount()) / (3d * LO) + 2d * priorConfidence / 3d - MT;
+        double c = 100d * (LU + EXcomp) * scores.getCount() / (3d * LO) + 2d * scores.getSum() / 3d - MT * scores.getCount();
+        double D = Math.sqrt(Math.pow(b, 2) - 4 * a * c);
+        double prediction1 = (-b + D) / (2d * a);
+        double prediction2 = (-b - D) / (2d * a);
+        int prediction = (int) Math.round(Math.max(prediction1, prediction2));
+        // numerical edge case, can't happen for valid competencies
+        return Math.max(prediction, 0);
     }
 
     private static HashMap<DifficultyLevel, Set<Exercise>> generateDifficultyLevelMap(Set<Exercise> exercises) {

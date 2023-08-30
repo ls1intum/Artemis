@@ -9,6 +9,8 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.jgrapht.alg.util.UnionFind;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -25,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
  */
 @Service
 public class LearningPathNgxService {
+
+    private final Logger log = LoggerFactory.getLogger(LearningPathNgxService.class);
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
@@ -216,7 +220,6 @@ public class LearningPathNgxService {
                 .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
 
         // generate ngx representation of recommended competencies
-        // IMPORTANT generateNgxGraphRepresentationForCompetency will be replaced by future PR
         recommendedOrderOfCompetencies.forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath, competency, nodes, edges, recommendationState));
         // generate edges between competencies
         for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {

@@ -281,5 +281,4 @@ public class CompetencyProgressService {
         final double mastery = getMastery(competencyProgress);
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
-
 }

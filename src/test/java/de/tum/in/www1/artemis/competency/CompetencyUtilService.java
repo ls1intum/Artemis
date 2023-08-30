@@ -133,9 +133,9 @@ public class CompetencyUtilService {
      * @param competency the competency to link the learning unit to
      * @param exercise   the exercise that will be linked to the competency
      */
-    public void linkExerciseToCompetency(Competency competency, Exercise exercise) {
+    public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
         exercise.getCompetencies().add(competency);
-        exerciseRepository.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     /**
