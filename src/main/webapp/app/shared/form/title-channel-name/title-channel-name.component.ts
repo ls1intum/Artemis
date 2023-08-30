@@ -29,7 +29,8 @@ export class TitleChannelNameComponent implements OnInit {
             // Defer updating the channel name into the next change detection cycle to avoid the
             // "NG0100: Expression has changed after it was checked" error
             setTimeout(() => {
-                this.formatChannelName(this.channelNamePrefix + (this.title ?? ''));
+                // Remove trailing hyphens if title is not undefined or empty
+                this.formatChannelName(this.channelNamePrefix + (this.title ?? ''), false, !!this.title);
             });
         }
     }
@@ -37,12 +38,14 @@ export class TitleChannelNameComponent implements OnInit {
     updateTitle(newTitle: string) {
         this.title = newTitle;
         this.titleChange.emit(this.title);
-        this.formatChannelName(this.channelNamePrefix + this.title);
+        // Remove trailing hyphens if title is not undefined or empty
+        this.formatChannelName(this.channelNamePrefix + this.title, false, !!this.title);
     }
 
-    formatChannelName(newName: string, allowDuplicateDashes = false) {
-        const regex = allowDuplicateDashes ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
-        this.channelName = newName.toLowerCase().replaceAll(regex, '-').slice(0, 30);
+    formatChannelName(newName: string, allowDuplicateHyphens = true, removeTrailingHyphens = false) {
+        const specialCharacters = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
+        const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
+        this.channelName = newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30);
         this.channelNameChange.emit(this.channelName);
     }
 }
