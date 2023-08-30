@@ -1428,7 +1428,7 @@ public class GitService {
                     commitInfos.add(commitInfo);
                 });
             }
-            return commitInfos;
         }
+        return commitInfos;
     }
 }
