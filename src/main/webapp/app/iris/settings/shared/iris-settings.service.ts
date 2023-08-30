@@ -70,7 +70,7 @@ export class IrisSettingsService {
      * @param settings the settings to set
      */
     setGlobalSettings(settings: IrisSettings): Observable<EntityResponseType> {
-        return this.http.put<IrisSettings>(`${this.resourceUrl}/iris/global-iris-settings`, settings, { observe: 'response' });
+        return this.http.put<IrisSettings>(`${this.resourceUrl}/admin/iris/global-iris-settings`, settings, { observe: 'response' });
     }
 
     /**
