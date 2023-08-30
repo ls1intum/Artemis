@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+import static de.tum.in.www1.artemis.config.Constants.WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
@@ -85,6 +86,8 @@ public class StudentExamResource {
 
     private final WebsocketMessagingService messagingService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -98,7 +101,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService messagingService) {
+            WebsocketMessagingService messagingService, WebsocketMessagingService websocketMessagingService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -115,6 +118,7 @@ public class StudentExamResource {
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.messagingService = messagingService;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -204,7 +208,7 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(studentExamId);
-                studentExamService.notifyStudentAboutWorkingTimeChangeDuringConduction(savedStudentExam);
+                websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
             if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
                     && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {

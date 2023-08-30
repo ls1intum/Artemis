@@ -281,6 +281,8 @@ public final class Constants {
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
+    public static final String WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
+
     private Constants() {
     }
 }

@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -809,7 +808,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exam = examRepository.save(exam);
 
         var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).orElseThrow();
-        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).getSeconds());
+        studentExam.setWorkingTime(exam.getDuration());
         studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
         studentExam.setUser(user);
         studentExam = studentExamRepository.save(studentExam);
