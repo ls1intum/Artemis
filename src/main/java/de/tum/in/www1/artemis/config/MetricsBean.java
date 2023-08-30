@@ -264,20 +264,27 @@ public class MetricsBean {
     }
 
     private double getUpcomingDueExercisesCount(int minutes, ExerciseType exerciseType) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithEndDateBetween(now, endDate, exerciseType.getExerciseClass());
+        var result = exerciseRepository.countExercisesWithEndDateBetween(now, endDate, exerciseType.getExerciseClass());
+        log.info("getUpcomingDueExercisesCount for minutes {} and exerciseType {} took {}ms", minutes, exerciseType, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingDueExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass());
+        var result = exerciseRepository.countStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass());
+        log.info("getUpcomingDueExercisesCountWithStudentMultiplier for minutes {} and exerciseType {} took {}ms", minutes, exerciseType, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingDueExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
 
         var now = ZonedDateTime.now();
@@ -286,24 +293,35 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
 
-        return exerciseRepository.countActiveStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        var result = exerciseRepository.countActiveStudentsInExercisesWithDueDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        log.info("getUpcomingDueExercisesCountWithActiveStudentMultiplier for minutes {} and exerciseType {} took {}ms", minutes, exerciseType,
+                System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
+        var result = exerciseRepository.countExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
+        log.info("getUpcomingReleasedExercisesCount for minutes {} and exerciseType {} took {}ms", minutes, exerciseType, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingReleasedExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.countStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
+        var result = exerciseRepository.countStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
+        log.info("getUpcomingReleasedExercisesCountWithStudentMultiplier for minutes {} and exerciseType {} took {}ms", minutes, exerciseType,
+                System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(int minutes, ExerciseType exerciseType, int numberOfDaysToCountAsActive) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
 
         var now = ZonedDateTime.now();
@@ -312,35 +330,50 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(numberOfDaysToCountAsActive), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
 
-        return exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        var result = exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass(), activeUserNames);
+        log.info("getUpcomingReleasedExercisesCountWithActiveStudentMultiplier for minutes {} and exerciseType {} took {}ms", minutes, exerciseType,
+                System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingEndingExamCount(int minutes) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamsWithEndDateBetween(now, endDate);
+        var result = examRepository.countExamsWithEndDateBetween(now, endDate);
+        log.info("getUpcomingEndingExamCount for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingEndingExamCountWithStudentMultiplier(int minutes) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamUsersInExamsWithEndDateBetween(now, endDate);
+        var result = examRepository.countExamUsersInExamsWithEndDateBetween(now, endDate);
+        log.info("getUpcomingEndingExamCountWithStudentMultiplier for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingStartingExamCount(int minutes) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamsWithStartDateBetween(now, endDate);
+        var result = examRepository.countExamsWithStartDateBetween(now, endDate);
+        log.info("getUpcomingStartingExamCount for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     private double getUpcomingStartingExamCountWithStudentMultiplier(int minutes) {
+        var startDate = System.currentTimeMillis();
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
+        var result = examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
+        log.info("getUpcomingStartingExamCountWithStudentMultiplier for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
+        return result;
     }
 
     /**
