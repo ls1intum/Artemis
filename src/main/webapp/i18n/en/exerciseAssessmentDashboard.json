@@ -105,7 +105,8 @@
             "correctionRoundNotYetEnabled": "This correction round is not yet enabled.",
             "openAssessments": "Open assessments",
             "closedAssessments": "Closed assessments",
-            "ratings": "Ratings"
+            "ratings": "Ratings",
+            "exerciseDetails": "Exercise Details"
         }
     }
 }

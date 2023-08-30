@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faChartBar, faListAlt, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faChartBar, faListAlt, faTable, faTimes, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -42,6 +42,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
+    faUserCheck = faUserCheck;
 
     constructor(
         private textExerciseService: TextExerciseService,

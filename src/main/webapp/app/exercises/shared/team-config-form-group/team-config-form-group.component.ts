@@ -14,7 +14,6 @@ export class TeamConfigFormGroupComponent implements OnInit {
     readonly TEAM = ExerciseMode.TEAM;
 
     @Input() exercise: Exercise;
-
     @Input() isImport: boolean;
 
     config: TeamAssignmentConfig;
