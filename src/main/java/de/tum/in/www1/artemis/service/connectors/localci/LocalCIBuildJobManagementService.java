@@ -92,7 +92,7 @@ public class LocalCIBuildJobManagementService {
             throw new LocalCIException("Project type must be Gradle.");
         }
 
-        // Check if the Docker image is available. If not, pull it. This is done here, so that the build job does not have to wait for the image to be pulled.
+        // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
         pullDockerImage();
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.

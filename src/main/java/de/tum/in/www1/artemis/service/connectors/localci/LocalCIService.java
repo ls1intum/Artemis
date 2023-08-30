@@ -8,10 +8,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.BadRequestException;
+import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -40,10 +46,17 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final LocalCITriggerService localCITriggerService;
 
+    private final DockerClient dockerClient;
+
+    @Value("${artemis.continuous-integration.build.images.java.default}")
+    String dockerImage;
+
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCITriggerService localCITriggerService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCITriggerService localCITriggerService,
+            DockerClient dockerClient) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.localCITriggerService = localCITriggerService;
+        this.dockerClient = dockerClient;
     }
 
     @Override
@@ -53,6 +66,29 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         // which results in a new build being triggered.
         // For local CI, a build plan must not be created, because all the information for building a submission and running tests is contained in the participation, so we only
         // trigger the build here.
+
+        // Check if docker image exists locally, otherwise pull it from Docker Hub.
+
+        try {
+            log.info("Inspecting docker image {}", dockerImage);
+            dockerClient.inspectImageCmd(dockerImage).exec();
+        }
+        catch (NotFoundException e) {
+            // Image does not exist locally, pull it from Docker Hub.
+            log.info("Pulling docker image {}", dockerImage);
+            try {
+                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
+            }
+            catch (InterruptedException ie) {
+                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
+            }
+        }
+        catch (BadRequestException e) {
+            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
+        }
+
+        // Trigger build for the given participation.
+
         if (TEMPLATE.getName().equals(planKey)) {
             localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
         }
