@@ -589,7 +589,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);
-        assertThat(participation.getExercise().getExerciseGroup().getExam()).as("The exam object should not be send to students").isNull();
+        exam = participation.getExercise().getExerciseGroup().getExam();
+        assertThat(exam).isNotNull(); // The client needs the exam object to check if results are published yet
+        assertThat(exam.isTestExam()).isTrue();
     }
 
     @Test
