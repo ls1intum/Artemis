@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 
 /**
- * A DTO representing a Feedback, for transferring data to Athena
+ * A DTO representing a Feedback on a TextExercise, for transferring data to Athena and receiving suggestions from Athena
  */
 public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long gradingInstructionId, Integer indexStart,
         Integer indexEnd) {

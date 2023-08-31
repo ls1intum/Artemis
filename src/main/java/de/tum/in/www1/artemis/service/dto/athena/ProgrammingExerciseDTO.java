@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
  * A DTO representing a ProgrammingExercise, for transferring data to Athena
@@ -13,9 +13,9 @@ public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, do
     /**
      * Create a new TextExerciseDTO from a TextExercise
      */
-    public static ProgrammingExerciseDTO of(@NotNull TextExercise exercise) {
+    public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getProblemStatement(), "TODO", "TODO", "TODO", "TODO");
+                exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(), "TODO", "TODO", "TODO");
     }
 
     /**
