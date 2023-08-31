@@ -360,7 +360,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    @Disabled
     void testGetCommitsInfo() throws GitAPIException {
         prepareRepositoryContent();
         var commitsInfos = gitService.getCommitInfos(gitUtilService.getRepoUrlByType(GitUtilService.REPOS.LOCAL));
