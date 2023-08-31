@@ -377,10 +377,7 @@ public class GitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URL.
-     * <p>
-     * If the local repo does not exist yet, it will be checked out.
-     * After retrieving the repository, the commit for the given hash will be checked out.
+     * Checkout at the given repository at the given commit hash
      *
      * @param repository the repository to check out the commit in
      * @param commitHash the hash of the commit to check out
@@ -397,8 +394,10 @@ public class GitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
-     * After the checkout, the repository the commit for the given hash will be checked out.
+     * Get the local repository for a given remote repository URL.
+     * <p>
+     * If the local repo does not exist yet, it will be checked out.
+     * After retrieving the repository, the commit for the given hash will be checked out.
      *
      * @param vcsRepositoryUrl the url of the remote repository
      * @param commitHash       the hash of the commit to checkout
@@ -1413,7 +1412,7 @@ public class GitService {
     }
 
     /**
-     * Checkout a repository and get the git log for a given repository url
+     * Checkout a repository and get the git log for a given repository url.
      *
      * @param vcsRepositoryUrl the repository url for which the git log should be retrieved
      * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
