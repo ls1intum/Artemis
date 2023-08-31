@@ -56,8 +56,9 @@ public class LocalCIContainerService {
     /**
      * Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
      *
-     * @param assignmentRepositoryPath the path to the assignment repository in the file system
-     * @param testRepositoryPath       the path to the test repository in the file system
+     * @param assignmentRepositoryPath   the path to the assignment repository in the file system
+     * @param testRepositoryPath         the path to the test repository in the file system
+     * @param auxiliaryRepositoriesPaths the paths to the auxiliary repositories in the file system
      * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      */
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths) {
@@ -164,17 +165,6 @@ public class LocalCIContainerService {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
         TarArchiveInputStream repositoryTarInputStream = getArchiveFromContainer(containerId,
                 "/repositories/" + repositoryType.toString() + "-repository/.git/refs/heads/" + branchName);
-        repositoryTarInputStream.getNextTarEntry();
-        String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
-        repositoryTarInputStream.close();
-        return commitHash;
-    }
-
-    public String getCommitHashOfBranch(String containerId, LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType repositoryType, int auxiliaryRepositoryIndex,
-            String branchName) throws IOException {
-        // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
-        TarArchiveInputStream repositoryTarInputStream = getArchiveFromContainer(containerId,
-                "/repositories/" + repositoryType.toString() + "-repository-" + auxiliaryRepositoryIndex + "/.git/refs/heads/" + branchName);
         repositoryTarInputStream.getNextTarEntry();
         String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
         repositoryTarInputStream.close();
