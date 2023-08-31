@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.*;
 
@@ -162,7 +163,7 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @NotNull
-    private String getCommitHash(String msg) throws GitAPIException {
+    private String getCommitHash(String msg) {
         AtomicReference<String> commitHash = new AtomicReference<>();
         gitUtilService.getLog(GitUtilService.REPOS.LOCAL).forEach(revCommit -> {
             if (msg.equals(revCommit.getFullMessage())) {

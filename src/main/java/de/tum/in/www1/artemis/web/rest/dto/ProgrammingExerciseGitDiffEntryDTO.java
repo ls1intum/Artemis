@@ -18,8 +18,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 public record ProgrammingExerciseGitDiffEntryDTO(String previousFilePath, String filePath, Integer previousStartLine, Integer startLine, Integer previousLineCount,
         Integer lineCount) {
 
-    public static ProgrammingExerciseGitDiffEntryDTO of(ProgrammingExerciseGitDiffEntry entry) {
-        return new ProgrammingExerciseGitDiffEntryDTO(entry.getPreviousFilePath(), entry.getFilePath(), entry.getPreviousStartLine(), entry.getStartLine(),
-                entry.getPreviousLineCount(), entry.getLineCount());
+    public ProgrammingExerciseGitDiffEntryDTO(ProgrammingExerciseGitDiffEntry entry) {
+        this(entry.getPreviousFilePath(), entry.getFilePath(), entry.getPreviousStartLine(), entry.getStartLine(), entry.getPreviousLineCount(), entry.getLineCount());
     }
 }

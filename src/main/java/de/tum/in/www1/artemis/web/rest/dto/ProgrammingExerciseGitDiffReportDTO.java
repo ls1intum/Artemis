@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,7 +15,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseGitDiffReportDTO(Set<ProgrammingExerciseGitDiffEntryDTO> entries) {
 
-    public static ProgrammingExerciseGitDiffReportDTO of(ProgrammingExerciseGitDiffReport report) {
-        return new ProgrammingExerciseGitDiffReportDTO(report.getEntries().stream().map(ProgrammingExerciseGitDiffEntryDTO::of).collect(java.util.stream.Collectors.toSet()));
+    public ProgrammingExerciseGitDiffReportDTO(ProgrammingExerciseGitDiffReport report) {
+        this(report.getEntries().stream().map(ProgrammingExerciseGitDiffEntryDTO::new).collect(Collectors.toSet()));
     }
 }

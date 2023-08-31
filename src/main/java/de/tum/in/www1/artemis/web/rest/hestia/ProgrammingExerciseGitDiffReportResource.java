@@ -85,7 +85,7 @@ public class ProgrammingExerciseGitDiffReportResource {
             throw new IllegalArgumentException("The submissions do not belong to the exercise");
         }
         var report = gitDiffReportService.generateReportForSubmissions(submission1, submission2);
-        return ResponseEntity.ok(ProgrammingExerciseGitDiffReportDTO.of(report));
+        return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
 
     /**
@@ -110,6 +110,6 @@ public class ProgrammingExerciseGitDiffReportResource {
             throw new IllegalArgumentException("The submission does not belong to the exercise");
         }
         var report = gitDiffReportService.createReportForSubmissionWithTemplate(exercise, submission);
-        return ResponseEntity.ok(ProgrammingExerciseGitDiffReportDTO.of(report));
+        return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
 }
