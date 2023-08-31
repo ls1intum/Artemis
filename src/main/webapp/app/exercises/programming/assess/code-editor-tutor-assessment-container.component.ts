@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -275,7 +275,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!).toPromise()) ?? [];
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!))) ?? [];
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
             for (const feedback of [...this.referencedFeedback, ...this.unreferencedFeedback]) {
