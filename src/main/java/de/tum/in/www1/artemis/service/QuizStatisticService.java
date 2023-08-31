@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 
 @Service
 public class QuizStatisticService {
@@ -30,15 +32,18 @@ public class QuizStatisticService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final LtiNewResultService ltiNewResultService;
+
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, LtiNewResultService ltiNewResultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -93,6 +98,7 @@ public class QuizStatisticService {
                 var latestUnratedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestUnratedResult.getSubmission().getId());
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
+            ltiNewResultService.onNewResult((StudentParticipation) participation);
         }
 
         // save changed Statistics
