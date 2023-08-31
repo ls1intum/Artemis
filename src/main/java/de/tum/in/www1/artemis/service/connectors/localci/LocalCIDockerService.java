@@ -14,6 +14,10 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
+/**
+ * Service for Docker related operations in local CI
+ */
+
 @Service
 @Profile("localci")
 
@@ -28,6 +32,13 @@ public class LocalCIDockerService {
     public LocalCIDockerService(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
+
+    /**
+     * Pulls a docker image if it is not already present on the system
+     * Uses a lock to prevent multiple threads from pulling the same image
+     *
+     * @param imageName the name of the docker image
+     */
 
     public void pullDockerImage(String imageName) {
         try {
