@@ -52,6 +52,12 @@ describe('CodeEditorAceComponent', () => {
                 loadRepositoryFileStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
                 getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
                 getInlineFeedbackNodeStub.mockReturnValue(document.createElement('div'));
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation(() => ({
+                    observe: jest.fn(),
+                    unobserve: jest.fn(),
+                    disconnect: jest.fn(),
+                }));
             });
     });
 
