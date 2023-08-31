@@ -9,6 +9,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
 import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/conversation-code-of-conduct-dialog.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -39,6 +41,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         public metisConversationService: MetisConversationService,
         public metisService: MetisService,
+        private modalService: NgbModal,
     ) {}
 
     getAsChannel = getAsChannelDto;
@@ -105,7 +108,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openDialog() {
-        console.log('Open Dialog');
+        const modalRef: NgbModalRef = this.modalService.open(ConversationCodeOfConductDialogComponent, {});
+        modalRef.componentInstance.codeOfConduct = this.course?.courseInformationSharingMessagingCodeOfConduct;
     }
 
     private subscribeToActiveConversation() {
