@@ -333,8 +333,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
 
         TextBlock textBlock = new TextBlock();
-        textBlock.setCluster(null);
-        textBlock.setAddedDistance(0);
         textBlock.setStartIndex(0);
         textBlock.setEndIndex(14);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), submission);

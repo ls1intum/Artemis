@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -59,9 +61,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private TextClusterRepository textClusterRepository;
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
@@ -139,7 +138,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteTextExerciseWithSubmissionWithTextBlocksAndClusters() throws Exception {
+    void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
@@ -147,9 +146,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         int submissionCount = 5;
         int submissionSize = 4;
         var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
-        int[] clusterSizes = { 4, 5, 10, 1 };
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        textClusterRepository.saveAll(clusters);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
@@ -199,9 +195,11 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "exercise-new-text-exercise", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createTextExercise() throws Exception {
+    void createTextExercise(String channelName) throws Exception {
         final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         courseUtilService.enableMessagingForCourse(course);
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -212,7 +210,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         textExercise.setId(null);
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
-        textExercise.setChannelName("new-text-exercise");
+        textExercise.setChannelName(channelName);
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
@@ -223,7 +221,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
-        assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
+        assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("exercise-new-text-exercise");
 
         // Check that the conversation participants are added correctly to the exercise channel
         await().until(() -> {
@@ -843,14 +841,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         TextExercise receivedTextExercise = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
 
         assertThat(receivedTextExercise.isGradingInstructionFeedbackUsed()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testTriggerAutomaticAssessment() throws Exception {
-        final Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        request.postWithoutLocation("/api/admin/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
     }
 
     @Test

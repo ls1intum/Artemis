@@ -69,7 +69,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationTest {
         course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
-        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);
+        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
         var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(instructor);

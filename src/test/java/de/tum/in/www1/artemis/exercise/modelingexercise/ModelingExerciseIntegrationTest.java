@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -182,21 +184,23 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
 
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "exercise-new-modeling-exercise", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateModelingExercise_asInstructor() throws Exception {
+    void testCreateModelingExercise_asInstructor(String channelName) throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
-        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
-        modelingExercise.setChannelName(uniqueChannelName);
+        modelingExercise.setTitle("new modeling exercise");
+        modelingExercise.setChannelName(channelName);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.getId());
 
         assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
         assertThat(channelFromDB).isNotNull();
-        assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
+        assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);

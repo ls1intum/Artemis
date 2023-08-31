@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,7 +153,7 @@ public class ModelingExerciseResource {
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(result, modelingExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
