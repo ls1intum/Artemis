@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -17,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
@@ -244,6 +247,27 @@ public class ProgrammingExerciseParticipationService {
         }
         else {
             log.warn("Cannot lock student repository for participation {} because the repository was not copied yet!", participation.getId());
+        }
+    }
+
+    @Async
+    public void lockStudentRepositories(User currentUser, StudentExam studentExam) {
+        // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
+        // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
+        if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
+            // Use the programming exercises in the DB to lock the repositories (for safety)
+            for (Exercise exercise : studentExam.getExercises()) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    try {
+                        log.debug("lock student repositories for {}", currentUser);
+                        var participation = findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
+                        lockStudentRepository(programmingExercise, participation);
+                    }
+                    catch (Exception e) {
+                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
+                    }
+                }
+            }
         }
     }
 
