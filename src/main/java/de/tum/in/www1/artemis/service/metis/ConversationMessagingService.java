@@ -98,7 +98,7 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        conversation = conversationService.updateConversation(conversation);
+        Conversation savedConversation = conversationService.updateConversation(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -113,7 +113,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, conversation, course, createdMessage);
+        notifyAboutMessageCreation(author, savedConversation, course, createdMessage);
 
         return createdMessage;
     }
