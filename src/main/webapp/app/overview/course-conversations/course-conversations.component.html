@@ -1,3 +1,7 @@
+<ng-template #controls>
+    <button class="btn btn-primary" type="button" (click)="openDialog()">{{ 'artemisApp.conversation.codeOfConduct.topBar.button' | artemisTranslate }}</button>
+</ng-template>
+
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row mt-2" *ngIf="isServiceSetUp && course">
         <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
