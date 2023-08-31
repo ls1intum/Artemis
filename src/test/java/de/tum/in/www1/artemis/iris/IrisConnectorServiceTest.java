@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorExcep
 import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisModelNotAvailableException;
 
-public class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
+class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisConnectorService irisConnectorService;
