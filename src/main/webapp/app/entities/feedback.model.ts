@@ -85,6 +85,9 @@ export class Feedback implements BaseEntity {
 
     public isSubsequent?: boolean; // helper attribute to find feedback which is not included in the total score on the client
 
+    private static readonly programmingReferencePrefix = 'file:';
+    private static readonly programmingReferenceLineSeparator = '_line:';
+
     constructor() {
         this.credits = 0;
     }
@@ -153,11 +156,13 @@ export class Feedback implements BaseEntity {
      * Example output in this case: `src/com/example/package/MyClass.java`
      */
     public static getReferenceFilePath(feedback: Feedback): string | undefined {
-        if (!feedback.reference?.startsWith('file:')) {
+        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
+            // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
-        return feedback.reference.substring(5).split('_')[0];
+        const indexOfLine = feedback.reference?.lastIndexOf(this.programmingReferenceLineSeparator);
+        return feedback.reference.substring(this.programmingReferencePrefix.length, indexOfLine); // Split after "_line:"
     }
 
     /**
@@ -166,11 +171,13 @@ export class Feedback implements BaseEntity {
      * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
-        if (!feedback?.reference?.startsWith('file:')) {
+        if (!feedback?.reference?.startsWith(this.programmingReferencePrefix)) {
+            // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
-        const line = parseInt(feedback.reference.split('_line:')[1]);
+        const indexOfLine = feedback.reference?.lastIndexOf(this.programmingReferenceLineSeparator); // Split before "_line:"
+        const line = parseInt(feedback.reference?.substring(indexOfLine + this.programmingReferenceLineSeparator.length));
         if (isNaN(line)) {
             return undefined;
         }
