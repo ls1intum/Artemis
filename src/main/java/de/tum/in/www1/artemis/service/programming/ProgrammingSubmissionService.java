@@ -171,7 +171,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         checkForIllegalExamSubmission(participation, programmingSubmission);
         participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        updateGitDiffReport(participation);
+        updateGitDiffReportForTemplateOrSolutionParticipation(participation);
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
@@ -182,7 +182,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param programmingExerciseParticipation The participation
      */
-    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
+    private void updateGitDiffReportForTemplateOrSolutionParticipation(ProgrammingExerciseParticipation programmingExerciseParticipation) {
         if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
                 || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
             try {

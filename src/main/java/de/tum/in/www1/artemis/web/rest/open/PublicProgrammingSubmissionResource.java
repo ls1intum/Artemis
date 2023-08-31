@@ -74,18 +74,20 @@ public class PublicProgrammingSubmissionResource {
             SecurityUtils.setAuthorizationObject();
 
             Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
+            var existingSubmissionCount = participation.getSubmissions().size();
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new EntityNotFoundException("Programming Exercise Participation", participationId);
             }
 
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
-            // Remove unnecessary information from the new submission.
-            submission.getParticipation().setSubmissions(null);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
+            ProgrammingSubmission newProgrammingSubmission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
+            // Remove unnecessary information from the new programming Submission.
+            newProgrammingSubmission.getParticipation().setSubmissions(null);
+            // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
+            newProgrammingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
+            programmingMessagingService.notifyUserAboutSubmission(newProgrammingSubmission);
         }
         catch (IllegalArgumentException ex) {
-            log.error(
-                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
+            log.error("Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request body {}",
                     participationId, requestBody, ex);
             throw new BadRequestAlertException("Exception encountered when trying to extract the commit hash from the request body " + ex.getMessage(), "ProgrammingSubmission",
                     "extractCommitHashNotPossible");
@@ -98,8 +100,8 @@ public class PublicProgrammingSubmissionResource {
             return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
-            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, participationId, requestBody, ex);
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request body {}", participationId,
+                    participationId, requestBody, ex);
             throw ex;
         }
         catch (VersionControlException ex) {
