@@ -77,9 +77,10 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
             break;
     }
 
+    const exerciseName = nextAlphanumeric(10);
     // The actual exercise
     const exercise = {
-        title: 'TEST K6' + nextAlphanumeric(10),
+        title: 'TEST K6' + exerciseName,
         shortName: 'TESTK6' + nextAlphanumeric(5).toUpperCase(),
         maxPoints: 42,
         assessmentType: 'AUTOMATIC',
@@ -93,6 +94,7 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         projectType: programmingLanguage === 'JAVA' ? 'PLAIN_MAVEN' : undefined,
+        channelName: 'exercise-' + exerciseName,
     };
 
     if (courseId) {
