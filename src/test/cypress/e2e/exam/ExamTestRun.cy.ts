@@ -56,6 +56,7 @@ describe('Exam test run', () => {
         cy.visit(`/course-management/${course.id}/exams/${exam.id}`);
         examManagement.openTestRun();
         examTestRun.createTestRun();
+        examTestRun.setWorkingTimeMinutes(2);
         examTestRun.confirmTestRun().then((testRunResponse: Interception) => {
             testRun = testRunResponse.response!.body;
         });
