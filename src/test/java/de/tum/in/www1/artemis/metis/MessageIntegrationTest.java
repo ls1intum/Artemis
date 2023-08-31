@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -52,7 +53,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatReposito
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -202,10 +202,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         checkCreatedMessagePost(postToSave, createdPost);
 
         // participants who hid the conversation should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(eq(recipientWithHiddenTrue.getUser().getLogin()), anyString(), any(ConversationWebsocketDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + recipientWithHiddenTrue.getUser().getId() + "/notifications/conversations"),
+                any(Notification.class));
         // participants who have not hidden the conversation should be notified
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessageToUser(eq(recipientWithHiddenFalse.getUser().getLogin()), anyString(),
-                any(ConversationWebsocketDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + recipientWithHiddenFalse.getUser().getId() + "/notifications/conversations"),
+                any(Notification.class));
     }
 
     @ParameterizedTest

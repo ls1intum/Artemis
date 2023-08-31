@@ -136,13 +136,13 @@ public class ConversationMessagingService extends PostingService {
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
-        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, notificationRecipients);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
+        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
     }
 
@@ -171,6 +171,9 @@ public class ConversationMessagingService extends PostingService {
             if (!conversationService.isChannelVisibleToStudents(channel)) {
                 filter = filter.and(ConversationWebSocketRecipientSummary::isAtLeastTutorInCourse);
             }
+        }
+        else {
+            filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
         }
 
         return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
