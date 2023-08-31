@@ -119,7 +119,7 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + ", type=" + getType() + '}';
     }
 
     @Override

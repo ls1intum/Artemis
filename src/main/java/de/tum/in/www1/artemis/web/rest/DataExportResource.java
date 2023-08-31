@@ -1,39 +1,52 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Comparator;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.service.dataexport.DataExportService;
+import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * REST controller for data exports
+ */
 @RestController
 @RequestMapping("api/")
 public class DataExportResource {
+
+    private final int DAYS_BETWEEN_DATA_EXPORTS;
 
     private final DataExportService dataExportService;
 
     private final DataExportRepository dataExportRepository;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportResource.class);
+    private final UserRepository userRepository;
 
-    public DataExportResource(DataExportService dataExportService, DataExportRepository dataExportRepository) {
+    public DataExportResource(@Value("${artemis.data-export.days-between-data-exports:14}") int daysBetweenDataExports, DataExportService dataExportService,
+            DataExportRepository dataExportRepository, UserRepository userRepository) {
+        this.DAYS_BETWEEN_DATA_EXPORTS = daysBetweenDataExports;
         this.dataExportService = dataExportService;
         this.dataExportRepository = dataExportRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -41,20 +54,31 @@ public class DataExportResource {
      *
      * @return the data export object
      */
-    @PutMapping("data-export")
+    @PostMapping("data-exports")
     @EnforceAtLeastStudent
-    public DataExport requestDataExport() {
-        // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
-        // for now we return the data export object, so the client can make the request to download the export.
-
-        try {
-            return dataExportService.requestDataExport();
+    public RequestDataExportDTO requestDataExport() {
+        if (!canRequestDataExport()) {
+            throw new AccessForbiddenException("You can only request a data export every " + DAYS_BETWEEN_DATA_EXPORTS + " days");
         }
-        catch (Exception e) {
-            log.error("Could not create data export", e);
-            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
-        }
+        return dataExportService.requestDataExport();
+    }
 
+    /**
+     * Checks if the user can request a new data export.
+     *
+     * @return true if the user can request a new data export, false otherwise
+     */
+    private boolean canRequestDataExport() {
+        var user = userRepository.getUser();
+        var dataExports = dataExportRepository.findAllDataExportsByUserId(user.getId());
+        if (dataExports.isEmpty()) {
+            return true;
+        }
+        var latestDataExport = dataExports.stream().max(Comparator.comparing(DataExport::getCreatedDate)).get();
+        var olderThanDaysBetweenDataExports = Duration.between(latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()), ZonedDateTime.now())
+                .toDays() >= DAYS_BETWEEN_DATA_EXPORTS;
+
+        return olderThanDaysBetweenDataExports || latestDataExport.getDataExportState() == DataExportState.FAILED;
     }
 
     /**
@@ -62,25 +86,15 @@ public class DataExportResource {
      *
      * @param dataExportId the id of the data export to download
      * @return A resource containing the data export zip file
-     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export could not be found
-     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    @GetMapping("data-export/{dataExportId}")
+    @GetMapping("data-exports/{dataExportId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long dataExportId) {
-        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
+        DataExport dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
         checkDataExportCanBeDownloaded(dataExport);
-        var dataExportPath = dataExportService.downloadDataExport(dataExport);
-        var finalZipFile = dataExportPath.toFile();
-        InputStreamResource resource;
-        try {
-            resource = new InputStreamResource(new FileInputStream(finalZipFile));
-        }
-        catch (FileNotFoundException e) {
-            log.error("Could not find data export file", e);
-            throw new InternalServerErrorException("Could not find data export file");
-        }
+        Resource resource = dataExportService.downloadDataExport(dataExport);
+        File finalZipFile = Path.of(dataExport.getFilePath()).toFile();
         return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
     }
 
@@ -96,7 +110,7 @@ public class DataExportResource {
      * @param dataExport the data export that needs to be checked
      * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
      */
-    public void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
+    private void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
         if (!currentlyLoggedInUserIsOwnerOfDataExport(dataExport)) {
             throw new AccessForbiddenException("data export", dataExport.getId());
         }
@@ -113,7 +127,56 @@ public class DataExportResource {
             return false;
         }
         else {
-            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().orElseThrow());
+            return dataExport.getUser().getLogin().equals(userRepository.getUser().getLogin());
         }
     }
+
+    /**
+     * Check if the user can request a data export
+     *
+     * @return true if the user can request a data export, false otherwise
+     */
+    @GetMapping("data-exports/can-request")
+    @EnforceAtLeastStudent
+    public boolean canRequestExport() {
+        return canRequestDataExport();
+    }
+
+    /**
+     * Check if the user can download any data export
+     *
+     * @return a data export DTO with the id of the export that can be downloaded or a DTO with a id of null if no export can be downloaded
+     */
+    @GetMapping("data-exports/can-download")
+    @EnforceAtLeastStudent
+    public DataExportDTO canDownloadAnyExport() {
+        return dataExportService.canDownloadAnyDataExport();
+    }
+
+    /**
+     * Check if the user can download a specific data export
+     *
+     * @param dataExportId the id of the data export that should be checked
+     * @return true if the user can download the data export, false otherwise
+     */
+    @GetMapping("data-exports/{dataExportId}/can-download")
+    @EnforceAtLeastStudent
+    public boolean canDownloadSpecificExport(@PathVariable long dataExportId) {
+        return canDownloadSpecificDataExport(dataExportId);
+    }
+
+    /**
+     * Checks if the data export with the given id can be downloaded.
+     *
+     * @param dataExportId the id of the data export to check
+     * @return true if the data export can be downloaded, false otherwise
+     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
+     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
+     */
+    private boolean canDownloadSpecificDataExport(long dataExportId) throws EntityNotFoundException, AccessForbiddenException {
+        var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
+        currentlyLoggedInUserIsOwnerOfDataExportElseThrow(dataExport);
+        return dataExport.getDataExportState().isDownloadable();
+    }
+
 }

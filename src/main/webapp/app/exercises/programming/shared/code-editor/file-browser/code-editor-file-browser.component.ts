@@ -123,13 +123,11 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
     }
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
@@ -379,11 +377,16 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param node Tree node
      */
     compressTree(node: FileTreeItem): FileTreeItem {
-        if (node.children && node.children.length === 1 && node.children[0].children) {
+        // If the node has only one child and that child is a folder, we can compress the tree.
+        if (node.children && node.children.length === 1 && this.repositoryFiles[node.children[0].value] === FileType.FOLDER) {
             return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
-        } else if (node.children) {
+        }
+        // If the node has children, we cannot compress it. However, we can try to compress its children.
+        else if (node.children) {
             return { ...node, children: node.children.map(this.compressTree.bind(this)) };
-        } else {
+        }
+        // If the node has no children, there is nothing to compress.
+        else {
             return node;
         }
     }
@@ -569,7 +572,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * based on their file extension (see {@link shouldDisplayFileBasedOnExtension}).
      * @param fileName The name of the file or folder.
      * @param fileType The type of the file or folder.
-     * @private
      */
     private static shouldDisplayFile(fileName: string, fileType: FileType): boolean {
         if (fileName.startsWith('.')) {
@@ -586,7 +588,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      *
      * E.g., text files like `SomeClass.java` are shown, binary files like `document.pdf` are not.
      * @param fileName
-     * @private
      */
     private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
         const fileSplit = fileName.split('.');

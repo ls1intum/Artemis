@@ -19,7 +19,12 @@ export class CreateTextUnitComponent implements OnInit {
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private textUnitService: TextUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private textUnitService: TextUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

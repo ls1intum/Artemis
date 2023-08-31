@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -225,11 +226,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @return the captured notification at the given index
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
+        await().untilAsserted(
+                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                        .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
+
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
     }

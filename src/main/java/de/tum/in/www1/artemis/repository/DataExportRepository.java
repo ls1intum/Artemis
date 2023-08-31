@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.DataExport;
@@ -24,4 +27,45 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             throw new EntityNotFoundException("Could not find data export with id: " + dataExportId);
         });
     }
+
+    /**
+     * Find all data exports that need to be created. This includes all data exports that are currently in the state IN_CREATION (the export was not completed then) or
+     * REQUESTED.
+     * 0 = REQUESTED, 1 = IN_CREATION
+     *
+     * @return a set of data exports that need to be created
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.dataExportState = 0 OR dataExport.dataExportState = 1
+            """)
+    Set<DataExport> findAllToBeCreated();
+
+    /**
+     * Find all data exports that need to be deleted. This includes all data exports that have a creation date older than 7 days
+     *
+     * @return a set of data exports that need to be deleted
+     */
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.creationFinishedDate is NOT NULL
+                  AND dataExport.creationFinishedDate < :#{T(java.time.ZonedDateTime).now().minusDays(7)}
+            """)
+    Set<DataExport> findAllToBeDeleted();
+
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.user.id = :userId
+            """)
+    Set<DataExport> findAllDataExportsByUserId(long userId);
+
+    @Query("""
+            SELECT dataExport
+            FROM DataExport dataExport
+            WHERE dataExport.dataExportState = 2
+            """)
+    Set<DataExport> findAllSuccessfullyCreatedDataExports();
 }

@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public abstract class SubmissionExportService {
 
     @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
+    private Path submissionExportPath;
 
     private static final int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
@@ -71,16 +71,13 @@ public abstract class SubmissionExportService {
      * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
+        Path outputDir = fileService.getTemporaryUniquePath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         try {
             return exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
         }
         catch (IOException e) {
             log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e);
             return Optional.empty();
-        }
-        finally {
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         }
     }
 
@@ -162,7 +159,7 @@ public abstract class SubmissionExportService {
 
         // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
@@ -206,8 +203,8 @@ public abstract class SubmissionExportService {
         }).flatMap(Optional::stream).toList();
 
         // Add report entry
-        reportData.add(new ArchivalReportEntry(exercise, FileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
-                skippedEntries.intValue()));
+        reportData.add(
+                new ArchivalReportEntry(exercise, FileService.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();

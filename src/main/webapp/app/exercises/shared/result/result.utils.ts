@@ -307,7 +307,6 @@ export const isManualResult = (result?: Result) => {
  *
  * @param results list of results to extract the test case names from
  * @return list of extracted test case names
- * @private
  */
 export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
     const testCasesNames: Set<string> = new Set();
@@ -330,7 +329,6 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
  * @param result from which the test case results should be extracted
  * @param testCaseNames list containing the test names
  * @param withFeedback if true, the feedback's full text is included in case of failed test case
- * @private
  */
 export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
     const testCaseResults: TestCaseResult[] = [];
@@ -355,7 +353,6 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
  * If no feedback is found for the given test case name, null is returned.
  * @param feedbacks the list of result feedbacks to search in
  * @param testCase the name of the test case to search for
- * @private
  */
 export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
     if (!feedbacks) {

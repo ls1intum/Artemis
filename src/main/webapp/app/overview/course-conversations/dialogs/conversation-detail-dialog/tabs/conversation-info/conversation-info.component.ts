@@ -49,7 +49,12 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     changesPerformed = new EventEmitter<void>();
 
     readOnlyMode = false;
-    constructor(private channelService: ChannelService, private groupChatService: GroupChatService, private modalService: NgbModal, private alertService: AlertService) {}
+    constructor(
+        private channelService: ChannelService,
+        private groupChatService: GroupChatService,
+        private modalService: NgbModal,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         if (this.activeConversation) {

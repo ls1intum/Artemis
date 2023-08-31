@@ -19,6 +19,13 @@ export class ExamExerciseImportComponent implements OnInit {
     // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
     // or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
+
+    // Map of programming exercise ids with duplicated titles and their corresponding title
+    exercisesWithDuplicatedTitles = new Map<number, string>();
+
+    // Map of programming exercise ids with duplicated short names and their corresponding short name
+    exercisesWithDuplicatedShortNames = new Map<number, string>();
+
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Map to determine, if an exercise group contains at least one programming exercise.
@@ -78,6 +85,7 @@ export class ExamExerciseImportComponent implements OnInit {
         this.exam.exerciseGroups?.forEach((exerciseGroup) => {
             this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises));
         });
+        const duplicated = new Set<string>();
         // Initialize containsProgrammingExercises
         this.exam.exerciseGroups!.forEach((exerciseGroup) => {
             const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
@@ -85,7 +93,13 @@ export class ExamExerciseImportComponent implements OnInit {
             // In case of a rejected import, we can delete programming exercises with a title from the Map / blocklist, as those were not rejected by the server.
             exerciseGroup.exercises?.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && exercise.title) {
-                    this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
+                    if (duplicated.has(exercise.title)) {
+                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, '']);
+                        exercise.title = '';
+                    } else {
+                        duplicated.add(exercise.title);
+                        this.titleAndShortNameOfProgrammingExercises.delete(exercise.id!);
+                    }
                 }
             });
         });
@@ -119,8 +133,21 @@ export class ExamExerciseImportComponent implements OnInit {
         if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
             // Case Exercise is already selected -> delete
             this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
+            // The title or short name of the exercise is not considered to be duplicated. In case it was duplicated
+            // before, the set with duplicates has to be updated (checked again if any objects can be removed from the map).
+            if (this.exercisesWithDuplicatedTitles.delete(exercise.id!)) {
+                this.removeProgrammingExerciseFromDuplicates(exercise.title!, true);
+            }
+
+            if (this.exercisesWithDuplicatedShortNames.delete(exercise.id!)) {
+                this.removeProgrammingExerciseFromDuplicates(exercise.shortName!, false);
+            }
         } else {
             this.selectedExercises!.get(exerciseGroup)!.add(exercise);
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true);
+                this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false);
+            }
         }
     }
 
@@ -191,8 +218,10 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
         return (
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!)
+            !!exercise.title?.length &&
+            this.titleNamePattern.test(exercise.title!) &&
+            !this.exercisesWithDuplicatedTitles.has(exercise.id!) &&
+            (exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) || this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) === '')
         );
     }
 
@@ -205,8 +234,60 @@ export class ExamExerciseImportComponent implements OnInit {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.shortName?.length! > 2 &&
             this.shortNamePattern.test(exercise.shortName!) &&
+            !this.exercisesWithDuplicatedShortNames.has(exercise.id!) &&
             exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
         );
+    }
+
+    /**
+     * checks if there are any selected programming exercises with the same title or short name as the passed exercise
+     * @param exercise      exercise we want to use to check for duplications
+     * @param exerciseGroup exercise group of the exercise
+     * @param checkForTitle true if the title should be checked, otherwise the short name is checked
+     */
+    checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise: Exercise, exerciseGroup: ExerciseGroup, checkForTitle: boolean) {
+        if (!this.exerciseIsSelected(exercise, exerciseGroup)) {
+            return;
+        }
+
+        const duplicatesToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
+        let hasDuplicate = false;
+        this.selectedExercises.forEach((exerciseGroup) => {
+            exerciseGroup.forEach((ex) => {
+                if (ex.type === ExerciseType.PROGRAMMING && ex !== exercise) {
+                    if ((checkForTitle && ex.title === exercise.title) || (!checkForTitle && ex.shortName === exercise.shortName)) {
+                        hasDuplicate = true;
+                        duplicatesToCheck.set(ex.id!, checkForTitle ? exercise.title! : exercise.shortName!);
+                    }
+                }
+            });
+        });
+
+        // check if the exercise was a duplicate before
+        const titleOrShortName = duplicatesToCheck.get(exercise.id!);
+        if (duplicatesToCheck.delete(exercise.id!)) {
+            this.removeProgrammingExerciseFromDuplicates(titleOrShortName!, checkForTitle);
+        }
+
+        if (hasDuplicate) {
+            duplicatesToCheck.set(exercise.id!, checkForTitle ? exercise.title! : exercise.shortName!);
+        }
+    }
+
+    /**
+     * After a duplicate programming exercise's title / short name of programming exercise has been edited or a programming exercise has been unselected,
+     * other duplicates need to be checked if they can be removed from the map. In case there is only one exercise with the same title / short name
+     * it is no longer considered a duplicate and is removed
+     * @param titleOrShortName title / short name of the exercise that was a duplicate before
+     * @param checkForTitle   true if the exercise title duplication should be checked, otherwise short name duplication is checked
+     */
+    removeProgrammingExerciseFromDuplicates(titleOrShortName: string, checkForTitle: boolean) {
+        const setToCheck = checkForTitle ? this.exercisesWithDuplicatedTitles : this.exercisesWithDuplicatedShortNames;
+        const filteredKeys = Array.from(setToCheck.keys()).filter((key) => setToCheck.get(key) === titleOrShortName);
+
+        if (filteredKeys.length <= 1) {
+            filteredKeys.forEach((key) => setToCheck.delete(key));
+        }
     }
 
     /**

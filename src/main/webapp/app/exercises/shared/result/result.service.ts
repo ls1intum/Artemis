@@ -45,7 +45,10 @@ export class ResultService implements IResultService {
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 
-    constructor(private http: HttpClient, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private translateService: TranslateService,
+    ) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
@@ -145,7 +148,6 @@ export class ResultService implements IResultService {
      * @param points the amount of achieved points
      * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
      * @param short flag that indicates if the resultString should use the short format
-     * @private
      */
     private getBaseResultStringProgrammingExercise(
         result: Result,

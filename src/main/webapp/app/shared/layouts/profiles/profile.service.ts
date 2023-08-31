@@ -15,7 +15,11 @@ export class ProfileService {
     private infoUrl = 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
-    constructor(private http: HttpClient, private featureToggleService: FeatureToggleService, private browserFingerprintService: BrowserFingerprintService) {}
+    constructor(
+        private http: HttpClient,
+        private featureToggleService: FeatureToggleService,
+        private browserFingerprintService: BrowserFingerprintService,
+    ) {}
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {

@@ -98,54 +98,26 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Create n TextClusters and assign TextBlocks to new clusters.
+     * Create an example text exercise with feedback suggestions enabled
      *
-     * @param textBlocks   TextBlocks to fake cluster
-     * @param clusterSizes Number of new clusters
-     * @param textExercise TextExercise
-     * @return List of TextClusters with assigned TextBlocks
+     * @param course The course to which the exercise belongs
+     * @return the created text exercise
      */
-    public List<TextCluster> addTextBlocksToCluster(Set<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
-        if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
-            throw new IllegalArgumentException("The clusterSizes sum has to be equal to the number of textBlocks");
-        }
-
-        List<TextCluster> clusters = createClustersForExercise(clusterSizes, textExercise);
-
-        // Add all textblocks to a cluster
-        int clusterIndex = 0;
-        for (var textBlock : textBlocks) {
-            // as long as cluster is full select another cluster
-            do {
-                clusterIndex = (clusterIndex + 1) % clusterSizes.length;
-            }
-            while (clusterSizes[clusterIndex] == 0);
-
-            clusterSizes[clusterIndex]--;
-            clusters.get(clusterIndex).addBlocks(textBlock);
-        }
-
-        return clusters;
-    }
-
-    private List<TextCluster> createClustersForExercise(int[] clusterSizes, TextExercise textExercise) {
-        List<TextCluster> clusters = new ArrayList<>();
-        for (int i = 0; i < clusterSizes.length; i++) {
-            clusters.add(new TextCluster().exercise(textExercise));
-        }
-        return clusters;
-    }
-
-    public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
-        if (textBlocks.size() != submissionCount * submissionSize) {
-            throw new IllegalArgumentException("number of textBlocks must be eqaul to submissionCount * submissionSize");
-        }
+    public TextExercise createSampleTextExercise(Course course) {
         TextExercise textExercise = new TextExercise();
         textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         textExercise = textExerciseRepository.save(textExercise);
+        return textExercise;
+    }
+
+    public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
+        if (textBlocks.size() != submissionCount * submissionSize) {
+            throw new IllegalArgumentException("number of textBlocks must be equal to submissionCount * submissionSize");
+        }
+        TextExercise textExercise = createSampleTextExercise(course);
 
         // submissions.length must be equal to studentParticipations.length;
         for (int i = 0; i < submissionCount; i++) {
@@ -201,6 +173,20 @@ public class TextExerciseUtilService {
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return course;
+    }
+
+    /**
+     * renames the passed text exercise using the passed title
+     *
+     * @param textExercise exercise to be renamed
+     * @param title        new title of the exercise
+     * @return the renamed exercise
+     */
+    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+        textExercise.setTitle(title);
+        textExerciseRepository.save(textExercise);
+
+        return textExercise;
     }
 
     public Course addCourseWithOneReleasedTextExercise() {
@@ -345,5 +331,17 @@ public class TextExerciseUtilService {
         course = courseRepo.save(course);
         exerciseRepo.save(finishedTextExercise);
         return course;
+    }
+
+    /**
+     * creates and saves a text exercise for an exam
+     *
+     * @param exerciseGroup exercise group to which the text exercise should be added
+     * @return newly created text exercise
+     */
+    public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(textExercise);
+        return textExercise;
     }
 }

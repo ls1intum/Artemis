@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -223,7 +224,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         Path testFilePath = assignmentRepository.localRepoFile.toPath().resolve("new-file.txt");
         Files.createFile(testFilePath);
         assignmentRepository.localGit.add().addFilepattern(".").call();
-        assignmentRepository.localGit.commit().setMessage("Add new file").call();
+        GitService.commit(assignmentRepository.localGit).setMessage("Add new file").call();
         pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
         assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
         submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());

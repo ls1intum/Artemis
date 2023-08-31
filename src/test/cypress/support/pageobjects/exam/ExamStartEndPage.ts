@@ -1,6 +1,5 @@
-import { COURSE_BASE } from '../../requests/CourseManagementRequests';
+import { COURSE_BASE, GET, POST } from '../../constants';
 import { users } from '../../users';
-import { POST } from '../../constants';
 
 export class ExamStartEndPage {
     enterFirstnameLastname() {
@@ -9,6 +8,12 @@ export class ExamStartEndPage {
 
     setConfirmCheckmark(timeout?: number) {
         cy.get('#confirmBox', { timeout }).check();
+    }
+
+    pressStartWithWait() {
+        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/conduction').as('startExam');
+        cy.get('#start-exam').click();
+        return cy.wait('@startExam');
     }
 
     pressStart() {
@@ -22,18 +27,28 @@ export class ExamStartEndPage {
     pressFinish() {
         cy.intercept(POST, COURSE_BASE + '*/exams/*/student-exams/submit').as('finishExam');
         cy.get('#end-exam').click();
-        return cy.wait('@finishExam');
+        return cy.wait('@finishExam', { timeout: 10000 });
     }
 
-    startExam() {
+    startExam(withWait = false) {
         this.setConfirmCheckmark();
         this.enterFirstnameLastname();
-        this.pressStart();
+        if (withWait) {
+            this.pressStartWithWait();
+        } else {
+            this.pressStart();
+        }
     }
 
     finishExam(timeout?: number) {
         this.setConfirmCheckmark(timeout ? timeout : Cypress.config('defaultCommandTimeout'));
         this.enterFirstnameLastname();
         return this.pressFinish();
+    }
+
+    pressShowSummary() {
+        cy.intercept(GET, COURSE_BASE + '*/exams/*/student-exams/*/summary').as('examSummaryDownload');
+        cy.get('#showExamSummaryButton').should('be.visible').should('not.have.attr', 'disabled', { timeout: 15000 }).click();
+        cy.wait('@examSummaryDownload');
     }
 }

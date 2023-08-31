@@ -27,7 +27,7 @@
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
-                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"> </jhi-exam-exercise-overview-page>
+                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
             </div>
             <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
                 <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">
@@ -129,7 +129,24 @@
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
-        <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
+        <div class="submissionSuccessfulHint" *ngIf="this.studentExam?.submitted && !showExamSummary && !loadingExam">
+            <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+            <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
+            <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
+            <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
+            <button
+                type="button"
+                id="showExamSummaryButton"
+                class="btn btn-primary"
+                [disabled]="examSummaryButtonSecondsLeft"
+                (click)="loadAndDisplaySummary()"
+                jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
+                [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
+            >
+                Show Summary
+            </button>
+        </div>
+        <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
 </ng-container>
 <div class="alert alert-danger" *ngIf="!loadingExam && !exam">

@@ -83,6 +83,7 @@ public class SingleUserNotificationService {
                     ((ConversationNotificationSubject) notificationSubject).responsibleUser);
             case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
+            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject, author);
@@ -202,6 +203,24 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
         notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient, null);
+    }
+
+    /**
+     * Notify user about the successful creation of a data export.
+     *
+     * @param dataExport the data export that was created
+     */
+    public void notifyUserAboutDataExportCreation(DataExport dataExport) {
+        notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_CREATED, dataExport.getUser(), null);
+    }
+
+    /**
+     * Notify user about the failure of the creation of a data export.
+     *
+     * @param dataExport the data export that could not be created
+     */
+    public void notifyUserAboutDataExportFailure(DataExport dataExport) {
+        notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_FAILED, dataExport.getUser(), null);
     }
 
     /**

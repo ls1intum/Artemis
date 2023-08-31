@@ -4,12 +4,11 @@ import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExe
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -151,6 +151,18 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_sca_activated() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_scaChange_activated();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseLockRepositorySubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseLockRepositorySubmissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseNoneSubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseNoneSubmissionPolicyChange();
     }
 
     @Test
@@ -309,6 +321,22 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportInstructorRepositories() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
+        // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
+        verify(fileService, times(6)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
+        programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
+        // once for the temp directory and once for the directory with the zip file
+        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exportAuxiliaryRepository_forbidden() throws Exception {
+        programmingExerciseTestService.exportInstructorAuxiliaryRepository_forbidden();
     }
 
     @Test
@@ -320,7 +348,16 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
+        // we have a working directory and one directory for each repository
+        verify(fileService, times(4)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).scheduleForDeletion(any(Path.class), eq(5L));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportProgrammingExerciseInstructorMaterial_problemStatementNull() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementNull_success();
     }
 
     @Test
@@ -391,14 +428,29 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateZip() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any());
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST);
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, true, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.createTempDirectory(any(Path.class), any(String.class))).thenThrow(IOException.class);
+            programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, true, false, false);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseInstructorMaterial_embeddedFilesDontExist() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
-        doThrow(GitException.class).when(fileService).getUniquePathString(anyString());
-        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR);
+        doThrow(GitException.class).when(fileService).getTemporaryUniquePath(any(Path.class), anyLong());
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false, true, true);
     }
 
     @Test
@@ -471,12 +523,18 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
+        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
+        // the other one has two because the tests repository is also included.
+        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
     }
 
     @Test

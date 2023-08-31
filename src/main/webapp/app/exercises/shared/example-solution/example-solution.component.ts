@@ -14,7 +14,11 @@ export class ExampleSolutionComponent implements OnInit {
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
-    constructor(private exerciseService: ExerciseService, private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService) {}
+    constructor(
+        private exerciseService: ExerciseService,
+        private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdownService,
+    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

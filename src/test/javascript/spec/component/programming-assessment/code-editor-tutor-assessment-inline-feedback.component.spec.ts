@@ -137,4 +137,14 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
         expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
     });
+
+    it('should escape special characters', () => {
+        const feedbackWithSpecialCharacters = {
+            detailText: 'feedback <with> special characters & "',
+        } as Feedback;
+        const expectedTextToBeDisplayed = 'feedback &lt;with&gt; special characters &amp; &quot;';
+
+        const textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedbackWithSpecialCharacters);
+        expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
+    });
 });

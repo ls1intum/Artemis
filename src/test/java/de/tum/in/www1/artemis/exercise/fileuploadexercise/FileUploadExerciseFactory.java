@@ -25,4 +25,10 @@ public class FileUploadExerciseFactory {
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) ExerciseFactory.populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
+
+    public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup, String title) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setFilePattern(filePattern);
+        return (FileUploadExercise) ExerciseFactory.populateExerciseForExam(fileUploadExercise, exerciseGroup, title);
+    }
 }

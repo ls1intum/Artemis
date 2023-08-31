@@ -33,7 +33,7 @@ public class InstanceMessageReceiveService {
 
     private final ParticipantScoreScheduleService participantScoreScheduleService;
 
-    private final Optional<AtheneScheduleService> atheneScheduleService;
+    private final Optional<AthenaScheduleService> athenaScheduleService;
 
     private final UserScheduleService userScheduleService;
 
@@ -49,12 +49,12 @@ public class InstanceMessageReceiveService {
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
-            ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, Optional<AthenaScheduleService> athenaScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
             UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseRepository = textExerciseRepository;
-        this.atheneScheduleService = atheneScheduleService;
+        this.athenaScheduleService = athenaScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseScheduleService = modelingExerciseScheduleService;
         this.exerciseRepository = exerciseRepository;
@@ -91,13 +91,13 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processTextExerciseScheduleCancel((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_INSTANT_CLUSTERING.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processTextExerciseInstantClustering((message.getMessageObject()));
-        });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processUnlockAllRepositories((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processUnlockAllRepositoriesAndParticipations((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
                 .addMessageListener(message -> {
@@ -191,25 +191,26 @@ public class InstanceMessageReceiveService {
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForAtheneIfRequired(textExercise));
+        athenaScheduleService.ifPresent(service -> service.scheduleExerciseForAthenaIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise {}", exerciseId);
-        atheneScheduleService.ifPresent(service -> service.cancelScheduledAthene(exerciseId));
+        athenaScheduleService.ifPresent(service -> service.cancelScheduledAthena(exerciseId));
     }
 
-    public void processTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Received schedule instant clustering for text exercise {}", exerciseId);
-        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
+    public void processUnlockAllRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Received unlock all repositories for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipations(programmingExercise).run();
     }
 
     public void processUnlockAllRepositories(Long exerciseId) {
         log.info("Received unlock all repositories for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipations(programmingExercise).run();
+        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {

@@ -23,7 +23,11 @@ export abstract class UserSettingsDirective implements OnInit {
     page = 0;
     error?: string;
 
-    protected constructor(protected userSettingsService: UserSettingsService, protected alertService: AlertService, protected changeDetector: ChangeDetectorRef) {}
+    protected constructor(
+        protected userSettingsService: UserSettingsService,
+        protected alertService: AlertService,
+        protected changeDetector: ChangeDetectorRef,
+    ) {}
 
     ngOnInit(): void {
         this.alertService.closeAll();

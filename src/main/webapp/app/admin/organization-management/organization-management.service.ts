@@ -11,7 +11,10 @@ export class OrganizationManagementService {
     public resourceUrl = 'api/organizations';
     public adminResourceUrl = 'api/admin/organizations';
 
-    constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
+    constructor(
+        private http: HttpClient,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Send GET request to retrieve all organizations

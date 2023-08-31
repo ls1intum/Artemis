@@ -192,8 +192,8 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         course1 = courseRepository.save(course1);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
-        final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
+        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
     @NotNull

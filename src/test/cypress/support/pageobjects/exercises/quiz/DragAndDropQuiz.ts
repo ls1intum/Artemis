@@ -1,5 +1,4 @@
-import { EXERCISE_BASE, POST } from '../../../constants';
-import { MODELING_EDITOR_CANVAS } from '../modeling/ModelingEditor';
+import { EXERCISE_BASE, MODELING_EDITOR_CANVAS, POST } from '../../../constants';
 
 export class DragAndDropQuiz {
     createDnDQuiz(title: string) {

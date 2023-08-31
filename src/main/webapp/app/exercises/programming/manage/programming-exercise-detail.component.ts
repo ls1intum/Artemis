@@ -39,6 +39,7 @@ import {
     faPencilAlt,
     faTable,
     faTimes,
+    faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -112,6 +113,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faUsers = faUsers;
     faEye = faEye;
+    faUserCheck = faUserCheck;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -182,7 +184,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 this.programmingExercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     }
                 });

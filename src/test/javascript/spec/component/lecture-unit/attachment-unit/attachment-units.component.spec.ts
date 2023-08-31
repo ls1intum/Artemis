@@ -134,6 +134,11 @@ describe('AttachmentUnitsComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should initialize without remove slides', () => {
+        expect(attachmentUnitsComponent.removeBreakSlides).toBeFalse();
+        expect(attachmentUnitsComponent.removeSolutionSlides).toBeFalse();
+    });
+
     it('should create attachment units', fakeAsync(() => {
         const lectureUnitInformationDTOObj = { units: units, numberOfPages: numberOfPages, removeBreakSlides: removeBreakSlides };
         const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
@@ -223,12 +228,21 @@ describe('AttachmentUnitsComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should select process units checkbox', fakeAsync(() => {
+    it('should select remove break slides checkbox', fakeAsync(() => {
         attachmentUnitsComponent.removeBreakSlides = false;
         const onSelectRemoveBreakSlides = jest.spyOn(attachmentUnitsComponent, 'onSelectRemoveBreakSlides');
         attachmentUnitsComponent.onSelectRemoveBreakSlides();
         tick();
         expect(onSelectRemoveBreakSlides).toHaveBeenCalledOnce();
         expect(attachmentUnitsComponent.removeBreakSlides).toBeTrue();
+    }));
+
+    it('should select remove solution slides checkbox', fakeAsync(() => {
+        attachmentUnitsComponent.removeSolutionSlides = false;
+        const onSelectRemoveSolutionSlides = jest.spyOn(attachmentUnitsComponent, 'onSelectRemoveSolutionSlides');
+        attachmentUnitsComponent.onSelectRemoveSolutionSlides();
+        tick();
+        expect(onSelectRemoveSolutionSlides).toHaveBeenCalledOnce();
+        expect(attachmentUnitsComponent.removeSolutionSlides).toBeTrue();
     }));
 });

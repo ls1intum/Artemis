@@ -8,6 +8,9 @@ import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -136,19 +139,22 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         this.testAllPreAuthorize();
     }
 
-    @Test
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "lecture-loremipsum", "" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
+    void createLecture_correctRequestBody_shouldCreateLecture(String channelName) throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
         courseUtilService.enableMessagingForCourse(course);
 
         conversationUtilService.createChannel(course, "loremipsum");
 
         Lecture lecture = new Lecture();
-        lecture.setTitle("loremIpsum");
+        lecture.setTitle("loremIpsum-()!?");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        lecture.setChannelName("loremipsum");
+        lecture.setChannelName(channelName);
+
         lecture.setVisibleDate(ZonedDateTime.now().minusDays(1));
         lecture.setStartDate(ZonedDateTime.now());
         lecture.setEndDate(ZonedDateTime.now().plusWeeks(1));
@@ -165,7 +171,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLecture.getStartDate()).isEqualTo(lecture.getStartDate());
         assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.getEndDate());
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
+        assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
 
         // Check that the conversation participants are added correctly to the lecture channel
         await().until(() -> {

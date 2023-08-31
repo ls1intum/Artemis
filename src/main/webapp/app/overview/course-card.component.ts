@@ -53,7 +53,12 @@ export class CourseCardComponent implements OnChanges {
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
-    constructor(private router: Router, private route: ActivatedRoute, private scoresStorageService: ScoresStorageService, private exerciseService: ExerciseService) {}
+    constructor(
+        private router: Router,
+        private route: ActivatedRoute,
+        private scoresStorageService: ScoresStorageService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     ngOnChanges() {
         if (this.course.exercises && this.course.exercises.length > 0) {

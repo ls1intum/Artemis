@@ -21,6 +21,9 @@ type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeBreakSlides: boolean;
+    removeBreakSlidesKeyphrase: string;
+    removeSolutionSlides: boolean;
+    removeSolutionSlidesKeyphrase: string;
 };
 
 @Component({
@@ -48,6 +51,9 @@ export class AttachmentUnitsComponent implements OnInit {
     fileName: string;
     invalidUnitTableMessage?: string;
     removeBreakSlides: boolean;
+    removeBreakSlidesKeyphrase: string;
+    removeSolutionSlides: boolean;
+    removeSolutionSlidesKeyphrase: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -67,6 +73,9 @@ export class AttachmentUnitsComponent implements OnInit {
 
     ngOnInit(): void {
         this.removeBreakSlides = false;
+        this.removeBreakSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideKeyphrase');
+        this.removeSolutionSlides = false;
+        this.removeSolutionSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideKeyphrase');
         this.isLoading = true;
         this.isProcessingMode = true;
 
@@ -95,7 +104,14 @@ export class AttachmentUnitsComponent implements OnInit {
     createAttachmentUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading = true;
-            const lectureUnitInformationDTOObj: LectureUnitInformationDTO = { units: this.units, numberOfPages: this.numberOfPages, removeBreakSlides: this.removeBreakSlides };
+            const lectureUnitInformationDTOObj: LectureUnitInformationDTO = {
+                units: this.units,
+                numberOfPages: this.numberOfPages,
+                removeBreakSlides: this.removeBreakSlides,
+                removeBreakSlidesKeyphrase: this.removeBreakSlidesKeyphrase,
+                removeSolutionSlides: this.removeSolutionSlides,
+                removeSolutionSlidesKeyphrase: this.removeSolutionSlidesKeyphrase,
+            };
             const formData: FormData = new FormData();
             formData.append('file', this.file);
             formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
@@ -198,5 +214,9 @@ export class AttachmentUnitsComponent implements OnInit {
 
     onSelectRemoveBreakSlides() {
         this.removeBreakSlides = !this.removeBreakSlides;
+    }
+
+    onSelectRemoveSolutionSlides() {
+        this.removeSolutionSlides = !this.removeSolutionSlides;
     }
 }

@@ -44,7 +44,7 @@ import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -169,6 +169,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
+    faListAlt = faListAlt;
 
     constructor(
         public complaintService: ComplaintService,
@@ -447,7 +448,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     /**
      * get all submissions for all correction rounds which the tutor has assessed.
      * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
-     * @private
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
         if (this.isExamMode) {
@@ -529,7 +529,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     /**
      * Get all submissions that don't have an assessment for all correction rounds
      * If not in examMode correction rounds defaults to 0.
-     * @private
      */
     private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
         if (this.isExamMode) {
@@ -793,5 +792,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
         }
+    }
+
+    /**
+     * Generates a link to the respective exercise details page
+     */
+    getExerciseDetailsLink() {
+        return ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!];
     }
 }

@@ -610,6 +610,7 @@ public class GitService {
             StoredConfig gitRepoConfig = repository.getConfig();
             gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
@@ -639,8 +640,20 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         }
+    }
+
+    /**
+     * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
+     * commits is enabled, tests will fail because it will not be able to actually sign the commit.
+     * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     *
+     * @param git Git Repository Object.
+     * @return CommitCommand with signing set to false.
+     */
+    public static CommitCommand commit(Git git) {
+        return git.commit().setSign(false);
     }
 
     /**
@@ -656,7 +669,7 @@ public class GitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
@@ -973,7 +986,7 @@ public class GitService {
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
+            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -1027,7 +1040,7 @@ public class GitService {
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
             // Delete copy branch
@@ -1176,7 +1189,7 @@ public class GitService {
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
-                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
             }
@@ -1265,7 +1278,7 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = FileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }

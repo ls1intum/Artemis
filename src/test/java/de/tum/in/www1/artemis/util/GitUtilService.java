@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -30,7 +31,7 @@ public class GitUtilService {
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
     private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
-    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
+    private final Path remotePath = Path.of(System.getProperty("java.io.tmpdir")).resolve("remotegittest/scm/test-repository");
 
     public GitUtilService() throws IOException {
     }
@@ -46,10 +47,6 @@ public class GitUtilService {
     private Repository remoteRepo;
 
     private Repository localRepo;
-
-    private Git localGit;
-
-    private Git remoteGit;
 
     /**
      * Initializes the repository with three dummy files
@@ -67,19 +64,23 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
+            Files.createDirectories(remotePath);
+            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
-            remoteGit.commit().setMessage("initial commit").call();
+            GitService.commit(remoteGit).setMessage("initial commit").call();
 
             // clone remote repository
-            localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
+            Git localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
 
             reinitializeLocalRepository();
             reinitializeRemoteRepository();
+
+            localGit.close();
+            remoteGit.close();
         }
         catch (IOException | GitAPIException ex) {
             ex.printStackTrace();
@@ -102,16 +103,10 @@ public class GitUtilService {
 
     public void deleteRepos() {
         if (remoteRepo != null) {
-            remoteRepo.close();
+            remoteRepo.closeBeforeDelete();
         }
         if (localRepo != null) {
-            localRepo.close();
-        }
-        if (localGit != null) {
-            localGit.close();
-        }
-        if (remoteGit != null) {
-            remoteGit.close();
+            localRepo.closeBeforeDelete();
         }
 
         try {
@@ -171,11 +166,9 @@ public class GitUtilService {
     }
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
-        try {
-            var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
-            PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
+        var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
+        try (PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8)) {
             writer.print(content);
-            writer.close();
         }
         catch (IOException ignored) {
         }
@@ -201,7 +194,7 @@ public class GitUtilService {
         try {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
-            git.commit().setMessage("new commit").call();
+            GitService.commit(git).setMessage("new commit").call();
         }
         catch (GitAPIException ignored) {
         }

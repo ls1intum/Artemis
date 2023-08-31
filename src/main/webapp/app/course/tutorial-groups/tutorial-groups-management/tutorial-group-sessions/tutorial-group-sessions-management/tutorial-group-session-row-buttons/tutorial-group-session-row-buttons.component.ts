@@ -35,7 +35,10 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     faUsers = faUsers;
     faTimes = faTimes;
 
-    constructor(private tutorialGroupSessionService: TutorialGroupSessionService, private modalService: NgbModal) {}
+    constructor(
+        private tutorialGroupSessionService: TutorialGroupSessionService,
+        private modalService: NgbModal,
+    ) {}
 
     deleteTutorialGroupSession = () => {
         this.tutorialGroupSessionService

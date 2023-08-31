@@ -6,12 +6,14 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -880,6 +882,17 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
+
+        doAnswer(answer((u, topic, arg) -> {
+            // Verify that the passed result is minimal
+            // We cannot use an ArgumentCaptor since the passed object gets modified afterwards, but we want to verify that state when calling the method.
+            assertThat(arg).isInstanceOf(Result.class);
+            Result result = (Result) arg;
+            assertThat(result.getSubmission().getResults()).isNull();
+            assertThat(result.getSubmission().getParticipation()).isNull();
+            assertThat(result.getParticipation().getExercise()).isNull();
+            return CompletableFuture.completedFuture(null);
+        })).when(websocketMessagingService).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
 
         // Mock result from bamboo
         assertThat(examDateService.getLatestIndividualExamEndDateWithGracePeriod(studentExam.getExam())).isAfter(ZonedDateTime.now());

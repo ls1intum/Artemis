@@ -33,7 +33,10 @@ export class ManualTextSelectionComponent {
     public selectedWords = new Array<wordSelection>();
     public ready = false;
 
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    constructor(
+        public textAssessmentAnalytics: TextAssessmentAnalytics,
+        protected route: ActivatedRoute,
+    ) {
         textAssessmentAnalytics.setComponentRoute(route);
     }
 

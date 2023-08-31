@@ -221,10 +221,9 @@ You can override the following configuration options in this file.
        git:
            name: Artemis
            email: artemis@in.tum.de
-       athene:
-           url: http://localhost
-           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-           token-validity-in-seconds: 10800
+       athena:
+           url: http://localhost:5000
+           secret: abcdef12345
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -416,8 +415,8 @@ Other run / debug configurations
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
 * **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
-  (see `Athene Service <#athene-service>`__).
+* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
+  (see `Athena Service <#athena-service>`__).
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -600,23 +599,115 @@ instead of the TUM defaults:
 ------------------------------------------------------------------------------------------------------------------------
 
 
-Athene Service
+Hermes Service
 --------------
 
-The semi-automatic text assessment relies on the Athene_ service.
+Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
+To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
+
+Configure and start Hermes
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run Hermes, you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
+
+The following environment variables need to be updated for push notifications to Apple devices:
+
+* ``APNS_CERTIFICATE_PATH``: String - Path to the APNs certificate .p12 file as described `here <https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns>`_
+* ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
+* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore, the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
+
+To run the services for Android support the following environment variable is required:
+
+* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json
+
+Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
+
+To run both APNS and Firebase, configure the environment variables for both.
+
+To start Hermes, run the ``docker compose up`` command in the folder where the ``docker-compose`` file is located.
+
+Artemis Configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+The Hermes service is running on a dedicated machine and is addressed via
+HTTPS. We need to extend the Artemis configuration in the file
+``src/main/resources/config/application-artemis.yml`` like:
+
+.. code:: yaml
+
+   artemis:
+     # ...
+    push-notification-relay: <url>
+
+.. _Hermes: https://github.com/ls1intum/Hermes
+
+------------------------------------------------------------------------------------------------------------------------
+
+Hermes Service
+--------------
+
+Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
+To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
+
+Configure and start Hermes
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run Hermes, you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
+
+The following environment variables need to be updated for push notifications to Apple devices:
+
+* ``APNS_CERTIFICATE_PATH``: String - Path to the APNs certificate .p12 file as described `here <https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns>`_
+* ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
+* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore, the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
+
+To run the services for Android support the following environment variable is required:
+
+* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json
+
+Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
+
+To run both APNS and Firebase, configure the environment variables for both.
+
+To start Hermes, run the ``docker compose up`` command in the folder where the ``docker-compose`` file is located.
+
+Artemis Configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+The Hermes service is running on a dedicated machine and is addressed via
+HTTPS. We need to extend the Artemis configuration in the file
+``src/main/resources/config/application-artemis.yml`` like:
+
+.. code:: yaml
+
+   artemis:
+     # ...
+    push-notification-relay: <url>
+
+.. _Hermes: https://github.com/ls1intum/Hermes
+
+------------------------------------------------------------------------------------------------------------------------
+
+Athena Service
+--------------
+
+The semi-automatic text assessment relies on the Athena_ service.
 To enable automatic text assessments, special configuration is required:
 
-Enable the ``athene`` Spring profile:
+Enable the ``athena`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athena
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Athene service is running on a dedicated machine and is addressed via
+The Athena service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -624,12 +715,14 @@ HTTP. We need to extend the configuration in the file
 
    artemis:
      # ...
-     athene:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
+     athena:
+         url: http://localhost:5000
+         secret: abcdef12345
 
-.. _Athene: https://github.com/ls1intum/Athene
+The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the Athena documentation_.
+
+.. _Athena: https://github.com/ls1intum/Athena
+.. _documentation: https://ls1intum.github.io/Athena
 
 ------------------------------------------------------------------------------------------------------------------------
 

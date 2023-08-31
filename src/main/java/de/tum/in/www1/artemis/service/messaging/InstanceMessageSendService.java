@@ -56,13 +56,6 @@ public interface InstanceMessageSendService {
     void sendTextExerciseScheduleCancel(Long exerciseId);
 
     /**
-     * Send a message to the main server that a text exercise should be instantly get clustered
-     *
-     * @param exerciseId the id of the exercise that should be clustered
-     */
-    void sendTextExerciseInstantClustering(Long exerciseId);
-
-    /**
      * Send a message to the main server that all student repositories and student participations of an exercise should be instantly locked
      *
      * @param exerciseId the id of the exercise that should be locked
@@ -91,6 +84,14 @@ public interface InstanceMessageSendService {
      * @param exerciseId the id of the exercise that should be locked
      */
     void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories of an exercise should be instantly unlocked.
+     * This does not unlock the participations associated with the repositories! See {@link #sendUnlockAllStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be unlocked
+     */
+    void sendUnlockAllStudentRepositories(Long exerciseId);
 
     /**
      * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.

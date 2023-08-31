@@ -18,10 +18,19 @@ import org.springframework.stereotype.Service;
 
 import net.lingala.zip4j.ZipFile;
 
+/**
+ * A service class to create zip files
+ */
 @Service
 public class ZipFileService {
 
     private final Logger log = LoggerFactory.getLogger(ZipFileService.class);
+
+    private final FileService fileService;
+
+    public ZipFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
 
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
@@ -41,6 +50,19 @@ public class ZipFileService {
                 }
             }
         }
+    }
+
+    /**
+     * Create a zip file of the given paths and save it in the zipFilePath. The zipFilePath will be deleted after the specified delay.
+     *
+     * @param zipFilePath          path where the zip file should be saved
+     * @param paths                multiple paths that should be zipped
+     * @param deleteDelayInMinutes delay in minutes after which the zip is deleted
+     * @throws IOException if an error occurred while zipping
+     */
+    public void createTemporaryZipFile(Path zipFilePath, List<Path> paths, long deleteDelayInMinutes) throws IOException {
+        createZipFile(zipFilePath, paths);
+        fileService.scheduleForDeletion(zipFilePath, deleteDelayInMinutes);
     }
 
     /**

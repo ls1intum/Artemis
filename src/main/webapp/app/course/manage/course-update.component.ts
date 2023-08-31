@@ -580,7 +580,6 @@ export class CourseUpdateComponent implements OnInit {
 
     /**
      * Auxiliary method checking if at least one date is not set or simply deleted by the user
-     * @private
      */
     private atLeastOneDateNotExisting(): boolean {
         // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date

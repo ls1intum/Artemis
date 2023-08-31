@@ -127,8 +127,14 @@
                 "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
-                "removeBreakSlide": "Remove Break slide",
-                "removeBreakSlideTooltip": "If the slide contains the word 'Break' it will remove the slide from the unit.",
+                "removeBreakSlide": "Remove Break slides",
+                "removeBreakSlideInfo": "All Break slides that contain the following keyphrase will be removed from all units.",
+                "removeBreakSlideKeyphrase": "Break",
+                "removeBreakSlideTooltip": "If a Break slide contains the keyphrase, it will be removed from the unit.",
+                "removeSolutionSlide": "Remove Example Solution slides",
+                "removeSolutionSlideInfo": "All Example solution slides that contain the following keyphrase will be removed from all units.",
+                "removeSolutionSlideKeyphrase": "Example solution",
+                "removeSolutionSlideTooltip": "If an Example solution slide contains the keyphrase, it will be removed from the unit.",
                 "validation": {
                     "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
                     "empty": {

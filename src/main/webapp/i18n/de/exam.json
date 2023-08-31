@@ -197,6 +197,7 @@
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
             "bonusGradeColumn": "Bonusnote",
+            "bonusPointsColumn": "Bonuspunkte",
             "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
             "mostSeverePlagiarismVerdictColumn": "Urteil",
@@ -266,7 +267,13 @@
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
             "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}."
+            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
+            "submissionSuccessful": {
+                "title": "Deine Klausur wurde erfolgreich abgegeben!",
+                "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
+                "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
+                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
+            }
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -399,7 +406,7 @@
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
-                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
@@ -635,7 +642,6 @@
             "noSessions": "Keine Sitzungen"
         },
         "studentExam": {
-            "submitSuccessful": "Deine Klausur wurde erfolgreich abgegeben. Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden. Halte dich an die Klausuranweisungen deiner Lehrenden.",
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"

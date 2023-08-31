@@ -53,9 +53,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
     @Query("""
-            select s from ProgrammingSubmission s
-            where s.participation.id = :#{#participationId} and (s.type <> 'ILLEGAL' or s.type is null)
-            order by s.submissionDate desc
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            ORDER BY s.submissionDate DESC
             """)
     List<ProgrammingSubmission> findLatestLegalSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 

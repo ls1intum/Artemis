@@ -21,12 +21,15 @@ export class ArtemisDeduplicate implements Integration {
                     } else {
                         // Add event to seen events and schedule removal in 5 minutes (throttle)
                         this.observedEventHashes.push(eventHash);
-                        setTimeout(() => {
-                            const index = this.observedEventHashes.indexOf(eventHash);
-                            if (index >= 0) {
-                                this.observedEventHashes.splice(index, 1);
-                            }
-                        }, 5 * 60 * 1000);
+                        setTimeout(
+                            () => {
+                                const index = this.observedEventHashes.indexOf(eventHash);
+                                if (index >= 0) {
+                                    this.observedEventHashes.splice(index, 1);
+                                }
+                            },
+                            5 * 60 * 1000,
+                        );
                     }
                 } catch (e) {
                     console.error(e);

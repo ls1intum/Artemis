@@ -70,8 +70,9 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (lectureUnitInformationDTO.removeBreakSlides()) {
-                    removeBreakSlides(documentUnits.get(0));
+                if (lectureUnitInformationDTO.removeBreakSlides() || lectureUnitInformationDTO.removeSolutionSlides()) {
+                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesKeyphrase(),
+                            lectureUnitInformationDTO.removeSolutionSlides(), lectureUnitInformationDTO.removeSolutionSlidesKeyphrase());
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
                 documentUnits.get(0).save(outputStream);
@@ -96,28 +97,34 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Removes the break slides from the given document.
+     * Removes the break slides or solution slides from the given document.
      *
-     * @param document document to remove break slides from
+     * @param document                      document to remove break slides from
+     * @param removeBreakSlides             true if the break slides should be removed
+     * @param removeBreakSlidesKeyphrase    the keyword that identifies a break slide
+     * @param removeSolutionSlides          true if the example solution slides should be removed
+     * @param removeSolutionSlidesKeyphrase the keyword that identifies a example solution slide
      */
-    private void removeBreakSlides(PDDocument document) {
-
+    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyphrase, boolean removeSolutionSlides,
+            String removeSolutionSlidesKeyphrase) {
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
             List<PDDocument> pages = pdfSplitter.split(document);
-            Iterator<PDDocument> iterator = pages.listIterator();
 
-            int index = 0;
-            while (iterator.hasNext()) {
-                PDDocument currentPage = iterator.next();
+            // Uses a decrementing loop (starting from the last index) to ensure that the
+            // index values are adjusted correctly when removing pages.
+            for (int index = pages.size() - 1; index >= 0; index--) {
+                PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
-                if (isBreakSlide(slideText)) {
+
+                if (removeBreakSlides && slideContainsKeyphrase(slideText, removeBreakSlidesKeyphrase)) {
                     document.removePage(index);
-                    break;
+                }
+                else if (removeSolutionSlides && slideContainsKeyphrase(slideText, removeSolutionSlidesKeyphrase)) {
+                    document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
-                index++;
             }
         }
         catch (IOException e) {
@@ -126,8 +133,8 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean isBreakSlide(String slideText) {
-        return slideText.contains("Break") || slideText.contains("Pause");
+    private boolean slideContainsKeyphrase(String slideText, String keyphrase) {
+        return slideText.contains(keyphrase);
     }
 
     /**
@@ -147,8 +154,8 @@ public class LectureUnitProcessingService {
             List<LectureUnitSplitDTO> units = unitsDocumentMap.values().stream()
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
-            // return units information, maximum number of pages and by default remove break slides is false
-            return new LectureUnitInformationDTO(units, numberOfPages, false);
+            // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
+            return new LectureUnitInformationDTO(units, numberOfPages, false, null, false, null);
         }
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);

@@ -242,7 +242,7 @@ public class ConversationUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+    public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
@@ -357,7 +357,7 @@ public class ConversationUtilService {
         return conversationRepository.save(oneToOneChat);
     }
 
-    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+    public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
         answerPost.setContent("answer post");
@@ -368,7 +368,7 @@ public class ConversationUtilService {
         answerPostRepository.save(answerPost);
     }
 
-    private void addReactionForUserToPost(String login, Post post) {
+    public void addReactionForUserToPost(String login, Post post) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setPost(post);
         conversationRepository.save(post.getConversation());
@@ -376,7 +376,7 @@ public class ConversationUtilService {
         reactionRepository.save(reaction);
     }
 
-    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+    public void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setAnswerPost(answerPost);
         answerPostRepository.save(answerPost);
@@ -392,6 +392,25 @@ public class ConversationUtilService {
         channel.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, channel);
         addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(channel);
+    }
+
+    public Conversation addOneMessageForUserInCourse(String login, Course course, String messageText) {
+        Post message = new Post();
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        message.setConversation(channel);
+        message.setAuthor(userUtilService.getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        channel.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(channel);
+        message = postRepository.save(message);
         return conversationRepository.save(channel);
     }
 

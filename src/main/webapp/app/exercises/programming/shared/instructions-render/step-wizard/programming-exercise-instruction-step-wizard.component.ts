@@ -26,7 +26,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     faCheck = faCheck;
     faQuestion = faQuestion;
 
-    constructor(private modalService: NgbModal, private instructionService: ProgrammingExerciseInstructionService) {}
+    constructor(
+        private modalService: NgbModal,
+        private instructionService: ProgrammingExerciseInstructionService,
+    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that changes are detected.

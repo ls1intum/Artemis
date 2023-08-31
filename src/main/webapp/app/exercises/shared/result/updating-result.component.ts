@@ -47,7 +47,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: ProgrammingSubmissionService,
+    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -139,7 +142,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Checks if a status update should be shown for this submission.
      *
      * @param submission for which a status update should be shown.
-     * @private
      */
     private shouldUpdateSubmissionState(submission?: Submission): boolean {
         // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
@@ -158,7 +160,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
-     * @private
      */
     private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

@@ -138,7 +138,10 @@ export const addDelay = async (t: number) => {
  * Represents the inclusive range with a lower and upper bound
  */
 export class Range {
-    constructor(public lowerBound: number, public upperBound: number) {}
+    constructor(
+        public lowerBound: number,
+        public upperBound: number,
+    ) {}
 
     toString(): string {
         return '[' + this.lowerBound + '%, ' + this.upperBound + '%' + (this.upperBound === 100 ? ']' : ')');

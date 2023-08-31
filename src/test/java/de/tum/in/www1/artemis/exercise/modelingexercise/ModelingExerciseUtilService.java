@@ -298,7 +298,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
@@ -315,7 +315,7 @@ public class ModelingExerciseUtilService {
         if (submit) {
             assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
-        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).orElseThrow();
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
 
     public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
@@ -324,5 +324,20 @@ public class ModelingExerciseUtilService {
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
         return plagiarismResultRepo.save(result);
+    }
+
+    public Course addModelingExerciseToCourse(Course course) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
+        modelingExercise.setGradingInstructions("Grading instructions");
+        modelingExercise.getCategories().add("Modeling");
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
+        course.addExercises(modelingExercise);
+        return courseRepo.save(course);
+
     }
 }

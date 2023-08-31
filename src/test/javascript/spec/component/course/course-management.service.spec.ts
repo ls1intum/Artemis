@@ -311,26 +311,26 @@ describe('Course Management Service', () => {
     }));
 
     it('should register for the course', fakeAsync(() => {
-        const user = new User(1, 'name');
+        const groups = ['student-group-name'];
         courseManagementService
             .registerForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(user));
+            .subscribe((res) => expect(res.body).toEqual(groups));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
-        req.flush(user);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(user);
+        req.flush(groups);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
         tick();
     }));
 
     it('should unenroll from the course', fakeAsync(() => {
-        const user = new User(1, 'name');
+        const groups = ['student-group-name'];
         courseManagementService
             .unenrollFromCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(user));
+            .subscribe((res) => expect(res.body).toEqual(groups));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
-        req.flush(user);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(user);
+        req.flush(groups);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
         tick();
     }));
 

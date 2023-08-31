@@ -64,7 +64,12 @@ export class AlertService {
 
     readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
 
-    constructor(private sanitizer: DomSanitizer, private ngZone: NgZone, private translateService: TranslateService, private eventManager: EventManager) {
+    constructor(
+        private sanitizer: DomSanitizer,
+        private ngZone: NgZone,
+        private translateService: TranslateService,
+        private eventManager: EventManager,
+    ) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;
             this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);

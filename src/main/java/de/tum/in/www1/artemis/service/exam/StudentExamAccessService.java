@@ -72,7 +72,7 @@ public class StudentExamAccessService {
 
         // Check that the student of the required student exam (from the database) is the current user
         if (!studentExam.getUser().equals(currentUser)) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
     }
 

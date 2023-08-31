@@ -19,7 +19,11 @@ import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submis
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
-    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private courseService: CourseManagementService,
+        private exerciseGroupService: ExerciseGroupService,
+    ) {}
 
     /**
      * Resolves the route and initializes text exercise
@@ -137,9 +141,5 @@ export const textExerciseRoute: Routes = [
     {
         path: ':courseId/text-exercises/:exerciseId/tutor-effort-statistics',
         loadChildren: () => import('../tutor-effort/tutor-effort-statistics.module').then((m) => m.ArtemisTutorEffortStatisticsModule),
-    },
-    {
-        path: ':courseId/text-exercises/:exerciseId/text-cluster-statistics',
-        loadChildren: () => import('../cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
 ];

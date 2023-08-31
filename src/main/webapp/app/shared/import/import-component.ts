@@ -43,7 +43,12 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
     @Input() public disabledIds: number[];
 
-    constructor(private router: Router, public pagingService: CompetencyPagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
+    constructor(
+        private router: Router,
+        public pagingService: CompetencyPagingService,
+        private sortService: SortService,
+        private activeModal: NgbActiveModal,
+    ) {}
 
     get page(): number {
         return this.state.page;

@@ -78,6 +78,42 @@
         <input class="form-check-input" type="checkbox" name="processUnit" [disabled]="units.length < 1" (change)="onSelectRemoveBreakSlides()" />
         <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlide' | artemisTranslate }}</span>
         <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideTooltip' | artemisTranslate"></fa-icon>
+        <div *ngIf="removeBreakSlides">
+            <div class="alert alert-warning mt-3 ml-3">
+                <span>
+                    {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideInfo' | artemisTranslate }}
+                </span>
+            </div>
+            <input
+                type="text"
+                class="form-control"
+                id="removeBreakSlidesKeyword"
+                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideKeyphrase' | artemisTranslate }}"
+                autocomplete="off"
+                [(ngModel)]="removeBreakSlidesKeyphrase"
+            />
+        </div>
+    </div>
+
+    <div class="mt-3 mb-3">
+        <input class="form-check-input" type="checkbox" name="processUnit" [disabled]="units.length < 1" (change)="onSelectRemoveSolutionSlides()" />
+        <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlide' | artemisTranslate }}</span>
+        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideTooltip' | artemisTranslate"></fa-icon>
+        <div *ngIf="removeSolutionSlides">
+            <div class="alert alert-warning mt-3 ml-3">
+                <span>
+                    {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideInfo' | artemisTranslate }}
+                </span>
+            </div>
+            <input
+                type="text"
+                class="form-control"
+                name="removeSolutionSlidesKeyword"
+                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideKeyphrase' | artemisTranslate }}"
+                autocomplete="off"
+                [(ngModel)]="removeSolutionSlidesKeyphrase"
+            />
+        </div>
     </div>
 
     <div *ngIf="units && units.length < 1" class="alert alert-danger mt-3">
