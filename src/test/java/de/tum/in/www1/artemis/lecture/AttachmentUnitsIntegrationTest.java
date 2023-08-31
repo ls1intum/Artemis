@@ -146,36 +146,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        var filePart = createLectureFile(true);
-
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "Break");
-
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
-                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
-        assertThat(attachmentUnits).hasSize(2);
-        assertThat(slideRepository.findAll()).hasSize(19); // 19 slides should be created for 2 attachment units (1 break slide is removed)
-
-        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
-        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-        String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
-
-        try (PDDocument document = PDDocument.load(fileBytes)) {
-            // 6 is the number of pages for the first unit without the break slides
-            assertThat(document.getNumberOfPages()).isEqualTo(6);
-            document.close();
-        }
-        assertThat(attachmentUnitList).hasSize(2);
-        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldRemoveSolutionSlides_and_removeBreakSlides() throws Exception {
         var filePart = createLectureFile(true);
 
@@ -183,7 +153,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "Break, Example solution");
+
+        var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
