@@ -7,6 +7,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
 
 @Component
 @Profile("iris")
@@ -37,7 +40,10 @@ public class IrisRequestMockProvider {
     private MockRestServiceServer mockServer;
 
     @Value("${artemis.iris.url}/api/v1/messages")
-    private URL apiURL;
+    private URL messagesApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/models")
+    private URL modelsApiURL;
 
     @Autowired
     private ObjectMapper mapper;
@@ -66,9 +72,9 @@ public class IrisRequestMockProvider {
     /**
      * Mocks response call for the pyris call
      */
-    public void mockResponse(String responseMessage) throws JsonProcessingException {
+    public void mockMessageResponse(String responseMessage) throws JsonProcessingException {
         if (responseMessage == null) {
-            mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+            mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
             return;
         }
         var irisMessage = new IrisMessage();
@@ -81,10 +87,28 @@ public class IrisRequestMockProvider {
         var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);
 
-        mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
-    public void mockError() {
-        mockServer.expect(ExpectedCount.once(), requestTo(apiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
+    public void mockMessageError() throws JsonProcessingException {
+        mockMessageError(500);
+    }
+
+    public void mockMessageError(int status) throws JsonProcessingException {
+        var errorResponseDTO = new IrisErrorResponseDTO("Test error");
+        var json = Map.of("detail", errorResponseDTO);
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withRawStatus(status).body(mapper.writeValueAsString(json)));
+    }
+
+    public void mockModelsResponse() throws JsonProcessingException {
+        var irisModelDTO = new IrisModelDTO("TEST_MODEL", "Test model", "Test description");
+        var irisModelDTOArray = new IrisModelDTO[] { irisModelDTO };
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockModelsError() throws JsonProcessingException {
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(418));
     }
 }

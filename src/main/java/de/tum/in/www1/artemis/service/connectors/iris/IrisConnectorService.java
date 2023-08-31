@@ -11,8 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,11 +66,16 @@ public class IrisConnectorService {
      * @return A list of available Models as IrisModelDTO
      */
     public List<IrisModelDTO> getOfferedModels() throws IrisConnectorException {
-        var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
-        if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+        try {
+            var response = restTemplate.getForEntity(irisUrl + "/api/v1/models", JsonNode.class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                throw new IrisConnectorException("Could not fetch offered models");
+            }
+            return Arrays.asList((IrisModelDTO[]) parseResponse(response.getBody(), IrisModelDTO.class.arrayType()));
+        }
+        catch (HttpStatusCodeException e) {
             throw new IrisConnectorException("Could not fetch offered models");
         }
-        return Arrays.asList((IrisModelDTO[]) parseResponse(response.getBody(), IrisModelDTO.class.arrayType()));
     }
 
     private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
@@ -83,7 +87,7 @@ public class IrisConnectorService {
                 }
                 return CompletableFuture.completedFuture(parseResponse(response.getBody(), IrisMessageResponseDTO.class));
             }
-            catch (HttpClientErrorException e) {
+            catch (HttpStatusCodeException e) {
                 switch (e.getStatusCode()) {
                     case BAD_REQUEST -> {
                         var badRequestDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
