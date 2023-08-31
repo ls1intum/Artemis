@@ -75,6 +75,7 @@ import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -177,6 +178,8 @@ describe('CodeEditorContainerIntegration', () => {
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 

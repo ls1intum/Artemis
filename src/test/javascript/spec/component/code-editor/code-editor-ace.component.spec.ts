@@ -18,6 +18,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { FeedbackType } from 'app/entities/feedback.model';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -53,11 +54,7 @@ describe('CodeEditorAceComponent', () => {
                 getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
                 getInlineFeedbackNodeStub.mockReturnValue(document.createElement('div'));
                 // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation(() => ({
-                    observe: jest.fn(),
-                    unobserve: jest.fn(),
-                    disconnect: jest.fn(),
-                }));
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 
