@@ -41,7 +41,7 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "assessmentNote": "Geheime Notizen nur für Tutor:innen",
+                "assessmentNote": "Interne Notizen nur für Tutor:innen",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
