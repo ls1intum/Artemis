@@ -148,7 +148,7 @@ public class ProgrammingExerciseImportBasicService {
         ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
 
         if (newExercise.getChannelName() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(savedImportedExercise, newExercise.getChannelName());
+            Channel createdChannel = channelService.createExerciseChannel(savedImportedExercise, Optional.ofNullable(newExercise.getChannelName()));
             channelService.registerUsersToChannelAsynchronously(true, newExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         }
 

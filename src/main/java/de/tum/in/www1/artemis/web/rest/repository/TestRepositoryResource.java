@@ -98,16 +98,16 @@ public class TestRepositoryResource extends RepositoryResource {
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(exerciseId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.createFile(exerciseId, filePath, request);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(exerciseId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
+        return super.createFolder(exerciseId, folderPath, request);
     }
 
     @Override

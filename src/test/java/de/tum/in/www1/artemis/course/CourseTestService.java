@@ -2100,7 +2100,7 @@ public class CourseTestService {
         Files.createDirectories(Path.of(courseArchivesDirPath));
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
         doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
                 any(Path.class));
 

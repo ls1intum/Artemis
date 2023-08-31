@@ -56,9 +56,8 @@ artemis:
     git:
         name: Artemis
         email: artemis@in.tum.de
-    athene:
-        url: http://localhost
-        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-        token-validity-in-seconds: 10800
+    athena:
+        url: http://localhost:5000
+        secret: abcdef12345
     apollon:
         conversion-service-url: http://localhost:8080

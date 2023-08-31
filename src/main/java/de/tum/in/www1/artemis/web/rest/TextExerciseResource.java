@@ -168,7 +168,7 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(result, textExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);

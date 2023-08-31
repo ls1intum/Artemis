@@ -37,9 +37,10 @@ describe('Lecture management', () => {
 
     it('Deletes a lecture', () => {
         let lecture: Lecture;
-        cy.login(instructor, '/course-management/' + course.id + '/lectures');
+        cy.login(instructor, '/');
         courseManagementAPIRequest.createLecture(course).then((lectureResponse) => {
             lecture = lectureResponse.body;
+            cy.visit('/course-management/' + course.id + '/lectures');
             lectureManagement.deleteLecture(lecture).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
                 lectureManagement.getLecture(lecture.id!).should('not.exist');
