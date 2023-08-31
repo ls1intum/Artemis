@@ -14,11 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.BadRequestException;
-import com.github.dockerjava.api.exception.NotFoundException;
-
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -46,17 +41,17 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final LocalCITriggerService localCITriggerService;
 
-    private final DockerClient dockerClient;
+    private final LocalCIDockerService localCIDockerService;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCITriggerService localCITriggerService,
-            DockerClient dockerClient) {
+            LocalCIDockerService localCIDockerService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.localCITriggerService = localCITriggerService;
-        this.dockerClient = dockerClient;
+        this.localCIDockerService = localCIDockerService;
     }
 
     @Override
@@ -69,23 +64,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
         // Check if docker image exists locally, otherwise pull it from Docker Hub.
 
-        try {
-            log.info("Inspecting docker image {}", dockerImage);
-            dockerClient.inspectImageCmd(dockerImage).exec();
-        }
-        catch (NotFoundException e) {
-            // Image does not exist locally, pull it from Docker Hub.
-            log.info("Pulling docker image {}", dockerImage);
-            try {
-                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
-            }
-            catch (InterruptedException ie) {
-                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
-            }
-        }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
-        }
+        localCIDockerService.pullDockerImage(dockerImage);
 
         // Trigger build for the given participation.
 

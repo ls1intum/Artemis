@@ -20,11 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.BadRequestException;
-import com.github.dockerjava.api.exception.NotFoundException;
-
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -54,7 +49,7 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIContainerService localCIContainerService;
 
-    private final DockerClient dockerClient;
+    private final LocalCIDockerService localCIDockerService;
 
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
@@ -67,13 +62,13 @@ public class LocalCIBuildJobManagementService {
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            DockerClient dockerClient) {
+            LocalCIDockerService localCIDockerService) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
-        this.dockerClient = dockerClient;
+        this.localCIDockerService = localCIDockerService;
     }
 
     /**
@@ -93,7 +88,7 @@ public class LocalCIBuildJobManagementService {
         }
 
         // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
-        pullDockerImage();
+        localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
@@ -218,26 +213,6 @@ public class LocalCIBuildJobManagementService {
                 // where the container is stopped and the user is notified.
                 throw e;
             }
-        }
-    }
-
-    private void pullDockerImage() {
-        try {
-            log.info("Inspecting docker image {}", dockerImage);
-            dockerClient.inspectImageCmd(dockerImage).exec();
-        }
-        catch (NotFoundException e) {
-            // Image does not exist locally, pull it from Docker Hub.
-            log.info("Pulling docker image {}", dockerImage);
-            try {
-                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
-            }
-            catch (InterruptedException ie) {
-                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
-            }
-        }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
         }
     }
 
