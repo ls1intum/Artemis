@@ -125,7 +125,8 @@ public abstract class PostingService {
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null ? participant.getIsHidden() : false));
+                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null ? participant.getIsHidden() : false,
+                        authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
     /**

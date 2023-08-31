@@ -169,7 +169,7 @@ public class ConversationMessagingService extends PostingService {
 
             // If a channel is not visible to students, filter out participants that are only students
             if (!conversationService.isChannelVisibleToStudents(channel)) {
-                filter = filter.and(recipientSummary -> authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), recipientSummary.user()));
+                filter = filter.and(ConversationWebSocketRecipientSummary::isAtLeastTutorInCourse);
             }
         }
 
