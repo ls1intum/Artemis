@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -365,8 +364,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationTest {
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
-        TextSubmission finalTextSubmission = textSubmission;
-        await().timeout(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(complaintRepo.findByResultId(finalTextSubmission.getId())).isPresent());
+
+        assertThat(textSubmission.getLatestResult()).isNotNull();
+        assertThat(complaintRepo.findByResultId(textSubmission.getLatestResult().getId())).isPresent();
+
+        Complaint finalExamExerciseComplaint = examExerciseComplaint;
+        await().untilAsserted(() -> assertThat(complaintResponseRepo.findByComplaint_Id(finalExamExerciseComplaint.getId())).isPresent());
     }
 
     @Test
