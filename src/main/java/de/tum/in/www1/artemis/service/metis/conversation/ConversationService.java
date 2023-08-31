@@ -452,7 +452,7 @@ public class ConversationService {
 
     /**
      * Determines whether the provided channel is visible to students. If the channel is not associated with a
-     * lecture/exam/exercise, then this is method returns true. If it is connected to a lecture/exam/exercise, then the
+     * lecture/exam/exercise, then this method returns true. If it is connected to a lecture/exam/exercise, then the
      * channel visibility depends on the visible date of the lecture/exam/exercise.
      *
      * @param channel the channel under consideration
