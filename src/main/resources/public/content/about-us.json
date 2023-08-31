@@ -7,6 +7,12 @@
             "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
+            "fullName": "Patrick Bassner",
+            "photoDirectory": "public/images/about/Patrick_Bassner.png",
+            "role": "projectManager",
+            "website": "https://ase.cit.tum.de/people/bassner"
+        },
+        {
             "fullName": "Matthias Linhuber",
             "photoDirectory": "public/images/about/Matthias_Linhuber.jpg",
             "role": "projectManager",
@@ -17,12 +23,6 @@
             "photoDirectory": "public/images/about/Maximilian_Soelch.jpg",
             "role": "projectManager",
             "website": "https://ase.cit.tum.de/people/soelch"
-        },
-        {
-            "fullName": "Patrick Bassner",
-            "photoDirectory": "public/images/about/Patrick_Bassner.png",
-            "role": "projectManager",
-            "website": "https://ase.cit.tum.de/people/bassner"
         }
     ],
     "contributors": [
