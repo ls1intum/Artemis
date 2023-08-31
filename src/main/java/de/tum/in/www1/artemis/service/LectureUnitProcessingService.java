@@ -116,9 +116,6 @@ public class LectureUnitProcessingService {
                 if (slideContainsKeyphrase(slideText, removeSlidesCommaSeparatedKeyPhrases)) {
                     document.removePage(index);
                 }
-                else if (slideContainsKeyphrase(slideText, removeSlidesCommaSeparatedKeyPhrases)) {
-                    document.removePage(index);
-                }
                 currentPage.close(); // make sure to close the document
             }
         }
