@@ -118,7 +118,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * Get a programming exercise participation with the given id from the database.
+     * Gets a programming exercise participation with the given id from the database.
      *
      * @param participationId the id of the participation to retrieve
      * @throws IllegalArgumentException if the participation is not a programming exercise participation
@@ -167,7 +167,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /repository/{participationId}/files/{commitId} : get the files of the repository with the given participationId at the given commitId
+     * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitId        the commitId of the repository we want to get the files from

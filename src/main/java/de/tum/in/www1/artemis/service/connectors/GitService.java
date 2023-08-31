@@ -377,7 +377,9 @@ public class GitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URL.
+     * <p>
+     * If the local repo does not exist yet, it will be checked out.
      * After retrieving the repository, the commit for the given hash will be checked out.
      *
      * @param repository the repository to check out the commit in
@@ -915,7 +917,7 @@ public class GitService {
     }
 
     /**
-     * Switch back to the HEAD commit of the default branch
+     * Switch back to the HEAD commit of the default branch.
      *
      * @param repository the repository for which we want to switch to the HEAD commit of the default branch
      * @throws GitAPIException if this operation fails
