@@ -117,6 +117,11 @@ describe('Feedback', () => {
             expect(Feedback.getReferenceFilePath(feedback3)).toBeUndefined();
         });
 
+        it('should extract the file path from the feedback reference for file names with an underscore', () => {
+            const feedback = createFeedback('Feedback with reference', FeedbackType.AUTOMATIC, 'file:src/com/example/package/with_an_underscore.java_line:13');
+            expect(Feedback.getReferenceFilePath(feedback)).toBe('src/com/example/package/with_an_underscore.java');
+        });
+
         it('should extract the line number from the feedback reference', () => {
             const feedback1 = createFeedback('Feedback with reference', FeedbackType.AUTOMATIC, 'file:src/com/example/package/MyClass.java_line:13');
             const feedback2 = createFeedback('Feedback without reference', FeedbackType.AUTOMATIC);
@@ -129,6 +134,11 @@ describe('Feedback', () => {
             expect(Feedback.getReferenceLine(feedback3)).toBeUndefined();
             expect(Feedback.getReferenceLine(feedback4)).toBeUndefined();
             expect(Feedback.getReferenceLine(feedback5)).toBeUndefined();
+        });
+
+        it('should extract the line number from the feedback reference for file names with an underscore', () => {
+            const feedback = createFeedback('Feedback with reference', FeedbackType.AUTOMATIC, 'file:src/com/example/package/file_with_an_underscore.java_line:13');
+            expect(Feedback.getReferenceLine(feedback)).toBe(13);
         });
     });
 });
