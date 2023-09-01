@@ -244,8 +244,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
@@ -271,7 +269,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws Exception {
 
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         if (!recreateBuildPlans) {
@@ -290,7 +287,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
     }

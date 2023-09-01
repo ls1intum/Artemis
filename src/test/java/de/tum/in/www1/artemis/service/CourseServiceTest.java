@@ -1,18 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
@@ -24,6 +26,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class CourseServiceTest extends AbstractSpringIntegrationTest {
@@ -265,6 +269,44 @@ class CourseServiceTest extends AbstractSpringIntegrationTest {
 
         courses = courseService.findAllEnrollableForUser(student);
         assertThat(courses).contains(enrollmentEnabledAndActive);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}]")
+    @ValueSource(strings = { "student", "tutor", "editor", "instructor" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterLDAPUsersInCourse(String user) throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        Course course1 = courseUtilService.createCourse();
+        course1.setStudentGroupName("student");
+        courseRepository.save(course1);
+        String userName = TEST_PREFIX + user + "100";
+
+        // setup mocks
+        var ldapUser1Dto = new LdapUserDto().firstName(userName).lastName(userName).username(userName).email(userName + "@tum.de");
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(user, false);
+
+        StudentDTO dto1 = switch (user) {
+            case "tutor" -> new StudentDTO(null, userName, userName, "1000001", null);
+            case "editor" -> new StudentDTO(null, userName, userName, null, userName + "@tum.de");
+            case "instructor" -> new StudentDTO(userName, userName, userName, null, null);
+            default -> new StudentDTO(userName, userName, userName, "1000002", userName + "@tum.de");
+        };
+
+        if (dto1.login() != null) {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(dto1.login());
+        }
+        else if (dto1.email() != null) {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByEmail(dto1.email());
+        }
+        else {
+            doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
+        }
+        StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
+
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
+                HttpStatus.OK);
+        assertThat(registrationFailures).containsExactly(dto2);
     }
 
     private void setEnrollmentConfiguration(Course course, ZonedDateTime start, ZonedDateTime end) {
