@@ -29,10 +29,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should emit onAcceptSuggestion event when Accept button is clicked', () => {
         jest.spyOn(component.onAcceptSuggestion, 'emit');
         const acceptButton = fixture.debugElement.query(By.css('.btn-success')).nativeElement;

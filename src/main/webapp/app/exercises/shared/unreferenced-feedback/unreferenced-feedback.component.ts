@@ -113,7 +113,7 @@ export class UnreferencedFeedbackComponent {
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = (feedback.text || FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         this.updateFeedback(feedback); // Make it "real" feedback
         this.onAcceptSuggestion.emit(feedback);
     }

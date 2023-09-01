@@ -31,6 +31,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
 
+    // Expose to template
+    protected readonly Feedback = Feedback;
+
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
@@ -148,6 +151,4 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
         this.didChange();
     }
-
-    protected readonly Feedback = Feedback;
 }

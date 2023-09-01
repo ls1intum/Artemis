@@ -130,11 +130,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly faPlusSquare = faPlusSquare;
     readonly faCircleNotch = faCircleNotch;
 
+    // Expose to template
+    protected readonly Feedback = Feedback;
+
     /**
      * Filter feedback: Only referenced to current file
      */
     filterFeedbackForFile(feedbacks: Feedback[]): Feedback[] {
-        if (!this.selectedFile) return [];
+        if (!this.selectedFile) {
+            return [];
+        }
         return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile);
     }
 
@@ -201,12 +206,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         } else if (changes.commitState && changes.commitState.previousValue === CommitState.CONFLICT && changes.commitState.currentValue !== CommitState.CONFLICT) {
             this.editor.setReadOnly(false);
         }
-        if (changes.feedbacks || changes.feedbackSuggestions) {
-            // on changes to these props
-            if (this.editorSession) {
-                // initEditor should already be called, otherwise there is no need to init this anyways
-                await this.updateLineWidgets();
-            }
+        if ((changes.feedbacks || changes.feedbackSuggestions) && this.editorSession) {
+            // when feedback/suggestions change and initEditor was already called
+            await this.updateLineWidgets();
         }
     }
 
@@ -540,7 +542,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         // Wait for one render cycle for all DOM updates to be done
         await new Promise((resolve) => setTimeout(resolve, 0));
         // Remove all existing line widgets
-        const linesWithWidgets = this.editorSession.lineWidgets?.map((l: any) => l?.row).filter((row: number | undefined) => row != null) ?? [];
+        const linesWithWidgets = this.editorSession.lineWidgets?.map((l: any) => l?.row).filter((row: number | undefined) => row != undefined) ?? [];
         for (const line of linesWithWidgets) {
             this.removeLineWidget(line);
         }
@@ -619,7 +621,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = (feedback.text || FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         await this.updateFeedback(feedback); // Make it "real" feedback
         this.onAcceptSuggestion.emit(feedback);
     }
@@ -659,6 +661,4 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     updateTabSize(event: number) {
         this.tabSize = event;
     }
-
-    protected readonly Feedback = Feedback;
 }

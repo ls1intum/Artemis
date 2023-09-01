@@ -33,10 +33,6 @@ describe('FeedbackSuggestionBadgeComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should have the correct text and tooltip for a SUGGESTED feedback', () => {
         component.feedback = new Feedback();
         jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.SUGGESTED);

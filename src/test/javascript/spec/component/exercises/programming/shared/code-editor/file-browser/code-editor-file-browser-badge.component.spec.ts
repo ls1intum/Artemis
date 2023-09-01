@@ -27,10 +27,6 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should correctly display the tooltip for a FEEDBACK_SUGGESTION badge', () => {
         jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
         expect(component.tooltip).toBe('Mocked Tooltip');

@@ -46,6 +46,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    protected readonly Feedback = Feedback;
 
     public elementRef: ElementRef;
 
@@ -76,7 +77,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         if (Feedback.isFeedbackSuggestion(this.feedback)) {
             // Mark as modified feedback suggestion
-            this.feedback.text = (this.feedback.text || FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
+            this.feedback.text = (this.feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
                 FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
                 FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
             );
@@ -143,6 +144,4 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         return buildFeedbackTextForReview(feedback, false);
     }
-
-    protected readonly Feedback = Feedback;
 }

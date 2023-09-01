@@ -28,6 +28,9 @@ export class UnreferencedFeedbackDetailComponent {
     faCheck = faCheck;
     faTrash = faTrash;
 
+    // Expose to template
+    protected readonly Feedback = Feedback;
+
     constructor(
         private translateService: TranslateService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -42,7 +45,7 @@ export class UnreferencedFeedbackDetailComponent {
         }
         if (Feedback.isFeedbackSuggestion(this.feedback)) {
             // Change feedback suggestion type to adapted
-            this.feedback.text = (this.feedback.text || FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
+            this.feedback.text = (this.feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
                 FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
                 FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
             );
@@ -64,6 +67,4 @@ export class UnreferencedFeedbackDetailComponent {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         this.onFeedbackChange.emit(this.feedback);
     }
-
-    protected readonly Feedback = Feedback;
 }

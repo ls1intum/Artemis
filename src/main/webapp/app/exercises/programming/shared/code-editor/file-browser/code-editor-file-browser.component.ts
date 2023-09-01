@@ -600,7 +600,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             if (fileName.startsWith(folder.value)) {
                 // file is in folder
                 for (const fileBadge of fileBadges) {
-                    const folderBadgeCount = folderBadgesMap.get(fileBadge.type) || 0;
+                    const folderBadgeCount = folderBadgesMap.get(fileBadge.type) ?? 0;
                     folderBadgesMap.set(fileBadge.type, folderBadgeCount + fileBadge.count);
                 }
             }
