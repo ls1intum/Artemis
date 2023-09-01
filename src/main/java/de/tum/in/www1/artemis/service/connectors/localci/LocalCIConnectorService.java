@@ -243,6 +243,7 @@ public class LocalCIConnectorService {
         programmingMessagingService.notifyUserAboutSubmission(submission);
 
         // Trigger the build for the new submission on the local CI system.
+        // TODO: this is already invoked in the service method processNewProgrammingSubmission above, however without the commit hash, we should probably unify the methods
         localCITriggerService.triggerBuild(participation, commit.getCommitHash());
     }
 
