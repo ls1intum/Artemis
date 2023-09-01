@@ -117,8 +117,8 @@ public class ExamSessionService {
             relatedExamSessions = filterEqualRelatedExamSessionsOfSameStudentExam(relatedExamSessions);
 
             if (!relatedExamSessions.isEmpty() && !isSubsetOfFoundSuspiciousSessions(relatedExamSessions, suspiciousExamSessions)) {
-                addSuspiciousReasons(examSession, relatedExamSessions);
-                relatedExamSessions.add(examSession);
+                var session = addSuspiciousReasons(examSession, relatedExamSessions);
+                relatedExamSessions.add(session);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         }
@@ -215,8 +215,11 @@ public class ExamSessionService {
      * @param session             exam session we compare with
      * @param relatedExamSessions related exam sessions
      */
-    private void addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+    private ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+        session.setSuspiciousReasons(new HashSet<>());
+
         for (var relatedExamSession : relatedExamSessions) {
+            relatedExamSession.setSuspiciousReasons(new HashSet<>());
             if (relatedExamSession.hasSameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
                 session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
@@ -227,6 +230,7 @@ public class ExamSessionService {
             }
 
         }
+        return session;
     }
 
 }

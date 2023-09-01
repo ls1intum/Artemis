@@ -3,7 +3,7 @@ import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/ex
 import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
-    selector: 'jhi-suspicious-sessions',
+    selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
 })
@@ -25,14 +25,5 @@ export class SuspiciousSessionsComponent implements OnInit {
 
     private isSuspiciousFor(reason: SuspiciousSessionReason) {
         return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
-    }
-
-    mapEnumToTranslationString(reason: SuspiciousSessionReason) {
-        switch (reason) {
-            case SuspiciousSessionReason.SAME_IP_ADDRESS:
-                return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.sameIpAddress';
-            case SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT:
-                return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.sameBrowserFingerprint';
-        }
     }
 }
