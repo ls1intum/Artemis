@@ -89,9 +89,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl()))).toList();
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithUrl(repo.getName(), repo.getVcsRepositoryUrl())).toList();
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, sourceCodeRepositoryURL, testRepositoryURL, solutionRepositoryURL, additionalRepositories);
     }
 
     @Override
@@ -110,7 +109,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch);
+        String plainRepositoryUrl = urlService.getPlainUrlFromRepositoryUrl(repositoryUrl);
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, plainRepositoryUrl, null /* not needed */, branch);
         enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)

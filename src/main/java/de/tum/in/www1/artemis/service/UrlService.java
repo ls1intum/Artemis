@@ -138,4 +138,15 @@ public class UrlService {
         }
         return projectKey;
     }
+
+    public String getPlainUrlFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+        var uri = repositoryUrl.getURI();
+        try {
+            var updatedUri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, uri.getFragment());
+            return updatedUri.toString();
+        }
+        catch (URISyntaxException e) {
+            throw new VersionControlException(e);
+        }
+    }
 }

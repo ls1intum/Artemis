@@ -86,11 +86,16 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", branchName);
         parameters.add("repository.git.repositoryUrl", newRepoUrl);
+        parameters.add("repository.git.authenticationType", "PASSWORD");
+        parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        parameters.add("repository.git.useShallowClones", "true");
+        parameters.add("repository.git.commandTimeout", "180");
 
         try {
             String requestUrl = bambooServerUrl + "/chain/admin/config/updateRepository.action";
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-            bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
+            var response = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
+            log.info("Response from Bamboo updateRepository.action {}", response);
         }
         catch (Exception ex) {
             // TODO: improve error handling

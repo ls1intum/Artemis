@@ -225,6 +225,9 @@ public class ProgrammingExerciseService {
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
         scheduleOperations(savedProgrammingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
+
+        // TODO: we should trigger BASE and SOLUTION build plans once here
+
         return savedProgrammingExercise;
     }
 
