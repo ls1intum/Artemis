@@ -95,7 +95,7 @@ public class Slide extends DomainObject {
             return;
         }
         Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
-        slideImagePath = entityFileService.moveTempFileBeforeEntityPersistenceWithId(slideImagePath, targetFolder, false, (long) getSlideNumber());
+        slideImagePath = entityFileService.moveFileBeforeEntityPersistenceWithIdIfIsTemp(slideImagePath, targetFolder, false, (long) getSlideNumber());
     }
 
     @PreUpdate

@@ -109,11 +109,11 @@ public class Attachment extends DomainObject implements Serializable {
         }
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             Path targetFolder = FilePathService.getLectureAttachmentFilePath().resolve(getLecture().getId().toString());
-            link = entityFileService.moveTempFileBeforeEntityPersistenceWithId(link, targetFolder, true, getLecture().getId());
+            link = entityFileService.moveFileBeforeEntityPersistenceWithIdIfIsTemp(link, targetFolder, true, getLecture().getId());
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(getAttachmentUnit().getId().toString());
-            link = entityFileService.moveTempFileBeforeEntityPersistenceWithId(link, targetFolder, true, getAttachmentUnit().getId());
+            link = entityFileService.moveFileBeforeEntityPersistenceWithIdIfIsTemp(link, targetFolder, true, getAttachmentUnit().getId());
         }
     }
 

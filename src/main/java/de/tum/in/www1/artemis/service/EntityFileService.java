@@ -34,7 +34,7 @@ public class EntityFileService {
 
     /**
      * Moves a temporary file to the target folder and returns the new path. A placeholder is used as id.
-     * Use {@link #moveTempFileBeforeEntityPersistenceWithId(String, Path, boolean, Long)} to provide an existing id.
+     * Use {@link #moveFileBeforeEntityPersistenceWithIdIfIsTemp(String, Path, boolean, Long)} to provide an existing id.
      *
      * @param entityFilePath the path of the temporary file
      * @param targetFolder   the target folder to move the file to
@@ -43,11 +43,11 @@ public class EntityFileService {
      */
     @Nonnull
     public String moveTempFileBeforeEntityPersistence(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename) {
-        return moveTempFileBeforeEntityPersistenceWithId(entityFilePath, targetFolder, keepFilename, null);
+        return moveFileBeforeEntityPersistenceWithIdIfIsTemp(entityFilePath, targetFolder, keepFilename, null);
     }
 
     /**
-     * Moves a temporary file to the target folder and returns the new path.
+     * Moves a temporary file to the target folder and returns the new path. If the file is not a temporary file, the original path is returned without any changes.
      *
      * @param entityFilePath the path of the temporary file
      * @param targetFolder   the target folder to move the file to
@@ -56,12 +56,15 @@ public class EntityFileService {
      * @return the new file path as string
      */
     @Nonnull
-    public String moveTempFileBeforeEntityPersistenceWithId(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
+    public String moveFileBeforeEntityPersistenceWithIdIfIsTemp(@Nonnull String entityFilePath, @Nonnull Path targetFolder, boolean keepFilename, @Nullable Long entityId) {
         URI filePath = URI.create(entityFilePath);
         String filename = Path.of(entityFilePath).getFileName().toString();
         String extension = FilenameUtils.getExtension(filename);
         try {
             Path source = filePathService.actualPathForPublicPathOrThrow(filePath);
+            if (!source.startsWith(FilePathService.getTempFilePath())) {
+                return entityFilePath;
+            }
             Path target;
             if (keepFilename) {
                 target = targetFolder.resolve(filename);
@@ -97,7 +100,7 @@ public class EntityFileService {
             @Nonnull Path targetFolder, boolean keepFilename) {
         String resultingPath = newEntityFilePath;
         if (newEntityFilePath != null) {
-            resultingPath = moveTempFileBeforeEntityPersistenceWithId(newEntityFilePath, targetFolder, keepFilename, entityId);
+            resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);
         }
         if (oldEntityFilePath != null && !oldEntityFilePath.equals(newEntityFilePath)) {
             Path oldFilePath = filePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
