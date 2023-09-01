@@ -409,10 +409,9 @@ public class CourseExamExportService {
             if (exportedSubmissionsFileOrEmpty.isPresent()) {
                 var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
                 try {
-                    Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
-                    Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
+                    FileUtils.moveFileToDirectory(exportedSubmissionsFile, outputDir.toFile(), true);
 
-                    exportedExercises.add(newExportedSubmissionsFilePath);
+                    exportedExercises.add(Path.of(outputDir.toString(), exportedSubmissionsFile.getName()));
 
                     // Delete the directory where the zip was located before it was moved
                     FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());

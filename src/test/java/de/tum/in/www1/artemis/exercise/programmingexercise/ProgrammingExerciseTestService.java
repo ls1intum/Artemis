@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
@@ -1495,10 +1496,10 @@ public class ProgrammingExerciseTestService {
                 ![matterhorn.jpg](/api/files/markdown/%s)
                 """, embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
-            Files.write(FilePathService.getMarkdownFilePath().resolve(embeddedFileName1),
-                    new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
-            Files.write(FilePathService.getMarkdownFilePath().resolve(embeddedFileName2),
-                    new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
+            FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream(),
+                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
+            FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream(),
+                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);

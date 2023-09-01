@@ -90,7 +90,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileCopyUsage() {
-        ArchRule usage = noClasses().should().callMethodWhere(target(nameMatching("copy")).and(target(owner(assignableTo(Files.class)))))
+        ArchRule usage = noClasses().should()
+                .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
     }

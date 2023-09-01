@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.dataexport;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -70,11 +71,12 @@ public class DataExportQuizExerciseCreationService {
                 }
             }
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION),
-                        multipleChoiceQuestionsSubmissions);
+                FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),
+                        StandardCharsets.UTF_8.name(), multipleChoiceQuestionsSubmissions);
             }
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION), shortAnswerQuestionsSubmissions);
+                FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION).toFile(),
+                        StandardCharsets.UTF_8.name(), shortAnswerQuestionsSubmissions);
             }
         }
 

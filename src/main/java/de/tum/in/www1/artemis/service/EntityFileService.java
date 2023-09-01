@@ -4,12 +4,12 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
@@ -72,7 +72,7 @@ public class EntityFileService {
             else {
                 target = fileService.generateFilePath(fileService.generateTargetFilenameBase(targetFolder), extension, targetFolder);
             }
-            Files.move(source, target, REPLACE_EXISTING);
+            FileUtils.moveFile(source.toFile(), target.toFile(), REPLACE_EXISTING);
             URI newPath = filePathService.publicPathForActualPathOrThrow(target, entityId);
             log.debug("Moved File from {} to {}", source, target);
             return newPath.toString();

@@ -544,7 +544,7 @@ public class FileService implements DisposableBean {
         try (var files = Files.find(startPath, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
             files.forEach(filePath -> {
                 try {
-                    Files.move(filePath, Path.of(filePath.toString().replace(targetString, replacementString)));
+                    FileUtils.moveFile(filePath.toFile(), new File(filePath.toString().replace(targetString, replacementString)));
                 }
                 catch (IOException e) {
                     throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
@@ -623,7 +623,7 @@ public class FileService implements DisposableBean {
         for (Map.Entry<String, String> replacement : replacements.entrySet()) {
             fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
         }
-        Files.writeString(filePath, fileContent, charset);
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, charset);
     }
 
     /**
@@ -666,7 +666,7 @@ public class FileService implements DisposableBean {
 
         String fileContent = Files.readString(filePath, charset);
         fileContent = fileContent.replaceAll("\\r\\n?", "\n");
-        Files.writeString(filePath, fileContent, charset);
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, charset);
     }
 
     /**
@@ -710,7 +710,7 @@ public class FileService implements DisposableBean {
 
         String fileContent = new String(contentArray, charset);
 
-        Files.writeString(filePath, fileContent, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, StandardCharsets.UTF_8);
     }
 
     /**
@@ -914,7 +914,7 @@ public class FileService implements DisposableBean {
         try {
             String cleanFilename = sanitizeFilename(filename);
             Path tempPath = FilePathService.getTempFilePath().resolve(cleanFilename + extension);
-            Files.write(tempPath, streamByteArray);
+            FileUtils.writeByteArrayToFile(tempPath.toFile(), streamByteArray);
             File outputFile = tempPath.toFile();
             FileItem fileItem = new DiskFileItem(cleanFilename, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),
                     outputFile.getParentFile());

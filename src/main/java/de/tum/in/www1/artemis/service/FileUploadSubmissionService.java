@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
