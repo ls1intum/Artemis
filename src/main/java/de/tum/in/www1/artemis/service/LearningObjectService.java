@@ -12,6 +12,15 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 
+/**
+ * Service implementation for interactions with learning objects.
+ * <p>
+ * The interface {@code LearningObject} is implemented by all {@code LectureUnit}s and {@code Exercise}s.
+ *
+ * @see LearningObject
+ * @see LectureUnit
+ * @see Exercise
+ */
 @Service
 public class LearningObjectService {
 

@@ -7,10 +7,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -29,8 +25,6 @@ import de.tum.in.www1.artemis.service.*;
  */
 @Service
 public class LearningPathRecommendationService {
-
-    private final Logger log = LoggerFactory.getLogger(LearningPathRecommendationService.class);
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
@@ -53,10 +47,10 @@ public class LearningPathRecommendationService {
 
     private final static double MASTERY_PROGRESS_UTILITY = 1;
 
-    private final static double SCORE_THRESHOLD = 50;
+    private final static double SCORE_THRESHOLD = 80;
 
     /**
-     * LUT containing the distribution of exercises by difficulty level that should be recommended.
+     * Lookup table containing the distribution of exercises by difficulty level that should be recommended.
      * <p>
      * Values can be reproduced by computing the cumulative normal distribution function (cdf) for the general normal distribution f(x|mean=[0.00...1.00], std_dev=0.35): {easy:
      * cdf(0.40), medium: cdf(0.85) - cdf(0.40), hard: 1 - cdf(0.85)}.
@@ -94,15 +88,14 @@ public class LearningPathRecommendationService {
      * @see RecommendationState
      */
     private RecommendationState generateInitialRecommendationState(LearningPath learningPath) {
-        HashMap<Long, Competency> competencyIdMap = (HashMap<Long, Competency>) learningPath.getCompetencies().stream()
-                .collect(Collectors.toMap(Competency::getId, Function.identity()));
-        HashMap<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
-        HashMap<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
-        HashMap<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
-        HashMap<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Map<Long, Competency> competencyIdMap = learningPath.getCompetencies().stream().collect(Collectors.toMap(Competency::getId, Function.identity()));
+        Map<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
+        Map<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
+        Map<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Map<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
         Set<Long> masteredCompetencies = new HashSet<>();
         // map of non-mastered competencies to their normalized mastery score with respect to the associated threshold
-        HashMap<Long, Double> competencyMastery = new HashMap<>();
+        Map<Long, Double> competencyMastery = new HashMap<>();
         learningPath.getCompetencies().forEach(competency -> {
             // fetched learning path only contains data of the associated user
             final var progress = competency.getUserProgress().stream().findFirst();
@@ -128,8 +121,8 @@ public class LearningPathRecommendationService {
      * @param competencies the competencies for which the mapping should be generated
      * @return map representing the matching clusters
      */
-    private HashMap<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
-        final HashMap<Long, Set<Long>> matchingClusters = new HashMap<>();
+    private Map<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
+        final Map<Long, Set<Long>> matchingClusters = new HashMap<>();
         for (var competency : competencies) {
             if (!matchingClusters.containsKey(competency.getId())) {
                 final var matchingCompetencies = competencyRelationRepository.getMatchingCompetenciesByCompetencyId(competency.getId());
@@ -147,8 +140,8 @@ public class LearningPathRecommendationService {
      * @param matchingClusters the map representing the corresponding matching clusters
      * @return map to retrieve prior competencies
      */
-    private HashMap<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters) {
-        HashMap<Long, Set<Long>> priorsMap = new HashMap<>();
+    private Map<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters) {
+        Map<Long, Set<Long>> priorsMap = new HashMap<>();
         for (var competency : competencies) {
             if (!priorsMap.containsKey(competency.getId())) {
                 final var priors = competencyRelationRepository.getPriorCompetenciesByCompetencyIds(matchingClusters.get(competency.getId()));
@@ -167,7 +160,7 @@ public class LearningPathRecommendationService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency extends
      */
-    private HashMap<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.EXTENDS);
     }
 
@@ -179,7 +172,7 @@ public class LearningPathRecommendationService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency assumes
      */
-    private HashMap<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.ASSUMES);
     }
 
@@ -192,9 +185,9 @@ public class LearningPathRecommendationService {
      * @param type              the relation type that should be counted
      * @return map to retrieve the number of competencies a competency extends
      */
-    private HashMap<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters,
-            HashMap<Long, Set<Long>> priorCompetencies, CompetencyRelation.RelationType type) {
-        HashMap<Long, Long> map = new HashMap<>();
+    private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
+            CompetencyRelation.RelationType type) {
+        Map<Long, Long> map = new HashMap<>();
         for (var competency : competencies) {
             if (!map.containsKey(competency.getId())) {
                 long numberOfRelations = competencyRelationRepository.countRelationsOfTypeBetweenCompetencyGroups(matchingClusters.get(competency.getId()), type,
@@ -228,7 +221,7 @@ public class LearningPathRecommendationService {
      */
     private void simulateProgression(Set<Competency> pendingCompetencies, RecommendationState state) {
         while (!pendingCompetencies.isEmpty()) {
-            HashMap<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
+            Map<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
             var maxEntry = utilities.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue));
             // is present since outstandingCompetencies is not empty
             Long competencyId = maxEntry.get().getKey();
@@ -250,8 +243,8 @@ public class LearningPathRecommendationService {
      * @param state        the current state of the recommendation system
      * @return map to retrieve the utility of a competency
      */
-    private HashMap<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
-        HashMap<Long, Double> utilities = new HashMap<>();
+    private Map<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
+        Map<Long, Double> utilities = new HashMap<>();
         for (var competency : competencies) {
             utilities.put(competency.getId(), computeUtilityOfCompetency(competency, state));
         }
@@ -372,10 +365,10 @@ public class LearningPathRecommendationService {
      */
     public List<LearningObject> getRecommendedOrderOfLearningObjects(LearningPath learningPath, Competency competency, RecommendationState state) {
         var pendingLectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !lectureUnit.isCompletedFor(learningPath.getUser())).toList();
-        ArrayList<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
+        List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
         // early return if competency can be trivially mastered
-        if (canBeMasteredWithoutExercises(competency)) {
+        if (CompetencyProgressService.canBeMasteredWithoutExercises(competency)) {
             return recommendedOrder;
         }
 
@@ -383,14 +376,15 @@ public class LearningPathRecommendationService {
         final var pendingExercises = competency.getExercises().stream().filter(exercise -> !learningObjectService.isCompletedByUser(exercise, learningPath.getUser()))
                 .collect(Collectors.toSet());
         final var numberOfExercisesRequiredToMaster = predictNumberOfExercisesRequiredToMaster(learningPath, competency, combinedPriorConfidence, pendingExercises.size());
-        log.warn("numberOfExercisesRequiredToMaster:" + numberOfExercisesRequiredToMaster);
-        HashMap<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
+        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(competency.getExercises());
         if (numberOfExercisesRequiredToMaster >= competency.getExercises().size()) {
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
             return recommendedOrder;
         }
         final var recommendedExerciseDistribution = getRecommendedExerciseDistribution(numberOfExercisesRequiredToMaster, combinedPriorConfidence);
         if (Arrays.stream(recommendedExerciseDistribution).sum() >= competency.getExercises().size()) {
+            // The calculation of the distribution uses the ceiling of the recommendation to schedule sufficiently many exercises required for mastery.
+            // For competencies with only few exercises, this might cause the number of recommended exercises to surpass the number of linked exercises.
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
             return recommendedOrder;
         }
@@ -400,23 +394,12 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Checks if the competency can be mastered without completing any exercises.
-     *
-     * @param competency the competency to check
-     * @return true if the competency can be mastered without completing any exercises, false otherwise
-     */
-    private static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
-        return ((double) competency.getLectureUnits().size()) / (3 * (competency.getLectureUnits().size() + competency.getExercises().size())) * 100 >= competency
-                .getMasteryThreshold();
-    }
-
-    /**
      * Adds all exercises of the given difficulty map to the recommended order of learning objects.
      *
      * @param recommendedOrder   the list storing the recommended order of learning objects
      * @param difficultyLevelMap a map from difficulty level to a set of corresponding exercises
      */
-    private void scheduleAllExercises(ArrayList<LearningObject> recommendedOrder, HashMap<DifficultyLevel, Set<Exercise>> difficultyLevelMap) {
+    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap) {
         for (var difficulty : DifficultyLevel.values()) {
             recommendedOrder.addAll(difficultyLevelMap.get(difficulty));
         }
@@ -430,8 +413,7 @@ public class LearningPathRecommendationService {
      * @param learningPath                     the learning path for which the recommendation should be performed
      * @param competency                       the competency from which the exercises should be chosen
      */
-    private void scheduleExercisesByDistribution(ArrayList<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath,
-            Competency competency) {
+    private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, int[] recommendedExercisesDistribution, LearningPath learningPath, Competency competency) {
         var exerciseCandidates = competency.getExercises().stream().filter(exercise -> !exerciseService.hasScoredAtLeast(exercise, learningPath.getUser(), SCORE_THRESHOLD))
                 .collect(Collectors.toSet());
         final var difficultyMap = generateDifficultyLevelMap(exerciseCandidates);
@@ -441,16 +423,19 @@ public class LearningPathRecommendationService {
 
         // choose as many exercises from the correct difficulty level as possible
         final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisesDistribution[0], easyExercises);
-        final var missingMedium = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, recommendedExercisesDistribution[1], easyExercises);
-        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisesDistribution[2], easyExercises);
+        final var missingMedium = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, recommendedExercisesDistribution[1], mediumExercises);
+        final var missingHard = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.HARD, recommendedExercisesDistribution[2], hardExercises);
         int numberOfMissingExercises = missingEasy + missingMedium + missingHard;
 
         // if there are not sufficiently many exercises per difficulty level, prefer medium difficulty
+        // case 1: no medium exercises available/medium exercises missing: continue to fill with easy/hard exercises
+        // case 2: medium exercises available: no medium exercises missing -> missing exercises must be easy/hard -> in both scenarios medium is the closest difficulty level
         if (numberOfMissingExercises > 0 && !difficultyMap.get(DifficultyLevel.MEDIUM).isEmpty()) {
             numberOfMissingExercises = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.MEDIUM, numberOfMissingExercises, mediumExercises);
         }
 
         // if there are still not sufficiently many medium exercises, choose easy difficulty
+        // prefer easy to hard exercises to avoid student overload
         if (numberOfMissingExercises > 0 && !difficultyMap.get(DifficultyLevel.EASY).isEmpty()) {
             numberOfMissingExercises = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, numberOfMissingExercises, easyExercises);
         }
@@ -468,15 +453,15 @@ public class LearningPathRecommendationService {
     /**
      * Selects a given number of exercises of specified difficulty.
      * <p>
-     * If there are not sufficiently exercises available, the method returns the number of missing exercises.
+     * If there are not sufficiently exercises available, the method returns the number of exercises that could not be selected with the particular difficulty.
      *
      * @param difficultyMap     a map from difficulty level to a set of corresponding exercises
      * @param difficulty        the difficulty level that should be chosen
      * @param numberOfExercises the number of exercises that should be selected
      * @param exercises         the set to store the selected exercises
-     * @return number of missing exercises
+     * @return number of exercises that could not be selected
      */
-    private static int selectExercisesWithDifficulty(HashMap<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, int numberOfExercises,
+    private static int selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, int numberOfExercises,
             Set<Exercise> exercises) {
         var selectedExercises = difficultyMap.get(difficulty).stream().limit(numberOfExercises).collect(Collectors.toSet());
         exercises.addAll(selectedExercises);
@@ -523,14 +508,14 @@ public class LearningPathRecommendationService {
         // we assume that the student may perform slightly worse that previously and dampen the prior confidence for the prediction process
         priorConfidence *= 0.75;
         final var scores = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(learningPath.getUser(), competency.getExercises()).summaryStatistics();
-        double LU = competency.getLectureUnits().size();
-        double EX = competency.getExercises().size();
-        double LO = LU + EX;
-        double MT = competency.getMasteryThreshold();
-        double EXcomp = EX - numberOfPendingExercises;
-        double a = 100d / (3d * LO);
-        double b = 100d * (LU + EXcomp + scores.getCount()) / (3d * LO) + 2d * priorConfidence / 3d - MT;
-        double c = 100d * (LU + EXcomp) * scores.getCount() / (3d * LO) + 2d * scores.getSum() / 3d - MT * scores.getCount();
+        double lectureUnits = competency.getLectureUnits().size();
+        double exercises = competency.getExercises().size();
+        double learningObjects = lectureUnits + exercises;
+        double masteryThreshold = competency.getMasteryThreshold();
+        double completedExercises = exercises - numberOfPendingExercises;
+        double a = 100d / (3d * learningObjects);
+        double b = 100d * (lectureUnits + completedExercises + scores.getCount()) / (3d * learningObjects) + 2d * priorConfidence / 3d - masteryThreshold;
+        double c = 100d * (lectureUnits + completedExercises) * scores.getCount() / (3d * learningObjects) + 2d * scores.getSum() / 3d - masteryThreshold * scores.getCount();
         double D = Math.sqrt(Math.pow(b, 2) - 4 * a * c);
         double prediction1 = Math.ceil((-b + D) / (2d * a));
         double prediction2 = Math.ceil((-b - D) / (2d * a));
@@ -545,8 +530,8 @@ public class LearningPathRecommendationService {
      * @param exercises the exercises that should be contained in the map
      * @return a map from difficulty level to a set of corresponding exercises
      */
-    private static HashMap<DifficultyLevel, Set<Exercise>> generateDifficultyLevelMap(Set<Exercise> exercises) {
-        HashMap<DifficultyLevel, Set<Exercise>> difficultyLevelMap = new HashMap<>();
+    private static Map<DifficultyLevel, Set<Exercise>> generateDifficultyLevelMap(Set<Exercise> exercises) {
+        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = new HashMap<>();
         for (var difficulty : DifficultyLevel.values()) {
             difficultyLevelMap.put(difficulty, new HashSet<>());
         }
@@ -572,7 +557,7 @@ public class LearningPathRecommendationService {
      */
     private static int[] getRecommendedExerciseDistribution(int numberOfExercisesRequiredToMaster, double priorConfidence) {
         final var distribution = getExerciseDifficultyDistribution(priorConfidence);
-        final var numberOfExercises = new int[3];
+        final var numberOfExercises = new int[DifficultyLevel.values().length];
         for (int i = 0; i < numberOfExercises.length; i++) {
             numberOfExercises[i] = (int) Math.round(Math.ceil(distribution[i] * numberOfExercisesRequiredToMaster));
         }
@@ -580,7 +565,7 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Retrieves the corresponding distribution from the LUT.
+     * Retrieves the corresponding distribution from the lookup table.
      *
      * @param priorConfidence the median of the normal distribution
      * @return array containing the distribution in percent per difficulty level (easy to hard)
@@ -590,8 +575,8 @@ public class LearningPathRecommendationService {
         return EXERCISE_DIFFICULTY_DISTRIBUTION_LUT[distributionIndex];
     }
 
-    protected record RecommendationState(HashMap<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
-            HashMap<Long, Double> competencyMastery, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies, HashMap<Long, Long> extendsCompetencies,
-            HashMap<Long, Long> assumesCompetencies) {
+    protected record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
+            Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies,
+            Map<Long, Long> assumesCompetencies) {
     }
 }

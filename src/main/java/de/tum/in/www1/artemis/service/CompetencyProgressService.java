@@ -281,4 +281,15 @@ public class CompetencyProgressService {
         final double mastery = getMastery(competencyProgress);
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
+
+    /**
+     * Checks if the competency can be mastered without completing any exercises.
+     *
+     * @param competency the competency to check
+     * @return true if the competency can be mastered without completing any exercises, false otherwise
+     */
+    public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+        return ((double) competency.getLectureUnits().size()) / (3 * (competency.getLectureUnits().size() + competency.getExercises().size())) * 100 >= competency
+                .getMasteryThreshold();
+    }
 }

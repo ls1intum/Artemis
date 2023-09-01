@@ -7,9 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -46,9 +44,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private LearningPathService learningPathService;
-
-    @Autowired
-    private LearningPathNgxService learningPathNgxService;
 
     @Autowired
     private LearningPathUtilService learningPathUtilService;
@@ -566,7 +561,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             addNodes(lectureUnits[1]);
             addNodes(exercises[1], exercises[3], exercises[5]);
             addEdges(competency, lectureUnits[1], exercises[1], exercises[3], exercises[5]);
-            generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges)); // TODO
+            generatePathAndAssert(new NgxLearningPathDTO(expectedNodes, expectedEdges));
         }
 
         @Test
