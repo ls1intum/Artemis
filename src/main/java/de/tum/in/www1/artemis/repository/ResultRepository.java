@@ -108,7 +108,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "reviewNote" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "assessmentNote" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     /**
