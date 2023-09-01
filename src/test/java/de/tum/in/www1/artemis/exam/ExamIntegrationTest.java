@@ -344,17 +344,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 .email(STUDENT_111 + "@tum.de");
         doReturn(Optional.of(ldapUser111Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber111);
 
-        // first and second mocked calls are expected to add student 5 and 99 to the course students
+        // first mocked call is expected to add student 99 to the course student group
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-        // third mocked call expected to create student 111
+        // second mocked call expected to create student 111
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser111Dto.getUsername(), ldapUser111Dto.getFirstName() + " " + ldapUser111Dto.getLastName(),
                 ldapUser111Dto.getEmail());
-        // the last two mocked calls are expected to add student 111 to the course student group{
+        // the last mocked call is expected to add student 111 to the course student group
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
-
-        bitbucketRequestMockProvider.mockUpdateUserDetails(student3.getLogin(), student3.getEmail(), student3.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         User student99 = userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
@@ -364,8 +360,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
-        // Note: student101 is not yet a user of Artemis and should be retrieved from the LDAP
-
+        // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
 
@@ -380,21 +375,24 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         var studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber(student1.getRegistrationNumber());
         var studentDto2 = UserFactory.generateStudentDTOWithRegistrationNumber(student2.getRegistrationNumber());
-        var studentDto3 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber3WithTypo); // explicit typo, should be a registration failure later
-        studentDto3.setLogin(student3.getLogin());
+        var studentDto3 = new StudentDTO(student3.getLogin(), null, null, registrationNumber3WithTypo, null); // explicit typo, should be a registration failure later
         var studentDto4 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber4WithTypo); // explicit typo, should fall back to login name later
-        var studentDto10 = UserFactory.generateStudentDTOWithRegistrationNumber(null);  // completely empty
-        // Add a student with login but empty registration number
-        var studentDto99 = UserFactory.generateStudentDTOWithRegistrationNumber(emptyRegistrationNumber);
-        studentDto99.setLogin(student99.getLogin());
-        var studentDto111 = UserFactory.generateStudentDTOWithRegistrationNumber(registrationNumber111);
+        var studentDto10 = UserFactory.generateStudentDTOWithRegistrationNumber(null); // completely empty
 
+        var studentDto99 = new StudentDTO(student99.getLogin(), null, null, registrationNumber99, null);
+        var studentDto111 = new StudentDTO(null, null, null, registrationNumber111, null);
+
+        // Add a student with login but empty registration number
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto4, studentDto99, studentDto111, studentDto10);
 
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 studentsToRegister, StudentDTO.class, HttpStatus.OK);
+        // all students get registered if they can be found in the LDAP
         assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto4, studentDto10);
+
+        // TODO check audit events stored properly
+
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
 
         // now a new user student101 should exist
@@ -420,10 +418,49 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterLDAPUsersInExam() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        var savedExam = examUtilService.addExam(course1);
+        String student100 = TEST_PREFIX + "student100";
+        String student200 = TEST_PREFIX + "student200";
+        String student300 = TEST_PREFIX + "student300";
+
+        // setup mocks
+        var ldapUser1Dto = new LdapUserDto().firstName(student100).lastName(student100).username(student100).registrationNumber("100000").email(student100 + "@tum.de");
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByUsername(student100);
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser1Dto.getUsername(), ldapUser1Dto.getFirstName() + " " + ldapUser1Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        var ldapUser2Dto = new LdapUserDto().firstName(student200).lastName(student200).username(student200).registrationNumber("200000").email(student200 + "@tum.de");
+        doReturn(Optional.of(ldapUser2Dto)).when(ldapUserService).findByEmail(student200 + "@tum.de");
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser2Dto.getUsername(), ldapUser2Dto.getFirstName() + " " + ldapUser2Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        var ldapUser3Dto = new LdapUserDto().firstName(student300).lastName(student300).username(student300).registrationNumber("3000000").email(student300 + "@tum.de");
+        doReturn(Optional.of(ldapUser3Dto)).when(ldapUserService).findByRegistrationNumber("3000000");
+        jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser3Dto.getUsername(), ldapUser3Dto.getFirstName() + " " + ldapUser3Dto.getLastName(), null);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+
+        // user with login
+        StudentDTO dto1 = new StudentDTO(student100, student100, student100, null, null);
+        // user with email
+        StudentDTO dto2 = new StudentDTO(null, student200, student200, null, student200 + "@tum.de");
+        // user with registration number
+        StudentDTO dto3 = new StudentDTO(null, student300, student300, "3000000", null);
+        // user without anything
+        StudentDTO dto4 = new StudentDTO(null, null, null, null, null);
+
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(dto1, dto2, dto3, dto4), StudentDTO.class, HttpStatus.OK);
+        assertThat(registrationFailures).containsExactly(dto4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentsToExam_testExam() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
 
-        StudentDTO studentDto1 = new StudentDTO().registrationNumber("1111111");
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
         List<StudentDTO> studentDTOS = List.of(studentDto1);
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, StudentDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -917,7 +954,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+                HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
     }
 
@@ -2383,7 +2421,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
         // Add students to exam
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO()), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+                HttpStatus.FORBIDDEN);
         // Delete student from exam
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
         // Update order of exerciseGroups

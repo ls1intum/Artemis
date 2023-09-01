@@ -712,13 +712,7 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
-
-        var studentDto = new StudentDTO();
-        studentDto.setRegistrationNumber(student.getRegistrationNumber());
-        studentDto.setFirstName(student.getFirstName());
-        studentDto.setLastName(student.getLastName());
-        studentDto.setLogin(student.getLogin());
-        return ResponseEntity.ok().body(studentDto);
+        return ResponseEntity.ok().body(new StudentDTO(student));
     }
 
     /**
