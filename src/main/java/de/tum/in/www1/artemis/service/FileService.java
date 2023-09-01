@@ -174,8 +174,7 @@ public class FileService implements DisposableBean {
             filePath = generateFilePath(filenamePrefix, fileExtension, path);
         }
         try {
-            // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), filePath, REPLACE_EXISTING);
+            FileUtils.copyToFile(file.getResource().getInputStream(), filePath.toFile());
 
             return generateResponsePath(filePath, markdown);
         }
@@ -235,7 +234,7 @@ public class FileService implements DisposableBean {
             String filename = oldFilePath.getFileName().toString();
             try {
                 Path target = generateFilePath(generateTargetFilenameBase(targetFolder), FilenameUtils.getExtension(filename), targetFolder);
-                Files.copy(oldFilePath, target); // We expect no conflicts here, as the target filename is generated randomly
+                FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
                 log.debug("Moved File from {} to {}", oldFilePath, target);
                 return target;
             }
@@ -319,8 +318,7 @@ public class FileService implements DisposableBean {
             return;
         }
 
-        Files.createDirectories(targetPath.getParent());
-        Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
+        FileUtils.copyFile(resource.getFile(), targetPath.toFile(), REPLACE_EXISTING);
 
         if (targetPath.endsWith("gradlew")) {
             targetPath.toFile().setExecutable(true);

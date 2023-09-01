@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis;
 
 import static com.tngtech.archunit.base.DescribedPredicate.*;
+import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
+import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,6 +86,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .beDeclaredIn(WebsocketMessagingService.class)
                 .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
         usage.check(productionClasses);
+    }
+
+    @Test
+    void testFileCopyUsage() {
+        ArchRule usage = noClasses().should().callMethodWhere(target(nameMatching("copy")).and(target(owner(assignableTo(Files.class)))))
+                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
+        usage.check(allClasses);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes

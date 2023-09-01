@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -529,7 +530,7 @@ public class ProgrammingExerciseRepositoryService {
         // staging project files are only required for maven
         final boolean isMaven = ProjectType.isMavenProject(projectType);
         if (isMaven && stagePomXml.isPresent()) {
-            Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
+            FileUtils.copyFile(stagePomXml.get().getFile(), buildStagePath.resolve(POM_XML).toFile());
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);

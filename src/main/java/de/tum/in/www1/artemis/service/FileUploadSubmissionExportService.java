@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -37,7 +37,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
             throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
         }
 
-        Files.copy(submissionPath, file.toPath());
+        FileUtils.copyFile(submissionPath.toFile(), file);
     }
 
     @Override

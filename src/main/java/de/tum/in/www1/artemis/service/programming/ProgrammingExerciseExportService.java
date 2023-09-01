@@ -199,7 +199,7 @@ public class ProgrammingExerciseExportService {
             // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
             if (!Files.exists(imageExportPath)) {
                 try {
-                    Files.copy(imageFilePath, imageExportPath);
+                    FileUtils.copyFile(imageFilePath.toFile(), imageExportPath.toFile());
                 }
                 catch (IOException e) {
                     exportErrors.add("Failed to copy embedded files: " + e.getMessage());

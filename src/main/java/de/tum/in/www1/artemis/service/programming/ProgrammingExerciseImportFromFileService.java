@@ -107,9 +107,8 @@ public class ProgrammingExerciseImportFromFileService {
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
             for (Path file : embeddedFiles.toList()) {
                 Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
-                // we need this check because the detection if a file exists of Files.copy seems not to work properly
                 if (!Files.exists(targetPath)) {
-                    Files.copy(file, targetPath);
+                    FileUtils.copyFile(file.toFile(), targetPath.toFile());
                 }
             }
         }

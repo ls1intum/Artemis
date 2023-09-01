@@ -10,12 +10,13 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -329,8 +330,8 @@ public class QuizExerciseUtilService {
         if (Files.exists(dragItemPathInFileSystem)) {
             Files.delete(dragItemPathInFileSystem);
         }
-        Files.copy(new ClassPathResource("test-data/data-export/drag_and_drop_background.jpg").getInputStream(), backgroundPathInFileSystem);
-        Files.copy(new ClassPathResource("test-data/data-export/drag_item.jpg").getInputStream(), dragItemPathInFileSystem);
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
         dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);

@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -203,10 +205,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final File savedFile = filePath.toFile();
         final File dir = dirPath.toFile();
 
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        Files.copy(file.getInputStream(), savedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        FileUtils.copyToFile(file.getResource().getInputStream(), savedFile);
 
         return filePath;
     }
