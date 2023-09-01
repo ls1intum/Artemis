@@ -93,11 +93,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Not needed for Jenkins
-    }
-
-    @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         return jenkinsBuildPlanService.copyBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, targetPlanName);

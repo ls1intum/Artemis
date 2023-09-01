@@ -93,7 +93,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());

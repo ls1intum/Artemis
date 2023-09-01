@@ -73,11 +73,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Not needed for local CI. Implemented for Bamboo as a bug workaround.
-    }
-
-    @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         // Not needed for local CI. Build plans are grouped into projects automatically.
     }

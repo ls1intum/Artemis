@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -14,7 +12,6 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -63,11 +60,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;
 
-    @Value("${artemis.continuous-integration.empty-commit-necessary}")
-    private Boolean isEmptyCommitNecessary;
-
-    private final GitService gitService;
-
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
     private final BambooBuildPlanService bambooBuildPlanService;
@@ -80,13 +72,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+    public BambooService(ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService,
+            BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository, @Qualifier("bambooRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper, UrlService urlService, BuildLogEntryService buildLogService,
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
@@ -157,38 +147,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
         if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
             log.error("Cannot grant read permissions to student {} for build plan {}", user.getLogin(), buildPlanId);
-        }
-    }
-
-    @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Empty commit - Bamboo bug workaround
-
-        if (isEmptyCommitNecessary) {
-            try {
-                ProgrammingExercise exercise = participation.getProgrammingExercise();
-                var repositoryUrl = participation.getVcsRepositoryUrl();
-                Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
-                // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
-                // processNewProgrammingSubmission in ProgrammingSubmissionService
-                gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, true, null);
-
-                if (exercise == null) {
-                    log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
-                    gitService.deleteLocalRepository(repo);
-                }
-                else {
-                    // only delete the git repository, if the online editor is NOT allowed
-                    // this saves some performance on the server, when the student opens the online editor, because the repo does not need to be cloned again
-                    // Note: the null check is necessary, because otherwise we might get a null pointer exception
-                    if (exercise.isAllowOnlineEditor() == null || Boolean.FALSE.equals(exercise.isAllowOnlineEditor())) {
-                        gitService.deleteLocalRepository(repo);
-                    }
-                }
-            }
-            catch (GitAPIException | IOException | NullPointerException ex) {
-                log.error("Exception while doing empty commit", ex);
-            }
         }
     }
 

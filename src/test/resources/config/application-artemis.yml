@@ -47,7 +47,6 @@ artemis:
         token: fake-token
         url: https://continuous-integration.fake.fake
         vcs-application-link-name: Fake Application Link Name
-        empty-commit-necessary: true
         secret-push-token: fake-token-hash
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key

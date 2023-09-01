@@ -158,7 +158,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }

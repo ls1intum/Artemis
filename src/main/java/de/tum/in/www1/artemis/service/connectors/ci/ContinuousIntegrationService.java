@@ -75,13 +75,6 @@ public interface ContinuousIntegrationService {
     void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
 
     /**
-     * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan
-     *
-     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
-     */
-    void performEmptySetupCommit(ProgrammingExerciseParticipation participation);
-
-    /**
      * Delete project with given identifier from CI system.
      *
      * @param projectKey unique identifier for the project on CI system
