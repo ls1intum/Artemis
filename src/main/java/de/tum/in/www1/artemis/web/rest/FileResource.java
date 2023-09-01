@@ -468,8 +468,8 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
         try {
-            var actualPath = path.resolve(filename);
-            var file = fileService.getFileForPath(actualPath);
+            Path actualPath = path.resolve(filename);
+            byte[] file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }

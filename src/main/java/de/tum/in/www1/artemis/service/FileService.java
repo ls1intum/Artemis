@@ -113,13 +113,17 @@ public class FileService implements DisposableBean {
         if (file.exists()) {
             return Files.readAllBytes(file.toPath());
         }
-        else {
-            return null;
-        }
+
+        return null;
     }
 
+    /**
+     * Evict the cache for the given path
+     *
+     * @param path the path for the file to evict from cache
+     */
     @CacheEvict(value = "files", key = "#path")
-    public void evictCacheForPath(String path) {
+    public void evictCacheForPath(Path path) {
         log.info("Invalidate files cache for {}", path);
         // Intentionally blank
     }
