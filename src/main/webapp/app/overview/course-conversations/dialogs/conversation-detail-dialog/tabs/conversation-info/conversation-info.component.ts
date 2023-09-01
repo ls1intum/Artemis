@@ -89,7 +89,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(channelOrGroupChat, 'name', 20, true, channelRegex, keys);
+        this.openEditPropertyDialog(channelOrGroupChat, 'name', 30, true, channelRegex, keys);
     }
 
     openEditTopicModal(event: MouseEvent) {
