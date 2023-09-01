@@ -6,11 +6,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -129,12 +131,14 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         Resource resource = mock(Resource.class);
         URL resourceUrl = new URL("jar:file:/example.jar!/path/to/resource.txt");
 
+        File resourceFile = new File(resourceUrl.getFile());
+        FileUtils.writeStringToFile(resourceFile, "testContent", StandardCharsets.UTF_8);
+
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();
         doReturn(resourceUrl).when(resource).getURL();
-        doReturn(mock(InputStream.class)).when(resource).getInputStream();
+        doReturn(resourceFile).when(resource).getFile();
 
-        // ResourcePatternResolver resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
         // Instantiate the class under test and invoke the method.

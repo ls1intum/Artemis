@@ -359,7 +359,7 @@ public class RequestUtilService {
             return null;
         }
         final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
-        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
     }
