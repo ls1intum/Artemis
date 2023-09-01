@@ -263,11 +263,6 @@ public class GitLabService extends AbstractVersionControlService {
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             super.addWebHookForParticipation(participation);
-
-            // Webhook from the version control system to the continuous integration system
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
     }
 
