@@ -16,4 +16,8 @@ public interface CIMigrationService {
      * @param repositoryUrl the URL of the assignment repository
      */
     void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
+
+    void deleteBuildTriggers(String projectKey);
+
+    void overrideBuildPlanRepositories(String projectKey, String testRepositoryUrl, String assignmentRepositoryUrl);
 }

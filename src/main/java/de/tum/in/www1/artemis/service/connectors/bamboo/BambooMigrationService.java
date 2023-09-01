@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PA
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
 /**
@@ -53,6 +55,62 @@ public class BambooMigrationService implements CIMigrationService {
         }
 
         createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
+    }
+
+    @Override
+    public void deleteBuildTriggers(String projectKey) {
+        for (var buildPlanKey : BuildPlanType.values()) {
+            List<Long> triggerIds = getAllTriggerIds(projectKey + "-" + buildPlanKey);
+
+            for (var id : triggerIds) {
+                deleteBuildPlanTriggerId(projectKey + "-" + buildPlanKey, id);
+            }
+        }
+    }
+
+    @Override
+    public void overrideBuildPlanRepositories(String projectKey, String testRepositoryUrl, String assignmentRepositoryUrl) {
+        for (var buildPlanKey : BuildPlanType.values()) {
+            List<Long> repositoryIds = getAllConnectedRepositoryIds(projectKey + "-" + buildPlanKey.getName());
+
+            for (var id : repositoryIds) {
+                deleteLinkedRepository(projectKey + "-" + buildPlanKey, id);
+            }
+        }
+        Optional<Long> credentialsId = getSharedCredential();
+    }
+
+    private List<Long> getAllTriggerIds(String buildPlanName) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("buildKey", buildPlanName);
+        String requestUrl = bambooServerUrl + "/chain/admin/config/editChainTriggers.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
+        return getDataItemIds(response.getBody());
+    }
+
+    private static List<Long> getDataItemIds(String html) {
+        if (html == null) {
+            return List.of();
+        }
+        Elements repositories = Jsoup.parse(html).select(".item");
+        List<Long> ids = new ArrayList<>();
+        for (Element repository : repositories) {
+            String repositoryIdString = repository.attr("data-item-id");
+            ids.add(Long.parseLong(repositoryIdString));
+        }
+        return ids;
+    }
+
+    private List<Long> getAllConnectedRepositoryIds(String buildPlanName) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("buildKey", buildPlanName);
+        String requestUrl = bambooServerUrl + "/chain/admin/config/editChainRepository.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
+        return getDataItemIds(response.getBody());
     }
 
     /**
@@ -143,5 +201,54 @@ public class BambooMigrationService implements CIMigrationService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
+    }
+
+    /**
+     * Deletes the given trigger id for the given build plan
+     * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
+     *
+     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param triggerId    the id of the notification to delete
+     */
+    private void deleteBuildPlanTriggerId(String buildPlanKey, Long triggerId) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("triggerId", triggerId.toString());
+        parameters.add("planKey", buildPlanKey);
+
+        String requestUrl = bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+    }
+
+    private void deleteLinkedRepository(String buildPlanKey, Long repositoryId) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("replaceRepository", Integer.toString(0));
+        parameters.add("repositoryId", repositoryId.toString());
+        parameters.add("planKey", buildPlanKey);
+
+        String requestUrl = bambooServerUrl + "/chain/admin/config/deleteRepository.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+    }
+
+    private Optional<Long> getSharedCredential() {
+        String requestUrl = bambooServerUrl + "/admin/credentials/configureSharedCredentials.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
+        var html = response.getBody();
+        if (html == null) {
+            return Optional.empty();
+        }
+        Elements entries = Jsoup.parse(html).select("table#sharedCredentialsTable tbody");
+
+        for (Element entry : entries) {
+            Elements row = entry.select("tr");
+            var id = row.attr("id");
+            return Optional.of(Long.parseLong(id.replace("item-", "")));
+        }
+        return Optional.empty();
     }
 }

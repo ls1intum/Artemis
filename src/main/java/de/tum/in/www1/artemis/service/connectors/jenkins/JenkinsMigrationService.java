@@ -50,6 +50,16 @@ public class JenkinsMigrationService implements CIMigrationService {
         }
     }
 
+    @Override
+    public void deleteBuildTriggers(String projectKey) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public void overrideBuildPlanRepositories(String projectKey, String testRepositoryUrl, String assignmentRepositoryUrl) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
     /**
      * Replaces the current notification URL of the given config document with the current one in use by parsing the config document as string and replacing the URL using a regex.
      *

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
@@ -53,7 +52,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
         // Number of full batches. The last batch might be smaller
         long totalFullBatchCount = exerciseCount / BATCH_SIZE;
-        long threadCount = Math.min(totalFullBatchCount, MAX_THREAD_COUNT);
+        long threadCount = Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
         long batchCountPerThread = totalFullBatchCount / threadCount;
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
@@ -124,18 +123,32 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param errorMap The error map to write errors to
      */
     private void migrateExercise(ProgrammingExercise exercise, Map<ProgrammingExercise, Boolean> errorMap) {
+        // try {
+        // ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+        // }
+        // catch (ContinuousIntegrationException e) {
+        // log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
+        // errorMap.put(exercise, true);
+        // }
+        // try {
+        // ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+        // }
+        // catch (ContinuousIntegrationException e) {
+        // log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
+        // errorMap.put(exercise, false);
+        // }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey());
         }
-        catch (ContinuousIntegrationException e) {
-            log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
-            errorMap.put(exercise, true);
+        catch (Exception e) {
+            log.warn("Failed to delete build triggers for exercise {}", exercise.getId(), e);
+            errorMap.put(exercise, false);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepositories(exercise.getProjectKey(), exercise.getTestRepositoryUrl(), exercise.getTestRepositoryUrl());
         }
-        catch (ContinuousIntegrationException e) {
-            log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
+        catch (Exception e) {
+            log.warn("Failed to migrate build plan repositories for exercise {}", exercise.getId(), e);
             errorMap.put(exercise, false);
         }
     }
