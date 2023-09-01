@@ -250,8 +250,14 @@ public class ProgrammingExerciseParticipationService {
         }
     }
 
+    /**
+     * Asynchronously lock the repositories of all programming exercises of the given student exam, e.g. because the student handed in early
+     *
+     * @param user        the user to which the student exam belongs
+     * @param studentExam the student exam for which the lock operation should be executed
+     */
     @Async
-    public void lockStudentRepositories(User currentUser, StudentExam studentExam) {
+    public void lockStudentRepositories(User user, StudentExam studentExam) {
         // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
         // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
         if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
@@ -259,12 +265,12 @@ public class ProgrammingExerciseParticipationService {
             for (Exercise exercise : studentExam.getExercises()) {
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
-                        log.debug("lock student repositories for {}", currentUser);
-                        var participation = findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
+                        log.debug("lock student repositories for {}", user);
+                        var participation = findStudentParticipationByExerciseAndStudentId(programmingExercise, user.getLogin());
                         lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
-                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
+                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), user.getLogin(), e);
                     }
                 }
             }
