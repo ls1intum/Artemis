@@ -703,6 +703,7 @@ public class StudentExamService {
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
+
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = studentExams.stream()
                 .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
