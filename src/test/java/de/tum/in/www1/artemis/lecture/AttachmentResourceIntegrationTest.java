@@ -54,7 +54,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = LectureFactory.generateAttachment(null);
-        attachment.setLink("files/temp/example.txt");
+        attachment.setLink("/api/files/temp/example.txt");
 
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);

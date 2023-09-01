@@ -105,10 +105,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 }
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
-                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-                dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
+                if (dndQuestion.getBackgroundFilePath() != null) {
+                    // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
+                    Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
+                    Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+                    dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
+                }
+                else {
+                    log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
+                }
 
                 for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
                     dropLocation.setId(null);
