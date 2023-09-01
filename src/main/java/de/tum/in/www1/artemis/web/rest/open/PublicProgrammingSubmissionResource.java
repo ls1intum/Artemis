@@ -74,20 +74,15 @@ public class PublicProgrammingSubmissionResource {
             SecurityUtils.setAuthorizationObject();
 
             Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-            var existingSubmissionCount = participation.getSubmissions().size();
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new EntityNotFoundException("Programming Exercise Participation", participationId);
             }
 
             ProgrammingSubmission newProgrammingSubmission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
-            // Remove unnecessary information from the new programming Submission.
-            newProgrammingSubmission.getParticipation().setSubmissions(null);
-            // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
-            newProgrammingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
             var exerciseId = participation.getExercise().getId();
-            // remove the exercise here to avoid sending too much information to the client over websocket
+            // Remove unnecessary information from the new programming submission, in particular submission and exercise (avoid sending too much information over websocket)
+            newProgrammingSubmission.getParticipation().setSubmissions(null);
             newProgrammingSubmission.getParticipation().setExercise(null);
-            // TODO: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
             programmingMessagingService.notifyUserAboutSubmission(newProgrammingSubmission, exerciseId);
         }
         catch (IllegalArgumentException ex) {

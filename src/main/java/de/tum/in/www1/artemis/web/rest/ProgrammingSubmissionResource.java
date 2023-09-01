@@ -257,7 +257,7 @@ public class ProgrammingSubmissionResource {
                     correctionRound);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
         }
 
         if (!examMode) {
