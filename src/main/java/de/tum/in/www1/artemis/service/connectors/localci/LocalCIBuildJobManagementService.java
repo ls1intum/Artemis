@@ -58,7 +58,7 @@ public class LocalCIBuildJobManagementService {
     private boolean runBuildJobsAsynchronously;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
+    private String dockerImage;
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,

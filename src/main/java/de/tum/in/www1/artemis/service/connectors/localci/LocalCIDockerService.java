@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.exception.LocalCIException;
 /**
  * Service for Docker related operations in local CI
  */
-
 @Service
 @Profile("localci")
 
@@ -39,7 +38,6 @@ public class LocalCIDockerService {
      *
      * @param imageName the name of the docker image
      */
-
     public void pullDockerImage(String imageName) {
         try {
             log.info("Inspecting docker image {}", imageName);
