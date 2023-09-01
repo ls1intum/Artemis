@@ -46,8 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooTriggerService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketBambooUpdateService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BambooBuildPlanUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -72,7 +71,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
-    protected BitbucketBambooUpdateService continuousIntegrationUpdateService;
+    protected BambooBuildPlanUpdateService continuousIntegrationUpdateService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
@@ -190,32 +189,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, repoNameInVcs, bitbucketRepository);
 
-        var applicationLinksToBeReturned = bambooRequestMockProvider.createApplicationLink();
-        var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
-        bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
-
         if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, defaultBranch);
         }
         else if (TEST_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, defaultBranch);
         }
         else if ("auxrepo".equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, bitbucketRepository, applicationLink, defaultBranch);
-        }
-
-        if (!triggeredBy.isEmpty()) {
-            // in case there are triggers
-            List<BambooTriggerDTO> triggerList = bambooRequestMockProvider.mockGetTriggerList(buildPlanKey);
-
-            for (var trigger : triggerList) {
-                bambooRequestMockProvider.mockDeleteTrigger(buildPlanKey, trigger.getId());
-            }
-
-            for (var ignored : triggeredBy) {
-                // we only support one specific case for the repository above here
-                bambooRequestMockProvider.mockAddTrigger(buildPlanKey, bambooRepositoryAssignment.getId().toString());
-            }
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, bitbucketRepository, defaultBranch);
         }
     }
 
@@ -552,8 +533,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
         // Make sure that all REST calls are necessary
-        continuousIntegrationUpdateService.clearCachedApplicationLinks();
-
         String buildPlanId = participation.getBuildPlanId();
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = buildPlanId.split("-")[0];

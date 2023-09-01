@@ -110,7 +110,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch, List.of());
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch);
         enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
@@ -437,10 +437,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newBranch, List<String> triggeredByRepositories) throws BambooException {
-        final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
-        continuousIntegrationUpdateService.orElseThrow().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch,
-                triggeredByRepositories);
+            String newBranch) throws BambooException {
+        continuousIntegrationUpdateService.orElseThrow().updatePlanRepository(buildPlanKey, ciRepoName, newRepoUrl, newBranch);
     }
 
     /**

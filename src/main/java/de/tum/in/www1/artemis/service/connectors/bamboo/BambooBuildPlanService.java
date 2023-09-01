@@ -18,7 +18,8 @@ import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
-import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.credentials.SharedCredentialsIdentifier;
+import com.atlassian.bamboo.specs.api.builders.credentials.SharedCredentialsScope;
 import com.atlassian.bamboo.specs.api.builders.docker.DockerConfiguration;
 import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
 import com.atlassian.bamboo.specs.api.builders.notification.Notification;
@@ -37,7 +38,7 @@ import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifie
 import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
-import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
+import com.atlassian.bamboo.specs.builders.repository.git.GitRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
@@ -69,8 +70,8 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    @Value("${artemis.continuous-integration.vcs-application-link-name}")
-    private String vcsApplicationLinkName;
+    @Value("${artemis.version-control.user}")
+    private String gitUser;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -425,12 +426,11 @@ public class BambooBuildPlanService {
                         .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
-    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
-        return new BitbucketServerRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
-                .server(new ApplicationLink().name(vcsApplicationLinkName))
-                // make sure to use lower case to avoid problems in change detection between
-                // Bamboo and Bitbucket
-                .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
+    private GitRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
+        return new GitRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
+                .authentication(new SharedCredentialsIdentifier(gitUser).scope(SharedCredentialsScope.GLOBAL)).url(repositorySlug.toLowerCase()).shallowClonesEnabled(true)
+                .remoteAgentCacheEnabled(false)
+                // TODO: can we leave this empty?
                 .changeDetection(new VcsChangeDetection());
     }
 

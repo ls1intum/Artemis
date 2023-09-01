@@ -283,7 +283,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, List<String> triggeredByRepositories) {
+            String newDefaultBranch) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 

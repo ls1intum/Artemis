@@ -335,7 +335,6 @@ Configure Artemis
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
                token: <bamboo-admin-token>   # step 10.1
-               vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
