@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BambooBuildPlanUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
@@ -183,20 +182,18 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
         final var bambooRepositoryAuxRepo = new BambooRepositoryDTO(296200358L, "auxrepo");
-        final var bitbucketRepository = new BitbucketRepositoryDTO("id", repoNameInVcs, projectKey, "ssh:cloneUrl");
+        final var newRepoUrl = exercise.getTemplateRepositoryUrl().replace("exercise", planName); // planName is username
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
-        bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, repoNameInVcs, bitbucketRepository);
-
         if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, newRepoUrl, defaultBranch);
         }
         else if (TEST_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, newRepoUrl, defaultBranch);
         }
         else if ("auxrepo".equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, bitbucketRepository, defaultBranch);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, newRepoUrl, defaultBranch);
         }
     }
 
@@ -370,8 +367,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var buildPlanId = participation.getBuildPlanId();
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repoProjectName, defaultBranch);
+        bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repositoryUrl.toString(), defaultBranch);
 
         // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
         var splitted = buildPlanId.split("-");
@@ -536,8 +532,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         String buildPlanId = participation.getBuildPlanId();
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = buildPlanId.split("-")[0];
-        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repoProjectName, defaultBranch);
+        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repositoryUrl.toString(), defaultBranch);
         bambooRequestMockProvider.mockEnablePlan(projectKey, buildPlanId.split("-")[1], true, false);
         if (Boolean.TRUE.equals(participation.getProgrammingExercise().isPublishBuildPlanUrl())) {
             for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {

@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 @Component
@@ -219,33 +218,28 @@ public class BambooRequestMockProvider {
         }
     }
 
-    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, BitbucketRepositoryDTO bitbucketRepository, String defaultBranch)
-            throws URISyntaxException {
+    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, String newRepoUrl, String defaultBranch) throws URISyntaxException {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
-        parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
+        parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         parameters.add("repositoryName", bambooRepository.getName());
         parameters.add("repositoryId", Long.toString(bambooRepository.getId()));
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("repository.stash.branch", defaultBranch);
-        parameters.add("repository.stash.repositoryId", bitbucketRepository.id());
-        parameters.add("repository.stash.repositorySlug", bitbucketRepository.slug());
-        parameters.add("repository.stash.projectKey", bitbucketRepository.project().key());
-        parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
+        parameters.add("repository.git.branch", defaultBranch);
+        parameters.add("repository.git.repositoryUrl", newRepoUrl);
 
         URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/updateRepository.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String repoProjectKey, String defaultBranch) throws URISyntaxException, IOException {
+    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUrl, String defaultBranch) throws URISyntaxException, IOException {
         mockGetBuildPlanRepositoryList(buildPlanKey);
 
         BambooRepositoryDTO bambooRepository = new BambooRepositoryDTO(Long.parseLong("296200357"), ciRepoName);
-        BitbucketRepositoryDTO bitbucketRepository = new BitbucketRepositoryDTO("asd", buildPlanKey.toLowerCase(), repoProjectKey, "ssh:cloneUrl");
 
-        mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, defaultBranch);
+        mockUpdateRepository(buildPlanKey, bambooRepository, newRepoUrl, defaultBranch);
     }
 
     public void mockGetBuildPlanRepositoryList(String buildPlanKey) throws IOException, URISyntaxException {
