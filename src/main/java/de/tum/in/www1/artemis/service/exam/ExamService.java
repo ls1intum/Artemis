@@ -510,7 +510,7 @@ public class ExamService {
                     && exercise instanceof ProgrammingExercise programmingExercise) {
                 var submissionPolicy = programmingExercise.getSubmissionPolicy();
                 // in the unlikely case the student exam was already submitted, set all participations to locked
-                if (studentExam.isSubmitted() || studentExam.isEnded()) {
+                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
                     programmingExerciseStudentParticipation.setLocked(true);
                 }
                 else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {

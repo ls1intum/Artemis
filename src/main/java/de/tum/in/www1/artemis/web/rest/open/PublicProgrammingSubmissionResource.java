@@ -84,7 +84,11 @@ public class PublicProgrammingSubmissionResource {
             newProgrammingSubmission.getParticipation().setSubmissions(null);
             // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
             newProgrammingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
-            programmingMessagingService.notifyUserAboutSubmission(newProgrammingSubmission);
+            var exerciseId = participation.getExercise().getId();
+            // remove the exercise here to avoid sending too much information to the client over websocket
+            newProgrammingSubmission.getParticipation().setExercise(null);
+            // TODO: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
+            programmingMessagingService.notifyUserAboutSubmission(newProgrammingSubmission, exerciseId);
         }
         catch (IllegalArgumentException ex) {
             log.error("Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request body {}",
@@ -148,7 +152,7 @@ public class PublicProgrammingSubmissionResource {
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
         ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, exerciseId);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChanged(exerciseId, true);
 

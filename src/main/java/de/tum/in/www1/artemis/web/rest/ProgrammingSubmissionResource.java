@@ -163,7 +163,7 @@ public class ProgrammingSubmissionResource {
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
-                programmingMessagingService.notifyUserAboutSubmission(submission);
+                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
                 return ResponseEntity.ok().build();
             }
         }
