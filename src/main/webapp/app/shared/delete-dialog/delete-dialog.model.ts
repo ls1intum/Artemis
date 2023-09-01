@@ -11,7 +11,6 @@ export enum ActionType {
     Cleanup = 'cleanup',
     Remove = 'remove',
     Unlink = 'unlink',
-    RequestDataExport = 'requestDataExport',
     NoButtonTextDelete = 'noButtonTextDelete',
     EndNow = 'endNow',
 }
