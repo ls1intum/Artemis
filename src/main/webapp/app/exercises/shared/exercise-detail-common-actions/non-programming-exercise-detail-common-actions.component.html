@@ -19,9 +19,15 @@
         </a>
 
         <!-- Exercise Dashboard -->
-        <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="faListAlt"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+        <a
+            *ngIf="
+                exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments
+            "
+            [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id"
+            class="btn btn-info btn-sm me-1 mb-3"
+        >
+            <fa-icon [icon]="faUserCheck"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
         </a>
 
         <!-- Scores -->
@@ -56,16 +62,6 @@
         >
             <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
-        </a>
-
-        <!-- Cluster Statistics  -->
-        <a
-            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
-            [routerLink]="baseResource + 'text-cluster-statistics'"
-            class="btn btn-success btn-sm me-1 mb-2"
-        >
-            <fa-icon [icon]="faChartBar"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
         </a>
 
         <!-- Delete exercise -->

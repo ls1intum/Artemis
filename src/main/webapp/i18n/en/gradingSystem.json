@@ -59,7 +59,7 @@
                 },
                 "maxPoints": {
                     "title": "Maximum Points",
-                    "explanation": "Determines the maximum points for the given course/exam. The value is necessary if a grading key with absolute points as boundaries instead of percentages is needed"
+                    "explanation": "Determines the maximum points for the given course/exam. The value is necessary if a grading key with absolute points as boundaries instead of percentages is needed. Note that the maximum points do not impact the grade calculation for courses, but they do for exams."
                 },
                 "gradeType": {
                     "title": "Grade Type",

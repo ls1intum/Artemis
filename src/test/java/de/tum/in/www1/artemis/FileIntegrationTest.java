@@ -85,7 +85,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @Test
