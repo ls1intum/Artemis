@@ -40,7 +40,6 @@ import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotificatio
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.*;
-import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -49,7 +48,6 @@ import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
@@ -381,14 +379,6 @@ public class BambooBuildPlanService {
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
             boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
-        List<VcsRepositoryIdentifier> vcsTriggerRepositories = new ArrayList<>();
-        // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
-        vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
-        // Trigger the build when a commit is pushed to the TEST_REPO only for the
-        // solution repository!
-        if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
-            vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
-        }
 
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -407,7 +397,6 @@ public class BambooBuildPlanService {
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true)).planRepositories(planRepositories.toArray(VcsRepository[]::new))
-                .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
                 .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
