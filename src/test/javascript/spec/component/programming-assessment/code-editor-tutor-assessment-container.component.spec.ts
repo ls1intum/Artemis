@@ -70,6 +70,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/athena.service';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -228,6 +229,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
                 findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
+
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 
