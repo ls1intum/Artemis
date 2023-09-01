@@ -87,7 +87,9 @@ class ExamStartTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final int NUMBER_OF_STUDENTS = 2;
 
-    // private static final int NUMBER_OF_TUTORS = 2;
+    private Set<User> registeredUsers;
+
+    private final List<StudentExam> createdStudentExams = new ArrayList<>();
 
     @BeforeEach
     void initTestCase() throws GitAPIException {
@@ -127,10 +129,6 @@ class ExamStartTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         }
         examRepository.save(exam);
     }
-
-    private Set<User> registeredUsers;
-
-    private final List<StudentExam> createdStudentExams = new ArrayList<>();
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
