@@ -516,12 +516,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     hasAssessmentNote(): boolean {
-        if (this.manualResult) {
-            if (this.manualResult.assessmentNote) {
-                return this.manualResult.assessmentNote.length == 1;
-            }
-        }
-        return false;
+        return this.manualResult?.assessmentNote?.length == 1;
     }
 
     /**
