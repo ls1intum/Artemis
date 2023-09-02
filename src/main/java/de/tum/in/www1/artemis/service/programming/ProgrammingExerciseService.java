@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -89,6 +90,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     private final ParticipationRepository participationRepository;
 
     private final ParticipationService participationService;
@@ -130,7 +133,7 @@ public class ProgrammingExerciseService {
     private final ChannelService channelService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
@@ -144,6 +147,7 @@ public class ProgrammingExerciseService {
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.participationRepository = participationRepository;
@@ -211,9 +215,6 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
-
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook
         savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
@@ -226,7 +227,8 @@ public class ProgrammingExerciseService {
         scheduleOperations(savedProgrammingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
 
-        // TODO: we should trigger BASE and SOLUTION build plans once here
+        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
+        channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
 
         return savedProgrammingExercise;
     }
@@ -358,6 +360,10 @@ public class ProgrammingExerciseService {
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
+
+        // trigger BASE and SOLUTION build plans once here
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**

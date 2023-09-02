@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
@@ -145,15 +144,9 @@ public class ProgrammingExerciseImportService {
         updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
-        try {
-            ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
-            triggerService.triggerBuild(templateParticipation);
-            triggerService.triggerBuild(solutionParticipation);
-        }
-        catch (ContinuousIntegrationException e) {
-            log.error("Unable to trigger imported build plans", e);
-            throw e;
-        }
+        ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
+        triggerService.triggerBuild(templateParticipation);
+        triggerService.triggerBuild(solutionParticipation);
     }
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
