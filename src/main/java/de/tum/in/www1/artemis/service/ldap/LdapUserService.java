@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.ldap;
 
+import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_EMAIL;
 import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 
 @Service
-@Profile("ldap")
+@Profile("ldap | ldap-only")
 public class LdapUserService {
 
     private final Logger log = LoggerFactory.getLogger(LdapUserService.class);
@@ -38,6 +39,10 @@ public class LdapUserService {
 
     public Optional<LdapUserDto> findByUsername(final String username) {
         return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where("cn").is(username));
+    }
+
+    public Optional<LdapUserDto> findByEmail(final String email) {
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_EMAIL).is(email));
     }
 
     public Optional<LdapUserDto> findByRegistrationNumber(final String registrationNumber) {

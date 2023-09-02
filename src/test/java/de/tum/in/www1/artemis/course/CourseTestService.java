@@ -2100,7 +2100,7 @@ public class CourseTestService {
         Files.createDirectories(Path.of(courseArchivesDirPath));
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
         doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
                 any(Path.class));
 
@@ -2820,13 +2820,12 @@ public class CourseTestService {
 
     // Test
     public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
+
         var course = courseUtilService.createCourse();
-        StudentDTO dto1 = new StudentDTO().registrationNumber(registrationNumber1);
-        dto1.setLogin("newstudent1");
-        StudentDTO dto2 = new StudentDTO().registrationNumber(registrationNumber2);
-        dto1.setLogin("newstudent2");
-        StudentDTO dto3 = new StudentDTO();
-        dto3.setEmail(email);
+        StudentDTO dto1 = new StudentDTO("newstudent1", null, null, registrationNumber1, null);
+        StudentDTO dto2 = new StudentDTO("newstudent2", null, null, registrationNumber2, null);
+        StudentDTO dto3 = new StudentDTO(null, null, null, null, email);
+
         var newStudents = request.postListWithResponseBody("/api/courses/" + course.getId() + "/" + group, List.of(dto1, dto2, dto3), StudentDTO.class, HttpStatus.OK);
         assertThat(newStudents).hasSize(3);
         assertThat(newStudents).contains(dto1, dto2, dto3);
