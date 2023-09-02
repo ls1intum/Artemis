@@ -27,6 +27,9 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
+/**
+ * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
+ */
 @Order(3)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -45,10 +48,6 @@ public class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTes
     protected void resetSpyBeans() {
         super.resetSpyBeans();
     }
-
-    /**
-     * Note: This test group is used for tests that do not require to mock requests to the VC and CI server.
-     */
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
