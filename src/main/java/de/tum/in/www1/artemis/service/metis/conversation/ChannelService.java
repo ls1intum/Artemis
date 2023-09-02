@@ -486,7 +486,10 @@ public class ChannelService {
     private static String generateChannelNameFromTitle(@NotNull String prefix, Optional<String> title) {
         String channelName = prefix + title.orElse("");
         // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
-        channelName = channelName.toLowerCase().replaceAll("[^a-z0-9]+", "-");
+        String specialCharacters = "[^a-z0-9]+";
+        // -+$ matches a trailing hyphen at the end of a string
+        String leadingTrailingHyphens = "-$";
+        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
         if (channelName.length() > 30) {
             channelName = channelName.substring(0, 30);
         }
