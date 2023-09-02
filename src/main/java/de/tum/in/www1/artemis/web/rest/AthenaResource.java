@@ -1,26 +1,34 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.TextBlockRef;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * REST controller for Athena feedback suggestions.
@@ -32,23 +40,45 @@ public class AthenaResource {
 
     private final Logger log = LoggerFactory.getLogger(AthenaResource.class);
 
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    // We reuse the same directory as the programming exercise export service for this.
+    @Value("${artemis.repo-download-clone-path}")
+    private Path repoDownloadClonePath;
+
+    @Value("${artemis.athena.secret}")
+    private String athenaSecret;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseExportService programmingExerciseExportService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final FileService fileService;
+
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, TextExerciseRepository textExerciseRepository,
-            TextSubmissionRepository textSubmissionRepository, AuthorizationCheckService authCheckService) {
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+    public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
+            ProgrammingExerciseExportService programmingExerciseExportService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, FileService fileService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseExportService = programmingExerciseExportService;
         this.authCheckService = authCheckService;
+        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -77,5 +107,140 @@ public class AthenaResource {
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
+    }
+
+    /**
+     * Check if the given auth header is valid for Athena, otherwise throw an exception.
+     *
+     * @param auth the auth header value to check
+     */
+    private void checkAthenaSecret(String auth) {
+        if (!auth.equals(athenaSecret)) {
+            log.error("Athena secret does not match");
+            throw new AccessForbiddenException("Athena secret does not match");
+        }
+    }
+
+    /**
+     * Check if feedback suggestions are enabled for the given exercise, otherwise throw an exception.
+     *
+     * @param exercise the exercise to check
+     */
+    private void checkFeedbackSuggestionsEnabledElseThrow(de.tum.in.www1.artemis.domain.Exercise exercise) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
+            log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
+            throw new AccessForbiddenException("Feedback suggestions are not enabled for exercise");
+        }
+    }
+
+    /**
+     * Export the repository for the given exercise and participation to a zip file.
+     * The ZIP file will be deleted automatically after 15 minutes.
+     *
+     * @param exerciseId      the id of the exercise to export the repository for
+     * @param participationId the id of the participation to export the repository for (only for student repository)
+     * @param repositoryType  the type of repository to export. Pass null to export the student repository.
+     * @return 200 Ok if successful with the corresponding result as body
+     * @throws IOException if the export fails
+     */
+    private ResponseEntity<Resource> exportRepository(long exerciseId, Long participationId, RepositoryType repositoryType) throws IOException {
+        log.debug("Exporting repository for exercise {}, participation {}", exerciseId, participationId);
+
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        checkFeedbackSuggestionsEnabledElseThrow(programmingExercise);
+
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setAnonymizeRepository(false);
+        exportOptions.setExportAllParticipants(false);
+        exportOptions.setFilterLateSubmissions(false);
+        exportOptions.setFilterLateSubmissionsIndividualDueDate(false);
+
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
+        }
+
+        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 15);
+        Path zipFile = null;
+
+        if (repositoryType == null) { // Export student repository
+            var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, List.of(participationId));
+            if (participations.isEmpty()) {
+                log.error("Participation with id {} does not exist for exercise {}", participationId, exerciseId);
+                throw new ConflictException("Participation does not exist", "Participation", "participationDoesNotExist");
+            }
+            var participation = participations.get(0);
+            zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
+        }
+        else {
+            List<String> exportErrors = List.of();
+            var exportFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, exportDir, exportErrors);
+            if (exportFile.isPresent()) {
+                zipFile = exportFile.get().toPath();
+            }
+        }
+
+        if (zipFile == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseUtil.ok(zipFile.toFile());
+    }
+
+    /**
+     * GET athena/exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
+     *
+     * @param exerciseId      the id of the exercise the submission belongs to
+     * @param participationId the id of the participation to get the repository for
+     * @return 200 Ok with the zip file as body if successful
+     */
+    @GetMapping("exercises/{exerciseId}/participations/{participationId}/repository")
+    @EnforceNothing // We check the Athena secret instead
+    public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long participationId, @RequestHeader("Authorization") String auth)
+            throws IOException {
+        log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, participationId);
+        checkAthenaSecret(auth);
+        return exportRepository(exerciseId, participationId, null);
+    }
+
+    /**
+     * GET athena/exercises/:exerciseId/repository/template : Get the template repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @return 200 Ok with the zip file as body if successful
+     */
+    @GetMapping("exercises/{exerciseId}/repository/template")
+    @EnforceNothing // We check the Athena secret instead
+    public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+        log.debug("REST call to get template repository for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        return exportRepository(exerciseId, null, RepositoryType.TEMPLATE);
+    }
+
+    /**
+     * GET athena/exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @return 200 Ok with the zip file as body if successful
+     */
+    @GetMapping("exercises/{exerciseId}/repository/solution")
+    @EnforceNothing // We check the Athena secret instead
+    public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+        log.debug("REST call to get solution repository for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        return exportRepository(exerciseId, null, RepositoryType.SOLUTION);
+    }
+
+    /**
+     * GET athena/exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @return 200 Ok with the zip file as body if successful
+     */
+    @GetMapping("exercises/{exerciseId}/repository/tests")
+    @EnforceNothing // We check the Athena secret instead
+    public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+        log.debug("REST call to get test repository for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        return exportRepository(exerciseId, null, RepositoryType.TESTS);
     }
 }

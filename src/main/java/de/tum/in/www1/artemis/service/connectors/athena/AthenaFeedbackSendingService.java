@@ -104,7 +104,7 @@ public class AthenaFeedbackSendingService {
      */
     @Async
     public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks, int maxRetries) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
 

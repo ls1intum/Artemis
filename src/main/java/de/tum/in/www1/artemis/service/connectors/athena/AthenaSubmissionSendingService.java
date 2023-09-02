@@ -89,7 +89,7 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(TextExercise exercise, int maxRetries) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
 

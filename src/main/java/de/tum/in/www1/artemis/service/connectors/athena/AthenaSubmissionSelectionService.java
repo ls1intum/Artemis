@@ -71,7 +71,7 @@ public class AthenaSubmissionSelectionService {
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
     public Optional<Long> getProposedSubmissionId(TextExercise exercise, List<Long> submissionIds) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
         if (submissionIds.isEmpty()) {
