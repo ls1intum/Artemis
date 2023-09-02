@@ -34,8 +34,7 @@ export class ExamNavigationBarComponent implements OnInit {
         overViewChange: boolean;
         exercise?: Exercise;
         forceSave: boolean;
-        submission?: ProgrammingSubmission | SubmissionVersion;
-        initial?: boolean;
+        submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
@@ -120,14 +119,9 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param overviewPage: user wants to switch to the overview page
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
+     * @param submission the submission to be viewed, used in the exam timeline
      */
-    changePage(
-        overviewPage: boolean,
-        exerciseIndex: number,
-        forceSave?: boolean,
-        submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission,
-        initial?: boolean,
-    ): void {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -135,7 +129,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission, initial: initial });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;
