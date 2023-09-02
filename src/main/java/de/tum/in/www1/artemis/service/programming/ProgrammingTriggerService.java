@@ -91,8 +91,9 @@ public class ProgrammingTriggerService {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).orElseThrow();
 
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
-            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getTemplateParticipation());
+            ContinuousIntegrationTriggerService ciTriggerService = continuousIntegrationTriggerService.orElseThrow();
+            ciTriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
+            ciTriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);

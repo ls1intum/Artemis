@@ -74,7 +74,6 @@ function getExifRotation(imageBase64: string): number {
                     return view.getUint16(offset + i * 12 + 8, little);
                 }
             }
-            // eslint-disable-next-line no-bitwise
         } else if ((marker & 0xff00) !== 0xff00) {
             break;
         } else {

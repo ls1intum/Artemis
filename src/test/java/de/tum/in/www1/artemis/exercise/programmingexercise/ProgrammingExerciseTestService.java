@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exception.GitException;
@@ -344,7 +345,6 @@ public class ProgrammingExerciseTestService {
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -381,7 +381,6 @@ public class ProgrammingExerciseTestService {
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
@@ -929,6 +928,64 @@ public class ProgrammingExerciseTestService {
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
+    }
+
+    void testImportProgrammingExerciseLockRepositorySubmissionPolicyChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
+
+        var submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setSubmissionLimit(5);
+        exerciseToBeImported.setSubmissionPolicy(submissionPolicy);
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
+        assertThat(exerciseToBeImported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertThat(sourceExercise.getSubmissionPolicy()).isNull();
+    }
+
+    void testImportProgrammingExerciseNoneSubmissionPolicyChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        var submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setProgrammingExercise(sourceExercise);
+        submissionPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
+        exerciseToBeImported.setSubmissionPolicy(null);
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(exerciseToBeImported.getSubmissionPolicy()).isNull();
+
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertThat(sourceExercise.getSubmissionPolicy()).isNotNull();
     }
 
     /**

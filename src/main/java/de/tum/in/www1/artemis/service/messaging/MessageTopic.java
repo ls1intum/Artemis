@@ -13,7 +13,6 @@ public enum MessageTopic {
     MODELING_EXERCISE_INSTANT_CLUSTERING("modeling-exercise-instant-clustering"),
     TEXT_EXERCISE_SCHEDULE("text-exercise-schedule"),
     TEXT_EXERCISE_SCHEDULE_CANCEL("text-exercise-schedule-cancel"),
-    TEXT_EXERCISE_INSTANT_CLUSTERING("text-exercise-instant-clustering"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES("programming-exercise-unlock-repositories"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS("programming-exercise-unlock-repositories-and-participations"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-repositories-and-participations-with-earlier-start-date-and-later-due-date"),
