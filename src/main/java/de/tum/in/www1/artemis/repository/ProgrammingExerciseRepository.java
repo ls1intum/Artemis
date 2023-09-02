@@ -14,6 +14,8 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -108,26 +110,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Returns all programming exercises with its test cases
-     *
-     * @return all programming exercises
-     */
-    @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
-    Set<ProgrammingExercise> findAllWithEagerTestCases();
-
-    /**
-     * Returns all programming exercises with their hints and tasks
-     *
-     * @return all programming exercises
-     */
-    @Query("""
-            SELECT p FROM ProgrammingExercise p
-            LEFT JOIN FETCH p.tasks
-            LEFT JOIN FETCH p.exerciseHints
-            """)
-    Set<ProgrammingExercise> findAllWithEagerTasksAndHints();
-
-    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.
@@ -148,9 +130,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
-
-    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
-    List<ProgrammingExercise> findAllWithEagerParticipations();
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -216,9 +195,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
 
-    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation LEFT JOIN FETCH pe.solutionParticipation")
-    List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
-
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
@@ -275,16 +251,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
-     * This can't be done as a standard query as the property contains the word 'And'.
-     *
-     * @param dateTime ZonedDatetime object.
-     * @return List<ProgrammingExercise> (can be empty)
-     */
-    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
-    List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
-
-    /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with
      * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} but no buildAndTestStudentSubmissionsAfterDueDate.
      *
@@ -310,20 +276,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                p.exercise.id,
-                count(DISTINCT p)
-            )
-            FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
-            WHERE p.exercise.id IN :exerciseIds
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            GROUP BY p.exercise.id
-            """)
-    List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
-
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the due date.
@@ -348,7 +300,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseIds the exercise ids we are interested in
-     * @return the number of distinct submissions belonging to the exercise id
+     * @return list of exercises with the count of distinct submissions belonging to the exercise id
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
@@ -412,14 +364,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      *         considered)
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+            SELECT COUNT (DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                JOIN p.submissions s
             WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExercise p
+                LEFT JOIN FETCH p.templateParticipation
+                LEFT JOIN FETCH p.solutionParticipation
+            """)
+    Page<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipation(Pageable pageable);
 
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
@@ -455,15 +416,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
 
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
-
-    /**
-     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in the future.
-     *
-     * @return List<ProgrammingExercise>
-     */
-    default List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
-        return findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-    }
 
     /**
      * Find a programming exercise by its id and throw an EntityNotFoundException if it cannot be found

@@ -111,7 +111,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         // do batches
         for (int i = (int) start, j = 0; i < end; i++, j = j + BATCH_SIZE) {
             Pageable pageable = PageRequest.of(i, BATCH_SIZE);
-            programmingExerciseRepository.findAll(pageable).forEach(exercise -> migrateExercise(exercise, errorMap));
+            programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipation(pageable).forEach(exercise -> migrateExercise(exercise, errorMap));
 
             log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, j + 1)), exerciseCount);
         }
