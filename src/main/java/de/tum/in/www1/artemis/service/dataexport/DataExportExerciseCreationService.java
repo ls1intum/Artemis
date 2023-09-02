@@ -73,10 +73,12 @@ public class DataExportExerciseCreationService {
 
     private final ResultService resultService;
 
+    private final AuthorizationCheckService authCheckService;
+
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService) {
+            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -86,6 +88,7 @@ public class DataExportExerciseCreationService {
         this.exerciseRepository = exerciseRepository;
         this.repoClonePath = repoClonePath;
         this.resultService = resultService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -187,9 +190,10 @@ public class DataExportExerciseCreationService {
      */
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir, User user) throws IOException {
         // quizzes do not have an assessment due date, so we need to check if they have ended according to their due date
+        boolean isInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean includeResults = (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished())
                 || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
-                || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded());
+                || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
@@ -205,10 +209,10 @@ public class DataExportExerciseCreationService {
                 else if (submission instanceof QuizSubmission) {
                     dataExportQuizExerciseCreationService.createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir, includeResults);
                 }
-                // for a programming exercise, we want to include the results that are visible for the assessment due date
+                // for a programming exercise, we want to include the results that are visible before the assessment due date
                 if (includeResults || exercise instanceof ProgrammingExercise) {
                     boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !ExerciseDateService.isAfterAssessmentDueDate(exercise);
-                    createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate);
+                    createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate, isInstructor);
                 }
             }
         }
@@ -285,9 +289,11 @@ public class DataExportExerciseCreationService {
      * @param outputDir                                  the directory in which the results should be stored
      * @param user                                       the user for which the export should be created
      * @param programmingExerciseBeforeAssessmentDueDate whether the programming exercise is before the assessment due date
+     * @param isInstructor                               whether the user is an instructor in the course the exercise belongs to
      * @throws IOException if the file cannot be written
      */
-    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, User user, boolean programmingExerciseBeforeAssessmentDueDate) throws IOException {
+    private void createResultsAndComplaintFiles(Submission submission, Path outputDir, User user, boolean programmingExerciseBeforeAssessmentDueDate, boolean isInstructor)
+            throws IOException {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {

@@ -330,13 +330,12 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         // only include automatic test feedback if the assessment due date is in the future
         if (exerciseDirPath.toString().contains("Programming") && assessmentDueDateInTheFuture && courseExercise) {
             var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
-            var fileContentResult2 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, false));
             // automatic feedback
             assertThat(fileContentResult1).contains("1.0");
             assertThat(fileContentResult1).contains("feedback");
-            // manual feedback
-            assertThat(fileContentResult2).doesNotContain("2.0");
-            assertThat(fileContentResult2).doesNotContain("detailed feedback 2");
+            // this result should not be included, so the path should be null
+            assertThat(getProgrammingResultsFilePath(exerciseDirPath, false)).isNull();
+
         }
         else if (exerciseDirPath.toString().contains("Programming") && !assessmentDueDateInTheFuture && courseExercise) {
             var fileContentResult1 = Files.readString(getProgrammingResultsFilePath(exerciseDirPath, true));
@@ -427,7 +426,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         if (firstResult) {
             return paths.get(0);
         }
-        return paths.get(1);
+        if (paths.size() > 1) {
+            return paths.get(1);
+        }
+        // file doesn't exist
+        return null;
     }
 
     private Path getCourseOrExamDirectoryPath(Path rootPath, String shortName) throws IOException {
