@@ -316,7 +316,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId/summary',
-        component: StudentExamTimelineComponent,
+        component: StudentExamSummaryComponent,
         resolve: {
             studentExam: StudentExamResolve,
         },
