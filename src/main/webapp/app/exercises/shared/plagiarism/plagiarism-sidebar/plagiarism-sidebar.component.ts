@@ -57,7 +57,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
 
             this.currentPage = 0;
             if (!comparisons) {
-                this.numberOfPages = 0;
+                this.numberOfPages = 1;
             } else {
                 this.numberOfPages = this.computeNumberOfPages(comparisons.length);
             }
@@ -70,7 +70,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     }
 
     computeNumberOfPages(totalComparisons: number) {
-        return Math.floor(totalComparisons / this.pageSize);
+        return Math.ceil(totalComparisons / this.pageSize);
     }
 
     getPagedComparisons() {
@@ -92,7 +92,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     }
 
     handlePageRight() {
-        if (this.currentPage === this.numberOfPages) {
+        if (this.currentPage + 1 >= this.numberOfPages) {
             return;
         }
 

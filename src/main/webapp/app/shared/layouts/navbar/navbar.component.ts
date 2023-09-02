@@ -311,7 +311,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         grading_key: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
-        text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
         user_settings: 'artemisApp.userSettings.title',
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
