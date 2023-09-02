@@ -23,11 +23,6 @@ import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../..
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
 import { convertModelAfterMultiPart } from '../../support/utils';
 
-// This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
-Cypress.on('uncaught:exception', () => {
-    return false;
-});
-
 let exam: Exam;
 
 describe('Exam assessment', () => {

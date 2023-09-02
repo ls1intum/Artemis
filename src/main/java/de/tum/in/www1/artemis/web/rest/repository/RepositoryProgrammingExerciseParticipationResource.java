@@ -222,16 +222,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(participationId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.createFile(participationId, filePath, request);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(participationId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
+        return super.createFolder(participationId, folderPath, request);
     }
 
     @Override
