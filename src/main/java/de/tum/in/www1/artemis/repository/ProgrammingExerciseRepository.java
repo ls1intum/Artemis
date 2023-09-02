@@ -14,8 +14,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -221,8 +219,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
 
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            LEFT JOIN pe.studentParticipations pep
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.studentParticipations pep
             WHERE pep.id = :#{#participationId}
                 OR pe.templateParticipation.id = :#{#participationId}
                 OR pe.solutionParticipation.id = :#{#participationId}
@@ -230,23 +229,25 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            LEFT JOIN pe.studentParticipations pep
-            LEFT JOIN FETCH pe.templateParticipation tp
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.studentParticipations pep
+                LEFT JOIN FETCH pe.templateParticipation tp
             WHERE pep.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
 
     @Query("""
-            SELECT p FROM ProgrammingExercise p
-            LEFT JOIN FETCH p.testCases tc
-            LEFT JOIN FETCH p.staticCodeAnalysisCategories
-            LEFT JOIN FETCH p.exerciseHints
-            LEFT JOIN FETCH p.templateParticipation
-            LEFT JOIN FETCH p.solutionParticipation
-            LEFT JOIN FETCH p.auxiliaryRepositories
-            LEFT JOIN FETCH tc.solutionEntries
-                WHERE p.id = :#{#exerciseId}
+            SELECT p
+            FROM ProgrammingExercise p
+                LEFT JOIN FETCH p.testCases tc
+                LEFT JOIN FETCH p.staticCodeAnalysisCategories
+                LEFT JOIN FETCH p.exerciseHints
+                LEFT JOIN FETCH p.templateParticipation
+                LEFT JOIN FETCH p.solutionParticipation
+                LEFT JOIN FETCH p.auxiliaryRepositories
+                LEFT JOIN FETCH tc.solutionEntries
+            WHERE p.id = :#{#exerciseId}
                 """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
 
@@ -258,8 +259,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe
-            LEFT JOIN pe.testCases tc
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.testCases tc
             WHERE pe.dueDate > :now
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
@@ -273,7 +275,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param dateTime ZonedDatetime object.
      * @return List<ProgrammingExercise> (can be empty)
      */
-    @Query("SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
+    @Query("""
+             SELECT pe
+             FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+            WHERE e.endDate > :#{#dateTime}
+             """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -285,8 +293,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+            SELECT COUNT (DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
@@ -374,14 +383,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    @Query("""
-            SELECT p
-            FROM ProgrammingExercise p
-                LEFT JOIN FETCH p.templateParticipation
-                LEFT JOIN FETCH p.solutionParticipation
-            """)
-    Page<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipation(Pageable pageable);
-
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
     List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
@@ -391,7 +392,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
     // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe LEFT JOIN pe.course c1 LEFT JOIN pe.exerciseGroup eg LEFT JOIN eg.exam ex LEFT JOIN ex.course c2
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c1
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam ex
+                LEFT JOIN ex.course c2
             WHERE c1.instructorGroupName IN :#{#groupNames}
                 OR c1.editorGroupName IN :#{#groupNames}
                 OR c1.teachingAssistantGroupName IN :#{#groupNames}

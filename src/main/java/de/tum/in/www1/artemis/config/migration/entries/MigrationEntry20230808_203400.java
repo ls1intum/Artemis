@@ -15,6 +15,8 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
 @Component
@@ -30,10 +32,18 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     private final Optional<CIMigrationService> ciMigrationService;
 
-    public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository, Optional<CIMigrationService> ciMigrationService) {
+    public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, Optional<CIMigrationService> ciMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.ciMigrationService = ciMigrationService;
     }
 
@@ -111,7 +121,24 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         // do batches
         for (int i = (int) start, j = 0; i < end; i++, j = j + BATCH_SIZE) {
             Pageable pageable = PageRequest.of(i, BATCH_SIZE);
-            programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipation(pageable).forEach(exercise -> migrateExercise(exercise, errorMap));
+
+            // TODO: in the unlikely case the buildPlanId is null, we could skip the template participation
+            var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
+            log.info("Found {} programming exercise to migrate in batch", templateParticipationPage.getTotalElements());
+            templateParticipationPage.forEach(templateParticipation -> {
+                templateParticipation.getProgrammingExercise().setTemplateParticipation(templateParticipation);
+                migrateExercise(templateParticipation.getProgrammingExercise(), errorMap);
+            });
+
+            // TODO: in the unlikely case the buildPlanId is null, we could skip the solution participation
+            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
+            log.info("Found {} programming exercise to migrate in batch", solutionParticipationPage.getTotalElements());
+            solutionParticipationPage.forEach(solutionParticipation -> {
+                solutionParticipation.getProgrammingExercise().setSolutionParticipation(solutionParticipation);
+                migrateExercise(solutionParticipation.getProgrammingExercise(), errorMap);
+            });
+
+            // TODO: also load student participations with paging for which the buildPlanId is not null
 
             log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, j + 1)), exerciseCount);
         }
