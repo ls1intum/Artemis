@@ -52,7 +52,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var planKey = (programmingExerciseResultTestService.getProgrammingExercise().getProjectKey() + "-" + loginName).toUpperCase();
-        var notification = ProgrammingExerciseFactory.generateBambooBuildResult("assignment", planKey, null, null, List.of("test1"), List.of(), new ArrayList<>());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1"), List.of(),
+                new ArrayList<>());
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 

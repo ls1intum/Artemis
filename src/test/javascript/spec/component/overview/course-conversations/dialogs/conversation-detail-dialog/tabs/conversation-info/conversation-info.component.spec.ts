@@ -18,6 +18,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -117,7 +118,7 @@ examples.forEach((activeConversation) => {
             if (isChannelDto(activeConversation) || isGroupChatDto(activeConversation)) {
                 genericEditPropertyDialogTest('name', {
                     propertyName: 'name',
-                    maxPropertyLength: 20,
+                    maxPropertyLength: 30,
                     isRequired: true,
                     regexPattern: channelRegex,
                 });
