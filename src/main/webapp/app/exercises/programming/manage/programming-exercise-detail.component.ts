@@ -197,7 +197,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 this.loadGitDiffReport();
 
-                // the build logs endpoint is requires at least editor privileges
+                // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
                     this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
                         this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;

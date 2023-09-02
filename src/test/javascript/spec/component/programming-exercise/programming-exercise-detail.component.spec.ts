@@ -196,8 +196,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
             if (isEditor) {
                 expect(buildLogsSpy).toHaveBeenCalledOnce();
-            }
-            if (!isEditor) {
+            } else {
                 expect(buildLogsSpy).not.toHaveBeenCalled();
             }
         });
