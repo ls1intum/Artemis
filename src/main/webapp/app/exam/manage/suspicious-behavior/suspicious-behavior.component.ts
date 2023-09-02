@@ -19,6 +19,11 @@ export class SuspiciousBehaviorComponent implements OnInit {
     suspiciousSessions: SuspiciousExamSessions[] = [];
     examId: number;
     courseId: number;
+    checkboxCriterionDifferentStudentExamsSameIPAddressChecked = false;
+    checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = false;
+    checkboxCriterionSameStudentExamDifferentIPAddressesChecked = false;
+    checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked = false;
+    checkboxCriterionIPOutsideOfASpecificRangeChecked = false;
 
     constructor(
         private suspiciousSessionsService: SuspiciousSessionsService,
@@ -52,10 +57,20 @@ export class SuspiciousBehaviorComponent implements OnInit {
             });
         });
     };
+    get isAnyCheckboxChecked(): boolean {
+        return (
+            this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked ||
+            this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked ||
+            this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked ||
+            this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked
+        );
+    }
 
     goToSuspiciousSessions() {
         this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'suspicious-behavior', 'suspicious-sessions'], {
             state: { suspiciousSessions: this.suspiciousSessions },
         });
     }
+
+    updateButtonState() {}
 }

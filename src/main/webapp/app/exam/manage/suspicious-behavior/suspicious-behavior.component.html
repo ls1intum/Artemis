@@ -4,19 +4,29 @@
     {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
 </p>
 
-<ul>
-    <li>
-        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}
-    </li>
-    <li>
-        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}
-    </li>
-</ul>
+<div>
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="different-student-exams-same-ip"
+        [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked"
+        (change)="updateButtonState()"
+    />
+    <label for="different-student-exams-same-ip">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}</label>
+</div>
 
-<p>
-    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate: { numberOfSuspiciousSessions: suspiciousSessions.length } }}
-</p>
+<div>
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="different-student-exams-same-browser"
+        [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked"
+        (change)="updateButtonState()"
+    />
+    <label for="different-student-exams-same-browser">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}</label>
+</div>
 
+<button [disabled]="!isAnyCheckboxChecked">Submit</button>
 <button *ngIf="suspiciousSessions.length !== 0" [disabled]="suspiciousSessions.length === 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
     <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
 </button>
