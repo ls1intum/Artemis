@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
@@ -123,20 +124,20 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param errorMap The error map to write errors to
      */
     private void migrateExercise(ProgrammingExercise exercise, Map<ProgrammingExercise, Boolean> errorMap) {
-        // try {
-        // ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
-        // }
-        // catch (ContinuousIntegrationException e) {
-        // log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
-        // errorMap.put(exercise, true);
-        // }
-        // try {
-        // ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
-        // }
-        // catch (ContinuousIntegrationException e) {
-        // log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
-        // errorMap.put(exercise, false);
-        // }
+        try {
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+        }
+        catch (ContinuousIntegrationException e) {
+            log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
+            errorMap.put(exercise, true);
+        }
+        try {
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+        }
+        catch (ContinuousIntegrationException e) {
+            log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
+            errorMap.put(exercise, false);
+        }
         try {
             ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey());
         }
@@ -145,7 +146,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorMap.put(exercise, false);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepositories(exercise.getProjectKey(), exercise.getTestRepositoryUrl(), exercise.getTestRepositoryUrl());
+            var template = exercise.getTemplateRepositoryUrl();
+            var test = exercise.getTestRepositoryUrl();
+            var solution = exercise.getSolutionRepositoryUrl();
+            ciMigrationService.orElseThrow().overrideBuildPlanRepositories(exercise.getProjectKey(), template, test, solution);
         }
         catch (Exception e) {
             log.warn("Failed to migrate build plan repositories for exercise {}", exercise.getId(), e);

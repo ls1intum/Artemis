@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,16 +32,29 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 @Profile("bamboo")
 public class BambooMigrationService implements CIMigrationService {
 
+    private final RestTemplate restTemplate;
+
     @Value("${artemis.continuous-integration.url}")
     protected URL bambooServerUrl;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final RestTemplate restTemplate;
-
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    private static List<Long> getDataItemIds(String html) {
+        if (html == null) {
+            return List.of();
+        }
+        Elements repositories = Jsoup.parse(html).select(".item");
+        List<Long> ids = new ArrayList<>();
+        for (Element repository : repositories) {
+            String repositoryIdString = repository.attr("data-item-id");
+            ids.add(Long.parseLong(repositoryIdString));
+        }
+        return ids;
     }
 
     @Override
@@ -69,15 +80,24 @@ public class BambooMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepositories(String projectKey, String testRepositoryUrl, String assignmentRepositoryUrl) {
+    public void overrideBuildPlanRepositories(String projectKey, String templateRepositoryUrl, String testRepositoryUrl, String solutionRepositoryUrl) {
+        Optional<Long> credentialsId = getSharedCredential();
         for (var buildPlanKey : BuildPlanType.values()) {
-            List<Long> repositoryIds = getAllConnectedRepositoryIds(projectKey + "-" + buildPlanKey.getName());
+            String planName = projectKey + "-" + buildPlanKey.getName();
+            List<Long> repositoryIds = getAllConnectedRepositoryIds(planName);
 
             for (var id : repositoryIds) {
-                deleteLinkedRepository(projectKey + "-" + buildPlanKey, id);
+                deleteLinkedRepository(planName, id);
             }
+
+            if (buildPlanKey == BuildPlanType.TEMPLATE) {
+                addGitRepository(planName, templateRepositoryUrl, "assignment", credentialsId.orElseThrow());
+            }
+            else if (buildPlanKey == BuildPlanType.SOLUTION) {
+                addGitRepository(planName, solutionRepositoryUrl, "assignment", credentialsId.orElseThrow());
+            }
+            addGitRepository(planName, testRepositoryUrl, "tests", credentialsId.orElseThrow());
         }
-        Optional<Long> credentialsId = getSharedCredential();
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {
@@ -88,19 +108,6 @@ public class BambooMigrationService implements CIMigrationService {
 
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
         return getDataItemIds(response.getBody());
-    }
-
-    private static List<Long> getDataItemIds(String html) {
-        if (html == null) {
-            return List.of();
-        }
-        Elements repositories = Jsoup.parse(html).select(".item");
-        List<Long> ids = new ArrayList<>();
-        for (Element repository : repositories) {
-            String repositoryIdString = repository.attr("data-item-id");
-            ids.add(Long.parseLong(repositoryIdString));
-        }
-        return ids;
     }
 
     private List<Long> getAllConnectedRepositoryIds(String buildPlanName) {
@@ -250,5 +257,38 @@ public class BambooMigrationService implements CIMigrationService {
             return Optional.of(Long.parseLong(id.replace("item-", "")));
         }
         return Optional.empty();
+    }
+
+    private void addGitRepository(String buildPlanKey, String repository, String name, Long credentialsId) {
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("planKey", buildPlanKey);
+        body.add("repositoryId", Integer.toString(0));
+        body.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
+        body.add("respositoryPluginKey", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
+        body.add("repositoryName", name);
+        body.add("repository.git.repositoryUrl", repository);
+        body.add("repository.git.authenticationType", "PASSWORD");
+        body.add("selectFields", "repository.git.authenticationType");
+        body.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        body.add("repository.git.passwordSharedCredentials", credentialsId.toString());
+        body.add("selectFields", "repository.git.passwordSharedCredentials");
+        // body.add("repository.git.sshCredentialsSource", "CUSTOM");
+        body.add("repository.git.branch", "main");
+        body.add("repository.git.commandTimeout", Integer.toString(180));
+        body.add("checkBoxFields", "repository.git.useShallowClones");
+        body.add("repository.git.useShallowClones", Boolean.TRUE.toString());
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        String requestUrl = bambooServerUrl + "/chain/admin/config/createRepository.action";
+        parameters.add("planKey", buildPlanKey);
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Content-Type", "multipart/form-data");
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
     }
 }

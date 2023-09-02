@@ -26,6 +26,7 @@ public class MigrationRegistry {
         // Here we define the order of the ChangeEntries
         this.migrationService = migrationService;
         // TODO: the following line is out-commented so we can test other changes on test servers
+
         // this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
     }
 
