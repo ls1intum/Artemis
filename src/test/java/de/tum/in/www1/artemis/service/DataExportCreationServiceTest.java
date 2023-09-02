@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -397,7 +398,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                     .orElseThrow();
         }
         catch (IOException e) {
-            fail(e);
+            fail("Failed while getting multiple choice questions answers file");
         }
         return null;
     }
@@ -408,7 +409,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
                     .orElseThrow();
         }
         catch (IOException e) {
-            fail(e);
+            fail("Failed while getting short answer questions answers file");
         }
         return null;
     }
@@ -416,10 +417,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     private Path getProgrammingResultsFilePath(Path exerciseDirPath, boolean firstResult) {
         List<Path> paths;
         try (var files = Files.list(exerciseDirPath)) {
-            paths = files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result")).collect(Collectors.toList());
+            paths = files.filter(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result"))
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
         catch (IOException e) {
-            fail(e);
+            fail("Failed while getting programming results file");
             return null;
         }
         paths.sort(Comparator.comparing(Path::getFileName));
