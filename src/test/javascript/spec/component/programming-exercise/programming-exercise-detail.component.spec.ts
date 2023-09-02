@@ -175,7 +175,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
-            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -186,7 +185,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
         }));
 
         it.each([true, false])('should only call service method to get build log statistics onInit if the user is at least an editor for this exercise', (isEditor: boolean) => {
-            const buildLogsSpy = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
             const programmingExercise = new ProgrammingExercise(new Course(), undefined);
             programmingExercise.id = 123;
             programmingExercise.isAtLeastEditor = isEditor;
@@ -195,9 +193,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
             );
             comp.ngOnInit();
             if (isEditor) {
-                expect(buildLogsSpy).toHaveBeenCalledOnce();
+                expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
             } else {
-                expect(buildLogsSpy).not.toHaveBeenCalled();
+                expect(buildLogStatisticsStub).not.toHaveBeenCalled();
             }
         });
     });
@@ -224,7 +222,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
-            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
