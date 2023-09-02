@@ -197,9 +197,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 this.loadGitDiffReport();
 
-                this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
-                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
-                });
+                // the build logs endpoint is requires at least editor privileges
+                if (this.programmingExercise.isAtLeastEditor) {
+                    this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
+                        this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+                    });
+                }
 
                 this.setLatestCoveredLineRatio();
 

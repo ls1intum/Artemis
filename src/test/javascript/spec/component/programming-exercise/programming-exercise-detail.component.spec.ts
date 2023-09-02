@@ -184,6 +184,23 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         }));
+
+        it.each([true, false])('should only call service method to get build log statistics onInit if the user is at least an editor for this exercise', (isEditor: boolean) => {
+            const buildLogsSpy = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 123;
+            programmingExercise.isAtLeastEditor = isEditor;
+            jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+                of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
+            );
+            comp.ngOnInit();
+            if (isEditor) {
+                expect(buildLogsSpy).toHaveBeenCalledOnce();
+            }
+            if (!isEditor) {
+                expect(buildLogsSpy).not.toHaveBeenCalled();
+            }
+        });
     });
 
     describe('onInit for exam exercise', () => {
