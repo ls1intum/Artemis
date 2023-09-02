@@ -27,7 +27,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLElement, UMLModel } from '@palsch/apollon';
+import { UMLElement, UMLModel } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/button.component';

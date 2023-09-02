@@ -16,9 +16,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
-import { UMLModel } from '@palsch/apollon';
+import { UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
-import { Text } from '@palsch/apollon/lib/es5/utils/svg/text';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { addDelay } from '../../helpers/utils/general.utils';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements

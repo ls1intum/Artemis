@@ -11,7 +11,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { UMLModel } from '@palsch/apollon';
+import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Submission, SubmissionExerciseType, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
