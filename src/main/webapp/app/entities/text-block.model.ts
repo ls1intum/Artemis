@@ -12,18 +12,18 @@ export class TextBlock {
 
     // The ID of the text block is computed as a hash of the submission ID, the start and end index and the text.
     // We need to keep it up to date with the latest values of these properties. Therefore, we use setter properties to never forget to update the ID.
-    private _submission?: TextSubmission;
+    private _submissionId?: number;
     private _startIndex?: number;
     private _endIndex?: number;
     private _text?: string;
 
-    set submission(value: TextSubmission | undefined) {
-        this._submission = value;
+    set submissionId(value: number | undefined) {
+        this._submissionId = value;
         this.computeId();
     }
 
-    get submission(): TextSubmission | undefined {
-        return this._submission;
+    get submissionId(): number | undefined {
+        return this._submissionId;
     }
 
     set startIndex(value: number | undefined) {
@@ -57,15 +57,15 @@ export class TextBlock {
      * Computes the ID of the text block. The ID is a hash of the submission ID, the start and end index and the text.
      */
     private computeId(): void {
-        const submissionId = this.submission?.id ?? 0;
+        const submissionId = this.submissionId ?? 0;
         const idString = `${submissionId};${this.startIndex}-${this.endIndex};${this.text}`;
         this.id = sha1Hex(idString);
     }
 
     setTextFromSubmission(submission?: TextSubmission): void {
-        this.submission ??= submission;
-        if (this.submission && this.startIndex != undefined) {
-            this.text = this.submission.text?.substring(this.startIndex, this.endIndex) || '';
+        this.submissionId ??= submission?.id;
+        if (submission && this.startIndex != undefined) {
+            this.text = submission.text?.substring(this.startIndex, this.endIndex) || '';
         }
     }
 }

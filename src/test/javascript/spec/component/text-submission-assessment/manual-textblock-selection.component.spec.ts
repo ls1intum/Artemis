@@ -27,32 +27,32 @@ describe('ManualTextblockSelectionComponent', () => {
             text: 'First text.',
             startIndex: 0,
             endIndex: 11,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
         {
             text: 'Second text.',
             startIndex: 12,
             endIndex: 24,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
         {
             text: 'Third text.',
             startIndex: 25,
             endIndex: 36,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
         {
             text: 'Fourth text.',
             startIndex: 37,
             endIndex: 49,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
         {
             text: 'Fifth sixth text.',
             startIndex: 50,
             endIndex: 67,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
     ];
     const textBlockRefs = [new TextBlockRef(blocks[0]), new TextBlockRef(blocks[1]), new TextBlockRef(blocks[2]), new TextBlockRef(blocks[3]), new TextBlockRef(blocks[4])];
 
