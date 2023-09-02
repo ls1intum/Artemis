@@ -131,7 +131,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         Resource resource = mock(Resource.class);
         URL resourceUrl = new URL("jar:file:/example.jar!/path/to/resource.txt");
 
-        File resourceFile = new File(resourceUrl.getFile());
+        File resourceFile = Files.createTempFile("GetResourceFilePath", "TestFile.txt").toFile();
         FileUtils.writeStringToFile(resourceFile, "testContent", StandardCharsets.UTF_8);
 
         // Mock the getResource() method.

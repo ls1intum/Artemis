@@ -191,8 +191,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             var components = filename.split("\\\\");
             filename = components[components.length - 1];
         }
-        // replace all illegal characters with ascii characters \w means A-Za-z0-9 to avoid problems during download later on
-        filename = filename.replaceAll("[^\\w.-]", "");
+        filename = FileService.sanitizeFilename(filename);
         // if the filename is now too short, we prepend "file"
         // this prevents potential problems when users call their file e.g. ßßß.pdf
         if (filename.length() < 5) {
@@ -201,9 +200,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         final Path dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
         final Path filePath = dirPath.resolve(filename);
         final File savedFile = filePath.toFile();
-        final File dir = dirPath.toFile();
 
-        FileUtils.copyToFile(file.getResource().getInputStream(), savedFile);
+        FileUtils.copyToFile(file.getInputStream(), savedFile);
 
         return filePath;
     }

@@ -174,7 +174,7 @@ public class FileService implements DisposableBean {
             filePath = generateFilePath(filenamePrefix, fileExtension, path);
         }
         try {
-            FileUtils.copyToFile(file.getResource().getInputStream(), filePath.toFile());
+            FileUtils.copyToFile(file.getInputStream(), filePath.toFile());
 
             return generateResponsePath(filePath, markdown);
         }
