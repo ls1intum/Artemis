@@ -99,7 +99,6 @@ describe('ManualTextblockSelectionComponent', () => {
         textBlockRef.block!.startIndex = 50;
         textBlockRef.block!.endIndex = 61;
         textBlockRef.block!.setTextFromSubmission(submission);
-        textBlockRef.block!.computeId();
         textBlockRef.initFeedback();
         expect(component.textBlockRefAdded.emit).toHaveBeenCalledWith(textBlockRef);
     });

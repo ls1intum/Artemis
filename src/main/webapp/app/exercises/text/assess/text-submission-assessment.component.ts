@@ -278,7 +278,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         newBlockRef.block!.startIndex = end;
                         newBlockRef.block!.endIndex = exEnd;
                         newBlockRef.block!.submission = this.submission;
-                        newBlockRef.block!.computeId();
 
                         existingBlockRef.block!.endIndex = start;
                         newTextBlockRefs.push(existingBlockRef);
