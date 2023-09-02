@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -60,25 +61,25 @@ public class AthenaResource {
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final FileService fileService;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseExportService programmingExerciseExportService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, FileService fileService) {
+            AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, FileService fileService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.fileService = fileService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -137,14 +138,14 @@ public class AthenaResource {
      * Export the repository for the given exercise and participation to a zip file.
      * The ZIP file will be deleted automatically after 15 minutes.
      *
-     * @param exerciseId      the id of the exercise to export the repository for
-     * @param participationId the id of the participation to export the repository for (only for student repository)
-     * @param repositoryType  the type of repository to export. Pass null to export the student repository.
+     * @param exerciseId     the id of the exercise to export the repository for
+     * @param submissionId   the id of the submission to export the repository for (only for student repository, otherwise pass null)
+     * @param repositoryType the type of repository to export. Pass null to export the student repository.
      * @return 200 Ok if successful with the corresponding result as body
      * @throws IOException if the export fails
      */
-    private ResponseEntity<Resource> exportRepository(long exerciseId, Long participationId, RepositoryType repositoryType) throws IOException {
-        log.debug("Exporting repository for exercise {}, participation {}", exerciseId, participationId);
+    private ResponseEntity<Resource> exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
+        log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkFeedbackSuggestionsEnabledElseThrow(programmingExercise);
@@ -163,13 +164,9 @@ public class AthenaResource {
         Path zipFile = null;
 
         if (repositoryType == null) { // Export student repository
-            var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, List.of(participationId));
-            if (participations.isEmpty()) {
-                log.error("Participation with id {} does not exist for exercise {}", participationId, exerciseId);
-                throw new ConflictException("Participation does not exist", "Participation", "participationDoesNotExist");
-            }
-            var participation = participations.get(0);
-            zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
+            var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
+            zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise,
+                    (ProgrammingExerciseStudentParticipation) submission.getParticipation(), exportOptions, exportDir, exportDir);
         }
         else {
             List<String> exportErrors = List.of();
@@ -189,17 +186,16 @@ public class AthenaResource {
     /**
      * GET athena/exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
-     * @param exerciseId      the id of the exercise the submission belongs to
-     * @param participationId the id of the participation to get the repository for
+     * @param exerciseId   the id of the exercise the submission belongs to
+     * @param submissionId the id of the submission to get the repository for
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("exercises/{exerciseId}/participations/{participationId}/repository")
+    @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
-    public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long participationId, @RequestHeader("Authorization") String auth)
-            throws IOException {
-        log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, participationId);
+    public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
+        log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
-        return exportRepository(exerciseId, participationId, null);
+        return exportRepository(exerciseId, submissionId, null);
     }
 
     /**
