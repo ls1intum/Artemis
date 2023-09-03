@@ -1,12 +1,11 @@
-import { Feedback } from 'app/entities/feedback.model';
 import { Observable, of } from 'rxjs';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 
 export class MockAthenaService {
-    getFeedbackSuggestionsForProgramming(exerciseId: number, submissionId: number): Observable<Feedback[]> {
+    getProgrammingFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<ProgrammingFeedbackSuggestion[]> {
         return of([]);
     }
-    getFeedbackSuggestionsForText(exerciseId: number, submissionId: number): Observable<TextBlockRef[]> {
+    getTextFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<TextFeedbackSuggestion[]> {
         return of([]);
     }
 }

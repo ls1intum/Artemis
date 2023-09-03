@@ -71,6 +71,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { ProgrammingFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -252,13 +253,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
         comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
-        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestionsForProgramming');
+        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
-                { text: 'unreferenced test', detailText: 'some detail', reference: undefined },
-                { text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
-                { text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
-            ]),
+                { title: 'unreferenced test', description: 'some detail' },
+                { title: 'referenced test', description: 'some detail', filePath: 'src/Test.java', lineStart: 1 },
+                { title: 'suggestion to pass', description: 'some detail', filePath: 'src/Test.java', lineStart: 2 },
+            ] as ProgrammingFeedbackSuggestion[]),
         );
         comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
         await comp['loadFeedbackSuggestions']();
