@@ -8,7 +8,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,9 +30,6 @@ public class AthenaSubmissionSendingService {
     private static final int SUBMISSIONS_PER_REQUEST = 100;
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSendingService.class);
-
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
 
     private final SubmissionRepository submissionRepository;
 
@@ -117,8 +113,7 @@ public class AthenaSubmissionSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise),
                     filteredSubmissions.stream().map((submission) -> athenaDTOConverter.ofSubmission(exercise.getId(), submission)).toList());
-            // TODO: make module selection dynamic (based on exercise)
-            ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/submissions", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

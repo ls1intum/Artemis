@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -28,9 +27,6 @@ import de.tum.in.www1.artemis.exception.NetworkingException;
 public class AthenaSubmissionSelectionService {
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
-
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
@@ -77,9 +73,8 @@ public class AthenaSubmissionSelectionService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), submissionIds);
-            // TODO: make module selection dynamic (based on exercise)
             // allow no retries because this should be fast and it's not too bad if it fails
-            ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/select_submission", request, 0);
+            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/select_submission", request, 0);
             log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();

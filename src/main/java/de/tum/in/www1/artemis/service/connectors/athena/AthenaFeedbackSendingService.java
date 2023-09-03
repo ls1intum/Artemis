@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -23,9 +22,6 @@ import de.tum.in.www1.artemis.exception.NetworkingException;
 public class AthenaFeedbackSendingService {
 
     private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);
-
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
@@ -85,8 +81,7 @@ public class AthenaFeedbackSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().map((feedback) -> athenaDTOConverter.ofFeedback(exercise.getId(), submission.getId(), feedback)).toList());
-            // TODO: make module selection dynamic (based on exercise)
-            ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedbacks", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {

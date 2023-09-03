@@ -64,8 +64,8 @@ public class AthenaFeedbackSuggestionsService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            // TODO: make module selection dynamic (based on exercise)
-            ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
+            ResponseDTOText response = textAthenaConnector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request,
+                    0);
             log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().toList();
         }
@@ -87,7 +87,6 @@ public class AthenaFeedbackSuggestionsService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            // TODO: make module selection dynamic (based on exercise)
             ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
             log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().toList();
