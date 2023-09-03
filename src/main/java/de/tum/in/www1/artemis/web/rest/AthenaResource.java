@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
@@ -144,6 +145,7 @@ public class AthenaResource {
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
+    @ManualConfig
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
@@ -158,6 +160,7 @@ public class AthenaResource {
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret instead
+    @ManualConfig
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
@@ -172,6 +175,7 @@ public class AthenaResource {
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/solution")
     @EnforceNothing // We check the Athena secret instead
+    @ManualConfig
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get solution repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
@@ -186,6 +190,7 @@ public class AthenaResource {
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/tests")
     @EnforceNothing // We check the Athena secret instead
+    @ManualConfig
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get test repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
