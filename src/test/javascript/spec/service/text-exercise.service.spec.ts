@@ -11,7 +11,6 @@ import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
-import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -170,28 +169,6 @@ describe('TextExercise Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(expectedReturnValue);
             expect(requestResult).toEqual(expectedReturnValue);
-        });
-
-        it('should retrieve TextExercise cluster statistics', () => {
-            service.getClusterStats(1).subscribe((resp) => (requestResult = resp));
-            const req = httpMock.expectOne({ method: 'GET' });
-            const returnedFromService: TextExerciseClusterStatistics[] = [
-                {
-                    clusterId: 1,
-                    clusterSize: 1,
-                    numberOfAutomaticFeedbacks: 3,
-                    disabled: true,
-                },
-            ];
-            req.flush(returnedFromService);
-            expect(requestResult).toEqual(returnedFromService);
-        });
-
-        it('should set TextExercise cluster disabled predicate', () => {
-            service.setClusterDisabledPredicate(1, 1, true).subscribe((resp) => (requestResult = resp));
-            const req = httpMock.expectOne({ method: 'PATCH' });
-            req.flush({});
-            expect(requestResult).toEqual({});
         });
     });
 

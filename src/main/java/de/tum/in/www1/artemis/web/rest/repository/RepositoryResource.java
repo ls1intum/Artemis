@@ -162,17 +162,17 @@ public abstract class RepositoryResource {
      * Create new file.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @param filename of the file to create.
+     * @param filePath of the file to create.
      * @param request  to retrieve input stream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
-        log.debug("REST request to create file {} for domainId : {}", filename, domainId);
+    public ResponseEntity<Void> createFile(Long domainId, String filePath, HttpServletRequest request) {
+        log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
-            repositoryService.createFile(repository, filename, inputStream);
+            repositoryService.createFile(repository, filePath, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -181,17 +181,17 @@ public abstract class RepositoryResource {
      * Create new folder.
      *
      * @param domainId   that serves as an abstract identifier for retrieving the repository.
-     * @param folderName of the folder to create.
+     * @param folderPath of the folder to create.
      * @param request    to retrieve inputStream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
-        log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
+    public ResponseEntity<Void> createFolder(Long domainId, String folderPath, HttpServletRequest request) {
+        log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
-            repositoryService.createFolder(repository, folderName, inputStream);
+            repositoryService.createFolder(repository, folderPath, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }

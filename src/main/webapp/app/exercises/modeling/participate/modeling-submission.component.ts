@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
@@ -15,10 +14,8 @@ import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/enti
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
@@ -103,13 +100,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
-        private apollonDiagramService: ApollonDiagramService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private resultService: ResultService,
         private alertService: AlertService,
         private route: ActivatedRoute,
-        private modalService: NgbModal,
         private translateService: TranslateService,
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
@@ -477,7 +471,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Retrieves names for displaying the assessment and calculates the total score
      */
     private initializeAssessmentInfo(): void {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && this.umlModel) {
+        if (this.assessmentResult?.feedbacks && this.umlModel) {
             this.assessmentsNames = getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
