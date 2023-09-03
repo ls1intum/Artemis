@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +24,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.AthenaRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -38,7 +40,6 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
@@ -54,9 +55,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private ComplaintRepository complaintRepo;
-
-    @Autowired
-    private TextClusterRepository textClusterRepository;
 
     @Autowired
     private TextBlockRepository textBlockRepository;
@@ -89,12 +87,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ExamRepository examRepository;
 
     @Autowired
-    private AutomaticTextFeedbackService automaticTextFeedbackService;
-
-    @Autowired
-    private FeedbackRepository feedbackRepository;
-
-    @Autowired
     private TextAssessmentService textAssessmentService;
 
     @Autowired
@@ -119,6 +111,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private Course course;
 
+    @Autowired
+    protected AthenaRequestMockProvider athenaRequestMockProvider;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
@@ -126,6 +121,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
+        // every test indirectly uses the submission selection in Athena, so we mock it here
+        athenaRequestMockProvider.enableMockingOfRequests();
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(0); // always select the first submission
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        athenaRequestMockProvider.reset();
     }
 
     @Test
@@ -136,70 +139,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testPrepareSubmissionForAssessmentAutomaticLabel() {
-        // create two text blocks
-        int submissionCount = 2;
-        int submissionSize = 1;
-        int numberOfBlocksTotally = submissionCount * submissionSize;
-        var textBlocks = TextExerciseFactory.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-
-        // Create Exercise to save blocks & submissions
-        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        textExercise.setMaxPoints(1000D);
-        exerciseRepository.save(textExercise);
-
-        // Create a cluster and set minimal distance to < Threshold = 1
-        int[] clusterSizes = { 2 };
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
-        // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
-        for (double[] row : minimalDistanceMatrix) {
-            Arrays.fill(row, 0.1);
-        }
-        clusters.get(0).blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
-        textClusterRepository.saveAll(clusters);
-
-        // save textBLocks
-        textBlockRepository.saveAll(textBlocks);
-
-        var listOfSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
-        TextSubmission firstSubmission = listOfSubmissions.get(0);
-        TextSubmission secondSubmission = listOfSubmissions.get(1);
-
-        // Create and set a sample result for submissions
-        Result firstResult = createSampleResultForSubmission(firstSubmission);
-        Result secondResult = createSampleResultForSubmission(secondSubmission);
-
-        // Create a manual feedback and attach first block to it as reference
-        Feedback feedback = new Feedback().credits(10.0).type(FeedbackType.MANUAL).detailText("gj");
-        feedback.setReference(textBlocks.iterator().next().getId());
-
-        // Set feedback to result
-        firstResult.addFeedback(feedback);
-        resultRepo.save(firstResult);
-        feedback.setResult(firstResult);
-        feedbackRepository.save(feedback);
-
-        automaticTextFeedbackService.suggestFeedback(secondResult);
-
-        assertThat(secondResult).as("saved result found").isNotNull();
-        assertThat(secondResult.getFeedbacks().get(0).getReference()).isEqualTo(textBlocks.stream().toList().get(1).getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackOriginSubmissionReference()).isEqualTo(firstSubmission.getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackParticipationReference()).isEqualTo(firstSubmission.getParticipation().getId());
-        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackReference()).isEqualTo(feedback.getReference());
-    }
-
-    private Result createSampleResultForSubmission(Submission submission) {
-        Result result = new Result();
-        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        result.setCompletionDate(now());
-        result.setSubmission(submission);
-        submission.setResults(Collections.singletonList(result));
-        return result;
     }
 
     @Test
@@ -247,7 +186,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.delete("/api/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
                 HttpStatus.NO_CONTENT);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
-        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
+        assertThat(textBlockRepository.findAllBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -261,7 +200,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         long randomId = 4532;
         request.delete("/api/exercises/" + randomId + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
-        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
+        assertThat(textBlockRepository.findAllBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -398,14 +337,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void saveTextAssessment_wrongParticipationId() throws Exception {
-
         TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
 
         long randomId = 1343;
-
         Result result = request.putWithResponseBody("/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/text-assessment",
                 textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
@@ -414,7 +351,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitTextAssessment_studentHidden() throws Exception {
-
         TextSubmission submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
@@ -445,12 +381,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
-        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
         var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-        textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
         var participations = textExercise.getStudentParticipations().iterator();
 
@@ -590,7 +523,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);
-        assertThat(participation.getExercise().getExerciseGroup().getExam()).as("The exam object should not be send to students").isNull();
+        exam = participation.getExercise().getExerciseGroup().getExam();
+        assertThat(exam).isNotNull(); // The client needs the exam object to check if results are published yet
+        assertThat(exam.isTestExam()).isTrue();
+        assertThat(exam.getExerciseGroups()).isNullOrEmpty();
+        assertThat(exam.getCourse()).isNull();
     }
 
     @Test
@@ -1015,7 +952,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAtheneEnabled() throws Exception {
+    void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
@@ -1047,34 +984,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTextSubmissionWithoutAssessmentAndRetrieveParticipationForSubmissionReturnSameBlocksAndFeedback() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
-
-        request.put("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/cancel-assessment", null,
-                HttpStatus.OK);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-        Participation participation = request.get("/api/text-submissions/" + textSubmissions.get(0).getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
-        final TextSubmission submissionFromParticipation = (TextSubmission) participation.getSubmissions().toArray()[0];
-        final Result resultFromParticipation = (Result) participation.getResults().toArray()[0];
-
-        assertThat(textSubmissionWithoutAssessment.getId()).isEqualTo(submissionFromParticipation.getId());
-        assertThat(Arrays.equals(textSubmissionWithoutAssessment.getBlocks().toArray(), submissionFromParticipation.getBlocks().toArray())).isTrue();
-        final Feedback feedbackFromSubmissionWithoutAssessment = textSubmissionWithoutAssessment.getLatestResult().getFeedbacks().get(0);
-        final Feedback feedbackFromParticipation = resultFromParticipation.getFeedbacks().get(0);
-        assertThat(feedbackFromSubmissionWithoutAssessment.getCredits()).isEqualTo(feedbackFromParticipation.getCredits());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getDetailText()).isEqualTo(feedbackFromParticipation.getDetailText());
-        assertThat(feedbackFromSubmissionWithoutAssessment.getType()).isEqualTo(feedbackFromParticipation.getType());
-    }
-
     @NotNull
     private List<TextSubmission> prepareTextSubmissionsWithFeedbackForAutomaticFeedback() {
         TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
@@ -1083,20 +992,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student2");
         exerciseDueDatePassed();
 
-        final TextCluster cluster = new TextCluster().exercise(textExercise);
-        textClusterRepository.save(cluster);
+        final Set<TextBlock> textBlocksSubmission1 = Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
+                new TextBlock().startIndex(36).endIndex(57).automatic());
+        final TextBlock textBlockSubmission2 = new TextBlock().startIndex(0).endIndex(27).automatic();
+        for (TextBlock textBlock : textBlocksSubmission1) {
+            textBlock.computeId();
+        }
+        textBlockSubmission2.computeId();
 
-        final TextBlock textBlockSubmission1 = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
-        final TextBlock textBlockSubmission2 = new TextBlock().startIndex(0).endIndex(27).automatic().cluster(cluster);
-
-        cluster.blocks(asList(textBlockSubmission1, textBlockSubmission2)).distanceMatrix(new double[][] { { 0.1, 0.1 }, { 0.1, 0.1 } });
-
-        textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(
-                Set.of(textBlockSubmission1, new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission1);
-
+        textSubmission1 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocksSubmission1, textSubmission1);
         textSubmission2 = textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
-
-        textClusterRepository.save(cluster);
 
         final Feedback feedback = new Feedback().detailText("Foo Bar.").credits(2d).reference(textBlockSubmission2.getId());
         textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
@@ -1106,43 +1011,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).orElseThrow();
         textSubmission2 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission2.getId()).orElseThrow();
         return asList(textSubmission1, textSubmission2);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkTextBlockSavePreservesClusteringInformation() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
-
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
-
-        assertThat(textSubmissionWithoutAssessment.getBlocks()).isNotEmpty()
-                .allSatisfy(block -> assertThat(block).isEqualToIgnoringGivenFields(blocksSubmission1.get(block.getId()), "positionInCluster", "submission", "cluster"));
-
-        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())).isNotEmpty()
-                .allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
-
-        final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
-            var newBlock = new TextBlock();
-            newBlock.setText(oldBlock.getText());
-            newBlock.setStartIndex(oldBlock.getStartIndex());
-            newBlock.setEndIndex(oldBlock.getEndIndex());
-            newBlock.setId(oldBlock.getId());
-            return newBlock;
-        }).collect(Collectors.toSet());
-
-        final TextAssessmentDTO dto = new TextAssessmentDTO();
-        dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
-        dto.setFeedbacks(new ArrayList<>());
-
-        request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
-
-        Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1198,6 +1066,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
+        // Athena requests are ok
         TextSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         // verify that no new submission was created
@@ -1372,7 +1241,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
@@ -1395,9 +1263,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
-
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
-        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
+        final Map<String, TextBlock> blocksSubmission = textSubmissions.stream().flatMap(submission -> submission.getBlocks().stream())
+                .collect(Collectors.toMap(TextBlock::getId, block -> block));
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
@@ -1444,7 +1312,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // however the intergration tests use H2 in-memory database so same code did not produce the same error.
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
-        Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
-        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
+        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
     }
 }

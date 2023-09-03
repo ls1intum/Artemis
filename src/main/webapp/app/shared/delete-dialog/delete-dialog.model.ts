@@ -11,7 +11,6 @@ export enum ActionType {
     Cleanup = 'cleanup',
     Remove = 'remove',
     Unlink = 'unlink',
-    RequestDataExport = 'requestDataExport',
     NoButtonTextDelete = 'noButtonTextDelete',
     EndNow = 'endNow',
 }
@@ -29,6 +28,9 @@ export class DeleteDialogData {
 
     // i18n key, that will be translated
     deleteQuestion: string;
+
+    // parameters used for the delete question
+    translateValues: { [key: string]: unknown };
 
     // i18n key, if undefined no safety check will take place (input name of the entity)
     deleteConfirmationText?: string;
