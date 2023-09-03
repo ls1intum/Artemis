@@ -9,7 +9,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { Text } from '@palsch/apollon/lib/es5/utils/svg/text';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { addDelay } from '../../../helpers/utils/general.utils';
@@ -25,7 +25,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SpyLocation } from '@angular/common/testing';
-import { ApollonEditor, ApollonMode, Locale } from '@palsch/apollon';
+import { ApollonEditor, ApollonMode, Locale } from '@ls1intum/apollon';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
