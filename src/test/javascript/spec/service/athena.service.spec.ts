@@ -43,7 +43,7 @@ describe('AthenaService', () => {
             response = suggestions;
         });
 
-        const requestWrapper = httpTestingController.expectOne({ url: 'api/public/athena/text-exercises/1/submissions/2/feedback-suggestions' });
+        const requestWrapper = httpTestingController.expectOne({ url: 'api/athena/text-exercises/1/submissions/2/feedback-suggestions' });
         requestWrapper.flush(feedbackSuggestions);
 
         tick();
