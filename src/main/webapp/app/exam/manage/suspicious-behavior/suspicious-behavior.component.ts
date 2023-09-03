@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
-import { SuspiciousExamSessions } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
@@ -24,8 +24,9 @@ export class SuspiciousBehaviorComponent implements OnInit {
     checkboxCriterionSameStudentExamDifferentIPAddressesChecked = false;
     checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked = false;
     checkboxCriterionIPOutsideOfASpecificRangeChecked = false;
-    lowerBoundIP: string;
-    upperBoundIP: string;
+    lowerBoundIP?: string;
+    upperBoundIP?: string;
+    analyzing = false;
 
     constructor(
         private suspiciousSessionsService: SuspiciousSessionsService,
@@ -59,14 +60,16 @@ export class SuspiciousBehaviorComponent implements OnInit {
             });
         });
     };
+
     get analyzeButtonEnabled(): boolean {
         return (
-            this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked ||
-            this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked ||
-            this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked ||
-            this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked ||
-            !this.checkboxCriterionIPOutsideOfASpecificRangeChecked ||
-            (this.lowerBoundIP?.trim().length != 0 && this.upperBoundIP?.trim().length != 0)
+            (this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked ||
+                this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked ||
+                this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked ||
+                this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked ||
+                this.checkboxCriterionIPOutsideOfASpecificRangeChecked) &&
+            (!this.checkboxCriterionIPOutsideOfASpecificRangeChecked ||
+                (this.checkboxCriterionIPOutsideOfASpecificRangeChecked && !!this.lowerBoundIP?.trim().length && !!this.upperBoundIP?.trim().length))
         );
     }
 
@@ -76,5 +79,27 @@ export class SuspiciousBehaviorComponent implements OnInit {
         });
     }
 
-    updateButtonState() {}
+    updateAnalyzeButtonState() {}
+
+    analyzeSessions() {
+        const options = new SuspiciousSessionsAnalysisOptions(
+            this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked,
+            this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked,
+            this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked,
+            this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked,
+            this.checkboxCriterionIPOutsideOfASpecificRangeChecked,
+            this.lowerBoundIP,
+            this.upperBoundIP,
+        );
+        this.analyzing = true;
+        this.suspiciousSessionsService.getSuspiciousSessions(this.courseId, this.examId, options).subscribe({
+            next: (suspiciousSessions) => {
+                this.suspiciousSessions = suspiciousSessions;
+                this.analyzing = false;
+            },
+            error: () => {
+                this.analyzing = false;
+            },
+        });
+    }
 }

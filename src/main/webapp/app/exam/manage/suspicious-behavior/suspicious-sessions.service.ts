@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SuspiciousExamSessions } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam-session.model';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -9,7 +9,23 @@ import { Observable } from 'rxjs';
 export class SuspiciousSessionsService {
     constructor(private http: HttpClient) {}
 
-    getSuspiciousSessions(courseId: number, examId: number): Observable<SuspiciousExamSessions[]> {
-        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`);
+    getSuspiciousSessions(courseId: number, examId: number, options: SuspiciousSessionsAnalysisOptions): Observable<SuspiciousExamSessions[]> {
+        let params = new HttpParams()
+            .set('differentStudentExamsSameIPAddress', options.differentStudentExamsSameIPAddress.toString())
+            .set('differentStudentExamsSameBrowserFingerprint', options.differentStudentExamsSameBrowserFingerprint.toString())
+            .set('sameStudentExamDifferentIPAddresses', options.sameStudentExamDifferentIPAddresses.toString())
+            .set('sameStudentExamDifferentBrowserFingerprints', options.sameStudentExamDifferentBrowserFingerprints.toString())
+            .set('ipOutsideOfRange', options.ipOutsideOfRange.toString());
+
+        // If lowerBoundIP is provided, add it to the params
+        if (options.lowerBoundIP) {
+            params = params.set('lowerBoundIP', options.lowerBoundIP);
+        }
+
+        // If upperBoundIP is provided, add it to the params
+        if (options.upperBoundIP) {
+            params = params.set('upperBoundIP', options.upperBoundIP);
+        }
+        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
     }
 }

@@ -12,8 +12,13 @@ export class SuspiciousSessionsComponent implements OnInit {
     suspiciousFingerprint = false;
     suspiciousIpAddress = false;
     ngOnInit(): void {
-        this.suspiciousFingerprint = this.isSuspiciousFor(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
-        this.suspiciousIpAddress = this.isSuspiciousFor(SuspiciousSessionReason.SAME_IP_ADDRESS);
+        this.suspiciousFingerprint =
+            this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT) ||
+            this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+        this.suspiciousIpAddress =
+            this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS) ||
+            this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES) ||
+            this.isSuspiciousFor(SuspiciousSessionReason.IP_OUTSIDE_OF_RANGE);
     }
 
     getStudentExamLink(studentExam: StudentExam) {

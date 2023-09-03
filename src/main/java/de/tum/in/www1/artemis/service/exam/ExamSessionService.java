@@ -14,7 +14,10 @@ import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import inet.ipaddr.AddressStringException;
 import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressSeqRange;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Service Implementation for managing ExamSession.
@@ -91,6 +94,7 @@ public class ExamSessionService {
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
         Set<StudentExam> studentExams = new HashSet<>();
+        boolean studentExamsFetched = false;
         if (analysisOptions.sameIpAddress() && analysisOptions.sameBrowserFingerprint()) {
             // first step find all sessions that have matching browser fingerprint and ip address
             findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
@@ -109,29 +113,89 @@ public class ExamSessionService {
 
         if (analysisOptions.differentIpAddress() && analysisOptions.differentBrowserFingerprint()) {
             studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+            studentExamsFetched = true;
             // fourth step find all sessions that belong to the same student exam but have different browser fingerprints and ip addresses
-            // analyzeSessionOfStudentExamsForGivenCriteria(studentExams, );
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, true, true, suspiciousExamSessions);
         }
         if (analysisOptions.differentBrowserFingerprint()) {
-            // findSuspiciousSessionsForGivenCriteria();
+            if (!studentExamsFetched) {
+                studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+                studentExamsFetched = true;
+            }
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, false, true, suspiciousExamSessions);
         }
         if (analysisOptions.differentIpAddress()) {
-            // sixth step find all sessions that belong to the same student exam but have different IP addresses
-            // findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithDifferentIpAddressByExamIdAndExamSession,
-            // suspiciousExamSessions);
+            if (!studentExamsFetched) {
+                studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+            }
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, true, false, suspiciousExamSessions);
         }
         if (analysisOptions.ipAddressOutsideOfRange()) {
             // seventh step find all sessions that have ip address outside of range
-            findSessionsWithIPAddressOutsideOfRange(examSessions, lowerBound, upperBound, suspiciousExamSessions);
+            examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+            try {
+                findSessionsWithIPAddressOutsideOfRange(examSessions, lowerBound, upperBound, suspiciousExamSessions);
+            }
+            catch (AddressStringException | NullPointerException e) {
+                log.warn("Cannot analyze if IP address is outside of range because an exception was thrown while parsing any of the IP addresses: {}", e.getMessage());
+            }
         }
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
 
-    private void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipAddressLowerBound, String ipAddressUpperBound,
+    private static void analyzeSessionOfStudentExamsForGivenCriteria(Set<StudentExam> studentExams, boolean analyzeDifferentIp, boolean analyzeDifferentFingerprint,
             Set<SuspiciousExamSessions> suspiciousExamSessions) {
-        for (var examSession : examSessions) {
-            // TODO https://www.baeldung.com/java-check-ip-address-range
+        for (var studentExam : studentExams) {
+            var relatedSuspiciousExamSessions = new HashSet<ExamSession>();
+            Set<ExamSession> examSessions = studentExam.getExamSessions();
+            examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+            for (var examSession : examSessions) {
+                for (var examSession2 : examSessions) {
+                    if (Objects.equals(examSession.getId(), examSession2.getId())) {
+                        continue;
+                    }
+                    if (analyzeDifferentIp && !Objects.equals(examSession.getIpAddress(), examSession2.getIpAddress())) {
+                        examSession.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES);
+                        examSession2.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES);
+                        relatedSuspiciousExamSessions.add(examSession);
+                        relatedSuspiciousExamSessions.add(examSession2);
+
+                    }
+                    if (analyzeDifferentFingerprint && !Objects.equals(examSession.getBrowserFingerprintHash(), examSession2.getBrowserFingerprintHash())) {
+                        examSession.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+                        examSession2.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+                        relatedSuspiciousExamSessions.add(examSession);
+                        relatedSuspiciousExamSessions.add(examSession2);
+                    }
+                }
+            }
+            if (!relatedSuspiciousExamSessions.isEmpty() && !isSubsetOfFoundSuspiciousSessions(relatedSuspiciousExamSessions, suspiciousExamSessions)) {
+                suspiciousExamSessions.add(new SuspiciousExamSessions(relatedSuspiciousExamSessions));
+            }
         }
+    }
+
+    private static void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipAddressLowerBound, String ipAddressUpperBound,
+            Set<SuspiciousExamSessions> suspiciousExamSessions) throws AddressStringException {
+        var examSessionsWithIPAddressOutsideOfRange = new HashSet<ExamSession>();
+        for (var examSession : examSessions) {
+            if (!checkIPIsInGivenRange(examSession.getIpAddress(), ipAddressLowerBound, ipAddressUpperBound)) {
+                examSession.addSuspiciousReason(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
+                examSessionsWithIPAddressOutsideOfRange.add(examSession);
+            }
+        }
+        if (!examSessionsWithIPAddressOutsideOfRange.isEmpty()) {
+            suspiciousExamSessions.add(new SuspiciousExamSessions(examSessionsWithIPAddressOutsideOfRange));
+        }
+    }
+
+    private static boolean checkIPIsInGivenRange(String inputIP, String rangeStartIP, String rangeEndIP) throws AddressStringException {
+        IPAddress startIPAddress = new IPAddressString(rangeStartIP).getAddress();
+        IPAddress endIPAddress = new IPAddressString(rangeEndIP).getAddress();
+        IPAddressSeqRange ipRange = startIPAddress.spanWithRange(endIPAddress);
+        IPAddress inputIPAddress = new IPAddressString(inputIP).toAddress();
+
+        return ipRange.contains(inputIPAddress);
     }
 
     /**
@@ -142,9 +206,8 @@ public class ExamSessionService {
      * @param criteriaFilter         function that returns a set of exam sessions that match the given criteria
      * @param suspiciousExamSessions set of suspicious exam sessions to which the found suspicious exam sessions shall be added
      */
-    private void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, long examId, BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter,
+    private static void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, long examId, BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter,
             Set<SuspiciousExamSessions> suspiciousExamSessions) {
-
         for (var examSession : examSessions) {
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
             relatedExamSessions = filterEqualRelatedExamSessionsOfSameStudentExam(relatedExamSessions);
@@ -167,7 +230,7 @@ public class ExamSessionService {
      * @param suspiciousExamSessions a set of suspicious exam sessions that have already been found
      * @return true if the given set of exam sessions is a subset of suspicious exam sessions that have already been found, otherwise false.
      */
-    private boolean isSubsetOfFoundSuspiciousSessions(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private static boolean isSubsetOfFoundSuspiciousSessions(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
         for (var suspiciousExamSession : suspiciousExamSessions) {
             if (suspiciousExamSession.examSessions().containsAll(relatedExamSessions)) {
                 return true;
@@ -184,7 +247,7 @@ public class ExamSessionService {
      * @param examSessions exam sessions to filter
      * @return filtered exam sessions
      */
-    private Set<ExamSession> filterEqualExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
+    private static Set<ExamSession> filterEqualExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
         Set<ExamSession> filteredSessions = new HashSet<>();
         Set<String> processedSessionKeys = new HashSet<>();
 
@@ -207,7 +270,7 @@ public class ExamSessionService {
      * @param examSessions exam sessions to filter
      * @return filtered exam sessions
      */
-    private Set<ExamSession> filterEqualRelatedExamSessionsOfSameStudentExam(Set<ExamSession> examSessions) {
+    private static Set<ExamSession> filterEqualRelatedExamSessionsOfSameStudentExam(Set<ExamSession> examSessions) {
         Set<ExamSession> filteredSessions = new HashSet<>();
         Set<Long> processedSessionsStudentExamIds = new HashSet<>();
 
@@ -224,7 +287,7 @@ public class ExamSessionService {
         return filteredSessions;
     }
 
-    private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private static Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
         Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
         for (var suspiciousExamSession : suspiciousExamSessions) {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
@@ -248,18 +311,18 @@ public class ExamSessionService {
      * @param session             exam session we compare with
      * @param relatedExamSessions related exam sessions
      */
-    private ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+    private static ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
         session.setSuspiciousReasons(new HashSet<>());
 
         for (var relatedExamSession : relatedExamSessions) {
             relatedExamSession.setSuspiciousReasons(new HashSet<>());
             if (relatedExamSession.hasSameBrowserFingerprint(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
-                session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
+                session.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
             }
             if (relatedExamSession.hasSameIpAddress(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
-                session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
+                session.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
             }
 
         }

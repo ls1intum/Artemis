@@ -13,23 +13,19 @@
             <span *ngIf="i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1">,</span>
         </ng-container>
     </p>
-    <div class="container" style="overflow-x: auto">
-        <div class="row">
-            <div class="col-md-12">
-                <table class="table table-responsive">
-                    <thead>
-                        <tr>
-                            <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.examSession.userLogin' | artemisTranslate }}</th>
-                        </tr>
-                    </thead>
-                    <tbody jhi-suspicious-sessions [suspiciousSessions]="suspiciousSessionsSet"></tbody>
-                </table>
-            </div>
-        </div>
+    <div style="overflow-x: auto" class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.examSession.userLogin' | artemisTranslate }}</th>
+                </tr>
+            </thead>
+            <tbody jhi-suspicious-sessions [suspiciousSessions]="suspiciousSessionsSet"></tbody>
+        </table>
     </div>
 </ng-container>

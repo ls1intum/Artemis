@@ -3404,7 +3404,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
         examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
         ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
-        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_IP_ADDRESS);
+        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT,
+                SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
         firstExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
         secondExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
         Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions",

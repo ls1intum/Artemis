@@ -4,11 +4,11 @@ package de.tum.in.www1.artemis.domain.exam;
  * Options for the analysis of suspicious sessions.
  * The options define which criteria are used to determine whether a session is suspicious.
  *
- * @param sameBrowserFingerprint      whether sessions with the same browser fingerprint are considered suspicious
- * @param sameIpAddress               whether sessions with the same IP address are considered suspicious
- * @param differentBrowserFingerprint whether sessions with different browser fingerprints are considered suspicious
- * @param differentIpAddress          whether sessions with different IP addresses are considered suspicious
- * @param ipAddressOutsideOfRange     whether sessions with an IP address outside a specific range are considered suspicious
+ * @param sameBrowserFingerprint      whether sessions should be analyzed for the same browser fingerprint but different student exams
+ * @param sameIpAddress               whether sessions should be analyzed for the same IP address but different student exams
+ * @param differentBrowserFingerprint whether sessions should be analyzed for different browser fingerprints but the same student exam
+ * @param differentIpAddress          whether sessions should be analyzed for different IP addresses but the same student exam
+ * @param ipAddressOutsideOfRange     whether sessions should be analyzed for IP addresses outside the specified IP range
  */
 public record SuspiciousSessionsAnalysisOptions(boolean sameBrowserFingerprint, boolean sameIpAddress, boolean differentBrowserFingerprint, boolean differentIpAddress,
         boolean ipAddressOutsideOfRange) {

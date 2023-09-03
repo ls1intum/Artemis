@@ -3,8 +3,12 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from './student-exam.model';
 
 export enum SuspiciousSessionReason {
-    SAME_IP_ADDRESS = 'SAME_IP_ADDRESS',
-    SAME_BROWSER_FINGERPRINT = 'SAME_BROWSER_FINGERPRINT',
+    DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS = 'DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS',
+    DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT = 'DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT',
+
+    SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES = 'SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES',
+    SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS = 'SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS',
+    IP_OUTSIDE_OF_RANGE = 'IP_OUTSIDE_OF_RANGE',
 }
 export class ExamSession implements BaseEntity {
     public id?: number;
@@ -24,4 +28,30 @@ export class ExamSession implements BaseEntity {
 
 export class SuspiciousExamSessions {
     examSessions: ExamSession[] = [];
+}
+export class SuspiciousSessionsAnalysisOptions {
+    constructor(
+        diffStudentExamsSameIPAddress: boolean,
+        diffStudentExamsSameBrowserFingerprint: boolean,
+        sameStudentExamDifferentIPAddresses: boolean,
+        sameStudentExamDifferentBrowserFingerprints: boolean,
+        ipOutsideOfASpecificRange: boolean,
+        lowerBoundIP?: string,
+        upperBoundIP?: string,
+    ) {
+        this.differentStudentExamsSameIPAddress = diffStudentExamsSameIPAddress;
+        this.differentStudentExamsSameBrowserFingerprint = diffStudentExamsSameBrowserFingerprint;
+        this.sameStudentExamDifferentIPAddresses = sameStudentExamDifferentIPAddresses;
+        this.sameStudentExamDifferentBrowserFingerprints = sameStudentExamDifferentBrowserFingerprints;
+        this.ipOutsideOfRange = ipOutsideOfASpecificRange;
+        this.lowerBoundIP = lowerBoundIP;
+        this.upperBoundIP = upperBoundIP;
+    }
+    differentStudentExamsSameIPAddress = false;
+    differentStudentExamsSameBrowserFingerprint = false;
+    sameStudentExamDifferentIPAddresses = false;
+    sameStudentExamDifferentBrowserFingerprints = false;
+    ipOutsideOfRange = false;
+    lowerBoundIP?: string;
+    upperBoundIP?: string;
 }
