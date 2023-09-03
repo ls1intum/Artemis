@@ -23,6 +23,6 @@ public record ProgrammingSubmissionDTO(long id, long exerciseId, String reposito
      */
     public static ProgrammingSubmissionDTO of(long exerciseId, @NotNull ProgrammingSubmission submission) {
         return new ProgrammingSubmissionDTO(submission.getId(), exerciseId,
-                artemisServerUrl + "/api/athena/exercises/" + exerciseId + "/submissions/" + submission.getId() + "/repository");
+                artemisServerUrl + "/api/athena/programming-exercises/" + exerciseId + "/submissions/" + submission.getId() + "/repository");
     }
 }

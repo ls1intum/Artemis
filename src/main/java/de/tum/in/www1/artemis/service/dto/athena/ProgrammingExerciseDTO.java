@@ -20,9 +20,10 @@ public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, do
      */
     public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(), artemisServerUrl + "/api/athena/exercises/" + exercise.getId() + "/repository/solution",
-                artemisServerUrl + "/api/athena/exercises/" + exercise.getId() + "/repository/template",
-                artemisServerUrl + "/api/athena/exercises/" + exercise.getId() + "/repository/tests");
+                exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
+                artemisServerUrl + "/api/athena/programming-exercises/" + exercise.getId() + "/repository/solution",
+                artemisServerUrl + "/api/athena/programming-exercises/" + exercise.getId() + "/repository/template",
+                artemisServerUrl + "/api/athena/programming-exercises/" + exercise.getId() + "/repository/tests");
     }
 
     /**

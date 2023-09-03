@@ -23,6 +23,17 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
+    /**
+     * Load programming submission only
+     *
+     * @param submissionId the submissionId
+     * @return programming submission
+     */
+    @NotNull
+    default ProgrammingSubmission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(Long participationId, String commitHash);
 
