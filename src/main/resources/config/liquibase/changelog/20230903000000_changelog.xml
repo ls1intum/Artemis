@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="pal03377" id="20230903000000-1">
+        <!-- Add the feedback_suggestions_enabled column to the exercise table -->
+        <addColumn tableName="exercise">
+            <column name="feedback_suggestions_enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="pal03377" id="20230903000000-2">
+        <!-- Update the feedback_suggestions_enabled column to true for rows with assessment_type="SEMI_AUTOMATIC" -->
+        <update tableName="exercise">
+            <column name="feedback_suggestions_enabled" valueBoolean="true"/>
+            <where>discriminator='T' AND assessment_type='SEMI_AUTOMATIC'</where> <!-- semi-automatic text exercises -->
+        </update>
+    </changeSet>
+</databaseChangeLog>

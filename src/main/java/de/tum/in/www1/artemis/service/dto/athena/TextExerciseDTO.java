@@ -7,14 +7,14 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 /**
  * A DTO representing a TextExercise, for transferring data to Athena
  */
-public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement) {
+public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement, String exampleSolution) {
 
     /**
      * Create a new TextExerciseDTO from a TextExercise
      */
     public static TextExerciseDTO of(@NotNull TextExercise exercise) {
         return new TextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getProblemStatement());
+                exercise.getProblemStatement(), exercise.getExampleSolution());
     }
 
     /**

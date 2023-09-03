@@ -38,6 +38,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Subscription } from 'rxjs';
+import { TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -326,10 +327,21 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         this.feedbackSuggestionsObservable = this.athenaService
-            .getFeedbackSuggestionsForText(this.exercise!.id!, this.submission!.id!)
-            .subscribe((feedbackSuggestions: TextBlockRef[]) => {
+            .getTextFeedbackSuggestions(this.exercise!, this.submission!.id!)
+            .subscribe((feedbackSuggestions: TextFeedbackSuggestion[]) => {
                 for (const suggestion of feedbackSuggestions) {
-                    this.addAutomaticTextBlockRef(suggestion);
+                    const textBlock = new TextBlock();
+                    textBlock.startIndex = suggestion.indexStart;
+                    textBlock.endIndex = suggestion.indexEnd;
+                    textBlock.setTextFromSubmission(this.submission);
+                    const feedback = new Feedback();
+                    feedback.credits = suggestion.credits;
+                    feedback.text = suggestion.title;
+                    feedback.detailText = suggestion.description;
+                    feedback.gradingInstruction = suggestion.gradingInstruction;
+                    feedback.reference = textBlock.id;
+                    feedback.type = FeedbackType.AUTOMATIC;
+                    this.addAutomaticTextBlockRef(new TextBlockRef(textBlock, feedback));
                 }
                 this.validateFeedback();
             });

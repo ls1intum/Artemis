@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,17 +34,12 @@ public class TextExercise extends Exercise {
         this.exampleSolution = exampleSolution;
     }
 
-    @JsonIgnore
-    public boolean isFeedbackSuggestionsEnabled() {
-        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
-    }
-
     /**
      * Disable feedback suggestions for this exercise by setting the assessment type to MANUAL.
      * Only changes the assessment type if feedback suggestions are currently enabled.
      */
     public void disableFeedbackSuggestions() {
-        if (isFeedbackSuggestionsEnabled()) {
+        if (this.getFeedbackSuggestionsEnabled()) {
             setAssessmentType(AssessmentType.MANUAL);
         }
     }

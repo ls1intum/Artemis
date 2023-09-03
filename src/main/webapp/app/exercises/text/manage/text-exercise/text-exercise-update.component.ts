@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
@@ -23,6 +23,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { AthenaService } from 'app/assessment/athena.service';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -39,6 +41,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     goBackAfterSaving = false;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
+    isAthenaEnabled$: Observable<boolean> | undefined;
 
     textExercise: TextExercise;
     backupExercise: TextExercise;
@@ -65,8 +68,8 @@ export class TextExerciseUpdateComponent implements OnInit {
         private courseService: CourseManagementService,
         private eventManager: EventManager,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private athenaService: AthenaService,
     ) {}
 
     get editType(): EditType {
@@ -149,6 +152,8 @@ export class TextExerciseUpdateComponent implements OnInit {
                 this.goBackAfterSaving = true;
             }
         });
+
+        this.isAthenaEnabled$ = this.athenaService.isEnabled();
 
         this.isSaving = false;
         this.notificationText = undefined;

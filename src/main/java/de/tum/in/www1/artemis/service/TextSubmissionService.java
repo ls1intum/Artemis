@@ -129,7 +129,7 @@ public class TextSubmissionService extends SubmissionService {
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
         // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
-        if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+        if (textExercise.getFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var assessableSubmissions = getAssessableSubmissions(textExercise, examMode, correctionRound);
             var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {

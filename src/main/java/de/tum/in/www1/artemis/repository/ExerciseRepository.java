@@ -353,4 +353,22 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                   OR students.id = :userId
              """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(long userId);
+
+    /**
+     * Finds all exercises filtered by feedback suggestions and due date.
+     *
+     * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
+     * @param dueDate                    - filter by due date
+     * @return List of Exercises
+     */
+    List<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+
+    /**
+     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     *
+     * @return List of Exercises
+     */
+    default List<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
+        return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+    }
 }

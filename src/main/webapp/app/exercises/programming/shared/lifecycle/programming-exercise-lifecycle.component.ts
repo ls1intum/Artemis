@@ -6,6 +6,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Observable } from 'rxjs';
+import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -25,9 +27,12 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
 
+    isAthenaEnabled$: Observable<boolean> | undefined;
+
     constructor(
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
+        private athenaService: AthenaService,
     ) {}
 
     /**
@@ -37,6 +42,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
+        this.isAthenaEnabled$ = this.athenaService.isEnabled();
     }
 
     ngOnChanges(simpleChanges: SimpleChanges) {
@@ -71,6 +77,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
+            this.exercise.feedbackSuggestionsEnabled = false;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
