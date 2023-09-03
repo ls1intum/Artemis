@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { UMLModel } from '@palsch/apollon';
+import { UMLModel } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-modeling-exam-summary',

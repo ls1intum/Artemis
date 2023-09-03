@@ -1,4 +1,4 @@
-import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@palsch/apollon';
+import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';

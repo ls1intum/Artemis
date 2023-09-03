@@ -4,8 +4,7 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { UMLModel } from '@palsch/apollon';
-
+import { UMLModel } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-modeling-submission-viewer',
     styleUrls: ['./modeling-submission-viewer.component.scss'],

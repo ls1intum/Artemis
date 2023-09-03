@@ -1,6 +1,6 @@
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel } from '@palsch/apollon';
+import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
