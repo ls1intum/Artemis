@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -13,7 +14,7 @@ import { NgModel } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
-describe('Assessment Detail Component', () => {
+describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
     let sgiService: StructuredGradingCriterionService;
@@ -28,6 +29,7 @@ describe('Assessment Detail Component', () => {
                 MockComponent(FaLayersComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
+                MockDirective(DeleteButtonDirective),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
@@ -66,12 +68,10 @@ describe('Assessment Detail Component', () => {
             credits: 1.5,
         } as Feedback;
         const emitSpy = jest.spyOn(comp.onFeedbackDelete, 'emit');
-        const confirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
         comp.delete();
         fixture.detectChanges();
 
         expect(emitSpy).toHaveBeenCalledOnce();
-        expect(confirmStub).toHaveBeenCalledOnce();
     });
 
     it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {

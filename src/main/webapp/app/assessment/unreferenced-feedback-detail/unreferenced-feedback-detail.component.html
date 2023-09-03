@@ -2,7 +2,20 @@
     <div class="card-header">
         <jhi-feedback-suggestion-badge *ngIf="isSuggestion || Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
         <jhi-grading-instruction-link-icon *ngIf="feedback.gradingInstruction" [feedback]="feedback"></jhi-grading-instruction-link-icon>
-        <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
+        <button
+            *ngIf="!readOnly"
+            jhiDeleteButton
+            [buttonSize]="ButtonSize.SMALL"
+            [translateValues]="{ text: feedback.detailText }"
+            deleteQuestion="artemisApp.feedback.delete.question"
+            (delete)="delete()"
+            [dialogError]="dialogError$"
+            [renderButtonStyle]="false"
+            [renderButtonText]="false"
+            class="btn float-end"
+        >
+            <fa-icon [icon]="faTrashAlt"></fa-icon>
+        </button>
         <!-- Accept/Discard for feedback suggestions -->
         <div class="row float-end suggestion-action-buttons" *ngIf="isSuggestion">
             <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">

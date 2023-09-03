@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
@@ -30,11 +31,12 @@ export class UnreferencedFeedbackDetailComponent {
 
     // Expose to template
     protected readonly Feedback = Feedback;
+    readonly ButtonSize = ButtonSize;
 
-    constructor(
-        private translateService: TranslateService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {}
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
      * Emits assessment changes to parent component
@@ -53,14 +55,11 @@ export class UnreferencedFeedbackDetailComponent {
         this.onFeedbackChange.emit(this.feedback);
     }
     /**
-     * Emits the deletion of an assessment
+     * Emits the deletion of a feedback
      */
     public delete() {
-        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
-        const confirmation = confirm(text);
-        if (confirmation) {
-            this.onFeedbackDelete.emit(this.feedback);
-        }
+        this.onFeedbackDelete.emit(this.feedback);
+        this.dialogErrorSource.next('');
     }
 
     updateFeedbackOnDrop(event: Event) {
