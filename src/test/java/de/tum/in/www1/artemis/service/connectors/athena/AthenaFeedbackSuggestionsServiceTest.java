@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 
 class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
@@ -41,9 +41,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
-        List<TextBlockRef> suggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(textExercise, textSubmission);
-        assertThat(suggestions.get(0).feedback().getText()).isEqualTo("Not so good");
-        assertThat(suggestions.get(0).block().getStartIndex()).isEqualTo(3);
-        assertThat(suggestions.get(0).feedback().getReference()).isEqualTo(suggestions.get(0).block().getId());
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission);
+        assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
+        assertThat(suggestions.get(0).indexStart()).isEqualTo(3);
     }
 }

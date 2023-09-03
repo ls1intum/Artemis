@@ -14,12 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
@@ -43,12 +40,13 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), textBlockRepository);
+        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), new AthenaDTOConverter(textBlockRepository));
         ReflectionTestUtils.setField(athenaFeedbackSendingService, "athenaUrl", athenaUrl);
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        textExercise.setFeedbackSuggestionsEnabled(true);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
@@ -57,6 +55,11 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         feedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         feedback.setId(3L);
+        var result = new Result();
+        feedback.setResult(result);
+        var participation = new StudentParticipation();
+        participation.setExercise(textExercise);
+        result.setParticipation(participation);
 
         when(textBlockRepository.findById(textBlock.getId())).thenReturn(Optional.of(textBlock));
     }
@@ -81,7 +84,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
+        textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(feedback))).isInstanceOf(IllegalArgumentException.class);
     }
 }

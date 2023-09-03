@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
+import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -69,7 +69,7 @@ public class AthenaResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<TextBlockRef>> getFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
+    public ResponseEntity<List<TextFeedbackDTO>> getFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -80,8 +80,7 @@ public class AthenaResource {
             throw new ConflictException("Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
         }
         try {
-            List<TextBlockRef> feedbackSuggestions = athenaFeedbackSuggestionsService.getFeedbackSuggestions(exercise, submission);
-            return ResponseEntity.ok(feedbackSuggestions);
+            return ResponseEntity.ok(athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();

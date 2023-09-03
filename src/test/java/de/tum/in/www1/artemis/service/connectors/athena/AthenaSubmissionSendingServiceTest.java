@@ -12,13 +12,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
@@ -32,7 +31,10 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private static final String DEFAULT_SUBMISSION_TEXT = "This is a test submission.";
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private AthenaDTOConverter athenaDTOConverter;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -53,15 +55,16 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaDTOConverter);
         ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        textExercise.setFeedbackSuggestionsEnabled(true);
     }
 
     @AfterEach
     void tearDown() {
-        textSubmissionRepository.deleteAll(textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
         studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(textExercise.getId()));
     }
 
@@ -76,7 +79,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
             studentParticipation.setExercise(textExercise);
             studentParticipationRepository.save(studentParticipation);
             submission.setParticipation(studentParticipation);
-            textSubmissionRepository.save(submission);
+            submissionRepository.save(submission);
         }
     }
 
@@ -113,7 +116,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendSubmissionsWithFeedbackSuggestionsDisabled() {
-        textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
+        textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -440,4 +442,21 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
     }
+
+    /**
+     * Gets all Submissions which are submitted
+     *
+     * @param exerciseId the ID of the exercise
+     * @param pageable   the pagination information for the query
+     * @return Set of Submissions
+     */
+    Page<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
+
+    /**
+     * Gets all TextSubmissions which are submitted
+     *
+     * @param exerciseId the ID of the exercise
+     * @return Set of Text Submissions
+     */
+    Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 }

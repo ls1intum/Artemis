@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 
 class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
@@ -36,6 +35,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        textExercise.setFeedbackSuggestionsEnabled(true);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
     }
@@ -70,7 +70,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
+        textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
