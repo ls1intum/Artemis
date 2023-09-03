@@ -62,7 +62,7 @@ public class AthenaSubmissionSendingService {
      *
      * @param exercise the exercise the automatic assessments should be calculated for
      */
-    public void sendSubmissions(TextExercise exercise) {
+    public void sendSubmissions(Exercise exercise) {
         sendSubmissions(exercise, 1);
     }
 
@@ -77,9 +77,9 @@ public class AthenaSubmissionSendingService {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
 
-        log.debug("Start Athena Submission Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Submission Sending Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
-        // Find all text submissions for exercise (later we will support others)
+        // Find all submissions for exercise (later we will support others)
         Pageable pageRequest = PageRequest.of(0, SUBMISSIONS_PER_REQUEST);
         while (true) {
             Page<Submission> submissions = submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId(), pageRequest);

@@ -11,9 +11,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 
 /**
@@ -56,7 +54,7 @@ public class AthenaFeedbackSendingService {
      * @param feedbacks  the feedback given by the tutor
      */
     @Async
-    public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
         sendFeedback(exercise, submission, feedbacks, 1);
     }
 
@@ -70,12 +68,12 @@ public class AthenaFeedbackSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     @Async
-    public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks, int maxRetries) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
         if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
 
-        log.debug("Start Athena Feedback Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Feedback Sending Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         if (feedbacks.isEmpty()) {
             log.debug("No feedback given for submission #{}.", submission.getId());

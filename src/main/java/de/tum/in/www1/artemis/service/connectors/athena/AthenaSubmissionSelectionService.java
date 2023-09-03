@@ -55,7 +55,7 @@ public class AthenaSubmissionSelectionService {
     }
 
     /**
-     * Fetches the proposedTextSubmission for a given exercise from Athena.
+     * Fetches the proposed submission for a given exercise from Athena.
      * It is not guaranteed that you get a valid submission ID, so you need to check for existence yourself.
      *
      * @param exercise      the exercise to get the proposed Submission for
