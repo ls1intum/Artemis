@@ -329,6 +329,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.feedbackSuggestionsObservable = this.athenaService
             .getTextFeedbackSuggestions(this.exercise!, this.submission!.id!)
             .subscribe((feedbackSuggestions: TextFeedbackSuggestion[]) => {
+                // Convert TextFeedbackSuggestion objects to TextBlockRefs to display them in the components:
                 for (const suggestion of feedbackSuggestions) {
                     const textBlock = new TextBlock();
                     textBlock.startIndex = suggestion.indexStart;

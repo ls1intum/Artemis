@@ -29,11 +29,13 @@ public class AthenaDTOConverter {
      * @return *ExerciseDTO for Athena
      */
     public Object ofExercise(Exercise exercise) {
-        if (exercise instanceof TextExercise) {
-            return TextExerciseDTO.of((TextExercise) exercise);
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            return ProgrammingExerciseDTO.of((ProgrammingExercise) exercise, artemisServerUrl);
+        switch (exercise.getExerciseType()) {
+            case TEXT -> {
+                return TextExerciseDTO.of((TextExercise) exercise);
+            }
+            case PROGRAMMING -> {
+                return ProgrammingExerciseDTO.of((ProgrammingExercise) exercise, artemisServerUrl);
+            }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
     }
