@@ -46,6 +46,12 @@ public class BambooMigrationService implements CIMigrationService {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Returns a list of all data-item-ids in the given html.
+     *
+     * @param html respons that contains a list of items with the data-item-id attribute
+     * @return a list of all data-item-ids in the given html
+     */
     private static List<Long> getDataItemIds(String html) {
         if (html == null) {
             return List.of();
@@ -59,12 +65,18 @@ public class BambooMigrationService implements CIMigrationService {
         return ids;
     }
 
+    /**
+     * Returns the name of the repository with the given id.
+     *
+     * @param html Response to the request to the editChainRepository.action endpoint
+     * @param id   The id of the repository we need the name for
+     * @return the name of the repository with the given id
+     */
     private static Optional<String> getRepositoryNameById(String html, Long id) {
         if (html == null) {
             return Optional.empty();
         }
         Elements repositories = Jsoup.parse(html).select(".item");
-        List<Long> ids = new ArrayList<>();
         for (Element repository : repositories) {
             var link = Jsoup.parse(repository.html()).selectFirst("a");
             if (link == null) {
@@ -120,6 +132,14 @@ public class BambooMigrationService implements CIMigrationService {
         return getDataItemIds(response.getBody());
     }
 
+    /**
+     * Returns the id of the repository with the given name for the given build plan.
+     * If no repository with the given name exists, an empty optional is returned.
+     *
+     * @param buildPlanId The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @param name        The name of the repository, e.g. 'assignment'.
+     * @return the id of the repository with the given name for the given build plan
+     */
     private Optional<Long> getConnectedRepositoryId(String buildPlanId, String name) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanId);
@@ -139,16 +159,16 @@ public class BambooMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void overrideRepositoriesToCheckout(String buildPlanId) {
-        Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanId, "tests");
-        Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanId, "assignment");
+    public void overrideRepositoriesToCheckout(String buildPlanKey) {
+        Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
+        Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
         if (testRepositoryId.isEmpty()) {
-            throw new IllegalStateException("Repository tests not found for build plan " + buildPlanId);
+            throw new IllegalStateException("Repository tests not found for build plan " + buildPlanKey);
         }
         if (assignmentRepositoryId.isEmpty()) {
-            throw new IllegalStateException("Repository assignment not found for build plan " + buildPlanId);
+            throw new IllegalStateException("Repository assignment not found for build plan " + buildPlanKey);
         }
-        setRepositoriesToCheckout(buildPlanId, testRepositoryId.get(), assignmentRepositoryId.get());
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get());
     }
 
     /**
@@ -259,6 +279,12 @@ public class BambooMigrationService implements CIMigrationService {
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
+    /**
+     * Deletes the given repository from the given build plan
+     *
+     * @param buildPlanKey The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @param repositoryId the id of the repository to delete
+     */
     private void deleteLinkedRepository(String buildPlanKey, Long repositoryId) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("replaceRepository", Integer.toString(0));
@@ -271,6 +297,14 @@ public class BambooMigrationService implements CIMigrationService {
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
+    /**
+     * Sets the repositories to be checked out in the first task (-JOB1) of the given build plan.
+     * testsRepositoryId is the id of the repository for the tests, assignmentRepositoryId is the id of the repository for the assignment.
+     *
+     * @param buildPlanId            The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @param testsRepositoryId      The id of the repository for the tests checked out in the root folder
+     * @param assignmentRepositoryId The id of the repository for the assignment, checked out in the folder 'assignment'
+     */
     private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanId + "-JOB1");
@@ -294,9 +328,14 @@ public class BambooMigrationService implements CIMigrationService {
         String requestUrl = bambooServerUrl + "/build/admin/edit/updateTask.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
 
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
+    /**
+     * Returns the id of the shared credential for the git user configured in the application properties.
+     *
+     * @return the id of the shared credential for the git user configured in the application properties
+     */
     private Optional<Long> getSharedCredential() {
         String requestUrl = bambooServerUrl + "/admin/credentials/configureSharedCredentials.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
@@ -320,6 +359,15 @@ public class BambooMigrationService implements CIMigrationService {
         return Optional.empty();
     }
 
+    /**
+     * Adds a new git repository to the given build plan. The repository is configured to use the given credentials.
+     * Bamboo doesn't provide a REST endpoint for this action, so we have to directly make the requests.
+     *
+     * @param buildPlanKey  The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @param repository    The URL of the repository
+     * @param name          The name of the repository, e.g. 'assignment' or 'tests'
+     * @param credentialsId The id of the credentials to use for the repository
+     */
     private void addGitRepository(String buildPlanKey, String repository, String name, Long credentialsId) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("planKey", buildPlanKey);

@@ -56,12 +56,12 @@ public class JenkinsMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String projectKey, String name, String repositoryUrl) {
+    public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
-    public void overrideRepositoriesToCheckout(String projectKey) {
+    public void overrideRepositoriesToCheckout(String buildPlanKey) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
