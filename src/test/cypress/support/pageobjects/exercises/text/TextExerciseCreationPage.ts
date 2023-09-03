@@ -32,7 +32,7 @@ export class TextExerciseCreationPage {
     }
 
     checkAutomaticAssessmentSuggestions() {
-        cy.get('#automatic_assessment_enabled').check();
+        cy.get('#feedbackSuggestionsEnabled').check();
     }
 
     typeProblemStatement(statement: string) {
