@@ -138,17 +138,17 @@
                 </div>
             </div>
         </div>
-        <div class="form-group" *ngIf="!isExamMode">
+        <div class="form-group" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
-                    id="feedback_suggestions_enabled"
+                    id="feedbackSuggestionsEnabled"
                     [ngModel]="textExercise.feedbackSuggestionsEnabled"
                     (ngModelChange)="textExercise.feedbackSuggestionsEnabled = !!$event"
                     class="form-check-input custom-control-input"
                     name="feedbackSuggestionsEnabled"
                 />
-                <label class="form-check-label custom-control-label" for="feedback_suggestions_enabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
+                <label class="form-check-label custom-control-label" for="feedbackSuggestionsEnabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
             </div>
         </div>

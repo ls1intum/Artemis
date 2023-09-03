@@ -175,7 +175,7 @@
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
     </div>
 
-    <div class="form-check" *ngIf="!isExamMode">
+    <div class="form-check" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
         <input
             type="checkbox"
             class="form-check-input"

@@ -14,6 +14,10 @@ export class AthenaService {
         private profileService: ProfileService,
     ) {}
 
+    public isEnabled(): Observable<boolean> {
+        return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes('athena'))));
+    }
+
     /**
      * Get feedback suggestions for the given submission from Athena
      *
@@ -25,9 +29,9 @@ export class AthenaService {
         if (!exercise.feedbackSuggestionsEnabled) {
             return of([]);
         }
-        return this.profileService.getProfileInfo().pipe(
-            switchMap((profileInfo) => {
-                if (!profileInfo.activeProfiles.includes('athena')) {
+        return this.isEnabled().pipe(
+            switchMap((isAthenaEnabled) => {
+                if (!isAthenaEnabled) {
                     return of([] as T[]);
                 }
                 return this.http
