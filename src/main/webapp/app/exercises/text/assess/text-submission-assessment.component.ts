@@ -328,7 +328,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         this.feedbackSuggestionsObservable = this.athenaService
-            .getTextFeedbackSuggestions(this.exercise!.id!, this.submission!.id!)
+            .getTextFeedbackSuggestions(this.exercise!, this.submission!.id!)
             .subscribe((feedbackSuggestions: TextFeedbackSuggestion[]) => {
                 for (const suggestion of feedbackSuggestions) {
                     const textBlock = new TextBlock();

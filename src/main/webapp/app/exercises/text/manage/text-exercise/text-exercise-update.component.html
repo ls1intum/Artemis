@@ -142,13 +142,14 @@
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
-                    id="automatic_assessment_enabled"
-                    [ngModel]="textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
-                    (ngModelChange)="textExercise.assessmentType = $event ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL"
+                    id="feedback_suggestions_enabled"
+                    [ngModel]="textExercise.feedbackSuggestionsEnabled"
+                    (ngModelChange)="textExercise.feedbackSuggestionsEnabled = !!$event"
                     class="form-check-input custom-control-input"
-                    name="automaticAssessmentEnabled"
+                    name="feedbackSuggestionsEnabled"
                 />
-                <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
+                <label class="form-check-label custom-control-label" for="feedback_suggestions_enabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
             </div>
         </div>
         <jhi-presentation-score-checkbox [exercise]="textExercise"></jhi-presentation-score-checkbox>
