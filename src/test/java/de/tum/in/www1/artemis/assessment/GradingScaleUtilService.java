@@ -70,6 +70,17 @@ public class GradingScaleUtilService {
         return gradingScale;
     }
 
+    /**
+     * Generates a grading scale with the given parameters and saves it to the database.
+     *
+     * @param gradeStepCount        The number of grade steps to generate.
+     * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
+     * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
+     * @param firstPassingIndex     The index of the first passing grade step.
+     * @param gradeNames            The names of the grade steps.
+     * @param exam                  The exam to which the grading scale belongs.
+     * @return The generated and saved grading scale.
+     */
     public GradingScale generateAndSaveGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
             Exam exam) {
         GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);

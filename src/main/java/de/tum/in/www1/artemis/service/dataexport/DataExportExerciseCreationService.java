@@ -297,7 +297,9 @@ public class DataExportExerciseCreationService {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
-                if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // Do not include the results if the assessment due date is in the future and the assessment is not automatic and the user is not an instructor
+                // we only consider progrmming exercises here because for other exercises we this method is not called if the assessment due date is in the future
+                if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isInstructor) {
                     continue;
                 }
                 resultService.filterSensitiveInformationIfNecessary(submission.getParticipation(), List.of(result), Optional.of(user));
