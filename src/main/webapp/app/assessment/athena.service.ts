@@ -36,7 +36,7 @@ export class AthenaService {
                     return of([] as T[]);
                 }
                 return this.http
-                    .get<T[]>(`${this.resourceUrl}/exercises/${exercise.type}-${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
+                    .get<T[]>(`${this.resourceUrl}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
                     .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)));
             }),
         );
