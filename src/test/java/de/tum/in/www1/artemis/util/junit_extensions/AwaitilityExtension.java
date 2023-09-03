@@ -15,7 +15,7 @@ public class AwaitilityExtension implements BeforeAllCallback {
 
     private static final Duration DEFAULT_POLL_DELAY = Duration.ZERO;
 
-    private static final Duration POLL_INTERVAL_START = Duration.ofMillis(20);
+    private static final Duration POLL_INTERVAL_START = Duration.ofMillis(100);
 
     private static final long POLL_INTERVAL_MULTIPLIER = 2;
 

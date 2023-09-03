@@ -2524,7 +2524,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
-    @RepeatedTest(100)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveExamAsInstructor() throws Exception {
         archiveExamAsInstructor();
@@ -2582,7 +2582,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
     }
 
-    @RepeatedTest(100)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDownloadExamArchiveAsInstructor_not_found() throws Exception {
         // Create an exam with no archive
