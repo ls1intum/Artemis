@@ -622,9 +622,15 @@
             "suspiciousBehavior": {
                 "title": "Suspicious Behavior",
                 "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
-                "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
+                "suspiciousSessionDescription": "Select at least one of the following criteria, for which the sessions of this exam should be analyzed:",
                 "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
                 "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessionCriterionDifferentIpAddress": "Sessions for the same student exam, that do not have the same IP address",
+                "suspiciousSessionCriterionDifferentBrowserFingerprint": "Sessions for the same student exam, that do not have the same browser fingerprint",
+                "suspiciousSessionCriterionIpOutsideOfRange": "The IP address of a session is outside of the specified IP range",
+                "lowerBoundIp": "Lower bound for the allowed range of IP addresses",
+                "upperBoundIp": "Upper bound for the allowed range of IP addresses",
+                "analyzeSessions": "Analyze Sessions",
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",

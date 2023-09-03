@@ -85,20 +85,53 @@ public class ExamSessionService {
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
      */
-    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
+    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, @Nullable String lowerBound,
+            @Nullable String upperBound) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-        // first step find all sessions that have matching browser fingerprint and ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
-                suspiciousExamSessions);
-        // second step find all sessions that have only matching browser fingerprint
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
-                suspiciousExamSessions);
-        // third step find all sessions that have only matching ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession, suspiciousExamSessions);
+        Set<StudentExam> studentExams = new HashSet<>();
+        if (analysisOptions.sameIpAddress() && analysisOptions.sameBrowserFingerprint()) {
+            // first step find all sessions that have matching browser fingerprint and ip address
+            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
+                    suspiciousExamSessions);
+        }
+        if (analysisOptions.sameBrowserFingerprint()) {
+            // second step find all sessions that have only matching browser fingerprint
+            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
+                    suspiciousExamSessions);
+        }
+        if (analysisOptions.sameIpAddress()) {
+            // third step find all sessions that have only matching ip address
+            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+                    suspiciousExamSessions);
+        }
 
+        if (analysisOptions.differentIpAddress() && analysisOptions.differentBrowserFingerprint()) {
+            studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+            // fourth step find all sessions that belong to the same student exam but have different browser fingerprints and ip addresses
+            // analyzeSessionOfStudentExamsForGivenCriteria(studentExams, );
+        }
+        if (analysisOptions.differentBrowserFingerprint()) {
+            // findSuspiciousSessionsForGivenCriteria();
+        }
+        if (analysisOptions.differentIpAddress()) {
+            // sixth step find all sessions that belong to the same student exam but have different IP addresses
+            // findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithDifferentIpAddressByExamIdAndExamSession,
+            // suspiciousExamSessions);
+        }
+        if (analysisOptions.ipAddressOutsideOfRange()) {
+            // seventh step find all sessions that have ip address outside of range
+            findSessionsWithIPAddressOutsideOfRange(examSessions, lowerBound, upperBound, suspiciousExamSessions);
+        }
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
+    }
+
+    private void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipAddressLowerBound, String ipAddressUpperBound,
+            Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        for (var examSession : examSessions) {
+            // TODO https://www.baeldung.com/java-check-ip-address-range
+        }
     }
 
     /**

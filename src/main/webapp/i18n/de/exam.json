@@ -620,9 +620,15 @@
             "suspiciousBehavior": {
                 "title": "Verdächtiges Verhalten",
                 "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
-                "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
+                "suspiciousSessionDescription": "Wähle mindestens eines der nachfolgenden Kriterien aus, nach dem die Sitzungen dieser Klasur untersucht werden sollen:",
                 "suspiciousSessionCriterionIpAddress": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
                 "suspiciousSessionCriterionBrowserFingerprint": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionDifferentIpAddress": "Es gibt mehrere Sitzungen für die selbe Studierendenklausur, die nicht die selbe IP-Adresse haben",
+                "suspiciousSessionCriterionDifferentBrowserFingerprint": "Es gibt mehrere Sitzungen für die selbe Studierendenklausur, die nicht den selben Browser-Fingerabdruck haben",
+                "suspiciousSessionCriterionIpOutsideOfRange": "Die IP-Adresse der Sitzung liegt nicht innerhalb des spezifizierten IP-Adressbereichs",
+                "lowerBoundIp": "Untere Grenze für den zulässigen Bereich der IP-Adressen",
+                "upperBoundIp": "Obere Grenze für den zulässigen Bereich der IP-Adressen",
+                "analyzeSessions": "Analysiere Sitzungen",
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",

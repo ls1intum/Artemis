@@ -1200,11 +1200,26 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
-    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId,
+            @RequestParam("sameIp") boolean analyzeSessionsWithTheSameIp, @RequestParam("sameFingerprint") boolean analyzeSessionsWithTheSameBrowserFingerprint,
+            @RequestParam("differentIp") boolean analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses,
+            @RequestParam("differentFingerprint") boolean analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
+            @RequestParam("ipOutsideOfRange") boolean analyzeSessionsIpOutsideOfRange, @RequestParam(required = false) String lowerBoundIp,
+            @RequestParam(required = false) String upperBoundIp) {
         log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId);
+        if (analyzeSessionsIpOutsideOfRange) {
+            if (lowerBoundIp == null || upperBoundIp == null) {
+                throw new BadRequestAlertException("If you want to analyze sessions with IP outside of range, you need to provide a lower and upper bound IP address", ENTITY_NAME,
+                        "missingLowerOrUpperBoundIp");
+            }
+        }
+        SuspiciousSessionsAnalysisOptions options = new SuspiciousSessionsAnalysisOptions(analyzeSessionsWithTheSameIp, analyzeSessionsWithTheSameBrowserFingerprint,
+                analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
+                analyzeSessionsIpOutsideOfRange);
+        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, lowerBoundIp, upperBoundIp);
+
     }
 
 }

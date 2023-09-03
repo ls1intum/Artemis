@@ -26,8 +26,43 @@
     <label for="different-student-exams-same-browser">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}</label>
 </div>
 
-<button [disabled]="!isAnyCheckboxChecked">Submit</button>
-<button *ngIf="suspiciousSessions.length !== 0" [disabled]="suspiciousSessions.length === 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
+<div>
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="same-student-exam-different-ips"
+        [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked"
+        (change)="updateButtonState()"
+    />
+    <label for="same-student-exam-different-ips">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress' | artemisTranslate }}</label>
+</div>
+
+<div>
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="same-student-exam-different-browser"
+        [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked"
+        (change)="updateButtonState()"
+    />
+    <label for="same-student-exam-different-browser">{{
+        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
+    }}</label>
+</div>
+
+<div>
+    <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" (change)="updateButtonState()" />
+    <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
+</div>
+<div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group">
+    <label for="ip-range-lower-bound">{{ 'artemisApp.examManagement.suspiciousBehavior.lowerBoundIp' | artemisTranslate }}</label>
+    <input type="text" class="form-control" id="ip-range-lower-bound" [(ngModel)]="lowerBoundIP" (change)="updateButtonState()" />
+    <label for="ip-range-upper-bound">{{ 'artemisApp.examManagement.suspiciousBehavior.upperBoundIp' | artemisTranslate }}</label>
+    <input type="text" class="form-control" id="ip-range-upper-bound" [(ngModel)]="upperBoundIP" (change)="updateButtonState()" />
+</div>
+
+<jhi-button [disabled]="!analyzeButtonEnabled">{{ 'artemisApp.examManagement.suspiciousBehavior.analyzeSessions' | artemisTranslate }}</jhi-button>
+<button *ngIf="suspiciousSessions.length !== 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
     <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
 </button>
 <jhi-plagiarism-cases-overview
