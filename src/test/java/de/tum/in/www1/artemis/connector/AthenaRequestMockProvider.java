@@ -153,7 +153,7 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions"))
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {

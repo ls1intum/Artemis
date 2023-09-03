@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -21,6 +20,9 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
+
+    @Autowired
+    private AthenaModuleUrlHelper athenaModuleUrlHelper;
 
     @Mock
     private TextBlockRepository textBlockRepository;
@@ -40,8 +42,8 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), new AthenaDTOConverter(textBlockRepository));
-        ReflectionTestUtils.setField(athenaFeedbackSendingService, "athenaUrl", athenaUrl);
+        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleUrlHelper,
+                new AthenaDTOConverter(textBlockRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 

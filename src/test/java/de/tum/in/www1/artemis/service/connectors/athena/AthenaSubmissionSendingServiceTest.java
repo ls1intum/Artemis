@@ -7,7 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -34,6 +33,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private SubmissionRepository submissionRepository;
 
     @Autowired
+    private AthenaModuleUrlHelper athenaModuleUrlHelper;
+
+    @Autowired
     private AthenaDTOConverter athenaDTOConverter;
 
     @Autowired
@@ -55,8 +57,8 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaDTOConverter);
-        ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleUrlHelper,
+                athenaDTOConverter);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);

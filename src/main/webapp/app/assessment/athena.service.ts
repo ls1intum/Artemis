@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
-    public resourceUrl = 'api/athena';
+    public resourceUrl = 'api/public/athena';
 
     constructor(
         protected http: HttpClient,

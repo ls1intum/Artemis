@@ -35,15 +35,18 @@ public class AthenaSubmissionSendingService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
      * Creates a new AthenaSubmissionSendingService.
      */
     public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository,
-            AthenaDTOConverter athenaDTOConverter) {
+            AthenaModuleUrlHelper athenaModuleUrlHelper, AthenaDTOConverter athenaDTOConverter) {
         this.submissionRepository = submissionRepository;
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
         this.athenaDTOConverter = athenaDTOConverter;
     }
 
@@ -113,7 +116,7 @@ public class AthenaSubmissionSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise),
                     filteredSubmissions.stream().map((submission) -> athenaDTOConverter.ofSubmission(exercise.getId(), submission)).toList());
-            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/submissions", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/submissions", request, maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

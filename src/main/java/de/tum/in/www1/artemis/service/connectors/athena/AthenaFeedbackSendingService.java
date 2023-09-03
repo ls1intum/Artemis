@@ -25,13 +25,17 @@ public class AthenaFeedbackSendingService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
      * Creates a new service to send feedback to the Athena service
      */
-    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaDTOConverter athenaDTOConverter) {
+    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+            AthenaDTOConverter athenaDTOConverter) {
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
         this.athenaDTOConverter = athenaDTOConverter;
     }
 
@@ -81,7 +85,7 @@ public class AthenaFeedbackSendingService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().map((feedback) -> athenaDTOConverter.ofFeedback(exercise.getId(), submission.getId(), feedback)).toList());
-            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedbacks", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {
