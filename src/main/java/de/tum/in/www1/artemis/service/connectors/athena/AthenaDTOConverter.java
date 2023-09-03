@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -11,6 +12,9 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
  */
 @Service
 public class AthenaDTOConverter {
+
+    @Value("${server.url}")
+    private static String artemisServerUrl;
 
     private final TextBlockRepository textBlockRepository;
 
@@ -29,7 +33,7 @@ public class AthenaDTOConverter {
             return TextExerciseDTO.of((TextExercise) exercise);
         }
         else if (exercise instanceof ProgrammingExercise) {
-            return ProgrammingExerciseDTO.of((ProgrammingExercise) exercise);
+            return ProgrammingExerciseDTO.of((ProgrammingExercise) exercise, artemisServerUrl);
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
     }
@@ -46,7 +50,7 @@ public class AthenaDTOConverter {
             return TextSubmissionDTO.of(exerciseId, (TextSubmission) submission);
         }
         else if (submission instanceof ProgrammingSubmission) {
-            return ProgrammingSubmissionDTO.of(exerciseId, (ProgrammingSubmission) submission);
+            return ProgrammingSubmissionDTO.of(exerciseId, (ProgrammingSubmission) submission, artemisServerUrl);
         }
         throw new IllegalArgumentException("Submission type not supported: " + submission.getType());
     }

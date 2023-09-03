@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.dto.athena;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
@@ -12,13 +10,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, String problemStatement, String programmingLanguage,
         String solutionRepositoryUrl, String templateRepositoryUrl, String testsRepositoryUrl) {
 
-    @Value("${server.url}")
-    private static String artemisServerUrl;
-
     /**
      * Create a new TextExerciseDTO from a TextExercise
      */
-    public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise) {
+    public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise, String artemisServerUrl) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
                 exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
                 artemisServerUrl + "/api/public/athena/programming-exercises/" + exercise.getId() + "/repository/solution",
