@@ -30,6 +30,8 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+
     private final AthenaDTOConverter athenaDTOConverter;
 
     private record RequestDTO(Object exercise, List<Long> submissionIds // Athena just needs submission IDs => quicker request, because less data is sent
@@ -45,8 +47,9 @@ public class AthenaSubmissionSelectionService {
      * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
     public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate,
-            AthenaDTOConverter athenaDTOConverter) {
+            AthenaModuleUrlHelper athenaModuleUrlHelper, AthenaDTOConverter athenaDTOConverter) {
         connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
         this.athenaDTOConverter = athenaDTOConverter;
     }
 
@@ -74,7 +77,7 @@ public class AthenaSubmissionSelectionService {
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), submissionIds);
             // allow no retries because this should be fast and it's not too bad if it fails
-            ResponseDTO response = connector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/select_submission", request, 0);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/select_submission", request, 0);
             log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();

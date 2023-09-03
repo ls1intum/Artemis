@@ -16,6 +16,7 @@ describe('AthenaService', () => {
     let httpTestingController: HttpTestingController;
     const exercise = {
         id: 1,
+        type: 'text',
         feedbackSuggestionsEnabled: true,
     } as Exercise;
     beforeEach(() => {
@@ -42,7 +43,7 @@ describe('AthenaService', () => {
             response = suggestions;
         });
 
-        const requestWrapper = httpTestingController.expectOne({ url: 'api/athena/exercises/1/submissions/2/feedback-suggestions' });
+        const requestWrapper = httpTestingController.expectOne({ url: 'api/public/athena/text-exercises/1/submissions/2/feedback-suggestions' });
         requestWrapper.flush(feedbackSuggestions);
 
         tick();

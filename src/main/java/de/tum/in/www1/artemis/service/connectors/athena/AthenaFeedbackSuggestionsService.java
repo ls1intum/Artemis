@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -25,22 +24,23 @@ public class AthenaFeedbackSuggestionsService {
 
     private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
 
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
-
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
     private final AthenaConnector<RequestDTO, ResponseDTOProgramming> programmingAthenaConnector;
+
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
 
     private final AthenaDTOConverter athenaDTOConverter;
 
     /**
      * Creates a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaDTOConverter athenaDTOConverter) {
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+            AthenaDTOConverter athenaDTOConverter) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         this.athenaDTOConverter = athenaDTOConverter;
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
     }
 
     private record RequestDTO(Object exercise, Object submission) {
@@ -64,7 +64,7 @@ public class AthenaFeedbackSuggestionsService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            ResponseDTOText response = textAthenaConnector.invokeWithRetry(AthenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request,
+            ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request,
                     0);
             log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().toList();
@@ -87,7 +87,8 @@ public class AthenaFeedbackSuggestionsService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions", request, 0);
+            ResponseDTOProgramming response = programmingAthenaConnector
+                    .invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
             log.info("Athena responded to feedback suggestions request: {}", response.data);
             return response.data.stream().toList();
         }

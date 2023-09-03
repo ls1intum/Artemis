@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * REST controller for Athena feedback suggestions.
  */
 @RestController
-@RequestMapping("api/athena/")
+@RequestMapping("api/")
 @Profile("athena")
 public class AthenaResource {
 
@@ -76,7 +76,7 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @GetMapping("athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
@@ -103,7 +103,7 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
@@ -136,13 +136,13 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
+     * GET public/athena/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
+    @GetMapping("public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
@@ -151,12 +151,12 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
+     * GET public/athena/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("programming-exercises/{exerciseId}/repository/template")
+    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret instead
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
@@ -165,12 +165,12 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
+     * GET public/athena/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("programming-exercises/{exerciseId}/repository/solution")
+    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/solution")
     @EnforceNothing // We check the Athena secret instead
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get solution repository for exercise {}", exerciseId);
@@ -179,12 +179,12 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
+     * GET public/athena/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("programming-exercises/{exerciseId}/repository/tests")
+    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/tests")
     @EnforceNothing // We check the Athena secret instead
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get test repository for exercise {}", exerciseId);

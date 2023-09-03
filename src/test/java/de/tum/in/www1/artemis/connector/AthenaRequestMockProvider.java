@@ -26,8 +26,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Profile("athena")
 public class AthenaRequestMockProvider {
 
-    private static final String MODULE_EXAMPLE = "module_example";
-
     private final RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
@@ -86,15 +84,15 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockSendSubmissionsAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/submissions"))
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/submissions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions = responseActions.andExpect(matcher);
         }
 
-        // Response: {"status":200,"data":null,"module_name":"module_example"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", MODULE_EXAMPLE).putNull("data");
+        // Response: {"status":200,"data":null,"module_name":"module_text_test"}
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").putNull("data");
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
@@ -105,7 +103,7 @@ public class AthenaRequestMockProvider {
      * @param expectedContents     The expected contents of the request
      */
     public void mockSelectSubmissionsAndExpect(long submissionIdResponse, RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission"))
+        ResponseActions responseActions = mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/select_submission"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
@@ -113,7 +111,7 @@ public class AthenaRequestMockProvider {
         }
 
         // Response: {"status":200,"data":<submissionIdResponse>,"module_name":"module_example"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", MODULE_EXAMPLE).put("data", submissionIdResponse);
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").put("data", submissionIdResponse);
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -123,7 +121,7 @@ public class AthenaRequestMockProvider {
      * with a server error.
      */
     public void mockGetSelectedSubmissionAndExpectNetworkingException() {
-        mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/select_submission")).andExpect(method(HttpMethod.POST))
+        mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/select_submission")).andExpect(method(HttpMethod.POST))
                 .andRespond(withException(new SocketTimeoutException("Mocked SocketTimeoutException")));
     }
 
@@ -133,15 +131,15 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockSendFeedbackAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedbacks"))
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/feedbacks"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions.andExpect(matcher);
         }
 
-        // Response: {"status":200,"data":null,"module_name":"module_text_cofee"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_cofee").putNull("data");
+        // Response: {"status":200,"data":null,"module_name":"module_text_test"}
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").putNull("data");
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -153,18 +151,17 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_cofee/feedback_suggestions"))
+        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions.andExpect(matcher);
         }
 
-        // Response: {"status":200,"data":<suggestions>,"module_name":"module_text_cofee"}
         final ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
                 .put("description", "This needs to be improved").put("credits", -1.0).put("indexStart", 3).put("indexEnd", 9);
 
-        final ObjectNode node = mapper.createObjectNode().put("module_name", "module_text_cofee").put("status", 200).set("data", mapper.createArrayNode().add(suggestion));
+        final ObjectNode node = mapper.createObjectNode().put("module_name", "module_text_test").put("status", 200).set("data", mapper.createArrayNode().add(suggestion));
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -183,7 +180,7 @@ public class AthenaRequestMockProvider {
         moduleExampleNode.set("url", mapper.valueToTree("http://localhost:5001"));
         moduleExampleNode.set("type", mapper.valueToTree("programming"));
         moduleExampleNode.set("healthy", mapper.valueToTree(exampleModuleHealthy));
-        modules.set(MODULE_EXAMPLE, moduleExampleNode);
+        modules.set("module_example", moduleExampleNode);
         node.set("modules", modules);
 
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/health")).andExpect(method(HttpMethod.GET));
