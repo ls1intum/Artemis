@@ -39,6 +39,9 @@ public class BambooMigrationService implements CIMigrationService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
+    @Value("${artemis.version-control.user}")
+    private String gitUser;
+
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -307,8 +310,12 @@ public class BambooMigrationService implements CIMigrationService {
 
         for (Element entry : entries) {
             Elements row = entry.select("tr");
-            var id = row.attr("id");
-            return Optional.of(Long.parseLong(id.replace("item-", "")));
+            Element name = entry.selectFirst("td");
+            if (name != null && name.text().equals(gitUser)) {
+                var id = row.attr("id");
+                return Optional.of(Long.parseLong(id.replace("item-", "")));
+            }
+
         }
         return Optional.empty();
     }

@@ -149,20 +149,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param errorMap The error map to write errors to
      */
     private void migrateExercise(ProgrammingExercise exercise, Map<ProgrammingExercise, Boolean> errorMap) {
-        try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
-        }
-        catch (ContinuousIntegrationException e) {
-            log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
-            errorMap.put(exercise, true);
-        }
-        try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
-        }
-        catch (ContinuousIntegrationException e) {
-            log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
-            errorMap.put(exercise, false);
-        }
         if (exercise.getTemplateBuildPlanId() != null) {
             try {
                 ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getTemplateBuildPlanId());
@@ -222,6 +208,20 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 log.warn("Failed to replace repositories in solution build plan for exercise {}", exercise.getId(), e);
                 errorMap.put(exercise, false);
             }
+        }
+        try {
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
+        }
+        catch (ContinuousIntegrationException e) {
+            log.warn("Failed to migrate template build plan for exercise {}", exercise.getId(), e);
+            errorMap.put(exercise, true);
+        }
+        try {
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
+        }
+        catch (ContinuousIntegrationException e) {
+            log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
+            errorMap.put(exercise, false);
         }
     }
 
