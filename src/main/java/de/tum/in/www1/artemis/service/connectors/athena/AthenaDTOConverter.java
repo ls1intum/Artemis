@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.dto.athena.*;
 public class AthenaDTOConverter {
 
     @Value("${server.url}")
-    private static String artemisServerUrl;
+    private String artemisServerUrl;
 
     private final TextBlockRepository textBlockRepository;
 
