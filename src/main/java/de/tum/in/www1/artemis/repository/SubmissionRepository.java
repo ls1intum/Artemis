@@ -453,10 +453,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Page<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
 
     /**
-     * Gets all TextSubmissions which are submitted
+     * Gets all submitted Submissions
      *
      * @param exerciseId the ID of the exercise
-     * @return Set of Text Submissions
+     * @return Set of Submissions
      */
     Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 }
