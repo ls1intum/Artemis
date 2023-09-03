@@ -17,7 +17,9 @@ public interface CIMigrationService {
      */
     void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
 
-    void deleteBuildTriggers(String projectKey);
+    void deleteBuildTriggers(String buildPlanKey);
 
-    void overrideBuildPlanRepositories(String projectKey, String templateRepositoryUrl, String testRepositoryUrl, String solutionRepositoryUrl);
+    void overrideBuildPlanRepository(String projectKey, String name, String repositoryUrl);
+
+    void overrideRepositoriesToCheckout(String projectKey);
 }

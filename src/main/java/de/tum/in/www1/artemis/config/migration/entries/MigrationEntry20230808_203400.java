@@ -138,8 +138,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 migrateExercise(solutionParticipation.getProgrammingExercise(), errorMap);
             });
 
-            // TODO: also load student participations with paging for which the buildPlanId is not null
-
             log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, j + 1)), exerciseCount);
         }
     }
@@ -165,22 +163,65 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
             errorMap.put(exercise, false);
         }
-        try {
-            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey());
+        if (exercise.getTemplateBuildPlanId() != null) {
+            try {
+                ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getTemplateBuildPlanId());
+            }
+            catch (Exception e) {
+                log.warn("Failed to delete template build triggers for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, true);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "assignment", exercise.getTemplateRepositoryUrl());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace template repository for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, true);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "tests", exercise.getTestRepositoryUrl());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace tests repository in template build plan for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, true);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getTemplateBuildPlanId());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace repositories in template build plan for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, true);
+            }
         }
-        catch (Exception e) {
-            log.warn("Failed to delete build triggers for exercise {}", exercise.getId(), e);
-            errorMap.put(exercise, false);
-        }
-        try {
-            var template = exercise.getTemplateRepositoryUrl();
-            var test = exercise.getTestRepositoryUrl();
-            var solution = exercise.getSolutionRepositoryUrl();
-            ciMigrationService.orElseThrow().overrideBuildPlanRepositories(exercise.getProjectKey(), template, test, solution);
-        }
-        catch (Exception e) {
-            log.warn("Failed to migrate build plan repositories for exercise {}", exercise.getId(), e);
-            errorMap.put(exercise, false);
+        if (exercise.getSolutionBuildPlanId() != null) {
+            try {
+                ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getSolutionBuildPlanId());
+            }
+            catch (Exception e) {
+                log.warn("Failed to delete solution build triggers for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, false);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "assignment", exercise.getSolutionRepositoryUrl());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace solution repository in template build plan for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, false);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "tests", exercise.getTestRepositoryUrl());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace tests repository in solution build plan for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, false);
+            }
+            try {
+                ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getSolutionBuildPlanId());
+            }
+            catch (Exception e) {
+                log.warn("Failed to replace repositories in solution build plan for exercise {}", exercise.getId(), e);
+                errorMap.put(exercise, false);
+            }
         }
     }
 

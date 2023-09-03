@@ -22,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
 /**
@@ -57,6 +56,26 @@ public class BambooMigrationService implements CIMigrationService {
         return ids;
     }
 
+    private static Optional<String> getRepositoryNameById(String html, Long id) {
+        if (html == null) {
+            return Optional.empty();
+        }
+        Elements repositories = Jsoup.parse(html).select(".item");
+        List<Long> ids = new ArrayList<>();
+        for (Element repository : repositories) {
+            var link = Jsoup.parse(repository.html()).selectFirst("a");
+            if (link == null) {
+                continue;
+            }
+            String repositoryLink = link.attr("href");
+            Element nameElement = repository.selectFirst("h3");
+            if (repositoryLink.contains("repositoryId=" + id.toString()) && nameElement != null) {
+                return Optional.of(nameElement.text());
+            }
+        }
+        return Optional.empty();
+    }
+
     @Override
     public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
         List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
@@ -69,35 +88,23 @@ public class BambooMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String projectKey) {
-        for (var buildPlanKey : BuildPlanType.values()) {
-            List<Long> triggerIds = getAllTriggerIds(projectKey + "-" + buildPlanKey);
-
-            for (var id : triggerIds) {
-                deleteBuildPlanTriggerId(projectKey + "-" + buildPlanKey, id);
-            }
+    public void deleteBuildTriggers(String buildPlanId) {
+        List<Long> triggerIds = getAllTriggerIds(buildPlanId);
+        for (var id : triggerIds) {
+            deleteBuildPlanTriggerId(buildPlanId, id);
         }
     }
 
     @Override
-    public void overrideBuildPlanRepositories(String projectKey, String templateRepositoryUrl, String testRepositoryUrl, String solutionRepositoryUrl) {
+    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl) {
         Optional<Long> credentialsId = getSharedCredential();
-        for (var buildPlanKey : BuildPlanType.values()) {
-            String planName = projectKey + "-" + buildPlanKey.getName();
-            List<Long> repositoryIds = getAllConnectedRepositoryIds(planName);
+        Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanId, name);
 
-            for (var id : repositoryIds) {
-                deleteLinkedRepository(planName, id);
-            }
-
-            if (buildPlanKey == BuildPlanType.TEMPLATE) {
-                addGitRepository(planName, templateRepositoryUrl, "assignment", credentialsId.orElseThrow());
-            }
-            else if (buildPlanKey == BuildPlanType.SOLUTION) {
-                addGitRepository(planName, solutionRepositoryUrl, "assignment", credentialsId.orElseThrow());
-            }
-            addGitRepository(planName, testRepositoryUrl, "tests", credentialsId.orElseThrow());
+        if (repositoryId.isEmpty()) {
+            throw new IllegalStateException("Repository " + name + " not found for build plan " + buildPlanId);
         }
+        deleteLinkedRepository(buildPlanId, repositoryId.get());
+        addGitRepository(buildPlanId, repositoryUrl, name, credentialsId.orElseThrow());
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {
@@ -110,14 +117,35 @@ public class BambooMigrationService implements CIMigrationService {
         return getDataItemIds(response.getBody());
     }
 
-    private List<Long> getAllConnectedRepositoryIds(String buildPlanName) {
+    private Optional<Long> getConnectedRepositoryId(String buildPlanId, String name) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("buildKey", buildPlanName);
+        parameters.add("buildKey", buildPlanId);
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainRepository.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
 
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
-        return getDataItemIds(response.getBody());
+        var html = response.getBody();
+        var ids = getDataItemIds(html);
+        for (var id : ids) {
+            var repositoryName = getRepositoryNameById(html, id);
+            if (repositoryName.isPresent() && repositoryName.get().equals(name)) {
+                return Optional.of(id);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public void overrideRepositoriesToCheckout(String buildPlanId) {
+        Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanId, "tests");
+        Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanId, "assignment");
+        if (testRepositoryId.isEmpty()) {
+            throw new IllegalStateException("Repository tests not found for build plan " + buildPlanId);
+        }
+        if (assignmentRepositoryId.isEmpty()) {
+            throw new IllegalStateException("Repository assignment not found for build plan " + buildPlanId);
+        }
+        setRepositoriesToCheckout(buildPlanId, testRepositoryId.get(), assignmentRepositoryId.get());
     }
 
     /**
@@ -240,6 +268,32 @@ public class BambooMigrationService implements CIMigrationService {
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
+    private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("planKey", buildPlanId + "-JOB1");
+
+        parameters.add("userDescription", "Checkout+Default+Repository");
+        parameters.add("checkBoxFields", "taskDisabled");
+        parameters.add("checkBoxFields", "conditionalTask");
+        parameters.add("selectedCondition", "com.atlassian.bamboo.plugins.bamboo-conditional-tasks:variableCondition");
+        parameters.add("selectFields", "selectedCondition");
+        parameters.add("task.condition.variable.operation", "exists");
+        parameters.add("selectFields", "task.condition.variable.operation");
+        parameters.add("selectedRepository_0", testsRepositoryId.toString());
+        parameters.add("selectFields", "selectedRepository_0");
+        parameters.add("checkoutDir_0", "");
+        parameters.add("selectedRepository_1", assignmentRepositoryId.toString());
+        parameters.add("selectFields", "selectedRepository_1");
+        parameters.add("checkoutDir_1", "assignment");
+        parameters.add("checkBoxFields", "cleanCheckout");
+        parameters.add("taskId", "1");
+
+        String requestUrl = bambooServerUrl + "/build/admin/edit/updateTask.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+    }
+
     private Optional<Long> getSharedCredential() {
         String requestUrl = bambooServerUrl + "/admin/credentials/configureSharedCredentials.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
@@ -272,7 +326,6 @@ public class BambooMigrationService implements CIMigrationService {
         body.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         body.add("repository.git.passwordSharedCredentials", credentialsId.toString());
         body.add("selectFields", "repository.git.passwordSharedCredentials");
-        // body.add("repository.git.sshCredentialsSource", "CUSTOM");
         body.add("repository.git.branch", "main");
         body.add("repository.git.commandTimeout", Integer.toString(180));
         body.add("checkBoxFields", "repository.git.useShallowClones");
