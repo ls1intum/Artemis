@@ -25,7 +25,7 @@
 
             <div class="test-schedule-date px-1">
                 <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
+                    <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
                     <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
@@ -142,7 +142,7 @@
             (change)="toggleManualFeedbackRequests()"
         />
         <label
-            [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+            [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="allowManualFeedbackRequests"
             jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
@@ -160,7 +160,7 @@
             [(ngModel)]="exercise.showTestNamesToStudents"
             checked
         />
-        <label class="form-check-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"> </label>
+        <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
     </div>
 
@@ -175,7 +175,7 @@
             (change)="toggleReleaseTests()"
         />
         <label
-            [ngStyle]="!exercise.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
+            [ngStyle]="!exercise.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="releaseTestsWithExampleSolution"
             jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
