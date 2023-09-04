@@ -44,6 +44,8 @@ public class BambooMigrationService implements CIMigrationService {
     @Value("${artemis.version-control.user}")
     private String gitUser;
 
+    private Optional<Long> sharedCredentialId = Optional.empty();
+
     private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
 
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
@@ -117,7 +119,13 @@ public class BambooMigrationService implements CIMigrationService {
 
     @Override
     public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl) {
-        Optional<Long> credentialsId = getSharedCredential();
+        if (this.sharedCredentialId.isEmpty()) {
+            Optional<Long> credentialsId = getSharedCredential();
+            if (credentialsId.isEmpty()) {
+                log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
+            }
+            this.sharedCredentialId = credentialsId;
+        }
         Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanId, name);
 
         if (repositoryId.isEmpty()) {
@@ -128,7 +136,7 @@ public class BambooMigrationService implements CIMigrationService {
             deleteLinkedRepository(buildPlanId, repositoryId.get());
         }
         log.debug("Adding repository " + name + " for build plan " + buildPlanId);
-        addGitRepository(buildPlanId, repositoryUrl, name, credentialsId.orElseThrow());
+        addGitRepository(buildPlanId, repositoryUrl, name, this.sharedCredentialId.orElseThrow());
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {
@@ -172,12 +180,12 @@ public class BambooMigrationService implements CIMigrationService {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
         Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
         if (testRepositoryId.isEmpty()) {
-            throw new IllegalStateException("Repository tests not found for build plan " + buildPlanKey);
+            log.error("Repository tests not found for build plan " + buildPlanKey);
         }
         if (assignmentRepositoryId.isEmpty()) {
-            throw new IllegalStateException("Repository assignment not found for build plan " + buildPlanKey);
+            log.error("Repository assignment not found for build plan " + buildPlanKey);
         }
-        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get());
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.orElseThrow(), assignmentRepositoryId.orElseThrow());
     }
 
     /**
