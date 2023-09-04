@@ -38,7 +38,6 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Subscription } from 'rxjs';
-import { TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -326,26 +325,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService
-            .getTextFeedbackSuggestions(this.exercise!, this.submission!.id!)
-            .subscribe((feedbackSuggestions: TextFeedbackSuggestion[]) => {
-                // Convert TextFeedbackSuggestion objects to TextBlockRefs to display them in the components:
-                for (const suggestion of feedbackSuggestions) {
-                    const textBlock = new TextBlock();
-                    textBlock.startIndex = suggestion.indexStart;
-                    textBlock.endIndex = suggestion.indexEnd;
-                    textBlock.setTextFromSubmission(this.submission);
-                    const feedback = new Feedback();
-                    feedback.credits = suggestion.credits;
-                    feedback.text = suggestion.title;
-                    feedback.detailText = suggestion.description;
-                    feedback.gradingInstruction = suggestion.gradingInstruction;
-                    feedback.reference = textBlock.id;
-                    feedback.type = FeedbackType.AUTOMATIC;
-                    this.addAutomaticTextBlockRef(new TextBlockRef(textBlock, feedback));
-                }
-                this.validateFeedback();
-            });
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions: TextBlockRef[]) => {
+            feedbackSuggestions.forEach((suggestion) => this.addAutomaticTextBlockRef(suggestion));
+            this.validateFeedback();
+        });
     }
 
     /**

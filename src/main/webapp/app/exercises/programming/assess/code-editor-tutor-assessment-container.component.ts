@@ -275,24 +275,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        const suggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
-        // Our feedback suggestions have to be real Feedback objects already
-        this.feedbackSuggestions = suggestions.map((suggestion) => {
-            const feedback = new Feedback();
-            feedback.credits = suggestion.credits;
-            feedback.text = suggestion.title;
-            feedback.detailText = suggestion.description;
-            if (suggestion.filePath != undefined && suggestion.lineStart != undefined) {
-                // Referenced feedback
-                feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}`; // Ignore lineEnd for now because Artemis does not support it
-            } else {
-                // Unreferenced feedback
-                feedback.reference = undefined;
-            }
-            feedback.gradingInstruction = suggestion.gradingInstruction;
-            feedback.type = FeedbackType.AUTOMATIC;
-            return feedback;
-        });
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
         const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
         this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {

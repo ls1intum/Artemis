@@ -71,7 +71,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { ProgrammingFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -256,14 +255,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
-                { title: 'unreferenced test', description: 'some detail' },
-                { title: 'referenced test', description: 'some detail', filePath: 'src/Test.java', lineStart: 1 },
-                { title: 'suggestion to pass', description: 'some detail', filePath: 'src/Test.java', lineStart: 2 },
-            ] as ProgrammingFeedbackSuggestion[]),
+                { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
+                { text: 'FeedbackSuggestion:referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
+                { text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+            ] as Feedback[]),
         );
         comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
         await comp['loadFeedbackSuggestions']();
-        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
+        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
