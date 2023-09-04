@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
@@ -176,6 +177,31 @@ class ExamStartTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             var modelingSubmission = (ModelingSubmission) participation.getSubmissions().iterator().next();
             assertThat(modelingSubmission.getModel()).isNull();
             assertThat(modelingSubmission.getExplanationText()).isNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExerciseWithProgrammingExercise() throws Exception {
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        ProgrammingExercise programmingExercise = createProgrammingExercise();
+
+        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
+
+        createStudentExams(programmingExercise);
+
+        var studentParticipations = invokePrepareExerciseStart();
+
+        for (Participation participation : studentParticipations) {
+            assertThat(participation.getExercise()).isEqualTo(programmingExercise);
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().get(0));
+            // No initial submissions should be created for programming exercises
+            assertThat(participation.getSubmissions()).isEmpty();
+            assertThat(((ProgrammingExerciseParticipation) participation).isLocked()).isTrue();
+            verify(versionControlService, never()).configureRepository(eq(programmingExercise), (ProgrammingExerciseStudentParticipation) eq(participation), eq(true));
         }
     }
 
