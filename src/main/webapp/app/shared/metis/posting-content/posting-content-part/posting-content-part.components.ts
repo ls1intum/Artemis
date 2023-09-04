@@ -104,13 +104,7 @@ export class PostingContentPartComponent {
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
         if (referenceUserLogin) {
-            this.metisConversationService.createOneToOneChat(referenceUserLogin).subscribe({
-                complete: () => {
-                    this.metisConversationService.forceRefresh().subscribe({
-                        complete: () => {},
-                    });
-                },
-            });
+            this.metisConversationService.createOneToOneChat(referenceUserLogin).subscribe();
         }
     }
 }
