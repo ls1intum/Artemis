@@ -151,7 +151,15 @@
     </div>
 
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="showTestNamesToStudents" id="field_showTestNamesToStudents" [(ngModel)]="exercise.showTestNamesToStudents" checked />
+        <input
+            class="form-check-input"
+            type="checkbox"
+            name="showTestNamesToStudents"
+            id="field_showTestNamesToStudents"
+            [disabled]="readOnly"
+            [(ngModel)]="exercise.showTestNamesToStudents"
+            checked
+        />
         <label class="form-check-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"> </label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
     </div>
