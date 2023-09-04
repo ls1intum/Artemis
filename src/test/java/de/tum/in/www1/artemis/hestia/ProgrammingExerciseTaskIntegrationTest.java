@@ -129,7 +129,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
                 "# Sorting with the Strategy Pattern\n" + "\n" + "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n"
                         + "\n" + "### Part 1: Sorting\n" + "\n" + "First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.\n" + "\n"
                         + "**You have the following tasks:**\n" + "\n" + "1. [task][" + taskName1 + "](testClass[BubbleSort])\n" + "Implement the class `BubbleSort`.\n"
-                        + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy],)\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
+                        + "2. [task][" + taskName2 + "](testMethods[Context],testMethods[Policy])\n" + "Implement the classes `Context` and `Policy`. Make sure to follow..");
         programmingExerciseRepository.save(programmingExercise);
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
@@ -193,7 +193,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
                 1. [task][%s](testClass[BubbleSort])
                 Implement the class `BubbleSort`.
-                2. [task][%s](testMethods[Context],testMethods[Policy],)
+                2. [task][%s](testMethods[Context],testMethods[Policy])
                 Implement the classes `Context` and `Policy`. Make sure to follow..
                 """.formatted(taskName1, taskName2));
         programmingExerciseRepository.save(programmingExercise);

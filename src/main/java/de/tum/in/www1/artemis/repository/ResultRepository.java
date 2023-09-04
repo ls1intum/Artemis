@@ -53,15 +53,19 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return a list of results.
      */
     @Query("""
-            select distinct r from Result r left join fetch r.feedbacks
-            where r.completionDate =
-                (select max(rr.completionDate) from Result rr
-                    where rr.assessmentType = 'AUTOMATIC'
-                    and rr.participation.exercise.id = :exerciseId
-                    and rr.participation.student.id = r.participation.student.id)
-                and r.participation.exercise.id = :exerciseId
-                and r.participation.student.id IS NOT NULL
-            order by r.completionDate asc
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE r.completionDate =
+                (SELECT max(rr.completionDate) FROM Result rr
+                    WHERE rr.assessmentType = 'AUTOMATIC'
+                        AND rr.participation.exercise.id = :exerciseId
+                        AND rr.participation.student.id = r.participation.student.id
+                )
+                AND r.participation.exercise.id = :exerciseId
+                AND r.participation.student.id IS NOT NULL
+            ORDER BY r.completionDate ASC
               """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
 

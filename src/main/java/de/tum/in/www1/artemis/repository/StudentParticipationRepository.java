@@ -165,13 +165,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            LEFT JOIN FETCH r.feedbacks
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.student.id = :#{#studentId}
-            AND p.testRun = :#{#testRun}
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = :testRun
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(@Param("exerciseId") Long exerciseId,
             @Param("studentId") Long studentId, @Param("testRun") boolean testRun);
@@ -219,14 +221,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return participations for exercise.
      */
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                and (r.id = (select max(pr.id) from p.results pr
-                    left join pr.submission prs
-                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :exerciseId
+                AND (r.id = (SELECT max(pr.id) FROM p.results pr
+                    LEFT JOIN pr.submission prs
+                    WHERE pr.assessmentType = 'AUTOMATIC' AND (prs.type <> 'ILLEGAL' OR prs.type IS NULL)))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
@@ -241,26 +245,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.id = :#{#participationId}
-                and (r.id = (select max(pr.id) from p.results pr
-                    left join pr.submission prs
-                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.submission s
+            WHERE p.id = :participationId
+                AND (r.id = (SELECT max(pr.id) FROM p.results pr
+                    LEFT JOIN pr.submission prs
+                    WHERE pr.assessmentType = 'AUTOMATIC' AND (prs.type <> 'ILLEGAL' OR prs.type IS NULL)))
             """)
     Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") Long participationId);
 
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                 and (s.type <> 'ILLEGAL' or s.type is null)
-                 and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :exerciseId
+                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                 AND (r.assessmentType = 'MANUAL' OR r.assessmentType = 'SEMI_AUTOMATIC')
             """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
@@ -272,11 +280,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.submission s
-            WHERE p.id = :#{#participationId}
-                 AND (s.type <> 'ILLEGAL' or s.type is null)
-                 AND (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
+            WHERE p.id = :participationId
+                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                 AND (r.assessmentType = 'MANUAL' OR r.assessmentType = 'SEMI_AUTOMATIC')
             """)
     Optional<StudentParticipation> findByIdWithManualResultAndFeedbacks(@Param("participationId") Long participationId);
 
