@@ -24,7 +24,8 @@
                 exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments
             "
             [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id"
-            class="btn btn-info btn-sm me-1 mb-3"
+            class="btn btn-info btn-sm me-1"
+            style="margin-bottom: 10px"
         >
             <fa-icon [icon]="faUserCheck"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
