@@ -98,6 +98,8 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    private Course course;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
@@ -117,7 +119,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
