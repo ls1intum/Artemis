@@ -142,6 +142,7 @@ public class AthenaResource {
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
+     * @param auth         the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
@@ -157,6 +158,7 @@ public class AthenaResource {
      * GET public/athena/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/template")
@@ -172,6 +174,7 @@ public class AthenaResource {
      * GET public/athena/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/solution")
@@ -187,6 +190,7 @@ public class AthenaResource {
      * GET public/athena/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/tests")

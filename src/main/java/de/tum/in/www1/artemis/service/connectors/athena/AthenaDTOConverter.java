@@ -60,8 +60,9 @@ public class AthenaDTOConverter {
     /**
      * Convert a feedback to a DTO for Athena.
      *
-     * @param exerciseId the id of the exercise the feedback belongs to
-     * @param feedback   the feedback to convert
+     * @param exerciseId   the id of the exercise the feedback belongs to
+     * @param submissionId the id of the submission the feedback belongs to
+     * @param feedback     the feedback to convert
      * @return *FeedbackDTO for Athena
      */
     public Object ofFeedback(long exerciseId, long submissionId, Feedback feedback) {
