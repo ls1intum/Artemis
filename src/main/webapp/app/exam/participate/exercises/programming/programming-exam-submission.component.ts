@@ -131,6 +131,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         // do nothing - the code editor itself is taking care of updating the view from submission
     }
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        // if we do not use it, eslint will complain
         this.submissionVersion = submissionVersion;
         // submission versions are not supported for programming exercises
         throw new Error('Submission versions are not supported for file upload exercises.');

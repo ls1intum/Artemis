@@ -100,12 +100,11 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     private updateViewFromSubmissionVersion() {
-        if (this.submissionVersion) {
-            if (this.submissionVersion.content) {
-                this.answer = this.submissionVersion.content;
-            }
+        if (this.submissionVersion?.content) {
+            this.answer = this.submissionVersion.content;
         }
     }
+
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();

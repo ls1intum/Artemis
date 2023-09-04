@@ -191,12 +191,11 @@ export class ExamNavigationBarComponent implements OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
-        // if we are in the exam timeline view use the following logic as not synced doesn't make sense there
         this.icon = faCheck;
-        if (this.examTimeLineView && this.exerciseIndex === exerciseIndex) {
-            return 'synced active';
-        } else if (this.examTimeLineView) {
-            return 'synced';
+        // If we are in the exam timeline we do not use not synced as not synced shows
+        // that the current submission is not saved which doesn't make sense in the timeline.
+        if (this.examTimeLineView) {
+            return this.exerciseIndex === exerciseIndex ? 'synced active' : 'synced';
         }
 
         // start with a yellow status (edit icon)
