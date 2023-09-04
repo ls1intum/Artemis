@@ -4,7 +4,7 @@ import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -65,7 +65,8 @@ export class AthenaService {
                     textBlock.setTextFromSubmission(submission);
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
-                    feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
+                    // Text feedback suggestions are automatically accepted, so we can set the text directly
+                    feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
                     feedback.gradingInstruction = suggestion.gradingInstruction;
                     feedback.reference = textBlock.id;
