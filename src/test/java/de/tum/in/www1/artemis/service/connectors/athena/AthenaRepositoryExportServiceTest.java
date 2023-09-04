@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -81,8 +82,8 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
         File resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
         File resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
 
-        assertEquals(zipFile1, resultStudentRepo);
-        assertEquals(zipFile2, resultSolutionRepo);
+        assertThat(zipFile1).isEqualTo(resultStudentRepo);
+        assertThat(zipFile2).isEqualTo(resultSolutionRepo);
     }
 
     @Test
@@ -91,6 +92,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
         programmingExercise.setFeedbackSuggestionsEnabled(false);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
-        assertThrows(AccessForbiddenException.class, () -> athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, null));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, null));
     }
 }
