@@ -117,7 +117,7 @@ public class GitLabService extends AbstractVersionControlService {
         final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
 
         try {
-            log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
+            log.info("Adding user {} with permissions {} to repository {}", userId, repositoryPermissions, repositoryPath);
             gitlab.getProjectApi().addMember(repositoryPath, userId, repositoryPermissions);
         }
         catch (GitLabApiException e) {

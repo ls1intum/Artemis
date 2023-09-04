@@ -169,8 +169,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        checkForIllegalExamSubmission(participation, programmingSubmission);
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        checkForIllegalSubmission(participation, programmingSubmission);
         participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         updateGitDiffReport(participation);
@@ -197,29 +197,47 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * We check if a submission for a programming exercise is after the individual end date and a student is not allowed to submit anymore.
      * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
      *
      * @param programmingExerciseParticipation current participation of the exam exercise
      * @param programmingSubmission            new created submission of the repository commit
      */
-    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+    private void checkForIllegalSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
-                    : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
-                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
-                        + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
-                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
-                programmingSubmission.setType(SubmissionType.ILLEGAL);
-                programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
-                log.warn(message);
-            }
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        if (!(programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
         }
+        var optionalStudent = studentParticipation.getStudent();
+        var optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
+        if (optionalStudentWithGroups.isEmpty()) {
+            return;
+        }
+        User student = optionalStudentWithGroups.get();
+        if (!isAllowedToSubmit(studentParticipation, student, programmingSubmission)) {
+            final String message = "The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the programming exercise %d"
+                    .formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getId());
+            programmingSubmission.setType(SubmissionType.ILLEGAL);
+            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+            log.warn(message);
+        }
+    }
+
+    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise.isExamExercise()) {
+            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+        }
+        return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
+    }
+
+    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
+        var dueDate = ExerciseDateService.getDueDate(participation);
+        if (dueDate.isEmpty()) {
+            return true;
+        }
+        return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
     }
 
     /**

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1627,8 +1628,10 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation1.getStudents());
-        verify(versionControlService).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation2.getStudents());
+        verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                participation1.getStudents());
+        verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                participation2.getStudents());
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
@@ -1649,11 +1652,11 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories() throws Exception {
-        course.setInstructorGroupName(userPrefix + "unlockAll");
-        courseRepository.save(course);
+        String suffix = "unlockAll";
+        courseUtilService.updateCourseGroups(userPrefix, course, suffix);
 
         var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        instructor.setGroups(Set.of(userPrefix + "unlockAll"));
+        instructor.setGroups(Set.of(userPrefix + "instructor" + suffix));
         userRepository.save(instructor);
 
         mockConfigureRepository(programmingExercise);
@@ -1662,17 +1665,21 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService).addMemberToRepository(participation1.getVcsRepositoryUrl(), participation1.getStudent().orElseThrow(),
+        verify(versionControlService, timeout(300)).addMemberToRepository(participation1.getVcsRepositoryUrl(), participation1.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);
-        verify(versionControlService).addMemberToRepository(participation2.getVcsRepositoryUrl(), participation2.getStudent().orElseThrow(),
+        verify(versionControlService, timeout(300)).addMemberToRepository(participation2.getVcsRepositoryUrl(), participation2.getStudent().orElseThrow(),
                 VersionControlRepositoryPermission.REPO_WRITE);
 
         userUtilService.changeUser(userPrefix + "instructor1");
 
-        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Instructor get notified that unlock operations were successful")
-                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
-                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+        await().untilAsserted(() -> {
+            // login again since this is executed on another thread
+            userUtilService.changeUser(userPrefix + "instructor1");
+            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            assertThat(notifications).as("Instructor get notified that unlock operations were successful")
+                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
+                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+        });
     }
 
     void testCheckPlagiarism() throws Exception {

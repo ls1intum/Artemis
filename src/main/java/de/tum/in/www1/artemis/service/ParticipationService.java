@@ -626,7 +626,7 @@ public class ParticipationService {
             return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), team.getId()))
                     .orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**

@@ -319,8 +319,8 @@ public class TutorialGroupService {
             if (registration.student() == null) {
                 return false;
             }
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
             return hasRegistrationNumber || hasLogin;
         }).collect(Collectors.toSet());
 
@@ -453,14 +453,14 @@ public class TutorialGroupService {
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
 
             if (hasRegistrationNumber && StringUtils.hasText(user.getRegistrationNumber())) {
-                return user.getRegistrationNumber().equals(registration.student().getRegistrationNumber().trim());
+                return user.getRegistrationNumber().equals(registration.student().registrationNumber().trim());
             }
             if (hasLogin && StringUtils.hasText(user.getLogin())) {
-                return user.getLogin().equals(registration.student().getLogin().trim());
+                return user.getLogin().equals(registration.student().login().trim());
             }
             return false;
         }).findFirst();
@@ -472,14 +472,14 @@ public class TutorialGroupService {
 
         for (var registration : registrations) {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
 
             if (hasRegistrationNumber) {
-                registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());
+                registrationNumbersToSearchFor.add(registration.student().registrationNumber().trim());
             }
             if (hasLogin) {
-                loginsToSearchFor.add(registration.student().getLogin().trim());
+                loginsToSearchFor.add(registration.student().login().trim());
             }
         }
 
@@ -599,8 +599,8 @@ public class TutorialGroupService {
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.getRegistrationNumber())
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.registrationNumber())
+                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.login()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
