@@ -77,6 +77,10 @@ public class AthenaResource {
     @FunctionalInterface
     private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
 
+        /**
+         * Method to apply the feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
+         * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
+         */
         List<OutputType> apply(ExerciseType exercise, SubmissionType submission) throws NetworkingException;
     }
 
