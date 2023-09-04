@@ -158,9 +158,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            LEFT JOIN FETCH r.feedbacks
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = :#{#testRun}
+            LEFT JOIN FETCH r.feedbacks f
+            LEFT JOIN FETCH f.testCase
+            WHERE p.exercise.id = :exerciseId
+            AND p.testRun = :testRun
             """)
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 

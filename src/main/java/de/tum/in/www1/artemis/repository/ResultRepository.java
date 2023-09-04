@@ -71,10 +71,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
               """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
     Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
