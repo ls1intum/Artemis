@@ -111,6 +111,9 @@ public class BambooMigrationService implements CIMigrationService {
     @Override
     public void deleteBuildTriggers(String buildPlanId, VcsRepositoryUrl repositoryUrl) {
         List<Long> triggerIds = getAllTriggerIds(buildPlanId);
+        if (triggerIds.size() != 1) {
+            log.warn("The build plan {} has {} triggers", buildPlanId, triggerIds.size());
+        }
         for (var id : triggerIds) {
             deleteBuildPlanTriggerId(buildPlanId, id);
             log.debug("Deleted trigger with id " + id + " for build plan " + buildPlanId);
@@ -180,6 +183,8 @@ public class BambooMigrationService implements CIMigrationService {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
         Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
         if (testRepositoryId.isEmpty()) {
+            // TODO: in old build plans, we used "Assignment", it could be the case, that there are still build plans with this old name, so we should take this into account here
+            // ideally, those get changed to "assigment", then we can remove the handling of both variants
             log.error("Repository tests not found for build plan " + buildPlanKey);
         }
         if (assignmentRepositoryId.isEmpty()) {
