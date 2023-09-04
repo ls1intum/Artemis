@@ -9,8 +9,8 @@ then
   exit 1
 fi
 
-if [[ $numberOfStarts -gt 5 ]]
+if [[ $numberOfStarts -gt 4 ]]
 then
-  echo "The number of Server Starts should not be greater than 5!"
+  echo "The number of Server Starts should not be greater than 4!"
   exit 1
 fi
