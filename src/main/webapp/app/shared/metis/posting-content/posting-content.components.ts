@@ -123,6 +123,14 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                         attachmentUnitRefDir +
                         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                         this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                } else if (ReferenceType.USER === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    queryParams = {
+                        userLogin: this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex)),
+                    } as Params;
                 }
 
                 // determining the endIndex of the content after the reference
@@ -177,9 +185,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 6: reference pattern for Lectures
         // Group 7: reference pattern for Lecture Attachments
         // Group 8: reference pattern for Lecture Units
+        // Group 9: reference pattern for Users
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

@@ -1,10 +1,23 @@
 import { Component, Input } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
-import { faBan, faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAt,
+    faBan,
+    faChalkboardUser,
+    faCheckDouble,
+    faFile,
+    faFileUpload,
+    faFont,
+    faKeyboard,
+    faMessage,
+    faPaperclip,
+    faProjectDiagram,
+} from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -21,12 +34,16 @@ export class PostingContentPartComponent {
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
-    faFile = faFile;
-    faBan = faBan;
+    protected readonly faFile = faFile;
+    protected readonly faBan = faBan;
+    protected readonly faAt = faAt;
+
+    protected readonly ReferenceType = ReferenceType;
 
     constructor(
         private fileService: FileService,
         private dialog: MatDialog,
+        private metisConversationService: MetisConversationService,
     ) {}
 
     /**
@@ -77,6 +94,23 @@ export class PostingContentPartComponent {
                 return faFile;
             default:
                 return faPaperclip;
+        }
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     *
+     * @param referenceUserLogin login of the referenced user
+     */
+    onClickUserReference(referenceUserLogin: string | undefined) {
+        if (referenceUserLogin) {
+            this.metisConversationService.createOneToOneChat(referenceUserLogin).subscribe({
+                complete: () => {
+                    this.metisConversationService.forceRefresh().subscribe({
+                        complete: () => {},
+                    });
+                },
+            });
         }
     }
 }
