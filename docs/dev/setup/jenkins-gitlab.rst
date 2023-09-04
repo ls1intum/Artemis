@@ -190,9 +190,9 @@ tokens instead of the predefined ones.
 
    ::
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_api', 'read_user', 'read_repository', 'write_repository', 'sudo'], name: 'Artemis Admin Token', expires_at: 365.days.from_now); token.set_token('artemis-gitlab-token'); token.save!"
 
-   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and
+   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens?name=Artemis+Admin+token&scopes=api,read_api,read_user,read_repository,write_repository,sudo`` and
      generate a token with all scopes.
    | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the
      ``docker/gitlab/gitlab-local-setup.sh`` file.
@@ -471,7 +471,7 @@ do either do it manually or using the following command:
 
     ::
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_repository'], name: 'Jenkins', expires_at: 365.days.from_now); token.set_token('jenkins-gitlab-token'); token.save!"
 
 
 
