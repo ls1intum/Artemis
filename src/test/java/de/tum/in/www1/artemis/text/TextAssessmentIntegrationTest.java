@@ -122,7 +122,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(0); // always select the first submission
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
     }
 
     @AfterEach

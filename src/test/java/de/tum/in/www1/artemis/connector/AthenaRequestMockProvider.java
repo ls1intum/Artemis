@@ -79,12 +79,23 @@ public class AthenaRequestMockProvider {
     }
 
     /**
+     * Returns the name of the test module for the given module type
+     *
+     * @param moduleType The type of the module: "text" or "programming"
+     */
+    private static String getTestModuleName(String moduleType) {
+        return "module_" + moduleType + "_test";
+    }
+
+    /**
      * Mocks the /submissions API from Athena used to submit all submissions of an exercise.
      *
+     * @param moduleType       The type of the module: "text" or "programming"
      * @param expectedContents The expected contents of the request
      */
-    public void mockSendSubmissionsAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/submissions"))
+    public void mockSendSubmissionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/submissions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
@@ -92,26 +103,28 @@ public class AthenaRequestMockProvider {
         }
 
         // Response: {"status":200,"data":null,"module_name":"module_text_test"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").putNull("data");
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", getTestModuleName(moduleType)).putNull("data");
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
     /**
      * Mocks the /select_submission API from Athena used to select a submission for manual assessment
      *
+     * @param moduleType           The type of the module: "text" or "programming"
      * @param submissionIdResponse The submission id to return from the endpoint. An ID of -1 means "no selection".
      * @param expectedContents     The expected contents of the request
      */
-    public void mockSelectSubmissionsAndExpect(long submissionIdResponse, RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/select_submission"))
+    public void mockSelectSubmissionsAndExpect(String moduleType, long submissionIdResponse, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServerVeryShortTimeout
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/select_submission"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions.andExpect(matcher);
         }
 
-        // Response: {"status":200,"data":<submissionIdResponse>,"module_name":"module_example"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").put("data", submissionIdResponse);
+        // Response: e.g. {"status":200,"data":<submissionIdResponse>,"module_name":"module_example"}
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", getTestModuleName(moduleType)).put("data", submissionIdResponse);
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -128,18 +141,20 @@ public class AthenaRequestMockProvider {
     /**
      * Mocks the /feedbacks API from Athena used to submit feedbacks for a submission
      *
+     * @param moduleType       The type of the module: "text" or "programming"
      * @param expectedContents The expected contents of the request
      */
-    public void mockSendFeedbackAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/feedbacks"))
+    public void mockSendFeedbackAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedbacks"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions.andExpect(matcher);
         }
 
-        // Response: {"status":200,"data":null,"module_name":"module_text_test"}
-        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", "module_text_test").putNull("data");
+        // Response: e.g. {"status":200,"data":null,"module_name":"module_text_test"}
+        final ObjectNode node = mapper.createObjectNode().put("status", 200).put("module_name", getTestModuleName(moduleType)).putNull("data");
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
@@ -148,20 +163,32 @@ public class AthenaRequestMockProvider {
      * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
      * Makes the endpoint return one example feedback suggestion.
      *
+     * @param moduleType       The type of the module: "text" or "programming"
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsAndExpect(RequestMatcher... expectedContents) {
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/text/module_text_test/feedback_suggestions"))
+    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        ResponseActions responseActions = mockServer
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
             responseActions.andExpect(matcher);
         }
 
-        final ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
-                .put("description", "This needs to be improved").put("credits", -1.0).put("indexStart", 3).put("indexEnd", 9);
+        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
+                .put("description", "This needs to be improved").put("credits", -1.0);
+        if (moduleType.equals("text")) {
+            suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
+        }
+        else if (moduleType.equals("programming")) {
+            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4);
+        }
+        else {
+            throw new IllegalArgumentException("Unknown module type: " + moduleType);
+        }
 
-        final ObjectNode node = mapper.createObjectNode().put("module_name", "module_text_test").put("status", 200).set("data", mapper.createArrayNode().add(suggestion));
+        final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
+                mapper.createArrayNode().add(suggestion));
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }

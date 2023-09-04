@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
@@ -26,6 +29,7 @@ import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * REST controller for Athena feedback suggestions.
@@ -70,6 +74,38 @@ public class AthenaResource {
         this.athenaRepositoryExportService = athenaRepositoryExportService;
     }
 
+    @FunctionalInterface
+    private interface FeedbackProvider<ExerciseType, SubmissionType, OutputType> {
+
+        /**
+         * Method to apply the feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
+         * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
+         */
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission) throws NetworkingException;
+    }
+
+    private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
+            Function<Long, ExerciseT> exerciseFetcher, Function<Long, SubmissionT> submissionFetcher, FeedbackProvider<ExerciseT, SubmissionT, OutputT> feedbackProvider) {
+
+        log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
+
+        final var exercise = exerciseFetcher.apply(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        final var submission = submissionFetcher.apply(submissionId);
+
+        if (submission.getParticipation().getExercise().getId() != exerciseId) {
+            log.error("Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
+            throw new ConflictException("Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
+        }
+        try {
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission));
+        }
+        catch (NetworkingException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+    }
+
     /**
      * GET athena/text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
      *
@@ -80,21 +116,8 @@ public class AthenaResource {
     @GetMapping("athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
-
-        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        final var submission = textSubmissionRepository.findByIdElseThrow(submissionId);
-        if (submission.getParticipation().getExercise().getId() != exerciseId) {
-            log.error("Text Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
-            throw new ConflictException("Text Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
-        }
-        try {
-            return ResponseEntity.ok(athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission));
-        }
-        catch (NetworkingException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
+        return getFeedbackSuggestions(exerciseId, submissionId, textExerciseRepository::findByIdElseThrow, textSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
     /**
@@ -107,21 +130,8 @@ public class AthenaResource {
     @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
-
-        final var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        final var submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
-        if (submission.getParticipation().getExercise().getId() != exerciseId) {
-            log.error("Programming Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
-            throw new ConflictException("Programming Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
-        }
-        try {
-            return ResponseEntity.ok(athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(exercise, submission));
-        }
-        catch (NetworkingException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
+        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
     /**
@@ -141,6 +151,7 @@ public class AthenaResource {
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
+     * @param auth         the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
@@ -149,13 +160,14 @@ public class AthenaResource {
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null));
     }
 
     /**
      * GET public/athena/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/template")
@@ -164,13 +176,14 @@ public class AthenaResource {
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE));
     }
 
     /**
      * GET public/athena/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/solution")
@@ -179,13 +192,14 @@ public class AthenaResource {
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get solution repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION));
     }
 
     /**
      * GET public/athena/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
      *
      * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
     @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/tests")
@@ -194,6 +208,6 @@ public class AthenaResource {
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get test repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS));
     }
 }
