@@ -6,10 +6,13 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -54,6 +57,20 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Remove zip files created during test
+        try {
+            // Replace with the path you want to remove
+            Path directory = Paths.get("/opt/bambooagent/bamboo-agent-home/xml-data/build-dir/ARTEMIS-TESTS5371-JAVATEST/data-exports");
+            Files.walk(directory).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
+        catch (IOException e) {
+            // Handle the exception, e.g., print stack trace, log it, etc.
+            e.printStackTrace();
+        }
     }
 
     @Test
