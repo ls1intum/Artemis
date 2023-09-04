@@ -129,7 +129,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     queryParams = {
-                        userLogin: this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex)),
+                        referenceUserLogin: this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex)),
                     } as Params;
                 }
 
