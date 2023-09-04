@@ -26,8 +26,15 @@ public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Lo
     @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :exerciseGroupId")
     Optional<ExerciseGroup> findWithExercisesById(@Param("exerciseGroupId") Long exerciseGroupId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exam", "exercises" })
-    @Query("SELECT eg FROM Exam exam LEFT JOIN exam.exerciseGroups eg WHERE exam.id = :examId ORDER BY INDEX(eg)")
+    @Query("""
+            SELECT eg
+            FROM Exam exam
+                LEFT JOIN exam.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises
+                LEFT JOIN FETCH eg.exam
+            WHERE exam.id = :examId
+            ORDER BY INDEX(eg)
+            """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<ExerciseGroup> findWithExamAndExercisesByExamId(@Param("examId") Long examId);
 
