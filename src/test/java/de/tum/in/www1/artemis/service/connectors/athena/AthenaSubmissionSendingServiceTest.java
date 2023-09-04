@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -42,6 +42,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -50,6 +53,8 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     private TextExercise textExercise;
+
+    private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void setUp() {
@@ -62,12 +67,17 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);
+
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        programmingExercise.setFeedbackSuggestionsEnabled(true);
     }
 
     @AfterEach
     void tearDown() {
         submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
         studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(textExercise.getId()));
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(programmingExercise.getId()));
+        studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(programmingExercise.getId()));
     }
 
     private void createTextSubmissionsForSubmissionSending(int totalSubmissions) {
@@ -86,38 +96,62 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testSendSubmissionsSuccess() {
+    void testSendSubmissionsSuccessText() {
         createTextSubmissionsForSubmissionSending(1);
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.title").value(textExercise.getTitle()),
-                jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()), jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()),
-                jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()),
+                jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()), jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(textExercise.getProblemStatement()), jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()),
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT), jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
     }
 
+    private void createProgrammingSubmissionForSubmissionSending() {
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipation.setExercise(textExercise);
+        studentParticipationRepository.save(studentParticipation);
+        submission.setParticipation(studentParticipation);
+        submissionRepository.save(submission);
+    }
+
+    @Test
+    void testSendSubmissionsSuccessProgramming() {
+        createProgrammingSubmissionForSubmissionSending();
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+                jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(programmingExercise.getMaxPoints()),
+                jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
+                jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
+                jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").value("TODO"));
+
+        athenaSubmissionSendingService.sendSubmissions(programmingExercise);
+    }
+
     @Test
     void testSendNoSubmissions() {
         athenaRequestMockProvider.ensureNoRequest();
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaSubmissionSendingService.sendSubmissions(programmingExercise);
     }
 
     @Test
     void testSendMultipleSubmissionBatches() {
         createTextSubmissionsForSubmissionSending(MAX_NUMBER_OF_TOTAL_PARTICIPATIONS); // 190 = almost twice the batch size (100)
         // expect two batches of submissions
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 // We cannot check IDs or similar here because the submissions are not ordered
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT));
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
     }
 
     @Test
-    void testSendSubmissionsWithFeedbackSuggestionsDisabled() {
+    void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
         textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }

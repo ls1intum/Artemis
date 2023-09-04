@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * REST controller for Athena feedback suggestions.
@@ -149,7 +150,7 @@ public class AthenaResource {
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null));
     }
 
     /**
@@ -164,7 +165,7 @@ public class AthenaResource {
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE));
     }
 
     /**
@@ -179,7 +180,7 @@ public class AthenaResource {
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get solution repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION));
     }
 
     /**
@@ -194,6 +195,6 @@ public class AthenaResource {
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
         log.debug("REST call to get test repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS);
+        return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS));
     }
 }

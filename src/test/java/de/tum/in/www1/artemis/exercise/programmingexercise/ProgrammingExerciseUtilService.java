@@ -105,6 +105,20 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * Create an example programming exercise
+     *
+     * @return the created programming exercise
+     */
+    public ProgrammingExercise createSampleProgrammingExercise() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setTitle("Title");
+        programmingExercise.setShortName("Shortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        return programmingExercise;
+    }
+
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();

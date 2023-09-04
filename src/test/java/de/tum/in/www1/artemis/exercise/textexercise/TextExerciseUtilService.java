@@ -98,17 +98,16 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Create an example text exercise with feedback suggestions enabled
+     * Create an example text exercise
      *
      * @param course The course to which the exercise belongs
      * @return the created text exercise
      */
     public TextExercise createSampleTextExercise(Course course) {
-        TextExercise textExercise = new TextExercise();
+        var textExercise = new TextExercise();
         textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         textExercise = textExerciseRepository.save(textExercise);
         return textExercise;
     }
