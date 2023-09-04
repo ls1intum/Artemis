@@ -243,22 +243,6 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        super.addWebHooksForExercise(exercise);
-        final var projectKey = exercise.getProjectKey();
-
-        // Optional webhook from the version control system to the continuous integration system
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
-        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
-        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getVcsTemplateRepositoryUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsSolutionRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsTestRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
-        }
-    }
-
-    @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
         addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }

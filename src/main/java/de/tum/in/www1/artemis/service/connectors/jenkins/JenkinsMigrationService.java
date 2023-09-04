@@ -3,9 +3,14 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.List;
 
 import javax.xml.transform.TransformerException;
 
+import org.gitlab4j.api.GitLabApi;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.ProjectHook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +20,9 @@ import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -31,10 +38,19 @@ public class JenkinsMigrationService implements CIMigrationService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
+    @Value("${artemis.continuous-integration.url}")
+    protected URL jenkinsServerUrl;
+
     private final JenkinsJobService jenkinsJobService;
 
-    public JenkinsMigrationService(JenkinsJobService jenkinsJobService) {
+    private final UrlService urlService;
+
+    private final GitLabApi gitlab;
+
+    public JenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab) {
         this.jenkinsJobService = jenkinsJobService;
+        this.urlService = new UrlService();
+        this.gitlab = gitlab;
     }
 
     @Override
@@ -51,18 +67,40 @@ public class JenkinsMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String buildPlanKey) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public void deleteBuildTriggers(String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+        removeWebHook(repositoryUrl);
     }
 
     @Override
     public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        // not needed for Jenkins
     }
 
     @Override
     public void overrideRepositoriesToCheckout(String buildPlanKey) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        // not needed for Jenkins
+    }
+
+    protected void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+        final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
+
+        try {
+            List<ProjectHook> hooks = gitlab.getProjectApi().getHooks(repositoryPath);
+            for (ProjectHook projectHook : hooks) {
+                var url = projectHook.getUrl();
+                /*
+                 * we can't use only the JenkinsServerUrl because and the buildPlanKey, as
+                 * the tests repository also has a webhook for the solution repository, so
+                 * we check if the hook contains the JenkinsServerUrl and ensure that not the artemisServerUrl
+                 */
+                if (url.contains(jenkinsServerUrl.toString()) && !url.contains(artemisServerUrl)) {
+                    gitlab.getProjectApi().deleteHook(projectHook);
+                }
+            }
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to remove webhook for " + repositoryUrl, e);
+        }
     }
 
     /**

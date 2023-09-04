@@ -28,6 +28,7 @@ public class MigrationRegistry {
         // TODO: the following line is out-commented so we can test other changes on test servers
 
         // this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
+        // this.migrationEntryMap.put(2, MigrationEntry20230904_162300.class);
     }
 
     /**

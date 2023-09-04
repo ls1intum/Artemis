@@ -13,10 +13,8 @@ import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
 @Component
@@ -32,22 +30,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final Optional<CIMigrationService> ciMigrationService;
 
-    public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<CIMigrationService> ciMigrationService) {
+    public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository, Optional<CIMigrationService> ciMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.ciMigrationService = ciMigrationService;
     }
 
@@ -126,32 +112,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         for (int i = (int) start, j = 0; i < end; i++, j = j + BATCH_SIZE) {
             Pageable pageable = PageRequest.of(i, BATCH_SIZE);
 
-            // TODO: in the unlikely case the buildPlanId is null, we could skip the template participation
-            var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} template programming exercise to migrate in batch", templateParticipationPage.getTotalElements());
-            templateParticipationPage.forEach(templateParticipation -> {
-                templateParticipation.getProgrammingExercise().setTemplateParticipation(templateParticipation);
-                migrateExercise(templateParticipation.getProgrammingExercise(), errorMap);
-            });
-
-            // TODO: in the unlikely case the buildPlanId is null, we could skip the solution participation
-            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} solution programming exercise to migrate in batch", solutionParticipationPage.getTotalElements());
-            solutionParticipationPage.forEach(solutionParticipation -> {
-                solutionParticipation.getProgrammingExercise().setSolutionParticipation(solutionParticipation);
-                migrateExercise(solutionParticipation.getProgrammingExercise(), errorMap);
-            });
-
-            var studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
-            log.info("Found {} student programming exercise to migrate in batch", studentParticipationPage.getTotalElements());
-            var urlService = new UrlService();
-            studentParticipationPage.forEach(studentParticipation -> {
-                TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-                templateParticipation.setBuildPlanId(studentParticipation.getBuildPlanId());
-                templateParticipation.setRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(studentParticipation.getVcsRepositoryUrl()));
-                studentParticipation.getProgrammingExercise().setTemplateParticipation(templateParticipation);
-                migrateExercise(studentParticipation.getProgrammingExercise(), errorMap);
-            });
+            programmingExerciseRepository.findAll(pageable).forEach(exercise -> migrateExercise(exercise, errorMap));
 
             log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, j + 1)), exerciseCount);
         }
@@ -164,66 +125,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      * @param errorMap The error map to write errors to
      */
     private void migrateExercise(ProgrammingExercise exercise, Map<ProgrammingExercise, Boolean> errorMap) {
-        if (exercise.getTemplateBuildPlanId() != null) {
-            try {
-                ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getTemplateBuildPlanId());
-            }
-            catch (Exception e) {
-                log.warn("Failed to delete template build triggers for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, true);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "assignment", exercise.getTemplateRepositoryUrl());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace template repository for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, true);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "tests", exercise.getTestRepositoryUrl());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace tests repository in template build plan for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, true);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getTemplateBuildPlanId());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace repositories in template build plan for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, true);
-            }
-        }
-        if (exercise.getSolutionBuildPlanId() != null) {
-            try {
-                ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getSolutionBuildPlanId());
-            }
-            catch (Exception e) {
-                log.warn("Failed to delete solution build triggers for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, false);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "assignment", exercise.getSolutionRepositoryUrl());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace solution repository in template build plan for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, false);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "tests", exercise.getTestRepositoryUrl());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace tests repository in solution build plan for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, false);
-            }
-            try {
-                ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getSolutionBuildPlanId());
-            }
-            catch (Exception e) {
-                log.warn("Failed to replace repositories in solution build plan for exercise {}", exercise.getId(), e);
-                errorMap.put(exercise, false);
-            }
-        }
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
         }

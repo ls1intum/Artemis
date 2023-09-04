@@ -107,7 +107,7 @@ public class BambooMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String buildPlanId) {
+    public void deleteBuildTriggers(String buildPlanId, VcsRepositoryUrl repositoryUrl) {
         List<Long> triggerIds = getAllTriggerIds(buildPlanId);
         for (var id : triggerIds) {
             deleteBuildPlanTriggerId(buildPlanId, id);
