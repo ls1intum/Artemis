@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -155,4 +157,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             WHERE p.id = :#{#participationId}
             """)
     void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
+
+    @Query("""
+                SELECT DISTINCT p
+                FROM ProgrammingExerciseStudentParticipation p
+                    WHERE p.buildPlanId IS NOT NULL
+            """)
+    Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 }

@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -42,6 +44,8 @@ public class BambooMigrationService implements CIMigrationService {
     @Value("${artemis.version-control.user}")
     private String gitUser;
 
+    private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
+
     public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -49,7 +53,7 @@ public class BambooMigrationService implements CIMigrationService {
     /**
      * Returns a list of all data-item-ids in the given html.
      *
-     * @param html respons that contains a list of items with the data-item-id attribute
+     * @param html response that contains a list of items with the data-item-id attribute
      * @return a list of all data-item-ids in the given html
      */
     private static List<Long> getDataItemIds(String html) {
@@ -107,6 +111,7 @@ public class BambooMigrationService implements CIMigrationService {
         List<Long> triggerIds = getAllTriggerIds(buildPlanId);
         for (var id : triggerIds) {
             deleteBuildPlanTriggerId(buildPlanId, id);
+            log.debug("Deleted trigger with id " + id + " for build plan " + buildPlanId);
         }
     }
 
@@ -116,9 +121,13 @@ public class BambooMigrationService implements CIMigrationService {
         Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanId, name);
 
         if (repositoryId.isEmpty()) {
-            throw new IllegalStateException("Repository " + name + " not found for build plan " + buildPlanId);
+            log.info("Repository " + name + " not found for build plan " + buildPlanId + ", will be added now");
         }
-        deleteLinkedRepository(buildPlanId, repositoryId.get());
+        else {
+            log.debug("Deleting repository " + name + " for build plan " + buildPlanId);
+            deleteLinkedRepository(buildPlanId, repositoryId.get());
+        }
+        log.debug("Adding repository " + name + " for build plan " + buildPlanId);
         addGitRepository(buildPlanId, repositoryUrl, name, credentialsId.orElseThrow());
     }
 
@@ -397,6 +406,6 @@ public class BambooMigrationService implements CIMigrationService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
     }
 }
