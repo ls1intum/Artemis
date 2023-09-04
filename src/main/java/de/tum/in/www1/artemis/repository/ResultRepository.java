@@ -29,9 +29,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
-                    SELECT r
-                    FROM Result r LEFT JOIN FETCH r.assessor
-                    WHERE r.id = :resultId
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") Long resultId);
 
@@ -56,6 +57,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT DISTINCT r
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH f.testCase
             WHERE r.completionDate =
                 (SELECT max(rr.completionDate) FROM Result rr
@@ -87,14 +89,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
-                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
