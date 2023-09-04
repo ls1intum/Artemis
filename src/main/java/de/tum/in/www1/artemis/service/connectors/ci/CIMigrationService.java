@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.ci;
 
+import java.util.List;
+
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
 /**
@@ -38,5 +41,5 @@ public interface CIMigrationService {
      *
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
      */
-    void overrideRepositoriesToCheckout(String buildPlanKey);
+    void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList);
 }

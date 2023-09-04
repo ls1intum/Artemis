@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -77,7 +78,7 @@ public class JenkinsMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void overrideRepositoriesToCheckout(String buildPlanKey) {
+    public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList) {
         // not needed for Jenkins
     }
 

@@ -23,6 +23,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 
@@ -161,6 +162,9 @@ public class BambooMigrationService implements CIMigrationService {
      * @return the id of the repository with the given name for the given build plan
      */
     private Optional<Long> getConnectedRepositoryId(String buildPlanId, String name) {
+        if ((name == null || name.isEmpty()) || (buildPlanId == null || buildPlanId.isEmpty())) {
+            return Optional.empty();
+        }
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanId);
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainRepository.action";
@@ -171,7 +175,8 @@ public class BambooMigrationService implements CIMigrationService {
         var ids = getDataItemIds(html);
         for (var id : ids) {
             var repositoryName = getRepositoryNameById(html, id);
-            if (repositoryName.isPresent() && repositoryName.get().equals(name)) {
+            // old repositories have the name "Assignment", new ones "assignment"
+            if (repositoryName.isPresent() && repositoryName.get().equalsIgnoreCase(name)) {
                 return Optional.of(id);
             }
         }
@@ -179,18 +184,28 @@ public class BambooMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void overrideRepositoriesToCheckout(String buildPlanKey) {
+    public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList) {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
         Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
+
         if (testRepositoryId.isEmpty()) {
-            // TODO: in old build plans, we used "Assignment", it could be the case, that there are still build plans with this old name, so we should take this into account here
-            // ideally, those get changed to "assigment", then we can remove the handling of both variants
-            log.error("Repository tests not found for build plan " + buildPlanKey);
+            log.error("Repository tests not found for build plan {}", buildPlanKey);
         }
         if (assignmentRepositoryId.isEmpty()) {
-            log.error("Repository assignment not found for build plan " + buildPlanKey);
+            log.error("Repository assignment not found for build plan {}", buildPlanKey);
         }
-        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.orElseThrow(), assignmentRepositoryId.orElseThrow());
+
+        Map<String, Long> auxiliaryRepositoryIds = new HashMap<>();
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoryList) {
+            Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanKey, auxiliaryRepository.getName());
+            if (repositoryId.isPresent()) {
+                auxiliaryRepositoryIds.put(auxiliaryRepository.getName(), repositoryId.get());
+            }
+            else {
+                log.error("Repository {} not found for build plan {}", auxiliaryRepository.getName(), buildPlanKey);
+            }
+        }
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.orElseThrow(), assignmentRepositoryId.orElseThrow(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
     }
 
     /**
@@ -323,11 +338,14 @@ public class BambooMigrationService implements CIMigrationService {
      * Sets the repositories to be checked out in the first task (-JOB1) of the given build plan.
      * testsRepositoryId is the id of the repository for the tests, assignmentRepositoryId is the id of the repository for the assignment.
      *
-     * @param buildPlanId            The key of the build plan, e.g. 'EIST16W1-BASE'.
-     * @param testsRepositoryId      The id of the repository for the tests checked out in the root folder
-     * @param assignmentRepositoryId The id of the repository for the assignment, checked out in the folder 'assignment'
+     * @param buildPlanId             The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @param testsRepositoryId       The id of the repository for the tests checked out in the root folder
+     * @param assignmentRepositoryId  The id of the repository for the assignment, checked out in the folder 'assignment'
+     * @param assignmentRepositoryIds The ids of the auxiliary repositories, checked out in the folder specified in the AuxiliaryRepository object
+     * @param auxiliaryRepositories   The auxiliary repositories to be checked out
      */
-    private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId) {
+    private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Map<String, Long> assignmentRepositoryIds,
+            List<AuxiliaryRepository> auxiliaryRepositories) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanId + "-JOB1");
 
@@ -344,6 +362,18 @@ public class BambooMigrationService implements CIMigrationService {
         parameters.add("selectedRepository_1", assignmentRepositoryId.toString());
         parameters.add("selectFields", "selectedRepository_1");
         parameters.add("checkoutDir_1", "assignment");
+        int index = 2;
+        for (var auxiliaryRepo : auxiliaryRepositories) {
+            Long id = assignmentRepositoryIds.get(auxiliaryRepo.getName());
+            if (id == null) {
+                // should not happen, if it does, error has been logged before calling this method
+                continue;
+            }
+            parameters.add("selectedRepository_" + index, id.toString());
+            parameters.add("selectFields", "selectedRepository_" + index);
+            parameters.add("checkoutDir_" + index, auxiliaryRepo.getCheckoutDirectory());
+            index++;
+        }
         parameters.add("checkBoxFields", "cleanCheckout");
         parameters.add("taskId", "1");
 
