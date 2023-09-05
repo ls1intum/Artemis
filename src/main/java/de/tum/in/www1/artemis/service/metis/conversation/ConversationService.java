@@ -447,7 +447,7 @@ public class ConversationService {
      * @return a stream of channels without channels belonging to unreleased lectures/exercises/exams
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
-        return channels.filter(channel -> isChannelVisibleToStudents(channel));
+        return channels.filter(this::isChannelVisibleToStudents);
     }
 
     /**
@@ -469,24 +469,6 @@ public class ConversationService {
             return channel.getExam().isVisibleToStudents();
         }
         return true;
-    }
-
-    private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
-
-        if (participation.isEmpty()) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
-
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
-        }
-        else {
-            return participation.get();
-        }
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
