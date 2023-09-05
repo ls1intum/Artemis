@@ -44,7 +44,6 @@ export class ManualTextblockSelectionComponent {
             textBlock.startIndex = selectedWords[0].index;
             textBlock.endIndex = selectedWords[1].index + selectedWords[1].word.length;
             textBlock.setTextFromSubmission(this.submission);
-            textBlock.computeId();
             const existingRef = this.textBlockRefs.find((ref) => ref.block?.id === textBlock.id);
 
             if (existingRef) {
