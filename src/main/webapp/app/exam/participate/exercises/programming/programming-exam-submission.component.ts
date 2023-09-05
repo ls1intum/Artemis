@@ -142,7 +142,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Intended only for the case when the online editor is disabled (otherwise, we can update on CommitState changes)
      */
     onBuildComplete() {
-        if (!this.exercise.allowOnlineEditor && this.exercise.allowOfflineIde) {
+        if (this.exercise.allowOnlineEditor || !this.exercise.allowOfflineIde) {
             return;
         }
         // this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
