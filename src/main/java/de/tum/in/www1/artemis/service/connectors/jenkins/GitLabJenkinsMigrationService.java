@@ -28,13 +28,13 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 /**
- * Services for executing migration tasks for Jenkins.
+ * Services for executing migration tasks for Jenkins and GitLab
  */
 @Service
 @Profile("jenkins")
-public class JenkinsMigrationService implements CIMigrationService {
+public class GitLabJenkinsMigrationService implements CIMigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(JenkinsMigrationService.class);
+    private final Logger log = LoggerFactory.getLogger(GitLabJenkinsMigrationService.class);
 
     @Value("${server.url}")
     private String artemisServerUrl;
@@ -48,7 +48,7 @@ public class JenkinsMigrationService implements CIMigrationService {
 
     private final GitLabApi gitlab;
 
-    public JenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab) {
+    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab) {
         this.jenkinsJobService = jenkinsJobService;
         this.urlService = new UrlService();
         this.gitlab = gitlab;
