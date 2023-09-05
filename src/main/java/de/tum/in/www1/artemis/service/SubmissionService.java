@@ -168,7 +168,7 @@ public class SubmissionService {
         return submissions;
     }
 
-    private List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+    protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
@@ -230,7 +230,16 @@ public class SubmissionService {
      */
     public Optional<Submission> getRandomAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+        return getRandomAssessableSubmission(assessableSubmissions);
+    }
 
+    /**
+     * Given a list of submissions, find a random one.
+     *
+     * @param assessableSubmissions the list of submissions to choose from
+     * @return a random submission or an empty Optional if no submission was passed
+     */
+    public Optional<Submission> getRandomAssessableSubmission(List<Submission> assessableSubmissions) {
         return assessableSubmissions.isEmpty() ? Optional.empty() : Optional.of(assessableSubmissions.get(ThreadLocalRandom.current().nextInt(assessableSubmissions.size())));
     }
 

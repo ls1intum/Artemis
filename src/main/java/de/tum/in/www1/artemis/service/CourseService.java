@@ -483,11 +483,10 @@ public class CourseService {
 
     /**
      * Add multiple users to the course so that they can access it
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: enrollment based on other user attributes (e.g. name) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId    the id of the course
      * @param studentDTOs the list of students (with at least registration number)
@@ -503,10 +502,7 @@ public class CourseService {
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            var email = studentDto.getEmail();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }

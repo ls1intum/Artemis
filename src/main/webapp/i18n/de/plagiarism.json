@@ -15,6 +15,7 @@
             "notSelected": "Kein Plagiat ausgewählt",
             "unknownStudent": "Unbekannt",
             "casesFiltered": "Fälle sind gefiltert!",
+            "casesTrimmed": "Nur 100 Fälle mit der höchsten Ähnlichkeit werden angezeigt!",
             "generateJplagReport": "JPlag Report generieren",
             "noFileSelected": "Keine Datei ausgewählt",
             "binaryFileNotRendered": "Binäre Datei nicht angezeigt.",

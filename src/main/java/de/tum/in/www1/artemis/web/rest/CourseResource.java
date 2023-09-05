@@ -867,7 +867,7 @@ public class CourseResource {
             groups.add(course.getInstructorGroupName());
         }
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+        var originalPage = userRepository.searchAllByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
@@ -1193,16 +1193,15 @@ public class CourseResource {
 
     /**
      * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the student in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId    the id of the course
-     * @param studentDtos the list of students (with at least registration number) who should get access to the course
+     * @param studentDtos the list of students (with at one unique user identifier) who should get access to the course
      * @param courseGroup the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
-     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
      */
     @PostMapping("courses/{courseId}/{courseGroup}")
     @EnforceAtLeastInstructor
