@@ -23,11 +23,13 @@ export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
 }
 
 export function newTextExercise(artemis, exerciseGroup, courseID) {
+    const exerciseName = nextAlphanumeric(5);
     const textExercise = {
         maxPoints: 1,
-        title: 'Text K6 ' + nextAlphanumeric(5),
+        title: 'Text K6 ' + exerciseName,
         type: 'text',
         mode: 'INDIVIDUAL',
+        channelName: 'exercise-' + exerciseName,
     };
 
     if (courseID) {

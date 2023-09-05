@@ -99,11 +99,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (!this.isExamMode) {
-                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channelName == undefined) {
-                            this.fileUploadExercise.channelName = '';
-                        }
-                    }
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),
