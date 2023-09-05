@@ -26,7 +26,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     readonly ExerciseType = ExerciseType;
     readonly SubmissionVersion = SubmissionVersion;
 
-    // determines if component was once drawn visited
+    // stores if a page component has already been visited (true) or not (false)
+    // this is an array because the exam-timeline uses a page component for each exercise
     pageComponentVisited: boolean[];
     selectedTimestamp: number;
     // Options for the ngx-slider
@@ -211,7 +212,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         }
 
         if (!exerciseChange.submission) {
-            // only change the submission if the exercise has changed
+            // only change the submission if the exercise has changed, prevents unnecessary updates if you press the same button multiple times on the navigation bar
             if (exerciseChange.exercise !== this.currentExercise) {
                 exerciseChange.submission = this.findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exerciseChange.exercise!);
             }

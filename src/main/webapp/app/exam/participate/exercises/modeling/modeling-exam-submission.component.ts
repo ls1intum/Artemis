@@ -129,7 +129,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      */
     private async updateViewFromSubmissionVersion() {
         if (this.submissionVersion?.content) {
-            // we need these string operations because we store the string like that in the database
+            // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
             // if we do not wait here for apollon, the redux store might be undefined

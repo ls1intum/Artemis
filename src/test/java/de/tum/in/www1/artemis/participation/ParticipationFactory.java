@@ -257,6 +257,14 @@ public class ParticipationFactory {
         return result;
     }
 
+    /**
+     * Generates a submission version for the given submission for the given user with the given content.
+     *
+     * @param content    the content of the submission version
+     * @param submission the submission, the submission version belongs to
+     * @param user       the user the submission version belongs to
+     * @return the generated submission version
+     */
     public static SubmissionVersion generateSubmissionVersion(String content, Submission submission, User user) {
         SubmissionVersion submissionVersion = new SubmissionVersion();
         submissionVersion.setContent(content);
