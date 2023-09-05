@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -31,7 +31,7 @@ import {
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -79,7 +79,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     ngOnInit(): void {
         this.updateDomain();
-        this.initSubmissionCountAndLock();
+        this.setSubmissionCountAndLockIfNeeded();
+    }
+
+    ngOnChanges(): void {
+        this.setSubmissionCountAndLockIfNeeded();
     }
 
     onActivate() {
@@ -97,20 +101,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     /**
-     * Sets the initial value of the submission count and repository lock based on the student participation.
+     * Sets the submission count and lock based on the student participation.
      */
-    initSubmissionCountAndLock() {
-        this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
-        this.repositoryIsLocked = this.studentParticipation.locked ?? false;
-    }
-
-    /**
-     * Sets the submission count to the given value. Enables the repository lock based on the recent submission.
-     * @param count the new value of submission count
-     */
-    setSubmissionCountAndLockIfNeeded(count: number | undefined) {
-        this.submissionCount = count ?? this.submissionCount;
-        this.repositoryIsLocked = this.codeEditorContainer?.buildOutput?.isRepositoryLocked ?? this.repositoryIsLocked;
+    setSubmissionCountAndLockIfNeeded() {
+        this.submissionCount = this.studentParticipation.submissionCount ?? this.submissionCount;
+        this.repositoryIsLocked = this.studentParticipation.locked ?? this.repositoryIsLocked;
     }
 
     /**
@@ -124,7 +119,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 this.studentParticipation.submissions[0].submitted = true;
                 this.studentParticipation.submissions[0].isSynced = true;
-                this.setSubmissionCountAndLockIfNeeded(this.codeEditorContainer?.buildOutput?.submissionCount);
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
@@ -135,18 +129,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         if (this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
             this.studentParticipation.submissions[0].isSynced = false;
         }
-    }
-
-    /**
-     * Called when the build is completed after a new commit.
-     * Intended only for the case when the online editor is disabled (otherwise, we can update on CommitState changes)
-     */
-    onBuildComplete() {
-        if (this.exercise.allowOnlineEditor || !this.exercise.allowOfflineIde) {
-            return;
-        }
-        // this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
-        // FIXME: this.studentParticipation contains the old submissionCount value here -> can't update submissionCount
     }
 
     hasUnsavedChanges(): boolean {
