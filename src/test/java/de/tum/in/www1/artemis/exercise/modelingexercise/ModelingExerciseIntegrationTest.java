@@ -126,13 +126,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_asTA() throws Exception {
-        Channel channel = new Channel();
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setExercise(classExercise);
-        channelRepository.save(channel);
+        exerciseUtilService.addChannelToExercise(classExercise);
 
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(receivedModelingExercise);
@@ -160,13 +154,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
         feedbackRepository.save(feedback);
-        Channel channel = new Channel();
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setExercise(classExercise);
-        channelRepository.save(channel);
+
+        exerciseUtilService.addChannelToExercise(classExercise);
+
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
 
         assertThat(receivedModelingExercise.isGradingInstructionFeedbackUsed()).isTrue();
