@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
@@ -35,13 +35,10 @@ export class TutorLeaderboardComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        if (this.exercise && this.exercise.course) {
-            this.course = this.exercise.course;
-            this.isExerciseDashboard = true;
-        } else if (this.exercise && this.exam && this.exam.course) {
-            this.course = this.exam.course;
-            this.isExerciseDashboard = true;
+        if (this.exercise) {
+            this.course = getCourseFromExercise(this.exercise);
         }
+        this.isExerciseDashboard = !!(this.exercise && this.course);
         this.isExamMode = !!this.exam;
         this.sortRows();
     }
