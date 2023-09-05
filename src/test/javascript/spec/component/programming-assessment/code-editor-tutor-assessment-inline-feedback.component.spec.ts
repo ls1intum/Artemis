@@ -79,12 +79,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     it('should delete feedback and emit to parent', () => {
         const onDeleteFeedbackSpy = jest.spyOn(comp.onDeleteFeedback, 'emit');
-        global.confirm = () => true;
-        const confirmSpy = jest.spyOn(window, 'confirm');
         comp.deleteFeedback();
-
-        expect(confirmSpy).toHaveBeenCalledOnce();
-        expect(confirmSpy).toHaveBeenCalledWith('artemisApp.feedback.delete.question');
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);

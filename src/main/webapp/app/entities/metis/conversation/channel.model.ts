@@ -46,6 +46,7 @@ export class ChannelDTO extends ConversationDto {
     public isArchived?: boolean;
     public isChannelModerator?: boolean;
     public hasChannelModerationRights?: boolean;
+    public isCourseWide?: boolean;
 
     public tutorialGroupId?: number;
 

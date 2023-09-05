@@ -533,7 +533,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             result.setRated(true);
         }
         else {
-            result.setRatedIfNotExceeded(dueDate.orElse(null), result.getSubmission().getSubmissionDate());
+            result.setRatedIfNotAfterDueDate();
         }
 
         result.setCompletionDate(ZonedDateTime.now());
