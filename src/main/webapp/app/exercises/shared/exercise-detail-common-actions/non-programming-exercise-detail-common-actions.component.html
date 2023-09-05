@@ -1,19 +1,19 @@
 <ng-container *ngIf="exercise">
     <div>
         <!-- Edit -->
-        <a *ngIf="exercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="exercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1 mb-2">
             <fa-icon [icon]="faWrench"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"> Edit</span>
         </a>
 
         <!-- Participations  -->
-        <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1 mb-2">
             <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
 
         <!-- Teams -->
-        <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1 mb-2">
             <fa-icon [icon]="faUsers"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
         </a>
@@ -24,21 +24,20 @@
                 exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments
             "
             [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id"
-            class="btn btn-info btn-sm me-1"
-            style="margin-bottom: 10px"
+            class="btn btn-info btn-sm me-1 mb-2"
         >
             <fa-icon [icon]="faUserCheck"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
         </a>
 
         <!-- Scores -->
-        <a *ngIf="course && exercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="course && exercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1 mb-2">
             <fa-icon [icon]="faTable"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
         </a>
 
         <!--Statistics -->
-        <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1 mb-2">
             <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title">Statistics</span>
         </a>
@@ -47,8 +46,7 @@
         <a
             *ngIf="exercise.isAtLeastEditor && (exercise.type == 'modeling' || exercise.type == 'text')"
             [routerLink]="baseResource + 'example-submissions'"
-            class="btn btn-success btn-sm me-1"
-            style="margin-bottom: 10px"
+            class="btn btn-success btn-sm me-1 mb-2"
             id="example-submissions-button"
         >
             <fa-icon [icon]="faBook"></fa-icon>
