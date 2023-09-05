@@ -32,6 +32,7 @@ import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-cre
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ConversationAcceptCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/accept/conversation-accept-code-of-conduct-dialog.component';
 
 const routes: Routes = [
     {
@@ -70,6 +71,7 @@ const routes: Routes = [
         ConversationAddUsersDialogComponent,
         ConversationAddUsersFormComponent,
         ConversationMembersComponent,
+        ConversationAcceptCodeOfConductDialogComponent,
         ConversationCodeOfConductDialogComponent,
         ConversationDetailDialogComponent,
         ConversationInfoComponent,

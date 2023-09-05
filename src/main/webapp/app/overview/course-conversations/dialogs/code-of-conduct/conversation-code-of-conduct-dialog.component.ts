@@ -3,8 +3,12 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 
 @Component({
     selector: 'jhi-conversation-code-of-conduct-dialog',
-    template: ` <div class="modal-body" [innerHTML]="codeOfConduct | htmlForMarkdown"></div> `,
+    templateUrl: './conversation-code-of-conduct-dialog.component.html',
 })
 export class ConversationCodeOfConductDialogComponent extends AbstractDialogComponent {
     @Input() codeOfConduct: string;
+
+    clear() {
+        this.close();
+    }
 }

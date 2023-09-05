@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
 import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ConversationAcceptCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/accept/conversation-accept-code-of-conduct-dialog.component';
 import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/conversation-code-of-conduct-dialog.component';
 
 @Component({
@@ -19,7 +20,7 @@ import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-co
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
     course?: Course;
     isLoading = false;
@@ -100,11 +101,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
         }
+
+        this.openAcceptDialog();
     }
 
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+    }
+
+    openAcceptDialog() {
+        const modalRef: NgbModalRef = this.modalService.open(ConversationAcceptCodeOfConductDialogComponent, { backdrop: 'static', size: 'xl' });
+        modalRef.componentInstance.codeOfConduct = this.course?.courseInformationSharingMessagingCodeOfConduct;
     }
 
     openDialog() {
