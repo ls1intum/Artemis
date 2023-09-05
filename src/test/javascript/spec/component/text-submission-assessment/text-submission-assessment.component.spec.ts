@@ -121,16 +121,16 @@ describe('TextSubmissionAssessmentComponent', () => {
                 text: 'First text.',
                 startIndex: 0,
                 endIndex: 11,
-                submission,
-            } as TextBlock,
+                submissionId: submission.id,
+            } as any as TextBlock,
             {
                 id: 'second text id',
                 text: 'Second text.',
                 startIndex: 12,
                 endIndex: 24,
                 type: TextBlockType.MANUAL,
-                submission,
-            } as TextBlock,
+                submissionId: submission.id,
+            } as any as TextBlock,
         ];
         submission.participation!.submissions = [submission];
         submission.participation!.results = [getLatestSubmissionResult(submission)!];
@@ -453,8 +453,8 @@ describe('TextSubmissionAssessmentComponent', () => {
             startIndex: 19,
             endIndex: 24,
             type: TextBlockType.MANUAL,
-            submission,
-        } as TextBlock);
+            submissionId: submission.id,
+        } as any as TextBlock);
 
         getLatestSubmissionResult(submission)?.feedbacks?.push({
             id: 3,
