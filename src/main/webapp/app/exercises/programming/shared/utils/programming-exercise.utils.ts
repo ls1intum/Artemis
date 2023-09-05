@@ -42,6 +42,9 @@ export const createCommitUrl = (
         const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (studentParticipation.repositoryUrl) {
             repoSlugPostfix = studentParticipation.participantIdentifier;
+            if (studentParticipation.testRun) {
+                repoSlugPostfix = 'practice-' + repoSlugPostfix;
+            }
         }
     } else if (participation?.type === ParticipationType.TEMPLATE) {
         // In case of a test submisson, we need to use the test repository

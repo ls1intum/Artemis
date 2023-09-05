@@ -125,7 +125,7 @@ public class LectureUtilService {
     }
 
     public Channel addLectureChannel(Lecture lecture) {
-        Channel channel = ConversationFactory.generateChannel(lecture.getCourse());
+        Channel channel = ConversationFactory.generateCourseWideChannel(lecture.getCourse());
         channel.setLecture(lecture);
         return conversationRepository.save(channel);
     }
