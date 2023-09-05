@@ -70,12 +70,26 @@
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
-    <h4 class="mb-1">
+    <h4 class="mb-3">
         <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
         <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
     </h4>
     <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true"></jhi-exercise-details-student-actions>
-    <div style="display: flex; justify-content: flex-end">
+    <div class="d-flex gap-3 my-3 ms-1 align-items-center">
+        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined" class="flex-fill">
+            <span>
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                }}
+            </span>
+            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
+                }}
+            </span>
+        </div>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="studentParticipation"
             [exercise]="exercise"
@@ -83,6 +97,7 @@
             [showBadge]="true"
             [participation]="studentParticipation"
             [personalParticipation]="true"
+            (onParticipationChange)="onBuildComplete()"
             class="me-2"
         ></jhi-updating-result>
     </div>

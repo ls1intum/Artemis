@@ -137,6 +137,18 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         }
     }
 
+    /**
+     * Called when the build is completed after a new commit.
+     * Intended only for the case when the online editor is disabled (otherwise, we can update on CommitState changes)
+     */
+    onBuildComplete() {
+        if (!this.exercise.allowOnlineEditor && this.exercise.allowOfflineIde) {
+            return;
+        }
+        // this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
+        // FIXME: this.studentParticipation contains the old submissionCount value here -> can't update submissionCount
+    }
+
     hasUnsavedChanges(): boolean {
         if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
             return false;
