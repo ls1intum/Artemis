@@ -66,7 +66,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
                         tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
                         tap(({ submission }) => {
                             if (submission?.participation?.submissionCount !== undefined) {
-                                this.submissionCountSubject.next(submission?.participation?.submissionCount!);
+                                this.submissionCountSubject.next(submission.participation.submissionCount!);
                             }
                             if ((submission?.participation as ProgrammingExerciseStudentParticipation)?.locked) {
                                 this.repositoryLockedSubject.next();
