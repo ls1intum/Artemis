@@ -38,17 +38,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     isBuilding: boolean;
     rawBuildLogs = new BuildLogEntryArray();
     result?: Result;
-    submissionCount: number;
-    isRepositoryLocked = false;
 
     /** Resizable constants **/
     resizableMinHeight = 150;
     interactResizable: Interactable;
 
     private resultSubscription: Subscription;
-    private buildStateSubscription: Subscription;
-    private submissionCountSubscription: Subscription;
-    private repositoryLockSubscription: Subscription;
+    private submissionSubscription: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;
@@ -142,19 +138,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * Subscribe to incoming submissions, translating to the state isBuilding = true (a pending submission without result exists) vs = false (no pending submission).
      */
     private setupSubmissionWebsocket() {
-        this.buildStateSubscription = this.submissionService
+        this.submissionSubscription = this.submissionService
             .getBuildingState()
             .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
-            .subscribe();
-
-        this.submissionCountSubscription = this.submissionService
-            .getSubmissionCount()
-            .pipe(tap((submissionCount: number) => (this.submissionCount = submissionCount)))
-            .subscribe();
-
-        this.repositoryLockSubscription = this.submissionService
-            .getIsRepositoryLocked()
-            .pipe(tap(() => (this.isRepositoryLocked = true)))
             .subscribe();
     }
 
@@ -241,14 +227,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        if (this.buildStateSubscription) {
-            this.buildStateSubscription.unsubscribe();
-        }
-        if (this.submissionCountSubscription) {
-            this.submissionCountSubscription.unsubscribe();
-        }
-        if (this.repositoryLockSubscription) {
-            this.repositoryLockSubscription.unsubscribe();
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
         }
     }
 }
