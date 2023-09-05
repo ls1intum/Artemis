@@ -60,7 +60,7 @@ describe('ChannelFormComponent', () => {
         checkFormIsInvalid();
 
         setFormValid();
-        setName('too-long-channel-name-should-be-rejected');
+        setName('long-channel-with-31-characters');
         checkFormIsInvalid();
     }));
 

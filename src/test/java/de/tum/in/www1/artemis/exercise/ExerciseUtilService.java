@@ -365,7 +365,7 @@ public class ExerciseUtilService {
     }
 
     public Channel addChannelToExercise(Exercise exercise) {
-        Channel channel = ConversationFactory.generateChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
+        Channel channel = ConversationFactory.generateCourseWideChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
         channel.setExercise(exercise);
         return channelRepository.save(channel);
     }
