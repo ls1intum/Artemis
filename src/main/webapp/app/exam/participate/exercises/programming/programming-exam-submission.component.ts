@@ -79,7 +79,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     ngOnInit(): void {
         this.updateDomain();
-        this.initSubmissionCount();
+        this.initSubmissionCountAndLock();
     }
 
     onActivate() {
@@ -97,9 +97,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     /**
-     * Sets the initial value of the submission count based on the student participation.
+     * Sets the initial value of the submission count and repository lock based on the student participation.
      */
-    initSubmissionCount() {
+    initSubmissionCountAndLock() {
         this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
         this.repositoryIsLocked = this.studentParticipation.locked ?? false;
     }
