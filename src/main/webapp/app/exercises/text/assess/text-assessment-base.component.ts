@@ -143,7 +143,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
             newRef.block.startIndex = startIndex;
             newRef.block.endIndex = endIndex;
             newRef.block.setTextFromSubmission(submission!);
-            newRef.block.computeId();
         }
         textBlockRefs.push(newRef);
     }

@@ -488,4 +488,22 @@ public class ConversationService {
             return participation.get();
         }
     }
+
+    private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+
+        if (participation.isEmpty()) {
+            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+        }
+        else {
+            return participation.get();
+        }
+    }
 }
