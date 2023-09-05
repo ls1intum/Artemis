@@ -72,6 +72,11 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         }
     }
 
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     */
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
         return this.http.get(`${this.resourceUrl}${participationId}/files-content/${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
@@ -81,6 +86,11 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             }),
         );
     }
+
+    /**
+     * Get the repository files with content for a given participation id at a specific commit hash.
+     * @param participationId of the participation to get the commit infos for
+     */
     retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${participationId}/commits-info`);
     }

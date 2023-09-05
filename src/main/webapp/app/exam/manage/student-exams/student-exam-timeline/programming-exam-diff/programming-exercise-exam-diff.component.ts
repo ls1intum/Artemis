@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -13,7 +13,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { Observable, Subject, debounceTime, take } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 
 @Component({
@@ -21,7 +21,7 @@ import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/s
     templateUrl: './programming-exercise-exam-diff.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExerciseExamDiffComponent }],
 })
-export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit {
+export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent implements OnInit, OnDestroy {
     @Input() exercise: ProgrammingExercise;
     @Input() previousSubmission: ProgrammingSubmission | undefined;
     @Input() currentSubmission: ProgrammingSubmission;
@@ -34,6 +34,8 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
     addedLineCount: number;
     removedLineCount: number;
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+
+    private exerciseIdSubscription: Subscription;
 
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
@@ -51,7 +53,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
 
     ngOnInit() {
         // we subscribe to the exercise id because this allows us to avoid reloading the diff report every time the user switches between submission timestamps
-        this.exerciseIdSubject.pipe(debounceTime(200)).subscribe(() => {
+        this.exerciseIdSubscription = this.exerciseIdSubject.pipe(debounceTime(200)).subscribe(() => {
             // we cannot use a tuple of the ids as key because they are only compared by reference, so we have to use this workaround with a string
             const key = this.calculateMapKey();
             if (this.cachedDiffReports.has(key)) {
@@ -61,6 +63,10 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
                 this.loadGitDiffReport();
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this.exerciseIdSubscription?.unsubscribe();
     }
 
     loadGitDiffReport() {

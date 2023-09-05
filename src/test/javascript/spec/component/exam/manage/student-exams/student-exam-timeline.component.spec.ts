@@ -239,7 +239,7 @@ describe('Student Exam Timeline Component', () => {
         (currentSubmission: ProgrammingSubmission) => {
             component.programmingSubmissions = [programmingSubmission1, programmingSubmission2, programmingSubmission3];
             const exercise = { id: 1 } as ProgrammingExercise;
-            const actualPreviousSubmission = component.findPreviousSubmission(exercise, currentSubmission);
+            const actualPreviousSubmission = component.findPreviousProgrammingSubmission(exercise, currentSubmission);
             if (currentSubmission.id === 1) {
                 expect(actualPreviousSubmission).toBeUndefined();
             }

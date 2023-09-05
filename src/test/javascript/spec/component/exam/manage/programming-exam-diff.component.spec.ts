@@ -105,7 +105,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.cachedDiffReports = cachedDiffReports;
         component.ngOnInit();
         component.exerciseIdSubject.next(1);
-        //tick 200 is needed because the observable uses debounceTime(200)
+        // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
         expect(component.exercise.gitDiffReport).toEqual(expectedReport);
         expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
         component.ngOnInit();
         component.exerciseIdSubject.next(1);
-        //tick 200 is needed because the observable uses debounceTime(200)
+        // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
         expect(component.exercise.gitDiffReport).toEqual(report);
         expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);

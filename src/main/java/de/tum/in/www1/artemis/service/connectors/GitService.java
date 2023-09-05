@@ -1390,14 +1390,12 @@ public class GitService {
     public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
 
-        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true)) {
-            try (var git = new Git(repo)) {
-                var commits = git.log().call();
-                commits.forEach(commit -> {
-                    var commitInfo = CommitInfoDTO.of(commit);
-                    commitInfos.add(commitInfo);
-                });
-            }
+        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true); var git = new Git(repo)) {
+            var commits = git.log().call();
+            commits.forEach(commit -> {
+                var commitInfo = CommitInfoDTO.of(commit);
+                commitInfos.add(commitInfo);
+            });
         }
         return commitInfos;
     }

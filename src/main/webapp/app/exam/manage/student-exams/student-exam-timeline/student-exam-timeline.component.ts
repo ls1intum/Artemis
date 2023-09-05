@@ -119,27 +119,30 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * Programming exercises do not support submission versions and therefore, need to be handled differently.
      */
     private updateProgrammingExerciseView() {
-        const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent;
+        const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent | undefined;
         if (activeProgrammingComponent) {
             activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
             activeProgrammingComponent.exercise = this.currentExercise!;
             activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
-            activeProgrammingComponent.previousSubmission = this.findPreviousSubmission(this.currentExercise!, this.currentSubmission!);
+            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!);
             activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
             activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
         }
     }
 
-    findPreviousSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
+    findPreviousProgrammingSubmission(currentExercise: Exercise, currentSubmission: ProgrammingSubmission): ProgrammingSubmission | undefined {
         const comparisonTimestamp: dayjs.Dayjs = currentSubmission.submissionDate!;
-        let smallestDiff = Number.MAX_VALUE;
+        let smallestDiff = Infinity;
         let correspondingSubmission: ProgrammingSubmission | undefined;
-        for (let i = 0; i < this.programmingSubmissions.length; i++) {
-            const submission = this.programmingSubmissions[i];
-            const diff = Math.abs(submission.submissionDate!.diff(comparisonTimestamp));
-            if (submission.submissionDate!.isBefore(comparisonTimestamp) && diff < smallestDiff && submission.participation?.exercise?.id === currentExercise.id) {
+        for (const programmingSubmission of this.programmingSubmissions) {
+            const diff = Math.abs(programmingSubmission.submissionDate!.diff(comparisonTimestamp));
+            if (
+                programmingSubmission.submissionDate!.isBefore(comparisonTimestamp) &&
+                diff < smallestDiff &&
+                programmingSubmission.participation?.exercise?.id === currentExercise.id
+            ) {
                 smallestDiff = diff;
-                correspondingSubmission = submission;
+                correspondingSubmission = programmingSubmission;
             }
         }
         return correspondingSubmission;
@@ -293,7 +296,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         } else if (this.currentExercise?.type === ExerciseType.FILE_UPLOAD) {
             this.updateFileUploadExerciseView();
         } else {
-            const activePageComponent = this.activePageComponent as ExamSubmissionComponent;
+            const activePageComponent = this.activePageComponent as ExamSubmissionComponent | undefined;
             activePageComponent?.setSubmissionVersion(this.currentSubmission as SubmissionVersion);
         }
     }

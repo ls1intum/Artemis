@@ -1,15 +1,16 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-git-diff-report-modal',
     templateUrl: './git-diff-report-modal.component.html',
 })
-export class GitDiffReportModalComponent implements OnInit {
+export class GitDiffReportModalComponent implements OnInit, OnDestroy {
     @Input() report: ProgrammingExerciseGitDiffReport;
     @Input() diffForTemplateAndSolution = true;
     @Input() cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
@@ -18,7 +19,10 @@ export class GitDiffReportModalComponent implements OnInit {
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
 
-    title: string;
+    private templateRepoFilesSubscription: Subscription;
+    private solutionRepoFilesSubscription: Subscription;
+    private participationRepoFilesAtLeftCommitSubscription: Subscription;
+    private participationRepoFilesAtRightCommitSubscription: Subscription;
 
     constructor(
         protected activeModal: NgbActiveModal,
@@ -35,13 +39,20 @@ export class GitDiffReportModalComponent implements OnInit {
         }
     }
 
+    ngOnDestroy(): void {
+        this.templateRepoFilesSubscription?.unsubscribe();
+        this.solutionRepoFilesSubscription?.unsubscribe();
+        this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
+        this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
+    }
+
     private loadFilesForTemplateAndSolution() {
         this.fetchTemplateRepoFiles();
         this.fetchSolutionRepoFiles();
     }
 
     private fetchSolutionRepoFiles() {
-        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
+        this.solutionRepoFilesSubscription = this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
             next: (response: Map<string, string>) => {
                 this.rightCommitFileContentByPath = response;
             },
@@ -68,7 +79,7 @@ export class GitDiffReportModalComponent implements OnInit {
     }
 
     private fetchParticipationRepoFilesAtLeftCommit() {
-        this.programmingExerciseParticipationService
+        this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
@@ -103,7 +114,7 @@ export class GitDiffReportModalComponent implements OnInit {
 
     private fetchTemplateRepoFiles() {
         const key = this.calculateTemplateMapKey();
-        this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
+        this.templateRepoFilesSubscription = this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
             next: (response: Map<string, string>) => {
                 this.leftCommitFileContentByPath = response;
                 this.cachedRepositoryFiles.set(key, response);
@@ -116,7 +127,7 @@ export class GitDiffReportModalComponent implements OnInit {
     }
 
     private fetchParticipationRepoFilesAtRightCommit() {
-        this.programmingExerciseParticipationService
+        this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForRightCommit!, this.report.rightCommitHash!)
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {

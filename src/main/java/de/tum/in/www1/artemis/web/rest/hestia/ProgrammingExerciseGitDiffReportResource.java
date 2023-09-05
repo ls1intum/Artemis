@@ -81,6 +81,9 @@ public class ProgrammingExerciseGitDiffReportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         var submission1 = submissionRepository.findById(submissionId1).orElseThrow();
         var submission2 = submissionRepository.findById(submissionId2).orElseThrow();
+        // If either of the two submissions does not belong to the exercise, throw an exception because we do not want to support this for now and while the git diff calucation
+        // would support that,
+        // it would lead to confusing results displayed in the client because the client interface hasn't been designed for this use case.
         if (!submission1.getParticipation().getExercise().getId().equals(exerciseId) || !submission2.getParticipation().getExercise().getId().equals(exerciseId)) {
             throw new IllegalArgumentException("The submissions do not belong to the exercise");
         }
