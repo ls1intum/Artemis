@@ -218,26 +218,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     }
 
     /**
-     * Maps a grade point to a valid grade step within the grading scale or throws an exception if no match was found.
-     * The percentage is calculated by using the given points and the max points from the grading scale.
-     *
-     * @param points       the grade points to be mapped
-     * @param gradingScale the grading scale with the grade steps
-     * @return grade step corresponding to the given points
-     * @see #matchPercentageToGradeStep(double, Long)
-     */
-    default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
-        int maxPoints = gradingScale.getMaxPoints();
-        if (maxPoints <= 0) {
-            throw new BadRequestAlertException("Max points for the grading scale must be set to a value greater than 0", "gradingScale", "invalidMaxPoints");
-        }
-
-        double percentage = points / maxPoints * 100.0;
-
-        return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());
-    }
-
-    /**
      * Deletes all excessive grading scales but the first saved for a course/exam
      *
      * @param entityId the id of the course/exam

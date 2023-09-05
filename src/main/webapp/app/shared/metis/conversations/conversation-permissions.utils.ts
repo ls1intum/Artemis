@@ -9,7 +9,7 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => hasChannelModerationRights(channel);
+    const channelCheck = (channel: ChannelDTO): boolean => !channel.isCourseWide && hasChannelModerationRights(channel);
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -79,7 +79,8 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
         return false;
     }
     // the creator of a channel can not leave it
-    if (isChannelDto(conversation) && conversation?.isCreator === true) {
+    // if the channel is course-wide, you also cannot leave it
+    if (isChannelDto(conversation) && (conversation?.isCreator || conversation?.isCourseWide)) {
         return false;
     }
     if (isOneToOneChatDto(conversation)) {

@@ -8,9 +8,8 @@ import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/man
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseInformationComponent {
-    @Input() isImportFromExistingExercise: boolean;
+    @Input() isImport: boolean;
     @Input() isExamMode: boolean;
-    @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
