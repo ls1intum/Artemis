@@ -38,6 +38,10 @@ export class TutorLeaderboardComponent implements OnInit {
         if (this.exercise && this.exercise.course) {
             this.course = this.exercise.course;
             this.isExerciseDashboard = true;
+        } else if (this.exercise && this.exam && this.exam.course) {
+            this.course = this.exam.course;
+            this.course.isAtLeastInstructor = this.exercise.isAtLeastInstructor;
+            this.isExerciseDashboard = true;
         }
         this.isExamMode = !!this.exam;
         this.sortRows();
