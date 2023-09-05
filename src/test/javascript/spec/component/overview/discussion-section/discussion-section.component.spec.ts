@@ -15,7 +15,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { SortDirection } from 'app/shared/metis/metis.util';
+import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -49,6 +49,9 @@ import {
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -315,5 +318,24 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
         expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(5);
+    }));
+
+    it('loads exercise posts if communication only', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.exercise = { id: 2 } as Exercise;
+
+        component.setChannel(1);
+
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseIds: [2] } as PostContextFilter);
+        expect(component.channel).toBeUndefined();
+    }));
+
+    it('loads lecture posts if communication only', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.lecture = { id: 2 } as Lecture;
+
+        component.setChannel(1);
+
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureIds: [2] } as PostContextFilter);
     }));
 });

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,8 +148,9 @@ public class ConversationResource extends ConversationManagementResource {
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var isMember = conversationService.isMember(conversationId, requestingUser.getId());
-        if (!isMember) {
+        var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
+                || conversationService.isMember(conversationId, requestingUser.getId());
+        if (!isAllowedToSearchForMembers) {
             var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
             if (!atLeastInstructorInCourse) {
                 throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
