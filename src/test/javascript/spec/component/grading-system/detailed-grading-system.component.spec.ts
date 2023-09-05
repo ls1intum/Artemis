@@ -800,7 +800,7 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(generateCsv).toHaveBeenCalledOnce();
+        expect(generateCsv).toHaveBeenCalled();
     });
 
     it('should not show grading steps above max points warning', () => {

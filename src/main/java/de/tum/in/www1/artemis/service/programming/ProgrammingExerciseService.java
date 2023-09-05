@@ -211,7 +211,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
+        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
         channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);

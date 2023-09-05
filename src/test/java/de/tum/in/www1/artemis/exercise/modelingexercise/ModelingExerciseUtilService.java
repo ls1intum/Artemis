@@ -296,7 +296,7 @@ public class ModelingExerciseUtilService {
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
-            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            assessmentService.submitManualAssessment(result.getId(), exercise);
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }
@@ -313,7 +313,7 @@ public class ModelingExerciseUtilService {
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
-            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            assessmentService.submitManualAssessment(result.getId(), exercise);
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(result.getId());
     }

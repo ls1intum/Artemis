@@ -22,10 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
@@ -90,8 +87,7 @@ public class ConversationMessagingService extends PostingService {
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
 
         var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
-        var conversationParticipants = conversation.getConversationParticipants();
-        var notificationRecipients = conversationParticipants.stream().map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
+        var notificationRecipients = getRecipientsForConversation(conversation).collect(Collectors.toSet());
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -165,7 +161,18 @@ public class ConversationMessagingService extends PostingService {
 
         var requestingUser = userRepository.getUser();
         if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
+            Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
+
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+                // Mark messages as read
+                conversationParticipant.setLastRead(ZonedDateTime.now());
+                conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+
         }
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)

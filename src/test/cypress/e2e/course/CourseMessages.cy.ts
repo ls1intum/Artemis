@@ -140,6 +140,7 @@ describe('Course messages', () => {
                 courseMessages.editTopic(topic);
                 courseMessages.editDescription('New Description');
                 courseMessages.closeEditPanel();
+                cy.reload();
                 courseMessages.getName().contains(newName);
                 courseMessages.getTopic().contains(topic);
             });
