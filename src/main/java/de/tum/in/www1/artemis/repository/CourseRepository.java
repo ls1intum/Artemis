@@ -231,6 +231,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
+    /**
+     * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
+     * Users that are part of multiple groups are NOT counted multiple times.
+     *
+     * @param courseId id of the course to count the members for
+     * @return number of users in the course
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ug.userId)
+            FROM Course c
+            JOIN UserGroup ug
+            ON c.studentGroupName = ug.group OR c.teachingAssistantGroupName = ug.group OR c.editorGroupName = ug.group OR c.instructorGroupName = ug.group
+            WHERE c.id = :courseId
+            """)
+    Integer countCourseMembers(@Param("courseId") Long courseId);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));

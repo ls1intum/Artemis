@@ -29,8 +29,8 @@ describe('ManualTextSelectionComponent', () => {
             text: 'First last text. Second text.',
             startIndex: 0,
             endIndex: 16,
-            submission,
-        } as TextBlock,
+            submissionId: submission.id,
+        } as any as TextBlock,
     ];
     const textBlockRefs = new TextBlockRef(blocks[0]);
 
