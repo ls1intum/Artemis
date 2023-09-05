@@ -124,7 +124,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 this.studentParticipation.submissions[0].submitted = true;
                 this.studentParticipation.submissions[0].isSynced = true;
-                this.setSubmissionCountAndLockIfNeeded(this.codeEditorContainer.buildOutput.submissionCount);
+                this.setSubmissionCountAndLockIfNeeded(this.codeEditorContainer?.buildOutput?.submissionCount);
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
