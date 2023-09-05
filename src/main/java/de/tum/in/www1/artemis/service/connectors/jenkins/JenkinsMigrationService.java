@@ -71,20 +71,17 @@ public class JenkinsMigrationService implements CIMigrationService {
     public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
         removeWebHook(repositoryUrl);
 
-        /*
-         * in case we need to remove the trigger from the jenkinsjob, we can use this code
-         * if (projectKey != null && buildPlanKey != null) {
-         * try {
-         * Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
-         * Document newConfig = removeTrigger(currentConfig);
-         * jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
-         * }
-         * catch (IOException | TransformerException e) {
-         * log.error("Could not fix build plan trigger for buildplanKey {} ", buildPlanKey, e);
-         * throw new JenkinsException(e);
-         * }
-         * }
-         */
+        if (projectKey != null && buildPlanKey != null) {
+            try {
+                Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
+                Document newConfig = removeTrigger(currentConfig);
+                jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
+            }
+            catch (IOException | TransformerException e) {
+                log.error("Could not remove build plan trigger in Jenkinsjob config.xml for buildPlanKey {} ", buildPlanKey, e);
+                throw new JenkinsException(e);
+            }
+        }
     }
 
     @Override
