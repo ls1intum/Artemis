@@ -521,6 +521,14 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Updates courseInformationSharingMessagingCodeOfConduct on markdown change
+     * @param message new courseInformationSharingMessagingCodeOfConduct
+     */
+    updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
+        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
+    }
+
+    /**
      * Auxiliary method checking if online course is currently true
      */
     isOnlineCourse(): boolean {

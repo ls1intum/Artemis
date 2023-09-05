@@ -348,13 +348,12 @@
                             class="text-secondary"
                             ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.tooltip' | artemisTranslate }}"
                         ></fa-icon>
-                        <textarea
-                            id="field_messagingCodeOfConduct"
-                            class="form-control"
-                            rows="2"
-                            formControlName="courseInformationSharingMessagingCodeOfConduct"
-                            [(ngModel)]="course.courseInformationSharingMessagingCodeOfConduct"
-                        ></textarea>
+                        <jhi-markdown-editor
+                            class="markdown-editor"
+                            [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
+                            (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
+                        >
+                        </jhi-markdown-editor>
                     </div>
                 </div>
                 <div class="form-check" *ngIf="!this.course.enrollmentEnabled">
