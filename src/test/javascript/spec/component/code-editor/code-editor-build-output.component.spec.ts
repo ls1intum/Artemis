@@ -105,6 +105,8 @@ describe('CodeEditorBuildOutputComponent', () => {
                 getBuildLogsStub = jest.spyOn(codeEditorBuildLogService, 'getBuildLogs');
                 getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
                 jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());
+                jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getSubmissionCount').mockReturnValue(of());
+                jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getIsRepositoryLocked').mockReturnValue(of());
             });
     });
 
