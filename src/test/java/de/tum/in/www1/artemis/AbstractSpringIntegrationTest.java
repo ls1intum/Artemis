@@ -40,7 +40,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
-public class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTest {
+public abstract class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTest {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
