@@ -9,7 +9,7 @@
     </div>
 
     <jhi-code-editor-container
-        [editable]="true"
+        [editable]="!repositoryIsLocked"
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
         [course]="getCourseFromExercise(exercise)"
@@ -26,7 +26,22 @@
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                 [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
         </div>
-        <div editorToolbar>
+        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined">
+            <br />
+            <span>
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                }}
+            </span>
+            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+                {{
+                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
+                }}
+            </span>
+        </div>
+        <div editorToolbar class="d-inline-flex align-items-center">
+            <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
             <jhi-updating-result
                 *ngIf="studentParticipation"
                 [exercise]="exercise"

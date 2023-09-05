@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
@@ -17,6 +18,8 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     private participationId?: number;
     private exerciseId?: number;
     private isBuildingSubject = new Subject<boolean>();
+    private submissionCountSubject = new Subject<number>();
+    private repositoryLockedSubject = new Subject<void>();
     private submissionSubscription: Subscription;
 
     constructor(
@@ -36,6 +39,8 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             this.submissionSubscription.unsubscribe();
         }
         this.isBuildingSubject.complete();
+        this.submissionCountSubject.complete();
+        this.repositoryLockedSubject.complete();
     }
 
     /**
@@ -59,6 +64,14 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
                     .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
                     .pipe(
                         tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
+                        tap(({ submission }) => {
+                            if (submission?.participation?.submissionCount !== undefined) {
+                                this.submissionCountSubject.next(submission?.participation?.submissionCount!);
+                            }
+                            if ((submission?.participation as ProgrammingExerciseStudentParticipation)?.locked) {
+                                this.repositoryLockedSubject.next();
+                            }
+                        }),
                         map(({ submission }) => !!submission),
                         tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
                     )
@@ -82,5 +95,19 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
      */
     getBuildingState() {
         return this.isBuildingSubject.asObservable();
+    }
+
+    /**
+     * Returns the current submission count.
+     */
+    getSubmissionCount() {
+        return this.submissionCountSubject.asObservable();
+    }
+
+    /**
+     * Returns the current lock state of the repository.
+     */
+    getIsRepositoryLocked() {
+        return this.repositoryLockedSubject.asObservable();
     }
 }

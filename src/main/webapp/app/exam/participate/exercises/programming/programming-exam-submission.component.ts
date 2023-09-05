@@ -11,6 +11,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
@@ -44,7 +45,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
+    submissionCount?: number;
+    repositoryIsLocked = false;
 
+    readonly SubmissionPolicyType = SubmissionPolicyType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -75,6 +79,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     ngOnInit(): void {
         this.updateDomain();
+        this.initSubmissionCount();
     }
 
     onActivate() {
@@ -92,6 +97,23 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     /**
+     * Sets the initial value of the submission count based on the student participation.
+     */
+    initSubmissionCount() {
+        this.setSubmissionCountAndLockIfNeeded(this.studentParticipation.submissionCount);
+        this.repositoryIsLocked = this.studentParticipation.locked ?? false;
+    }
+
+    /**
+     * Sets the submission count to the given value. Enables the repository lock based on the recent submission.
+     * @param count the new value of submission count
+     */
+    setSubmissionCountAndLockIfNeeded(count: number | undefined) {
+        this.submissionCount = count ?? this.submissionCount;
+        this.repositoryIsLocked = this.codeEditorContainer?.buildOutput?.isRepositoryLocked ?? this.repositoryIsLocked;
+    }
+
+    /**
      * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
      *
@@ -102,6 +124,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 this.studentParticipation.submissions[0].submitted = true;
                 this.studentParticipation.submissions[0].isSynced = true;
+                this.setSubmissionCountAndLockIfNeeded(this.codeEditorContainer.buildOutput.submissionCount);
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
