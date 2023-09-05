@@ -247,17 +247,17 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
 
-    it.each([
-        { currentIndex: 0, newIndex: 0 },
-        { currentIndex: 0, newIndex: 1 },
-    ])('should set the correct exercise button status in exam timeline view', ({ currentIndex, newIndex }) => {
+    it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
         comp.examTimeLineView = true;
-        comp.exerciseIndex = currentIndex;
-        if (newIndex === currentIndex) {
-            expect(comp.setExerciseButtonStatus(newIndex)).toBe('synced active');
-        } else {
-            expect(comp.setExerciseButtonStatus(newIndex)).toBe('synced');
-        }
+        comp.exerciseIndex = 0;
+        expect(comp.setExerciseButtonStatus(0)).toBe('synced active');
+        expect(comp.icon).toEqual(faCheck);
+    });
+
+    it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
+        comp.examTimeLineView = true;
+        comp.exerciseIndex = 0;
+        expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(faCheck);
     });
 });

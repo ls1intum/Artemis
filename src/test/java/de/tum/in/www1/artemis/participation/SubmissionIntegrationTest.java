@@ -176,7 +176,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
-        long randomExerciseId = UUID.randomUUID().getMostSignificantBits();
+        long randomExerciseId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
         PageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -230,7 +230,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionId_submissionNotFound() throws Exception {
-        long randomSubmissionId = UUID.randomUUID().getMostSignificantBits();
+        long randomSubmissionId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
         request.getList("/api/submissions/" + randomSubmissionId + "/versions", HttpStatus.NOT_FOUND, Submission.class);
     }
 

@@ -189,9 +189,7 @@ describe('Student Exam Timeline Component', () => {
         component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
         fixture.detectChanges();
         component.onPageChange({
-            overViewChange: false,
             exercise: exercise,
-            forceSave: false,
             submission: submission,
         });
         fixture.detectChanges();
@@ -217,7 +215,7 @@ describe('Student Exam Timeline Component', () => {
             component.programmingSubmissions = [programmingSubmission1];
             component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
             //when
-            component.onInputChange(changeContext as unknown as ChangeContext);
+            component.onSliderInputChange(changeContext as unknown as ChangeContext);
             fixture.detectChanges();
             //then
             if (changeContext.value === dayjs('2023-01-07').valueOf()) {

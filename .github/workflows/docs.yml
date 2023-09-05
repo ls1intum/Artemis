@@ -40,13 +40,13 @@ jobs:
     - uses: actions/upload-pages-artifact@v2
       with:
         path: docs/_build/dirhtml/
-      
+
   # Deployment job
   deploy:
     if: github.ref == 'refs/heads/develop'
     environment:
       name: github-pages
-      url: "https://docs.artemis.cit.tum.de"
+      url: "https://ls1intum.github.io/Artemis"
     runs-on: ubuntu-latest
     needs: docs
     steps:

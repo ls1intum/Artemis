@@ -81,6 +81,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     initQuiz() {
         // randomize order
+        // in the exam timeline, we do not want to randomize the order as this makes it difficult to view the changes between submissions.
         if (!this.examTimeline) {
             this.quizService.randomizeOrder(this.exercise);
         }

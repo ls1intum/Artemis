@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ApollonEditor } from '@palsch/apollon';
+import { ApollonEditor } from '@ls1intum/apollon';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { Course } from 'app/entities/course.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';

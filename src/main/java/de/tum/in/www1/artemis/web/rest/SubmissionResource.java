@@ -223,6 +223,16 @@ public class SubmissionResource {
         return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
+    /**
+     * GET /submissions/{submissionId}/versions : get all submission versions for a given submission
+     * {@link SubmissionVersion} are used in exams and store every submission a student has made.
+     * <p>
+     * A submission version is created every time a student clicks save or every 30s when the current state is saved
+     *
+     * @param submissionId the id of the submission for which all versions should be returned
+     * @return a list of {@link SubmissionVersionDTO} for the given submission
+     */
+
     @GetMapping("/submissions/{submissionId}/versions")
     @EnforceAtLeastInstructor
     public List<SubmissionVersionDTO> getSubmissionVersions(@PathVariable long submissionId) {

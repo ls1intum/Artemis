@@ -131,7 +131,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.studentSubmission.filePath && this.examTimeline)) {
+        if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.examTimeline && this.studentSubmission.filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
             const filePath = this.studentSubmission!.filePath!.split('/');

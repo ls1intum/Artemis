@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { UMLModel } from '@palsch/apollon';
+import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -123,23 +123,26 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         await this.updateViewFromSubmissionVersion();
     }
 
+    /**
+     * Updates the model and explanation text with the latest submission version.
+     * It extracts the model and explanation text from the submission version and updates the view.
+     */
     private async updateViewFromSubmissionVersion() {
-        if (this.submissionVersion) {
-            if (this.submissionVersion.content) {
-                // we need these string operations because we store the string like that in the database
-                // and need to remove the content that was added before the string is saved to the db to get valid JSON
-                let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
-                // if we do not wait here for apollon, the redux store might be undefined
-                await this.modelingEditor!.apollonEditor!.nextRender;
-                model = model.replace('Model: ', '');
-                // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = JSON.parse(model);
-                // same as above regarding the string operations
-                this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + 13) ?? '';
+        if (this.submissionVersion?.content) {
+            // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
+            // and need to remove the content that was added before the string is saved to the db to get valid JSON
+            let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
+            // if we do not wait here for apollon, the redux store might be undefined
+            await this.modelingEditor!.apollonEditor!.nextRender;
+            model = model.replace('Model: ', '');
+            // updates the Apollon editor model state (view) with the latest modeling submission
+            this.umlModel = JSON.parse(model);
+            // same as above regarding the string operations
+            const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
+            this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';
 
-                // if we do not call this, apollon doesn't show the updated model
-                this.changeDetectorReference.detectChanges();
-            }
+            // if we do not call this, apollon doesn't show the updated model
+            this.changeDetectorReference.detectChanges();
         }
     }
 }

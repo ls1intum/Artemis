@@ -29,6 +29,7 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract getExercise(): Exercise;
     @Input() readonly = false;
     @Input() examTimeline = false;
+    // needs to be public so that it can be accessed in the tests
     submissionVersion: SubmissionVersion;
     abstract setSubmissionVersion(submissionVersion: SubmissionVersion): void;
 }
