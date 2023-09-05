@@ -25,7 +25,7 @@ public interface CIMigrationService {
      *
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      */
-    void deleteBuildTriggers(String buildPlanKey, VcsRepositoryUrl repositoryUrl);
+    void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
 
     /**
      * Overrides the existing repository URL for the given build plan.

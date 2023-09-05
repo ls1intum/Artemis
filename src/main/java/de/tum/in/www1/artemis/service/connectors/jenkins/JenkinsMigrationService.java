@@ -68,8 +68,23 @@ public class JenkinsMigrationService implements CIMigrationService {
     }
 
     @Override
-    public void deleteBuildTriggers(String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
         removeWebHook(repositoryUrl);
+
+        /*
+         * in case we need to remove the trigger from the jenkinsjob, we can use this code
+         * if (projectKey != null && buildPlanKey != null) {
+         * try {
+         * Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
+         * Document newConfig = removeTrigger(currentConfig);
+         * jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
+         * }
+         * catch (IOException | TransformerException e) {
+         * log.error("Could not fix build plan trigger for buildplanKey {} ", buildPlanKey, e);
+         * throw new JenkinsException(e);
+         * }
+         * }
+         */
     }
 
     @Override
@@ -115,6 +130,15 @@ public class JenkinsMigrationService implements CIMigrationService {
         String stringConfig = XmlFileUtils.writeToString(config);
         // Pattern captures the current notification URL and additionally everything around in order to replace the URL
         String newStringConfig = stringConfig.replaceAll("(.*?notificationUrl: ')(.+?)('.*?)", "$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
+        return XmlFileUtils.readFromString(newStringConfig);
+    }
+
+    private Document removeTrigger(Document config) throws TransformerException {
+        String stringConfig = XmlFileUtils.writeToString(config);
+        // Pattern captures the current notification URL and additionally everything around in order to replace the URL
+        String newStringConfig = stringConfig.replaceAll(
+                "(?s)(<org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>)(.*?)(</org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>)",
+                "");
         return XmlFileUtils.readFromString(newStringConfig);
     }
 }

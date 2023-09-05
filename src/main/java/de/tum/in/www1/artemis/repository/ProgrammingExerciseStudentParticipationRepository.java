@@ -164,4 +164,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                     WHERE p.buildPlanId IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
+
+    @Query("""
+                SELECT DISTINCT p
+                FROM ProgrammingExerciseStudentParticipation p
+                    WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+            """)
+    Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
 }
