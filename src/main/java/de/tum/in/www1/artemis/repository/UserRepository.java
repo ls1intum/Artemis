@@ -97,6 +97,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<User> findOneWithLearningPathsByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<User> findWithLearningPathsById(long userId);
+
     @Query("SELECT count(*) FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
@@ -573,6 +579,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * Find user with eagerly loaded learning paths by its id
+     *
+     * @param userId the id of the user to find
+     * @return the user with learning paths if it exists, else throw exception
+     */
+    @NotNull
+    default User findWithLearningPathsByIdElseThrow(long userId) {
+        return findWithLearningPathsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**
