@@ -40,7 +40,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final Optional<CIMigrationService> ciMigrationService;
+    private final Optional<CIVCSMigrationService> ciMigrationService;
 
     private final UrlService urlService = new UrlService();
 
@@ -48,7 +48,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<CIMigrationService> ciMigrationService) {
+            Optional<CIVCSMigrationService> ciMigrationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;

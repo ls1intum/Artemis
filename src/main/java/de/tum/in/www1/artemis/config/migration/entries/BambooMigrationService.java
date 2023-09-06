@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipation
  */
 @Service
 @Profile("bamboo")
-public class BambooMigrationService implements CIMigrationService {
+public class BambooMigrationService implements CIVCSMigrationService {
 
     private final RestTemplate restTemplate;
 
@@ -47,6 +47,9 @@ public class BambooMigrationService implements CIMigrationService {
 
     @Value("${artemis.version-control.user}")
     private String gitUser;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     private Optional<Long> sharedCredentialId = Optional.empty();
 
@@ -442,7 +445,7 @@ public class BambooMigrationService implements CIMigrationService {
         body.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
         body.add("repository.git.passwordSharedCredentials", credentialsId.toString());
         body.add("selectFields", "repository.git.passwordSharedCredentials");
-        body.add("repository.git.branch", "main");
+        body.add("repository.git.branch", defaultBranch);
         body.add("repository.git.commandTimeout", Integer.toString(180));
         body.add("checkBoxFields", "repository.git.useShallowClones");
         body.add("repository.git.useShallowClones", Boolean.TRUE.toString());
@@ -458,6 +461,6 @@ public class BambooMigrationService implements CIMigrationService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
     }
 }

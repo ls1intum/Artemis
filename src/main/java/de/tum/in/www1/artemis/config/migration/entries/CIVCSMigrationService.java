@@ -11,10 +11,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
- * Service for migrations affecting a continuous integration system.
- * Every migration might now be implemented for all CI systems.
+ * Service for migrations affecting a continuous integration system and version control system.
+ * Every migration might now be implemented for all CI and VCS combinations systems.
  */
-public interface CIMigrationService {
+public interface CIVCSMigrationService {
 
     /**
      * Overrides the existing notification URL for build results with the current one in use by Artemis.
@@ -44,14 +44,16 @@ public interface CIMigrationService {
     /**
      * Overrides the existing repository URL for the given project that are checked out by the build plans.
      *
-     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
+     * @param buildPlanKey            The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
+     * @param auxiliaryRepositoryList the list of auxiliary repositories
      */
     void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList);
 
     /**
      * Jenkins and Bamboo need different results, this method is used to get the correct participations.
      *
-     * @param pageable
+     * @param programmingExerciseStudentParticipationRepository the repository to get the participations from
+     * @param pageable                                          the pageable object
      */
     Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable);

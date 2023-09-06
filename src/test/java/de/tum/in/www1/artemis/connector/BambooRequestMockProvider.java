@@ -46,9 +46,6 @@ public class BambooRequestMockProvider {
     private URL bambooServerUrl;
 
     @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
-
-    @Autowired
     private ObjectMapper mapper;
 
     private final RestTemplate restTemplate;

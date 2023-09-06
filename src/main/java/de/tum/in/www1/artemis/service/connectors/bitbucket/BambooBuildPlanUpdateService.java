@@ -74,7 +74,6 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
      * @param buildPlanKey     the complete name of the plan
      */
     private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String buildPlanKey, String branchName, String newRepoUrl) {
-
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
         parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
@@ -130,8 +129,8 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         }
 
         if (StringUtils.isNumeric(name)) {
-            Long id = Long.valueOf(name);
-            repository = list.stream().filter(repo -> id.equals(repo.getId())).findFirst();
+            Long repoId = Long.valueOf(name);
+            repository = list.stream().filter(repo -> repoId.equals(repo.getId())).findFirst();
             if (repository.isPresent()) {
                 return repository.get();
             }
