@@ -56,12 +56,16 @@ describe('ConversationPermissionUtils', () => {
                 expect(canLeaveConversation(channelsThatCanBeLeft)).toBeTrue();
             });
 
-            it('creator can not leave a channel', () => {
+            it('creator cannot leave a channel', () => {
                 expect(canLeaveConversation({ ...channelsThatCanBeLeft, isCreator: true })).toBeFalse();
             });
 
-            it('non member can not leave a channel', () => {
+            it('non member cannot leave a channel', () => {
                 expect(canLeaveConversation({ ...channelsThatCanBeLeft, isMember: false })).toBeFalse();
+            });
+
+            it('member cannot leave a course-wide channel', () => {
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isCourseWide: true } as ChannelDTO)).toBeFalse();
             });
         });
 
@@ -84,6 +88,10 @@ describe('ConversationPermissionUtils', () => {
 
             it('should return true if the channel is archived', () => {
                 expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isPublic: true, isArchived: true } as ChannelDTO)).toBeTrue();
+            });
+
+            it('should return false if the channel is course wide', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isCourseWide: true } as ChannelDTO)).toBeFalse();
             });
         });
 
