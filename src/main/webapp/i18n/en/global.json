@@ -326,6 +326,7 @@
         "course": "Course details",
         "lectures": "Lectures",
         "competencies": "Competencies",
+        "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
