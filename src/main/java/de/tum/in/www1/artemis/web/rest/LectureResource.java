@@ -105,7 +105,6 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(lecture);
         Channel createdChannel = channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
 
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
@@ -249,7 +248,6 @@ public class LectureResource {
 
         Channel createdChannel = channelService.createLectureChannel(savedLecture, Optional.empty());
 
-        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
