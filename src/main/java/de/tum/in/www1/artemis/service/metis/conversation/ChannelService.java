@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -16,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -24,7 +26,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -235,42 +236,6 @@ public class ChannelService {
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             conversationService.deleteConversation(channel);
-        }
-    }
-
-    /**
-     * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
-     *
-     * @param userToAddToGroup the user to be added
-     * @param group            the group of the user
-     * @param role             the role of the user
-     */
-    @Async
-    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
-        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
-
-        List<Course> courses = switch (role) {
-            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-            default -> List.of();
-        };
-
-        for (Course c : courses) {
-            // set the security context because the async methods use multiple threads
-            SecurityUtils.setAuthorizationObject();
-
-            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
-                // add user to default channels
-                if (channelNames.contains(channel.getName())) {
-                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-                // add to exercise or lecture channel if user is not member
-                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
-                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-            });
-
         }
     }
 
