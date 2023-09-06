@@ -10,8 +10,8 @@
         },
         "conversation": {
             "codeOfConduct": {
-                "topBar": {
-                    "button": "Verhaltens-Kodex"
+                "sideBar": {
+                    "button": "Verhaltenskodex"
                 }
             }
         },

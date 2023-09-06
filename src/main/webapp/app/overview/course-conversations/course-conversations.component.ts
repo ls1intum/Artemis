@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,10 +8,6 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course } from 'app/entities/course.model';
 import { PageType } from 'app/shared/metis/metis.util';
-import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationAcceptCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/accept/conversation-accept-code-of-conduct-dialog.component';
-import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/conversation-code-of-conduct-dialog.component';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -20,7 +16,7 @@ import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-co
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
     course?: Course;
     isLoading = false;
@@ -29,20 +25,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, AfterVie
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
 
-    // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
-    // Provides the control configuration to be read and used by "CourseOverviewComponent"
-    public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
-    };
-
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
         public metisConversationService: MetisConversationService,
         public metisService: MetisService,
-        private modalService: NgbModal,
     ) {}
 
     getAsChannel = getAsChannelDto;
@@ -96,28 +84,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, AfterVie
         });
     }
 
-    ngAfterViewInit(): void {
-        // Send our controls template to parent so it will be rendered in the top bar
-        if (this.controls) {
-            this.controlConfiguration.subject!.next(this.controls);
-        }
-
-        this.openAcceptDialog();
-    }
-
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-    }
-
-    openAcceptDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAcceptCodeOfConductDialogComponent, { backdrop: 'static', size: 'xl' });
-        modalRef.componentInstance.codeOfConduct = this.course?.courseInformationSharingMessagingCodeOfConduct;
-    }
-
-    openDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(ConversationCodeOfConductDialogComponent, {});
-        modalRef.componentInstance.codeOfConduct = this.course?.courseInformationSharingMessagingCodeOfConduct;
     }
 
     private subscribeToActiveConversation() {

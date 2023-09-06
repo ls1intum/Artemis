@@ -20,7 +20,6 @@ import { ConversationAddUsersDialogComponent } from './dialogs/conversation-add-
 import { ConversationAddUsersFormComponent } from './dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
 import { ConversationMembersComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
-import { ConversationCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/conversation-code-of-conduct-dialog.component';
 import { ConversationDetailDialogComponent } from './dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationInfoComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationMemberRowComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
@@ -31,8 +30,6 @@ import { ConversationSidebarEntryComponent } from './layout/conversation-selecti
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ConversationAcceptCodeOfConductDialogComponent } from 'app/overview/course-conversations/dialogs/code-of-conduct/accept/conversation-accept-code-of-conduct-dialog.component';
 
 const routes: Routes = [
     {
@@ -54,7 +51,6 @@ const routes: Routes = [
         ArtemisDataTableModule,
         InfiniteScrollModule,
         CourseUsersSelectorModule,
-        ArtemisMarkdownModule,
     ],
     declarations: [
         CourseConversationsComponent,
@@ -71,8 +67,6 @@ const routes: Routes = [
         ConversationAddUsersDialogComponent,
         ConversationAddUsersFormComponent,
         ConversationMembersComponent,
-        ConversationAcceptCodeOfConductDialogComponent,
-        ConversationCodeOfConductDialogComponent,
         ConversationDetailDialogComponent,
         ConversationInfoComponent,
         ConversationMemberRowComponent,

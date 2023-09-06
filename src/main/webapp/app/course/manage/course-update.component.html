@@ -343,11 +343,7 @@
                             for="field_messagingCodeOfConduct"
                             >Messaging Code of Conduct
                         </label>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.tooltip' | artemisTranslate }}"
-                        ></fa-icon>
+                        <jhi-help-icon text="artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.tooltip"></jhi-help-icon>
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"

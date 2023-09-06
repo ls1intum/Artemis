@@ -10,7 +10,7 @@
         },
         "conversation": {
             "codeOfConduct": {
-                "topBar": {
+                "sideBar": {
                     "button": "Code of Conduct"
                 }
             }
