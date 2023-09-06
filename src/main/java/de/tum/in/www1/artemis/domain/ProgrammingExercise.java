@@ -846,12 +846,8 @@ public class ProgrammingExercise extends Exercise {
         return buildPlanAccessSecret;
     }
 
-    void setBuildPlanAccessSecret(@Nullable String buildPlanAccessSecret) {
-        this.buildPlanAccessSecret = buildPlanAccessSecret;
-    }
-
     public void generateAndSetBuildPlanAccessSecret() {
-        setBuildPlanAccessSecret(UUID.randomUUID().toString());
+        buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
     /**

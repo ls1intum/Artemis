@@ -274,8 +274,6 @@ public class JenkinsBuildPlanService {
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetPlanName) {
         buildPlanRepository.copyBetweenExercises(sourceExercise, targetExercise);
 
-        targetExercise = setNewBuildPlanAccessSecretIfRequiredAndReturn(sourceExercise, targetExercise);
-
         String sourceProjectKey = sourceExercise.getProjectKey();
         String targetProjectKey = targetExercise.getProjectKey();
 
@@ -286,21 +284,6 @@ public class JenkinsBuildPlanService {
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
-    }
-
-    private ProgrammingExercise setNewBuildPlanAccessSecretIfRequiredAndReturn(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
-        if (!targetExercise.hasBuildPlanAccessSecretSet() || areBuildPlanAccessSecretsTheSameFor(sourceExercise, targetExercise)) {
-            targetExercise.generateAndSetBuildPlanAccessSecret();
-            targetExercise = programmingExerciseRepository.save(targetExercise);
-        }
-        return targetExercise;
-    }
-
-    private boolean areBuildPlanAccessSecretsTheSameFor(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
-        if (!sourceExercise.hasBuildPlanAccessSecretSet() || !targetExercise.hasBuildPlanAccessSecretSet())
-            return false;
-        assert sourceExercise.getBuildPlanAccessSecret() != null && targetExercise.getBuildPlanAccessSecret() != null;
-        return sourceExercise.getBuildPlanAccessSecret().equals(targetExercise.getBuildPlanAccessSecret());
     }
 
     private String getCleanPlanName(String name) {
