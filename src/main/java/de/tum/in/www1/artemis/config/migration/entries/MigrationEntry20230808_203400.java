@@ -192,7 +192,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         try {
             ciMigrationService.orElseThrow().deleteBuildTriggers(null, null, exercise.getVcsTestRepositoryUrl());
         }
-        catch (Exception e) {
+        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
             log.warn("Failed to delete test build triggers for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUrl(), e);
             errorMap.put(exercise, true);
         }
@@ -229,7 +229,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorMap.put(exercise, false);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", repositoryUrl.toString(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", String.valueOf(repositoryUrl), exercise.getBranch());
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
             log.warn("Failed to replace solution repository in template build plan for exercise {}", exercise.getId(), e);
