@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -874,19 +873,7 @@ public class CourseTestService {
         for (int i = 0; i < courses.length; i++) {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ExamFactory.generateExam(courses[i]);
-            Channel channel = new Channel();
-            channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-            channel.setIsAnnouncementChannel(false);
-            channel.setIsPublic(false);
-            channel.setIsArchived(false);
-            channelRepository.save(channel);
             Exam examUnregistered = ExamFactory.generateExam(courses[i]);
-            Channel channel1 = new Channel();
-            channel1.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-            channel1.setIsAnnouncementChannel(false);
-            channel1.setIsPublic(false);
-            channel1.setIsArchived(false);
-            channelRepository.save(channel1);
             Exam testExam = ExamFactory.generateTestExam(courses[i]);
             if (i == 0) {
                 examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
@@ -951,13 +938,7 @@ public class CourseTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
-        Channel channel = new Channel();
-        channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsPublic(true);
-        channel.setIsArchived(false);
 
-        channelRepository.save(channel);
         programmingExerciseRepository.save(programmingExercise);
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
@@ -1734,9 +1715,11 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
+        course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
+        assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
 

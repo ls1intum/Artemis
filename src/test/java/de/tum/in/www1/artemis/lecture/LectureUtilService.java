@@ -128,7 +128,7 @@ public class LectureUtilService {
     }
 
     public Channel addLectureChannel(Lecture lecture) {
-        Channel channel = ConversationFactory.generateChannel(lecture.getCourse());
+        Channel channel = ConversationFactory.generateCourseWideChannel(lecture.getCourse());
         channel.setLecture(lecture);
         return conversationRepository.save(channel);
     }
@@ -179,6 +179,7 @@ public class LectureUtilService {
 
     public TextUnit createTextUnit() {
         TextUnit textUnit = new TextUnit();
+        textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
     }
