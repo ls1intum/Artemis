@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
  * Services for executing migration tasks for Jenkins and GitLab
  */
 @Service
-@Profile("jenkins")
+@Profile("jenkins & gitlab")
 public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabJenkinsMigrationService.class);
