@@ -228,6 +228,10 @@ public class ExamUser extends AbstractAuditingEntity {
         }
     }
 
+    /**
+     * Will be called before the entity is flushed.
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PreUpdate
     public void onUpdate() {
         signingImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevSigningImagePath, signingImagePath,
@@ -236,6 +240,10 @@ public class ExamUser extends AbstractAuditingEntity {
                 FilePathService.getStudentImageFilePath(), false);
     }
 
+    /**
+     * Will be called after the entity is removed (deleted).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PostRemove
     public void onDelete() {
         if (signingImagePath != null) {
