@@ -367,6 +367,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             LEFT JOIN FETCH submission.results r
             LEFT JOIN FETCH r.feedbacks
             LEFT JOIN FETCH r.assessor
+            LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
