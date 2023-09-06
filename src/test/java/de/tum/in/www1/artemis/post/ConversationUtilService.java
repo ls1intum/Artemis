@@ -123,7 +123,8 @@ public class ConversationUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
-        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix));
+        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
 
         return posts;
     }
@@ -200,6 +201,11 @@ public class ConversationUtilService {
         conversationPost.setAnswers(createBasicAnswers(conversationPost, userPrefix));
         postRepository.save(conversationPost);
 
+        Post studentConversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null && coursePost.getAuthor().getLogin().contains("student"))
+                .findFirst().orElseThrow();
+        studentConversationPost.setAnswers(createBasicAnswers(studentConversationPost, userPrefix));
+        postRepository.save(studentConversationPost);
+
         return posts;
     }
 
@@ -249,10 +255,10 @@ public class ConversationUtilService {
         return postRepository.save(postToAdd);
     }
 
-    private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
+    private List<Post> createBasicPosts(Conversation conversation, String userPrefix, String userRole) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "tutor", (i + 1))));
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + userRole, (i + 1))));
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -321,15 +327,13 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
-    public Channel createChannel(Course course, String channelName) {
-        Channel channel = new Channel();
-        channel.setCourse(course);
-        channel.setName(channelName);
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+    public Channel createCourseWideChannel(Course course, String channelName) {
+        Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true);
         return conversationRepository.save(channel);
+    }
+
+    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
+        return createConversationParticipant(conversation, userName);
     }
 
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
@@ -347,6 +351,10 @@ public class ConversationUtilService {
         var message = createMessageWithReactionForUser(login, messageText, groupChat);
         addThreadReplyWithReactionForUserToPost(login, message);
         return conversationRepository.save(groupChat);
+    }
+
+    public Post addMessageToConversation(String login, Conversation conversation) {
+        return createMessageWithReactionForUser(login, "test", conversation);
     }
 
     public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
