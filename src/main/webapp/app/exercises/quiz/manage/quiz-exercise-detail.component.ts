@@ -217,11 +217,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
-            if (!this.isExamMode) {
-                if (this.quizExercise.id == undefined && this.quizExercise.channelName == undefined) {
-                    this.quizExercise.channelName = '';
-                }
-            }
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
@@ -592,16 +587,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     handleQuestionChanged() {
-        this.cacheValidation();
-    }
-
-    updateChannelName(newName: string) {
-        this.quizExercise.channelName = newName;
-        this.cacheValidation();
-    }
-
-    updateTitle(newTitle: string) {
-        this.quizExercise.title = newTitle;
         this.cacheValidation();
     }
 }
