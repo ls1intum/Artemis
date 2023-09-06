@@ -1038,7 +1038,6 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
-            channelService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
             if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
                 Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
                 learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
