@@ -544,7 +544,9 @@ public class FileService implements DisposableBean {
         try (var files = Files.find(startPath, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
             files.forEach(filePath -> {
                 try {
-                    FileUtils.moveFile(filePath.toFile(), new File(filePath.toString().replace(targetString, replacementString)));
+                    // We expect the strings to be clean already, so the filename shouldn't change. If it does, we are on the safe side with the sanitation.
+                    String cleanFileName = sanitizeFilename(filePath.toString().replace(targetString, replacementString));
+                    FileUtils.moveFile(filePath.toFile(), new File(cleanFileName));
                 }
                 catch (IOException e) {
                     throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");

@@ -594,18 +594,21 @@ public class ProgrammingExerciseRepositoryService {
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
         final Path repositoryLocalPath = getRepoAbsoluteLocalPath(repository);
         final String packageName = programmingExercise.getPackageName();
+        // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
+        // So usually, the name should not change.
+        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
+            replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(APP_NAME_PLACEHOLDER, packageName);
+            replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
         }
     }
 
