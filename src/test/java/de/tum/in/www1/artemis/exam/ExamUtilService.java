@@ -350,7 +350,7 @@ public class ExamUtilService {
     }
 
     public Channel addExamChannel(Exam exam, String channelName) {
-        Channel channel = ConversationFactory.generateChannel(exam.getCourse(), channelName);
+        Channel channel = ConversationFactory.generatePublicChannel(exam.getCourse(), channelName, true);
         channel.setExam(exam);
         return conversationRepository.save(channel);
     }
