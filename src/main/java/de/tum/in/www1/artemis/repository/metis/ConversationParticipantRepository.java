@@ -41,7 +41,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
-            WHERE conversationParticipant.conversation.id = :#{#conversationId}
+            WHERE conversationParticipant.conversation.id = :conversationId
             """)
     Set<ConversationParticipant> findConversationParticipantWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
 
