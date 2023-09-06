@@ -26,19 +26,8 @@
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                 [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
         </div>
-        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined">
-            <br />
-            <span>
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                }}
-            </span>
-            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                }}
-            </span>
+        <div submissionPolicy class="mt-3">
+            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount"></jhi-programming-submission-policy-status>
         </div>
         <div editorToolbar class="d-inline-flex align-items-center">
             <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
@@ -76,19 +65,7 @@
     </h4>
     <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true"></jhi-exercise-details-student-actions>
     <div class="d-flex gap-3 my-3 ms-1 align-items-center">
-        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined" class="flex-fill">
-            <span>
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                }}
-            </span>
-            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                }}
-            </span>
-        </div>
+        <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1"></jhi-programming-submission-policy-status>
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="studentParticipation"
