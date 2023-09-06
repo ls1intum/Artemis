@@ -1,21 +1,15 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -82,8 +76,9 @@ public abstract class PostingService {
     protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
 
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
-        if (postDTO.post().getConversation() != null) {
-            postDTO.post().getConversation().hideDetails();
+        Conversation postConversation = postDTO.post().getConversation();
+        if (postConversation != null) {
+            postConversation.hideDetails();
         }
 
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
@@ -97,18 +92,36 @@ public abstract class PostingService {
             specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
-        else if (postDTO.post().getConversation() != null) {
-            if (recipients == null) {
-                // send to all participants of the conversation
-                recipients = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId()).stream()
-                        .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        else if (postConversation != null) {
+            String conversationTopicName = genericTopicName + "/conversations/" + postConversation.getId();
+
+            if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
+                websocketMessagingService.sendMessage(conversationTopicName, postDTO);
             }
-            recipients.forEach(
-                    user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
+            else {
+                if (recipients == null) {
+                    // send to all participants of the conversation
+                    recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
+                            .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+                }
+                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), conversationTopicName, postDTO));
+            }
 
             return;
         }
+
         websocketMessagingService.sendMessage(genericTopicName, postDTO);
+    }
+
+    /**
+     * Determines the participants of a conversation that should receive the new message.
+     *
+     * @param conversation conversation the participants are supposed be retrieved
+     * @return users that should receive the new message
+     */
+    protected Stream<User> getRecipientsForConversation(Conversation conversation) {
+        return conversation instanceof Channel channel && channel.getIsCourseWide() ? userRepository.findAllInCourse(channel.getCourse().getId()).stream()
+                : conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser);
     }
 
     /**
