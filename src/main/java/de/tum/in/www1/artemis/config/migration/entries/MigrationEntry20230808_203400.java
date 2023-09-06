@@ -18,9 +18,6 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.BambooMigrationService;
-import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.GitLabJenkinsMigrationService;
 
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
@@ -152,13 +149,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 migrateSolutionBuildPlan(solutionParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
             });
 
-            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = new PageImpl<>(Collections.emptyList());
-            if (ciMigrationService.orElseThrow() instanceof BambooMigrationService) {
-                studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
-            }
-            else if (ciMigrationService.orElseThrow() instanceof GitLabJenkinsMigrationService) {
-                studentParticipationPage = programmingExerciseStudentParticipationRepository.findAllWithRepositoryUrlOrBuildPlanId(pageable);
-            }
+            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
+                    .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
             log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getTotalElements());
             studentParticipationPage.forEach(studentParticipation -> {
                 var auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(studentParticipation.getProgrammingExercise().getId());

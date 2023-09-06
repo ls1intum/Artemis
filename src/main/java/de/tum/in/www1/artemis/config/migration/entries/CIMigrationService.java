@@ -1,9 +1,14 @@
-package de.tum.in.www1.artemis.service.connectors.ci;
+package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
  * Service for migrations affecting a continuous integration system.
@@ -42,4 +47,12 @@ public interface CIMigrationService {
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
      */
     void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList);
+
+    /**
+     * Jenkins and Bamboo need different results, this method is used to get the correct participations.
+     *
+     * @param pageable
+     */
+    Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable);
 }

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.bamboo;
+package de.tum.in.www1.artemis.config.migration.entries;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -25,7 +27,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
  * Services for executing migration tasks for Bamboo.
@@ -206,6 +209,12 @@ public class BambooMigrationService implements CIMigrationService {
             }
         }
         setRepositoriesToCheckout(buildPlanKey, testRepositoryId.orElseThrow(), assignmentRepositoryId.orElseThrow(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
+    }
+
+    @Override
+    public Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable) {
+        return programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
     }
 
     /**
