@@ -148,6 +148,7 @@ public class ConversationMessagingService extends PostingService {
 
     /**
      * Filters the given list of recipients for users that should receive a notification about a new message.
+     * <p>
      * In all cases, the author will be filtered out.
      * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
      * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
