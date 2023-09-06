@@ -1714,9 +1714,11 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
+        course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
+        assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
 
