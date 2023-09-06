@@ -64,7 +64,6 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        empty-commit-necessary: true
         secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token

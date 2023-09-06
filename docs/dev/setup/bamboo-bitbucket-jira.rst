@@ -335,7 +335,6 @@ Configure Artemis
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
                token: <bamboo-admin-token>   # step 10.1
-               empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
 #. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
