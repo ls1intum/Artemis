@@ -34,20 +34,20 @@ public class LearningPathRecommendationService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final static double DUE_DATE_UTILITY = 10;
+    private static final double DUE_DATE_UTILITY = 10;
 
-    private final static double PRIOR_UTILITY = 150;
+    private static final double PRIOR_UTILITY = 150;
 
     // Important: EXTENDS_UTILITY should be smaller than ASSUMES_UTILITY to prefer extends-relation to assumes-relations.
-    private final static double EXTENDS_UTILITY_RATIO = 1;
+    private static final double EXTENDS_UTILITY_RATIO = 1;
 
-    private final static double ASSUMES_UTILITY_RATIO = 2;
+    private static final double ASSUMES_UTILITY_RATIO = 2;
 
-    private final static double EXTENDS_OR_ASSUMES_UTILITY = 100;
+    private static final double EXTENDS_OR_ASSUMES_UTILITY = 100;
 
-    private final static double MASTERY_PROGRESS_UTILITY = 1;
+    private static final double MASTERY_PROGRESS_UTILITY = 1;
 
-    private final static double SCORE_THRESHOLD = 80;
+    private static final double SCORE_THRESHOLD = 80;
 
     /**
      * Lookup table containing the distribution of exercises by difficulty level that should be recommended.

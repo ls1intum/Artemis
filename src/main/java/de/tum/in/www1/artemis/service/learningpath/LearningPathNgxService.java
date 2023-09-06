@@ -365,6 +365,13 @@ public class LearningPathNgxService {
         return "edge-" + competencyId + "-direct";
     }
 
+    /**
+     * Gets the node id of the given lecture unit or exercise.
+     *
+     * @param competencyId   the id of the competency that the learning object is linked to
+     * @param learningObject the lecture unit or exercise
+     * @return the ngx node id of the given lecture unit or exercise
+     */
     public static String getLearningObjectNodeId(long competencyId, LearningObject learningObject) {
         if (learningObject instanceof LectureUnit) {
             return getLectureUnitNodeId(competencyId, learningObject.getId());
