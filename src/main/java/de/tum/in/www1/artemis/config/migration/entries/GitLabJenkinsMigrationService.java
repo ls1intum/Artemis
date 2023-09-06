@@ -88,7 +88,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl) {
+    public void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl, String defaultBranch) {
         // not needed for Jenkins
     }
 
@@ -101,6 +101,11 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     public Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable) {
         return programmingExerciseStudentParticipationRepository.findAllWithRepositoryUrlOrBuildPlanId(pageable);
+    }
+
+    @Override
+    public boolean supportsAuxiliaryRepositories() {
+        return false;
     }
 
     protected void removeWebHook(VcsRepositoryUrl repositoryUrl) {

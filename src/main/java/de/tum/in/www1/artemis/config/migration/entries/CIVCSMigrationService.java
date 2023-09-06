@@ -38,8 +38,9 @@ public interface CIVCSMigrationService {
      * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
      * @param name          The name of the repository
      * @param repositoryUrl the URL of the repository
+     * @param defaultBranch the default branch of the exercise to be migrated
      */
-    void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl);
+    void overrideBuildPlanRepository(String buildPlanKey, String name, String repositoryUrl, String defaultBranch);
 
     /**
      * Overrides the existing repository URL for the given project that are checked out by the build plans.
@@ -57,4 +58,12 @@ public interface CIVCSMigrationService {
      */
     Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable);
+
+    /**
+     * Checks if the migration service supports auxiliary repositories. If not, the auxiliary repositories will be ignored
+     * and database calls can be reduced.
+     *
+     * @return true if the migration service supports auxiliary repositories, false otherwise
+     */
+    boolean supportsAuxiliaryRepositories();
 }

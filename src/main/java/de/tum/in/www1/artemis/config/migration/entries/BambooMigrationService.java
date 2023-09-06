@@ -48,9 +48,6 @@ public class BambooMigrationService implements CIVCSMigrationService {
     @Value("${artemis.version-control.user}")
     private String gitUser;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
-
     private Optional<Long> sharedCredentialId = Optional.empty();
 
     private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
@@ -128,7 +125,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl) {
+    public void overrideBuildPlanRepository(String buildPlanId, String name, String repositoryUrl, String defaultBranch) {
         if (this.sharedCredentialId.isEmpty()) {
             Optional<Long> credentialsId = getSharedCredential();
             if (credentialsId.isEmpty()) {
@@ -146,7 +143,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
             deleteLinkedRepository(buildPlanId, repositoryId.get());
         }
         log.debug("Adding repository " + name + " for build plan " + buildPlanId);
-        addGitRepository(buildPlanId, repositoryUrl, name, this.sharedCredentialId.orElseThrow());
+        addGitRepository(buildPlanId, repositoryUrl, name, this.sharedCredentialId.orElseThrow(), defaultBranch);
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {
@@ -218,6 +215,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
     public Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable) {
         return programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId(pageable);
+    }
+
+    @Override
+    public boolean supportsAuxiliaryRepositories() {
+        return true;
     }
 
     /**
@@ -431,8 +433,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param repository    The URL of the repository
      * @param name          The name of the repository, e.g. 'assignment' or 'tests'
      * @param credentialsId The id of the credentials to use for the repository
+     * @param defaultBranch The default branch of the repository
      */
-    private void addGitRepository(String buildPlanKey, String repository, String name, Long credentialsId) {
+    private void addGitRepository(String buildPlanKey, String repository, String name, Long credentialsId, String defaultBranch) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("planKey", buildPlanKey);
         body.add("repositoryId", Integer.toString(0));
