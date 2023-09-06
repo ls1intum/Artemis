@@ -103,7 +103,7 @@ public class ExamImportService {
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
         Channel createdChannel = channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(false, examCopied.getCourse(), createdChannel);
+        channelService.registerTutorsAndInstructorsToChannel(examCopied.getCourse(), createdChannel);
 
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }

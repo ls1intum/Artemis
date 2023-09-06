@@ -177,19 +177,18 @@ public class ChannelService {
     }
 
     /**
-     * Adds users to the given channel asynchronously
+     * Adds tutors and instructors to the given channel asynchronously
      *
-     * @param addAllStudents if true, all students of the course will be added to the channel
-     * @param course         the course to add the students from
-     * @param channel        the channel to add the students to
+     * @param course  the course to add the tutors and instructors from
+     * @param channel the exam channel to add the users to
      */
     @Async
-    public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
+    public void registerTutorsAndInstructorsToChannel(Course course, Channel channel) {
         if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return;
         }
         SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
+        registerUsersToChannel(false, true, true, List.of(), course, channel);
     }
 
     /**
