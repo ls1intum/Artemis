@@ -460,7 +460,7 @@ public class ConversationService {
      * @param channel the channel under consideration
      * @return true if the channel is visible to students
      */
-    public boolean isChannelVisibleToStudents(Channel channel) {
+    public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
         if (channel.getLecture() != null) {
             return channel.getLecture().isVisibleToStudents();
         }
