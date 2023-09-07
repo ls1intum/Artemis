@@ -458,18 +458,6 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
-    public Optional<AssessmentNote> getAssessmentNoteIfPresent() {
-        if (Hibernate.isInitialized(assessmentNote)) {
-            return assessmentNote.stream().findFirst();
-        }
-        return Optional.empty();
-    }
-
-    @JsonIgnore
-    public List<AssessmentNote> getAssessmentNotes() {
-        return this.assessmentNote;
-    }
-
     public AssessmentNote getAssessmentNote() {
         return (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) ? null : assessmentNote.get(0);
     }

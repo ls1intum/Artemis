@@ -272,8 +272,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
-        assertThat(storedResult.getAssessmentNoteIfPresent()).isEqualTo(modelingAssessment.getAssessmentNoteIfPresent());
-        assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks", "reviewNote");
+        assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
     }
 
     @Test
