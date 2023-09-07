@@ -24,7 +24,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
-
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
         private router: Router,
