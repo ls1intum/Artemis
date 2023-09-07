@@ -61,3 +61,11 @@ export class UserPublicInfoDTO {
     public isTeachingAssistant?: boolean;
     public isStudent?: boolean;
 }
+
+/**
+ * A DTO representing a user which contains only the name and login
+ */
+export class UserNameAndLoginDTO {
+    public name?: string;
+    public login?: string;
+}
