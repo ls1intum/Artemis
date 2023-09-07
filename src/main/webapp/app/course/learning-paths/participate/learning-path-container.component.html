@@ -20,12 +20,14 @@
 <div class="row mt-2">
     <div class="col-auto">
         <button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()" [disabled]="!learningPathStorageService.hasPrevious(this.learningPathId)">
-            <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="artemisApp.learningPath.participate.prev">Previous</span>
+            <fa-icon [icon]="faChevronLeft"></fa-icon>
+            <span jhiTranslate="artemisApp.learningPath.participate.prev" ngbTooltip="{{ 'artemisApp.learningPath.participate.prevHint' | artemisTranslate }}">Previous</span>
         </button>
     </div>
     <div class="col-auto">
         <button type="button" class="btn btn-primary next-button" (click)="onNextTask()" [disabled]="!learningPathStorageService.hasRecommendation(this.learningPathId)">
-            <span jhiTranslate="artemisApp.learningPath.participate.next">Next</span> <fa-icon [icon]="faChevronRight"></fa-icon>
+            <span jhiTranslate="artemisApp.learningPath.participate.next" ngbTooltip="{{ 'artemisApp.learningPath.participate.nextHint' | artemisTranslate }}">Next</span>
+            <fa-icon [icon]="faChevronRight"></fa-icon>
         </button>
     </div>
 </div>
