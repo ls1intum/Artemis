@@ -1399,4 +1399,8 @@ public class GitService {
         }
         return commitInfos;
     }
+
+    public void clearCachedRepositories() {
+        cachedRepositories.clear();
+    }
 }

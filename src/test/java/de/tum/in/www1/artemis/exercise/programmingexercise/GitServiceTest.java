@@ -348,5 +348,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertThat(commitsInfos.get(1).message()).isEqualTo("my first commit");
         assertThat(commitsInfos.get(2).hash()).isEqualTo(getCommitHash("initial commit"));
         assertThat(commitsInfos.get(2).message()).isEqualTo("initial commit");
+        gitService.clearCachedRepositories();
     }
 }
