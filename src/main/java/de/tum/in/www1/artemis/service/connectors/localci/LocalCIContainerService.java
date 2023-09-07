@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -235,46 +236,101 @@ public class LocalCIContainerService {
         boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositories() != null && programmingExercise.getAuxiliaryRepositories().size() > 0;
         boolean sequentialTestRuns = programmingExercise.hasSequentialTestRuns();
         boolean isStaticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean isStaticCodeAnalysisAfterDueDate = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean recordTestwiseCoverage = programmingExercise.isTestwiseCoverageEnabled();
 
         Path scriptsPath = Path.of("local-ci-scripts");
         String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + programmingExerciseId + "-build.sh";
 
-        String buildScript = "#!/bin/bash\n" + "mkdir /repositories\n" + "cd /repositories\n";
+        StringBuilder buildScript = new StringBuilder("""
+                #!/bin/bash
+                mkdir /repositories
+                cd /repositories
+                """);
 
         // Checkout tasks
-        buildScript += "git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository\n"
-                + "git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository\n";
+        buildScript.append("""
+                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
+                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
+                """);
 
         if (hasAuxiliaryRepositories) {
             for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-                buildScript += "git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///" + auxiliaryRepository.getName() + "-repository\n";
+                buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
             }
         }
 
-        buildScript += "cd assignment-repository\n" + "if [ -n \"$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH\" ]; then\n"
-                + "    git fetch --depth 1 origin \"$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH\"\n" + "    git checkout \"$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH\"\n" + "fi\n"
-                + "mkdir /repositories/test-repository/assignment\n" + "cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/\n"
-                + "cd /repositories/test-repository\n";
+        buildScript.append("""
+                cd assignment-repository
+                if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
+                    git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                    git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                fi
+                mkdir /repositories/test-repository/assignment
+                cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
+                cd /repositories/test-repository
+                """);
+
+        // programming language specific tasks
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
                 boolean isMavenProject = ProjectType.isMavenProject(projectType);
 
+                if (!isMavenProject) {
+                    buildScript.append("chmod +x gradlew\n");
+                }
+
                 if (!sequentialTestRuns) {
                     if (isMavenProject) {
-                        buildScript += "mvn clean test";
+                        // artifact?
+                        buildScript.append("mvn clean test");
                         if (recordTestwiseCoverage) {
-                            buildScript += " -Pcoverage\n" + "mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json";
+                            buildScript.append(" -Pcoverage\n" + "mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json");
                         }
-                        buildScript += "\n";
+                        buildScript.append("\n");
                     }
                     else {
-                        buildScript += "chmod +x gradlew\n" + "sed -i -e 's/\\r$//' gradlew\n" + "./gradlew clean test";
+                        // artifact?
+                        buildScript.append("""
+                                sed -i -e 's/\\r$//' gradlew
+                                ./gradlew clean test""");
                         if (recordTestwiseCoverage) {
-                            buildScript += " tiaTests --run-all-tests\n";
+                            buildScript.append(" tiaTests --run-all-tests\n");
                         }
+                    }
+                }
+                else {
+                    if (isMavenProject) {
+                        // does not work yet
+                        buildScript.append("""
+                                cd structural
+                                mvn clean test
+                                cd ..
+                                cd behavior
+                                mvn clean test
+                                cd ..
+                                """);
+                    }
+                    else {
+                        buildScript.append("""
+                                ./gradlew clean test structuralTests
+                                ./gradlew behaviorTests
+                                """);
+                    }
+                }
+
+                if (isStaticCodeAnalysisEnabled) {
+
+                    // artifacts?
+
+                    if (isMavenProject) {
+                        String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+                        buildScript.append("mvn ").append(command).append("\n");
+                    }
+                    else {
+                        buildScript.append("""
+                                ./gradlew check -x test
+                                """);
                     }
                 }
             }
@@ -282,7 +338,7 @@ public class LocalCIContainerService {
 
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(buildScriptPath));
-            writer.write(buildScript);
+            writer.write(buildScript.toString());
             writer.close();
         }
         catch (IOException e) {
