@@ -7,11 +7,14 @@ import de.tum.in.www1.artemis.domain.DomainObject;
  */
 public class PlagiarismDetectionConfig extends DomainObject {
 
-    private final float similarityThreshold;
+    private float similarityThreshold;
 
-    private final int minimumScore;
+    private int minimumScore;
 
-    private final int minimumSize;
+    private int minimumSize;
+
+    public PlagiarismDetectionConfig() {
+    }
 
     public PlagiarismDetectionConfig(float similarityThreshold, int minimumScore, int minimumSize) {
         this.similarityThreshold = similarityThreshold;
@@ -23,11 +26,23 @@ public class PlagiarismDetectionConfig extends DomainObject {
         return similarityThreshold;
     }
 
+    public void setSimilarityThreshold(float similarityThreshold) {
+        this.similarityThreshold = similarityThreshold;
+    }
+
     public int getMinimumScore() {
         return minimumScore;
     }
 
+    public void setMinimumScore(int minimumScore) {
+        this.minimumScore = minimumScore;
+    }
+
     public int getMinimumSize() {
         return minimumSize;
+    }
+
+    public void setMinimumSize(int minimumSize) {
+        this.minimumSize = minimumSize;
     }
 }
