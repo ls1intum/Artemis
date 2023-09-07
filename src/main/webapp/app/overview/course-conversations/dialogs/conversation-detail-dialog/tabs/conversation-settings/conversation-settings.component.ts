@@ -58,6 +58,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.canLeaveConversation = canLeaveConversation(this.activeConversation);
+
         this.conversationAsChannel = getAsChannelDto(this.activeConversation);
         this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
         this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course, this.conversationAsChannel) : false;

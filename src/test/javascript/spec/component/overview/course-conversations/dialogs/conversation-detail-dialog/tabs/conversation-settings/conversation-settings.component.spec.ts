@@ -17,6 +17,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -25,9 +26,9 @@ examples.forEach((activeConversation) => {
         let component: ConversationSettingsComponent;
         let fixture: ComponentFixture<ConversationSettingsComponent>;
         const course = { id: 1 } as Course;
-        const canChangeArchivalState = jest.fn();
-        const canDeleteChannel = jest.fn();
-        const canLeaveConversation = jest.fn();
+        const canLeaveConversation = jest.spyOn(ConversationPermissionUtils, 'canLeaveConversation');
+        const canChangeArchivalState = jest.spyOn(ConversationPermissionUtils, 'canChangeChannelArchivalState');
+        const canDeleteChannel = jest.spyOn(ConversationPermissionUtils, 'canDeleteChannel');
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -42,16 +43,14 @@ examples.forEach((activeConversation) => {
             canDeleteChannel.mockReturnValue(true);
             fixture = TestBed.createComponent(ConversationSettingsComponent);
             component = fixture.componentInstance;
-            component.canChangeArchivalState = canChangeArchivalState;
-            component.canLeaveConversation = canLeaveConversation;
-            component.canDeleteChannel = canDeleteChannel;
             component.course = course;
             component.activeConversation = activeConversation;
+            component.ngOnInit();
             fixture.detectChanges();
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            jest.resetAllMocks();
         });
 
         it('should create', () => {
@@ -61,6 +60,7 @@ examples.forEach((activeConversation) => {
         it('should show buttons only if user has the required permissions', () => {
             expect(fixture.nativeElement.querySelector('.leave-conversation')).toBeTruthy();
             canLeaveConversation.mockReturnValue(false);
+            component.ngOnInit();
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('.leave-conversation')).toBeFalsy();
 
@@ -69,9 +69,11 @@ examples.forEach((activeConversation) => {
                 expect(fixture.nativeElement.querySelector('.delete')).toBeTruthy();
 
                 canChangeArchivalState.mockReturnValue(false);
+                component.ngOnInit();
                 fixture.detectChanges();
                 expect(fixture.nativeElement.querySelector('.archive')).toBeFalsy();
                 canDeleteChannel.mockReturnValue(false);
+                component.ngOnInit();
                 fixture.detectChanges();
                 expect(fixture.nativeElement.querySelector('.delete')).toBeFalsy();
             } else {
