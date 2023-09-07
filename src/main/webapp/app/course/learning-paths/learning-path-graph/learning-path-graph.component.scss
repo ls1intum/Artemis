@@ -19,6 +19,15 @@
         stroke: var(--body-color) !important;
         marker-end: url(#arrow);
     }
+
+    .floating-icon-button {
+        position: absolute;
+        right: 0;
+        padding: 0.25em;
+    }
+    .floating-icon-button:hover {
+        cursor: pointer;
+    }
 }
 
 jhi-learning-path-graph-node:hover {

@@ -138,6 +138,25 @@ public class LearningPathResource {
     }
 
     /**
+     * GET learning-path/:learningPathId : Gets the learning path information.
+     *
+     * @param learningPathId the id of the learning path that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the learning path
+     */
+    @GetMapping("learning-path/{learningPathId}")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathPageableSearchDTO> getLearningPath(@PathVariable long learningPathId) {
+        log.debug("REST request to get learning path with id: {}", learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
+        final var user = userRepository.getUser();
+        if (!user.getId().equals(learningPath.getUser().getId())) {
+            throw new AccessForbiddenException("You are not the owner of the learning path.");
+        }
+        return ResponseEntity.ok(new LearningPathPageableSearchDTO(learningPath));
+    }
+
+    /**
      * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched

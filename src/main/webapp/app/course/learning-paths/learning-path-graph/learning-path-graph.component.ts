@@ -6,6 +6,9 @@ import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
 import { ExerciseEntry, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 
 export enum LearningPathViewMode {
     GRAPH,
@@ -42,9 +45,12 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
+    faEye = faEye;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private learningPathService: LearningPathService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -183,4 +189,18 @@ export class LearningPathGraphComponent implements OnInit {
             });
         }
     }
+
+    viewProgress() {
+        this.learningPathService.getLearningPath(this.learningPathId).subscribe((learningPathResponse) => {
+            const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
+                size: 'xl',
+                backdrop: 'static',
+                windowClass: 'learning-path-modal',
+            });
+            modalRef.componentInstance.courseId = this.courseId;
+            modalRef.componentInstance.learningPath = learningPathResponse.body!;
+        });
+    }
+
+    protected readonly PATH = LearningPathViewMode.PATH;
 }

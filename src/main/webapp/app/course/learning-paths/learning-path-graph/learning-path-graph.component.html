@@ -43,4 +43,8 @@
             </svg:g>
         </ng-template>
     </ngx-graph>
+
+    <div *ngIf="viewMode === PATH" class="floating-icon-button" (click)="viewProgress()">
+        <fa-icon [icon]="faEye"></fa-icon>
+    </div>
 </div>
