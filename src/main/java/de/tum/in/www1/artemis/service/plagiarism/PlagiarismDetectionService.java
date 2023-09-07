@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -55,20 +56,8 @@ public class PlagiarismDetectionService {
         var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(exercise, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize());
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons,", exercise.getId(), plagiarismResult.getComparisons().size());
 
-        // TODO: limit the amount temporarily because of database issues
-        plagiarismResult.sortAndLimit(100);
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
-
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        trimAndSavePlagiarismResult(plagiarismResult);
         return plagiarismResult;
-    }
-
-    private void checkProgrammingLanguageSupport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
-        var language = exercise.getProgrammingLanguage();
-        var programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow().getProgrammingLanguageFeatures(language);
-        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
-            throw new ProgrammingLanguageNotSupportedForPlagiarismDetectionException(language);
-        }
     }
 
     /**
@@ -113,11 +102,23 @@ public class PlagiarismDetectionService {
         var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, config.getSimilarityThreshold(), config.getMinimumSize(), config.getMinimumScore());
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
-        // TODO: limit the amount temporarily because of database issues
+        trimAndSavePlagiarismResult(plagiarismResult);
+        return plagiarismResult;
+    }
+
+    private void trimAndSavePlagiarismResult(PlagiarismResult<?> plagiarismResult) {
+        // Limit the amount temporarily because of database issues
         plagiarismResult.sortAndLimit(100);
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
 
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-        return plagiarismResult;
+    }
+
+    private void checkProgrammingLanguageSupport(ProgrammingExercise exercise) throws ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
+        var language = exercise.getProgrammingLanguage();
+        var programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow().getProgrammingLanguageFeatures(language);
+        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
+            throw new ProgrammingLanguageNotSupportedForPlagiarismDetectionException(language);
+        }
     }
 }
