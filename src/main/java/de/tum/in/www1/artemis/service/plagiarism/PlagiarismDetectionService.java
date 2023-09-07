@@ -53,6 +53,7 @@ public class PlagiarismDetectionService {
      * Check plagiarism in given text exercise
      *
      * @param exercise exercise to check plagiarism
+     * @param config   configuration for plagiarism detection
      * @return result of plagiarism checks
      */
     public TextPlagiarismResult checkTextExercise(TextExercise exercise, PlagiarismDetectionConfig config) throws ExitException {
@@ -67,6 +68,7 @@ public class PlagiarismDetectionService {
      * Check plagiarism in given programing exercise
      *
      * @param exercise exercise to check plagiarism
+     * @param config   configuration for plagiarism detection
      * @return result of plagiarism checks
      */
     public TextPlagiarismResult checkProgrammingExercise(ProgrammingExercise exercise, PlagiarismDetectionConfig config)
@@ -87,6 +89,7 @@ public class PlagiarismDetectionService {
      * Check plagiarism in given programing exercise and outputs a Jplag report
      *
      * @param exercise exercise to check plagiarism
+     * @param config   configuration for plagiarism detection
      * @return Jplag report of plagiarism checks
      */
     public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise, PlagiarismDetectionConfig config)
@@ -99,6 +102,7 @@ public class PlagiarismDetectionService {
      * Check plagiarism in given modeling exercise
      *
      * @param exercise exercise to check plagiarism
+     * @param config   configuration for plagiarism detection
      * @return result of plagiarism checks
      */
     public ModelingPlagiarismResult checkModelingExercise(ModelingExercise exercise, PlagiarismDetectionConfig config) {
