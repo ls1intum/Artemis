@@ -96,6 +96,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         mockDefaultBranch(programmingExercise1);

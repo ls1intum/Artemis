@@ -226,6 +226,10 @@ public class BambooRequestMockProvider {
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.git.branch", defaultBranch);
         parameters.add("repository.git.repositoryUrl", newRepoUrl);
+        parameters.add("repository.git.authenticationType", "PASSWORD");
+        parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        parameters.add("repository.git.useShallowClones", "true");
+        parameters.add("repository.git.commandTimeout", "180");
 
         URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/updateRepository.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
