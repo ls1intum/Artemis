@@ -4,8 +4,13 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -38,7 +43,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
