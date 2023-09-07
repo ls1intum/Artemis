@@ -125,10 +125,10 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/accept-code-of-conduct : Checks if the user accepted the code of conduct
+     * GET /api/courses/:courseId/code-of-conduct : Checks if the user accepted the code of conduct
      *
      * @param courseId
-     * @return ResponseEntity with status 200 (Ok) and if the user accepted the course's code of conduct
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user accepted the course's code of conduct
      */
     @GetMapping("/{courseId}/code-of-conduct")
     @EnforceAtLeastStudent
@@ -140,12 +140,12 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/accept-code-of-conduct : Accept the course's code of conduct
+     * POST /api/courses/:courseId/code-of-conduct : Accept the course's code of conduct
      *
      * @param courseId
-     * @return ResponseEntity with status 200 (Ok) and if the user accepted the code of conduct
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user accepted the code of conduct
      */
-    @GetMapping("/{courseId}/code-of-conduct")
+    @PostMapping("/{courseId}/code-of-conduct")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> acceptCodeOfConduct(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
