@@ -240,7 +240,7 @@ public class DataExportExerciseCreationService {
         try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
             Files.write(outputDir.resolve(fileName + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
-        catch (IOException e) {
+        catch (Exception e) {
             log.warn("Failed to include the model as pdf, going to include it as plain JSON file.");
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
         }
@@ -298,7 +298,7 @@ public class DataExportExerciseCreationService {
         for (var result : submission.getResults()) {
             if (result != null) {
                 // Do not include the results if the assessment due date is in the future and the assessment is not automatic and the user is not an instructor
-                // we only consider progrmming exercises here because for other exercises we this method is not called if the assessment due date is in the future
+                // We only consider programming exercises here because for other exercises we this method is not called if the assessment due date is in the future
                 if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isInstructor) {
                     continue;
                 }
