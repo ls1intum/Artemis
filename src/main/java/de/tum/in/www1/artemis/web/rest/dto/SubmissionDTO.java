@@ -24,6 +24,7 @@ public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boo
      */
     public static SubmissionDTO of(Submission submission) {
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
+            // For programming submissions we need to extract additional information (e.g. the commit hash) and send it to the client
             return new SubmissionDTO(programmingSubmission.getId(), programmingSubmission.isSubmitted(), programmingSubmission.getType(),
                     programmingSubmission.isExampleSubmission(), programmingSubmission.getSubmissionDate(), programmingSubmission.getCommitHash(),
                     programmingSubmission.isBuildFailed(), programmingSubmission.isBuildArtifact(), new DomainObjectIdDTO(programmingSubmission.getParticipation()),

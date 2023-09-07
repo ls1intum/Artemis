@@ -308,7 +308,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public abstract boolean isEmpty();
 
     /**
-     * used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+     * used to distinguish the type when used in collections or DTOs
      *
      * @return the exercise type (e.g. programming, text)
      */
