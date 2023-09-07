@@ -510,13 +510,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
-    onUpdateAssessmentNote(assessmentNote: AssessmentNote[]) {
+    onUpdateAssessmentNote(assessmentNote: AssessmentNote) {
         this.manualResult!.assessmentNote = assessmentNote;
         this.validateFeedback();
     }
 
     hasAssessmentNote(): boolean {
-        return this.manualResult?.assessmentNote?.length == 1;
+        return this.manualResult?.assessmentNote !== undefined;
     }
 
     /**
@@ -646,5 +646,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         return totalScore;
+    }
+
+    getAssessmentNoteIfPresentOrCreateNewOne() {
+        if (this.manualResult?.assessmentNote === undefined) {
+            return new AssessmentNote();
+        } else {
+            return this.manualResult.assessmentNote;
+        }
     }
 }

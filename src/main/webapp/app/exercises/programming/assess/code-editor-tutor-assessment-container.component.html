@@ -127,6 +127,7 @@
                     [(feedbacks)]="unreferencedFeedback"
                     (feedbacksChange)="validateFeedback()"
                     (assessmentNoteChange)="onUpdateAssessmentNote($event)"
+                    [assessmentNote]="getAssessmentNoteIfPresentOrCreateNewOne()"
                     [readOnly]="readOnly()"
                     [highlightDifferences]="highlightDifferences"
                 ></jhi-unreferenced-feedback>

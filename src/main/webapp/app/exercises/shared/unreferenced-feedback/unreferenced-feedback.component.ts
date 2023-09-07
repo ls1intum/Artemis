@@ -14,7 +14,7 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    assessmentNote: AssessmentNote[] = [new AssessmentNote()];
+    @Input() assessmentNote: AssessmentNote;
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -30,7 +30,7 @@ export class UnreferencedFeedbackComponent {
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
 
-    @Output() assessmentNoteChange = new EventEmitter<AssessmentNote[]>();
+    @Output() assessmentNoteChange = new EventEmitter<AssessmentNote>();
 
     constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
@@ -108,7 +108,16 @@ export class UnreferencedFeedbackComponent {
     }
 
     onAssessmentNoteInput(event: any) {
-        this.assessmentNote[0].note = event.target.value;
+        console.log(event.target.value);
+        this.assessmentNote.note = event.target.value;
         this.assessmentNoteChange.emit(this.assessmentNote);
+    }
+
+    getTextContent() {
+        if (this.assessmentNote === undefined) {
+            return '';
+        } else {
+            return this.assessmentNote.note;
+        }
     }
 }

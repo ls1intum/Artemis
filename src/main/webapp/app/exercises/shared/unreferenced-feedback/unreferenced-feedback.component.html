@@ -27,7 +27,7 @@
             <div class="row mt-4">
                 <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.assessmentNote">Assessment Notes</h4>
             </div>
-            <textarea (input)="onAssessmentNoteInput($event)" name="tutor_notes" id="tutor_notes" cols="52" rows="5"></textarea>
+            <textarea class="form-control" (input)="onAssessmentNoteInput($event)" [textContent]="getTextContent()" name="tutor_notes" id="tutor_notes"></textarea>
         </ng-container>
     </div>
 </div>

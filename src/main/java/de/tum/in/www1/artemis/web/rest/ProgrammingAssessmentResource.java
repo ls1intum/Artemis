@@ -184,8 +184,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
 
         // set creator of assessment note on the server to minimize network load
-        if (newManualResult.getAssessmentNote() != null && !newManualResult.getAssessmentNote().isEmpty()) {
-            newManualResult.getAssessmentNote().get(0).setCreator(newManualResult.getAssessor());
+        if (newManualResult.getAssessmentNotes() != null && !newManualResult.getAssessmentNotes().isEmpty()) {
+            newManualResult.getAssessmentNotes().get(0).setCreator(newManualResult.getAssessor());
         }
 
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
