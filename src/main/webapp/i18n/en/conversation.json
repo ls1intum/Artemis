@@ -106,6 +106,7 @@
                 "remove": "Remove user"
             },
             "conversationSettings": {
+                "settingsUnavailable": "No settings possible",
                 "actions": {
                     "leave": "Leave Conversation",
                     "archiveChannel": "Archive Channel",
