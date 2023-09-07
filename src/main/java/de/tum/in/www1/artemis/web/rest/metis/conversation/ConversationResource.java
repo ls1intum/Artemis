@@ -125,6 +125,36 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
+     * GET /api/courses/:courseId/accept-code-of-conduct : Checks if the user accepted the code of conduct
+     *
+     * @param courseId
+     * @return ResponseEntity with status 200 (Ok) and if the user accepted the course's code of conduct
+     */
+    @GetMapping("/{courseId}/code-of-conduct")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        return ResponseEntity.ok(false);
+    }
+
+    /**
+     * POST /api/courses/:courseId/accept-code-of-conduct : Accept the course's code of conduct
+     *
+     * @param courseId
+     * @return ResponseEntity with status 200 (Ok) and if the user accepted the code of conduct
+     */
+    @GetMapping("/{courseId}/code-of-conduct")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> acceptCodeOfConduct(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        return ResponseEntity.ok(true);
+    }
+
+    /**
      * GET /api/courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
      *
      * @param courseId       the id of the course
