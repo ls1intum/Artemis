@@ -52,8 +52,6 @@ public class ProgrammingExercisePlagiarismResource {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
-
     private final PlagiarismDetectionService plagiarismDetectionService;
 
     public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
