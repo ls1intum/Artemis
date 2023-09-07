@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="keller" id="20230907114600">
+        <sql>
+            UPDATE conversation c
+            SET is_course_wide = true
+            WHERE c.lecture_id IS NOT null
+                OR c.exercise_id IS NOT null
+                OR (
+                    c.creator_id IS null
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM tutorial_group AS tg
+                        WHERE tg.tutorial_group_channel_id = c.id
+                    )
+                )
+        </sql>
+    </changeSet>
+</databaseChangeLog>
