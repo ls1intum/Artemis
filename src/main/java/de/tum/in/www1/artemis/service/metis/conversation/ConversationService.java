@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,21 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -125,16 +118,35 @@ public class ConversationService {
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
 
-        var conversations = new ArrayList<Conversation>();
-        conversations.addAll(oneToOneChatsOfUser);
-        conversations.addAll(groupChatsOfUser);
+        var conversationsOfUser = new ArrayList<Conversation>();
+        conversationsOfUser.addAll(oneToOneChatsOfUser);
+        conversationsOfUser.addAll(groupChatsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
-        conversations.addAll(filteredChannels);
+        conversationsOfUser.addAll(filteredChannels);
 
-        return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
+        var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
+        var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
+                .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
+        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
+                .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
+
+        Integer numberOfCourseMembers = null;
+        for (Channel channel : filteredChannels) {
+            if (channel.getIsCourseWide()) {
+                if (numberOfCourseMembers == null) {
+                    numberOfCourseMembers = courseRepository.countCourseMembers(courseId);
+                }
+                generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
+            }
+        }
+
+        Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
+                .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
+
+        return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
     }
 
     /**
@@ -179,15 +191,7 @@ public class ConversationService {
         }
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
         for (User user : usersToBeRegistered) {
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(conversation);
-            conversationParticipant.setIsModerator(false);
-            conversationParticipant.setIsHidden(false);
-            conversationParticipant.setIsFavorite(false);
-            // set the last reading time of a participant in the past when creating conversation for the first time!
-            conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(2));
-            conversationParticipant.setUnreadMessagesCount(0L);
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, conversation);
             newConversationParticipants.add(conversationParticipant);
         }
         if (!newConversationParticipants.isEmpty()) {
@@ -330,27 +334,33 @@ public class ConversationService {
     public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
             Optional<ConversationMemberSearchFilters> filter) {
         if (filter.isEmpty()) {
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+                return userRepository.searchAllByLoginOrNameInCourse(pageable, searchTerm, course.getId());
+            }
             return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
+            var groups = new HashSet<String>();
             switch (filter.get()) {
-                case INSTRUCTOR -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getInstructorGroupName());
-                }
+                case INSTRUCTOR -> groups.add(course.getInstructorGroupName());
                 case TUTOR -> {
-                    // searches for both tutors and editors
-                    return userRepository.searchAllByLoginOrNameInConversationWithEitherCourseGroup(pageable, searchTerm, conversation.getId(), course.getEditorGroupName(),
-                            course.getTeachingAssistantGroupName());
+                    groups.add(course.getTeachingAssistantGroupName());
+                    // searching for tutors also searches for editors
+                    groups.add(course.getEditorGroupName());
                 }
-                case STUDENT -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getStudentGroupName());
-                }
+                case STUDENT -> groups.add(course.getStudentGroupName());
                 case CHANNEL_MODERATOR -> {
                     assert conversation instanceof Channel : "The filter CHANNEL_MODERATOR is only allowed for channels!";
                     return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
+
+            if (conversation instanceof Channel && ((Channel) conversation).getIsCourseWide()) {
+                return userRepository.searchAllByLoginOrNameInGroups(pageable, searchTerm, groups);
+            }
+
+            return userRepository.searchAllByLoginOrNameInConversationWithCourseGroups(pageable, searchTerm, conversation.getId(), groups);
         }
 
     }
@@ -360,12 +370,12 @@ public class ConversationService {
      *
      * @param conversationId the id of the conversation
      * @param requestingUser the user that wants to switch the favorite status
-     * @param isFavorite     the new favorite status
+     * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean isFavorite) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
-        participation.setIsFavorite(isFavorite);
-        conversationParticipantRepository.save(participation);
+    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+        ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsFavorite(favoriteStatus);
+        conversationParticipantRepository.save(conversationParticipant);
     }
 
     /**
@@ -376,9 +386,9 @@ public class ConversationService {
      * @param hiddenStatus   the new hidden status
      */
     public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
-        participation.setIsHidden(hiddenStatus);
-        conversationParticipantRepository.save(participation);
+        ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
     }
 
     /**
@@ -433,8 +443,8 @@ public class ConversationService {
     /**
      * Filter all channels where the attached lecture/exercise has been released
      *
-     * @param channels A stream of channels
-     * @return A stream of channels for lectures/exercises that have been released
+     * @param channels a stream of channels
+     * @return a stream of channels without channels belonging to unreleased lectures/exercises/exams
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
         return channels.filter(channel -> {
@@ -449,5 +459,23 @@ public class ConversationService {
             }
             return true;
         });
+    }
+
+    private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId());
+
+        if (participation.isEmpty()) {
+            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+                return ConversationParticipant.createWithDefaultValues(requestingUser, channel);
+            }
+            else {
+                throw new AccessForbiddenException("User not allowed to access this conversation!");
+            }
+        }
+        else {
+            return participation.get();
+        }
     }
 }

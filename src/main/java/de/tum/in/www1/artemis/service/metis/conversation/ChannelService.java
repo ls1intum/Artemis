@@ -66,6 +66,16 @@ public class ChannelService {
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
             conversationParticipant.setIsModerator(true);
         }
+        // If the channel is course-wide, there might not be a participant entry for some users yet. They are created here.
+        if (channel.getIsCourseWide()) {
+            var matchingParticipantIds = matchingParticipants.stream().map(participant -> participant.getUser().getId()).collect(Collectors.toSet());
+            var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
+            missingUsers.forEach(user -> {
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+                conversationParticipant.setIsModerator(true);
+                matchingParticipants.add(conversationParticipant);
+            });
+        }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
     }
@@ -363,6 +373,7 @@ public class ChannelService {
         }
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setIsPublic(false);
+        channelToCreate.setIsCourseWide(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -459,6 +470,7 @@ public class ChannelService {
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
+        defaultChannel.setIsCourseWide(true);
         defaultChannel.setIsAnnouncementChannel(false);
         defaultChannel.setIsArchived(false);
         return defaultChannel;
