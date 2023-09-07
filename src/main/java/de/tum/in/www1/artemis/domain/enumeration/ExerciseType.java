@@ -34,4 +34,20 @@ public enum ExerciseType {
             case QUIZ -> QuizExercise.class;
         };
     }
+
+    /**
+     * Get the exercise type based on a class.
+     *
+     * @return the exercise type corresponding to the class
+     */
+    public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
+        return switch (exerciseClass.getSimpleName()) {
+            case "TextExercise" -> TEXT;
+            case "ProgrammingExercise" -> PROGRAMMING;
+            case "ModelingExercise" -> MODELING;
+            case "FileUploadExercise" -> FILE_UPLOAD;
+            case "QuizExercise" -> QUIZ;
+            default -> throw new IllegalArgumentException(String.format("Received unexecpted exercise class name %s", exerciseClass.getSimpleName()));
+        };
+    }
 }

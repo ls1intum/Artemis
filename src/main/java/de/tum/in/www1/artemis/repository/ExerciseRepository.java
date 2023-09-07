@@ -16,6 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -117,29 +118,28 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
-            SELECT COUNT(DISTINCT user.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countStudentsInExercisesWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(DISTINCT user.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
+            GROUP BY TYPE(e)
             """)
-    Integer countActiveStudentsInExercisesWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
+    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
             SELECT COUNT(e.id)
@@ -153,29 +153,29 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
 
     @Query("""
-            SELECT COUNT(DISTINCT user.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countStudentsInExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(DISTINCT user.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
             FROM Exercise e
             JOIN User user ON e.course.studentGroupName member of user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
                 AND user.login IN :#{#activeUserLogins}
+            GROUP BY TYPE(e)
             """)
-    Integer countActiveStudentsInExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator, @Param("activeUserLogins") List<String> activeUserLogins);
+    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
             SELECT e FROM Exercise e

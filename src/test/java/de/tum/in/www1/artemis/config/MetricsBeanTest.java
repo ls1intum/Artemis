@@ -304,6 +304,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
                 .save(textExerciseUtilService.createIndividualTextExercise(course1, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null)));
         courseRepository.save(course1);
 
+        metricsBean.updateStudentMultiplierMetrics();
+
         // Only one of the two quizzes ends in the next 15 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
         assertMetricEquals(3 * 1, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
@@ -314,6 +316,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // Add activity to user
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.get(0).getLogin());
+
+        metricsBean.updateStudentMultiplierMetrics();
 
         // Should now have one active user
         assertMetricEquals(1, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
@@ -329,6 +333,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.get(1).getLogin());
 
+        metricsBean.updateStudentMultiplierMetrics();
+
         // Should now have two active users
         assertMetricEquals(2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
 
@@ -342,6 +348,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         course2.addExercises(
                 exerciseRepository.save(QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED, course2)));
         courseRepository.save(course2);
+
+        metricsBean.updateStudentMultiplierMetrics();
 
         // 3 quizzes end within the next 120 minutes, and are in two different courses -> 6 different users in total
         assertMetricEquals(3, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
