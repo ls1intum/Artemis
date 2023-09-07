@@ -1,12 +1,8 @@
 .graph-container {
-    display: block;
+    display: flex;
     width: 100%;
     height: 100%;
     overflow: hidden;
-
-    .ngx-graph {
-        width: auto;
-    }
 
     .node {
         display: flex;
@@ -35,6 +31,7 @@ jhi-learning-path-graph-node:hover {
 
     fa-icon {
         width: 100%;
+        display: flex;
 
         svg {
             margin: 10%;
@@ -44,8 +41,22 @@ jhi-learning-path-graph-node:hover {
     }
 }
 
+.node-xs {
+    width: 40%;
+    margin: 30%;
+}
+
+.node-s {
+    width: 60%;
+    margin: 20%;
+}
+
 .completed {
     color: var(--bs-success);
+}
+
+.current {
+    color: var(--bs-warning);
 }
 
 .node-details {

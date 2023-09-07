@@ -22,7 +22,13 @@
         <ng-template #nodeTemplate let-node>
             <svg:g class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
                 <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-                    <jhi-learning-path-graph-node class="node" [courseId]="courseId" [node]="node" (click)="nodeClicked.emit(node)"></jhi-learning-path-graph-node>
+                    <jhi-learning-path-graph-node
+                        class="node"
+                        [class.current]="currentNode && node.id === currentNode.id"
+                        [courseId]="courseId"
+                        [node]="node"
+                        (click)="nodeClicked.emit(node)"
+                    ></jhi-learning-path-graph-node>
                 </svg:foreignObject>
             </svg:g>
         </ng-template>

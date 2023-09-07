@@ -1,6 +1,7 @@
 <div class="row mt-2 main-container">
     <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
         <jhi-learning-path-graph-sidebar
+            #graphSidebar
             *ngIf="learningPathId"
             [courseId]="courseId"
             [learningPathId]="learningPathId"
@@ -16,9 +17,15 @@
         </div>
     </div>
 </div>
-<button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()" [disabled]="!learningPathHistoryStorageService.hasPrevious(this.learningPathId)">
-    <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="artemisApp.learningPath.participate.prev">Previous</span>
-</button>
-<button type="button" class="btn btn-primary next-button" (click)="onNextTask()" [disabled]="true">
-    <span jhiTranslate="artemisApp.learningPath.participate.next">Next</span> <fa-icon [icon]="faChevronRight"></fa-icon>
-</button>
+<div class="row mt-2">
+    <div class="col-auto">
+        <button type="button" class="btn btn-primary prev-button" (click)="onPrevTask()" [disabled]="!learningPathStorageService.hasPrevious(this.learningPathId)">
+            <fa-icon [icon]="faChevronLeft"></fa-icon> <span jhiTranslate="artemisApp.learningPath.participate.prev">Previous</span>
+        </button>
+    </div>
+    <div class="col-auto">
+        <button type="button" class="btn btn-primary next-button" (click)="onNextTask()" [disabled]="!learningPathStorageService.hasRecommendation(this.learningPathId)">
+            <span jhiTranslate="artemisApp.learningPath.participate.next">Next</span> <fa-icon [icon]="faChevronRight"></fa-icon>
+        </button>
+    </div>
+</div>

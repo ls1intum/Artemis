@@ -17,7 +17,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
+import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -32,7 +32,7 @@ describe('LearningPathContainerComponent', () => {
     let exerciseService: ExerciseService;
     let exercise: Exercise;
     let getExerciseDetailsStub: jest.SpyInstance;
-    let historyService: LearningPathHistoryStorageService;
+    let historyService: LearningPathStorageService;
     let storeLectureUnitStub: jest.SpyInstance;
     let storeExerciseStub: jest.SpyInstance;
     let hasPreviousStub: jest.SpyInstance;
@@ -77,7 +77,7 @@ describe('LearningPathContainerComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
-                historyService = TestBed.inject(LearningPathHistoryStorageService);
+                historyService = TestBed.inject(LearningPathStorageService);
                 storeLectureUnitStub = jest.spyOn(historyService, 'storeLectureUnit');
                 storeExerciseStub = jest.spyOn(historyService, 'storeExercise');
                 hasPreviousStub = jest.spyOn(historyService, 'hasPrevious');
