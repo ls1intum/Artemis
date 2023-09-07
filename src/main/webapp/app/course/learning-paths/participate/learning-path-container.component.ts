@@ -168,8 +168,10 @@ export class LearningPathContainerComponent implements OnInit {
             this.lectureId = node.linkedResourceParent;
             if (node.type === NodeType.LECTURE_UNIT) {
                 this.loadLectureUnit();
+                this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
             } else if (node.type === NodeType.EXERCISE) {
                 this.loadExercise();
+                this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
             }
         }
     }

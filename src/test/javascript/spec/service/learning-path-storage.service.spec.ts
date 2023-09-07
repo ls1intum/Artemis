@@ -38,15 +38,18 @@ describe('LearningPathStorageService', () => {
             });
     });
 
-    it('should return null if no previous is present', () => {
+    it('should return undefined if no previous is present', () => {
         expect(storageService.hasPrevious(learningPathId)).toBeFalsy();
         const entry = storageService.getPrevious(learningPathId);
-        expect(entry).toBeNull();
+        expect(entry).toBeUndefined();
     });
 
     it('should handle single lecture unit', () => {
         expect(storageService.hasPrevious(learningPathId)).toBeFalsy();
-        storageService.storeLectureUnit(learningPathId, lectureId, lectureUnitId);
+        const stored = storageService.storeLectureUnit(learningPathId, lectureId, lectureUnitId);
+        expect(stored).toBeInstanceOf(LectureUnitEntry);
+        expect(stored.lectureUnitId).toBe(lectureUnitId);
+        expect(stored.lectureId).toBe(lectureId);
         expect(storageService.hasPrevious(learningPathId)).toBeTruthy();
         const entry = storageService.getPrevious(learningPathId);
         expect(entry).not.toBeNull();
@@ -59,7 +62,9 @@ describe('LearningPathStorageService', () => {
 
     it('should handle single exercise', () => {
         expect(storageService.hasPrevious(learningPathId)).toBeFalsy();
-        storageService.storeExercise(learningPathId, exerciseId);
+        const stored = storageService.storeExercise(learningPathId, exerciseId);
+        expect(stored).toBeInstanceOf(ExerciseEntry);
+        expect(stored.exerciseId).toBe(exerciseId);
         expect(storageService.hasPrevious(learningPathId)).toBeTruthy();
         const entry = storageService.getPrevious(learningPathId);
         expect(entry).not.toBeNull();
@@ -143,10 +148,14 @@ describe('LearningPathStorageService', () => {
 
     it('should return first uncompleted if entry not existing', () => {
         storageService.storeRecommendations(learningPathId, ngxPath);
-        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(new LectureUnitEntry(6, 5));
+        let expectedEntry = new LectureUnitEntry(6, 5);
+        expectedEntry.interacted = true;
+        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedEntry);
 
         storageService.setInteraction(learningPathId, new LectureUnitEntry(6, 5));
-        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(new ExerciseEntry(7));
+        expectedEntry = new ExerciseEntry(7);
+        expectedEntry.interacted = true;
+        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedEntry);
     });
 
     it('should return undefined if all recommendations completed', () => {

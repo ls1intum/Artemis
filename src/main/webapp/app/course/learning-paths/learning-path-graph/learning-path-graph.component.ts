@@ -28,15 +28,15 @@ export class LearningPathGraphComponent implements OnInit {
     ngxLearningPath: NgxLearningPathDTO;
     ngxGraph?: NgxLearningPathDTO;
     ngxPath?: NgxLearningPathDTO;
-    currentNode?: NgxLearningPathNode;
+    highlightedNode?: NgxLearningPathNode;
 
     layout: string | Layout = 'dagreCluster';
     curve = shape.curveBundle;
 
-    private _draggingEnabled = false; // false
-    private _panningEnabled = false; // true
-    private _zoomEnabled = false; // true
-    private _panOnZoom = false; // true
+    private _draggingEnabled = false;
+    private _panningEnabled = false;
+    private _zoomEnabled = false;
+    private _panOnZoom = false;
 
     update$: Subject<boolean> = new Subject<boolean>();
     center$: Subject<boolean> = new Subject<boolean>();
@@ -160,10 +160,15 @@ export class LearningPathGraphComponent implements OnInit {
 
     highlightNode(learningObject: LectureUnitEntry | ExerciseEntry) {
         if (this.viewMode == LearningPathViewMode.GRAPH) {
-            this.currentNode = this.findNode(learningObject, this.ngxGraph!);
+            this.highlightedNode = this.findNode(learningObject, this.ngxGraph!);
         } else {
-            this.currentNode = this.findNode(learningObject, this.ngxPath!);
+            this.highlightedNode = this.findNode(learningObject, this.ngxPath!);
         }
+        this.update$.next(true);
+    }
+
+    clearHighlighting() {
+        this.highlightedNode = undefined;
         this.update$.next(true);
     }
 
