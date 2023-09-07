@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -45,16 +44,13 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            CourseRepository courseRepository, UserRepository userRepository) {
+            UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
 

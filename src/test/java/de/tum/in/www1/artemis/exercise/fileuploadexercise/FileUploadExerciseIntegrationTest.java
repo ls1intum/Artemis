@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
@@ -60,9 +59,6 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;

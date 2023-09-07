@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
@@ -44,9 +43,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     ChannelRepository channelRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;
