@@ -367,6 +367,10 @@ public class TextExerciseResource {
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
                     result.filterSensitiveInformation();
                 }
+
+                // only send the one latest result to the client
+                textSubmission.setResults(List.of(result));
+                participation.setResults(Set.of(result));
             }
 
             participation.addSubmission(textSubmission);
