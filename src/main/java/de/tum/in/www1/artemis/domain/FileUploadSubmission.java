@@ -35,17 +35,20 @@ public class FileUploadSubmission extends Submission {
     private List<String> filePaths;
 
     /**
-     * Deletes solution file for this submission
+     * Deletes solution files for this submission
      */
     @PostRemove
     public void onDelete() {
-        // nocheckin
         final List<String> filePaths = getFilePaths(); // this.filePaths might still be null. getFilePaths() lazily initializes to an empty list
         for (String filePath : filePaths)
             onDeleteSingleFile(filePath);
     }
 
-    // nocheckin
+    /**
+     * Deletes a single solution file from this submission
+     *
+     * @param filePath the path to the file
+     */
     public void onDeleteSingleFile(String filePath) {
         // delete old file if necessary
         final var splittedPath = filePath.split("/");
@@ -84,15 +87,13 @@ public class FileUploadSubmission extends Submission {
         return Path.of(FilePathService.getFileUploadExercisesFilePath(), String.valueOf(exerciseId), String.valueOf(submissionId)).toString();
     }
 
-    // nocheckin: Maybe we should remove this function in the end.
     public void setFilePath(String filePath) {
         this.filePaths = new ArrayList<>();
         filePaths.add(filePath);
     }
 
-    // nocheckin
-    public void setFilePathsList(String[] filePaths) {
-        this.filePaths = Arrays.stream(filePaths).toList();
+    public void setFilePaths(List<String> filePaths) {
+        this.filePaths = filePaths;
     }
 
     @Override

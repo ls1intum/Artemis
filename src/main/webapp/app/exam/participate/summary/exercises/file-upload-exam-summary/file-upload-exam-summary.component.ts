@@ -25,11 +25,5 @@ export class FileUploadExamSummaryComponent {
         this.fileService.downloadFile(filePath);
     }
 
-    fileName(filePath: string): string {
-        return FileDetails.getFileDetailsFromPath(filePath).name;
-    }
-
-    attachmentExtension(filePath: string): string {
-        return FileDetails.getFileDetailsFromPath(filePath).extension;
-    }
+    protected readonly FileDetails = FileDetails;
 }

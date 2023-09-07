@@ -114,7 +114,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
-        String[] newFilePaths = storeFiles(fileUploadSubmission, participation, files, exercise);
+        List<String> newFilePaths = storeFiles(fileUploadSubmission, participation, files, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -131,14 +131,14 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePathsList(newFilePaths);
+        fileUploadSubmission.setFilePaths(newFilePaths);
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         return fileUploadSubmission;
     }
 
-    private String[] storeFiles(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile[] files, FileUploadExercise exercise)
+    private List<String> storeFiles(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile[] files, FileUploadExercise exercise)
             throws EmptyFileException, IOException {
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
@@ -153,9 +153,8 @@ public class FileUploadSubmissionService extends SubmissionService {
                 throw new EmptyFileException(file.getOriginalFilename());
             }
 
-            // nocheckin: form here
             final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
-            final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise); // nocheckin
+            final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
             final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
 
             savePaths.add(savePath);
@@ -191,7 +190,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             }
         });
 
-        return newFilePaths.toArray(new String[0]); // nocheckin: consolidate use of array and list
+        return newFilePaths;
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {

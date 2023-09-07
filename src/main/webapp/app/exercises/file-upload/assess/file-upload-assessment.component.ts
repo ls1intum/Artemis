@@ -140,15 +140,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         });
     }
 
-    // nocheckin: duplicate code
-    fileName(filePath: string): string {
-        return FileDetails.getFileDetailsFromPath(filePath).name;
-    }
-
-    attachmentExtension(filePath: string): string {
-        return FileDetails.getFileDetailsFromPath(filePath).extension;
-    }
-
     private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission?: FileUploadSubmission) => {
@@ -506,4 +497,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     private onError(error: string) {
         this.alertService.error(error);
     }
+
+    protected readonly FileDetails = FileDetails;
 }

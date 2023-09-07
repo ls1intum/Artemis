@@ -33,10 +33,10 @@
                     <ol>
                         <li *ngFor="let filePath of submission!.filePaths!; let i = index" class="card-text">
                             <a class="text-primary" (click)="downloadFile(filePath)">
-                                {{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate: { fileName: fileName(filePath) } }}
+                                {{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(filePath).name } }}
                             </a>
                             <span class="ms-2 badge bg-info">
-                                {{ attachmentExtension(filePath) | uppercase }}
+                                {{ FileDetails.getFileDetailsFromPath(filePath).extension | uppercase }}
                             </span>
                         </li>
                     </ol>

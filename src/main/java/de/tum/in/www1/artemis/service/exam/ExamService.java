@@ -784,7 +784,7 @@ public class ExamService {
         }
         else if (exercise instanceof FileUploadExercise) {
             FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
-            return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
+            return !textSubmission.getFilePaths().isEmpty() && textSubmission.getFilePaths().stream().noneMatch(String::isEmpty); // nocheckin: Is this right?
         }
         else if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();

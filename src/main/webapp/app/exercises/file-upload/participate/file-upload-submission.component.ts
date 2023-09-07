@@ -153,11 +153,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         }
 
         this.isSaving = true;
-        const files = this.stagedFiles?.map((stagedFile) => stagedFile.file);
+        const files: File[] = this.stagedFiles?.map((stagedFile) => stagedFile.file);
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, files).subscribe({
             next: (res) => {
                 this.submission = res.body!;
-                console.log(this.submission);
                 this.participation = this.submission.participation as StudentParticipation;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation!.submissions = [this.submission];
@@ -176,9 +175,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.alertService.error(serverError, { fileName: /* file.name */ 'nocheckin' });
+                    this.alertService.error(serverError, { fileName: files.toString() });
                 } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: /* file.name */ 'nocheckin' });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: files.toString() });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.stagedFiles = undefined;
@@ -220,7 +219,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     private setSubmittedFiles() {
         // clear staged files and the file input
-        if (this.fileInput) this.fileInput.nativeElement.value = ''; // nocheckin
+        if (this.fileInput) this.fileInput.nativeElement.value = '';
         this.stagedFiles = undefined;
         this.submittedFiles = [];
 
