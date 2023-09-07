@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.jgrapht.alg.util.UnionFind;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -27,8 +25,6 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
  */
 @Service
 public class LearningPathNgxService {
-
-    private final Logger log = LoggerFactory.getLogger(LearningPathNgxService.class);
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
@@ -369,6 +365,13 @@ public class LearningPathNgxService {
         return "edge-" + competencyId + "-direct";
     }
 
+    /**
+     * Gets the node id of the given lecture unit or exercise.
+     *
+     * @param competencyId   the id of the competency that the learning object is linked to
+     * @param learningObject the lecture unit or exercise
+     * @return the ngx node id of the given lecture unit or exercise
+     */
     public static String getLearningObjectNodeId(long competencyId, LearningObject learningObject) {
         if (learningObject instanceof LectureUnit) {
             return getLectureUnitNodeId(competencyId, learningObject.getId());

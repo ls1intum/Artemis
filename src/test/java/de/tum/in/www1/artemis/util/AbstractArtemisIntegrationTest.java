@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import javax.mail.internet.MimeMessage;
 

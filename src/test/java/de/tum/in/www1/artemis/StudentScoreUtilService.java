@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 
 /**
@@ -16,10 +15,7 @@ import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 public class StudentScoreUtilService {
 
     @Autowired
-    StudentScoreRepository studentScoreRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
+    private StudentScoreRepository studentScoreRepository;
 
     /**
      * Creates student score for given exercise and user.
