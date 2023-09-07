@@ -148,14 +148,14 @@ describe('LearningPathStorageService', () => {
 
     it('should return first uncompleted if entry not existing', () => {
         storageService.storeRecommendations(learningPathId, ngxPath);
-        let expectedEntry = new LectureUnitEntry(6, 5);
-        expectedEntry.interacted = true;
-        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedEntry);
+        const expectedLectureUnitEntry = new LectureUnitEntry(6, 5);
+        expectedLectureUnitEntry.interacted = true;
+        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedLectureUnitEntry);
 
         storageService.setInteraction(learningPathId, new LectureUnitEntry(6, 5));
-        expectedEntry = new ExerciseEntry(7);
-        expectedEntry.interacted = true;
-        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedEntry);
+        const expectedExerciseEntry = new ExerciseEntry(7);
+        expectedExerciseEntry.interacted = true;
+        expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedExerciseEntry);
     });
 
     it('should return undefined if all recommendations completed', () => {

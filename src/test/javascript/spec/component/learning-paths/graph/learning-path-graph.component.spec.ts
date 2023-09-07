@@ -117,7 +117,8 @@ describe('LearningPathGraphComponent', () => {
         fixture.detectChanges();
         expect(comp.highlightedNode).toBeUndefined();
         comp.highlightNode(entry);
-        expect(comp.highlightedNode.id).toBe(expectedNodeId);
+        expect(comp.highlightedNode).toBeTruthy();
+        expect(comp.highlightedNode!.id).toBe(expectedNodeId);
         expect(updateStub).toHaveBeenCalledTimes(2);
     });
 

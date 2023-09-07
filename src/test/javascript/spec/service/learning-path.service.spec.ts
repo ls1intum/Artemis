@@ -3,9 +3,11 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
 describe('LearningPathService', () => {
     let learningPathService: LearningPathService;
+    let storageService: LearningPathStorageService;
     let httpService: HttpClient;
     let putStub: jest.SpyInstance;
     let getStub: jest.SpyInstance;
@@ -18,7 +20,8 @@ describe('LearningPathService', () => {
             .compileComponents()
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
-                learningPathService = new LearningPathService(httpService);
+                storageService = TestBed.inject(LearningPathStorageService);
+                learningPathService = new LearningPathService(httpService, storageService);
                 putStub = jest.spyOn(httpService, 'put');
                 getStub = jest.spyOn(httpService, 'get');
             });
