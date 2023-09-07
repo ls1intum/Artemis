@@ -20,6 +20,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
+/**
+ * Service for triggering plagiarism checks.
+ */
 @Service
 @Component
 public class PlagiarismDetectionService {
