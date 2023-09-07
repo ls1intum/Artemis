@@ -49,10 +49,6 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
         });
 
-        afterEach(() => {
-            jest.resetAllMocks();
-        });
-
         it('should create', () => {
             expect(component).toBeTruthy();
         });
