@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
-public class ProgrammingPlagiarismDetectionService {
+class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
