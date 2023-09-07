@@ -79,25 +79,25 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      *
      * @param exerciseId           of the file upload exercise a submission should be created for
      * @param fileUploadSubmission the fileUploadSubmission to create
-     * @param file                 The uploaded file belonging to the submission
+     * @param files                The uploaded files belonging to the submission
      * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an ID
      */
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, @RequestPart("submission") FileUploadSubmission fileUploadSubmission,
-            @RequestPart("file") MultipartFile file) {
+            @RequestPart("files") MultipartFile[] files) {
         log.debug("REST request to submit new file upload submission : {}", fileUploadSubmission);
-        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
+        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, files);
     }
 
     @NotNull
-    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
+    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile[] files) {
         long start = System.currentTimeMillis();
-        checkFileLength(file);
+        checkFileLengths(files);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
 
-        checkFilePattern(file, exercise);
+        checkFilePatterns(files, exercise);
 
         // if there is a participation that has an exercise linked to it,
         // the exercise needs to be the same as the one referenced in the path via exerciseId
@@ -116,7 +116,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         final FileUploadSubmission submission;
         try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, files, exercise, user);
         }
         catch (IOException e) {
             throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");
@@ -135,13 +135,15 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         return ResponseEntity.ok(submission);
     }
 
-    private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
-        // Check the pattern
-        final String[] splittedFileName = file.getOriginalFilename().split("\\.");
-        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
-        if (!fileSuffix.matches(filePattern)) {
-            throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
+    private static void checkFilePatterns(MultipartFile[] files, FileUploadExercise exercise) {
+        for (MultipartFile file : files) {
+            // Check the pattern
+            final String[] splittedFileName = file.getOriginalFilename().split("\\.");
+            final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
+            final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
+            if (!fileSuffix.matches(filePattern)) {
+                throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
+            }
         }
     }
 
@@ -325,15 +327,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * Throws IllegalArgumentException if the file length is over MAX_SUBMISSION_FILE_SIZE.
+     * Throws IllegalArgumentException if at least one of the file lengths is over MAX_SUBMISSION_FILE_SIZE.
      *
-     * @param file the file in the file upload submission
+     * @param files the files in the file upload submission
      */
-    private void checkFileLength(MultipartFile file) {
-        // Check the file size
-        if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
-            // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
+    private void checkFileLengths(MultipartFile[] files) {
+        for (MultipartFile file : files) {
+            // Check the file size
+            if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
+                // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
+                throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
+            }
         }
     }
 }

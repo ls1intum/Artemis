@@ -31,6 +31,7 @@ import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { FileDetails } from 'app/entities/file-details.model';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -139,12 +140,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         });
     }
 
-    attachmentExtension(filePath: string): string {
-        if (!filePath) {
-            return 'N/A';
-        }
+    // nocheckin: duplicate code
+    fileName(filePath: string): string {
+        return FileDetails.getFileDetailsFromPath(filePath).name;
+    }
 
-        return filePath.split('.').pop()!;
+    attachmentExtension(filePath: string): string {
+        return FileDetails.getFileDetailsFromPath(filePath).extension;
     }
 
     private loadOptimalSubmission(exerciseId: number): void {

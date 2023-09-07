@@ -163,31 +163,63 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFileUploadSubmission() throws Exception {
-        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
-        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedFile).isEqualTo("some data");
+    void testGetOneFileUploadSubmission() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFiles(1);
+        String receivedFile = request.get(fileUploadSubmission.getFilePaths().get(0), HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data 1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetTwoFilesUploadSubmission() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFiles(2);
+        final var files = fileUploadSubmission.getFilePaths();
+
+        String receivedFile1 = request.get(files.get(0), HttpStatus.OK, String.class);
+        assertThat(receivedFile1).isEqualTo("some data 1");
+
+        String receivedFile2 = request.get(files.get(1), HttpStatus.OK, String.class);
+        assertThat(receivedFile2).isEqualTo("some data 2");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFileUploadSubmissionAsTutor() throws Exception {
-        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
+    void testGetOneFileUploadSubmissionAsTutor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFiles(1);
 
-        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedFile).isEqualTo("some data");
+        String receivedFile = request.get(fileUploadSubmission.getFilePaths().get(0), HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data 1");
     }
 
-    private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetTwoFilesUploadSubmissionAsTutor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFiles(2);
+        final var files = fileUploadSubmission.getFilePaths();
+
+        String receivedFile1 = request.get(files.get(0), HttpStatus.OK, String.class);
+        assertThat(receivedFile1).isEqualTo("some data 1");
+
+        String receivedFile2 = request.get(files.get(1), HttpStatus.OK, String.class);
+        assertThat(receivedFile2).isEqualTo("some data 2");
+    }
+
+    private FileUploadSubmission createFileUploadSubmissionWithRealFiles(int filesCount) throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+
+        List<MockMultipartFile> files = new ArrayList<>();
+        for (int i = 0; i < filesCount; i++) {
+            String fileNameString = String.format("file %d.png", i + 1);
+            String dataString = String.format("some data %d", i + 1);
+            files.add(new MockMultipartFile("files", fileNameString, "application/json", dataString.getBytes()));
+        }
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
         FileUploadSubmission savedSubmission = request.postWithMultipartFiles("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", fileUploadSubmission,
-                "submission", List.of(file), FileUploadSubmission.class, HttpStatus.OK);
+                "submission", files, FileUploadSubmission.class, HttpStatus.OK);
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         return savedSubmission;

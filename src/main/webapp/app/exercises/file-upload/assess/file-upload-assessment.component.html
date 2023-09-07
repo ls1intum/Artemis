@@ -29,9 +29,17 @@
         <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise!.maxPoints!" [maxBonusPoints]="exercise!.bonusPoints!" [course]="course"></jhi-score-display>
         <div left-body>
             <div class="row">
-                <div *ngIf="submission?.filePath" class="col-12 card-text">
-                    <a class="text-primary" (click)="downloadFile(submission!.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
-                    <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePath!) | uppercase }}</span>
+                <div *ngIf="submission?.filePaths && submission!.filePaths!.length > 0" class="col-12 card-text">
+                    <ol>
+                        <li *ngFor="let filePath of submission!.filePaths!; let i = index" class="card-text">
+                            <a class="text-primary" (click)="downloadFile(filePath)">
+                                {{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate: { fileName: fileName(filePath) } }}
+                            </a>
+                            <span class="ms-2 badge bg-info">
+                                {{ attachmentExtension(filePath) | uppercase }}
+                            </span>
+                        </li>
+                    </ol>
                 </div>
             </div>
         </div>

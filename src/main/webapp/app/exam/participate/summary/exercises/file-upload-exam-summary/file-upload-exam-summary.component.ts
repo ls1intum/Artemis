@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -24,11 +25,11 @@ export class FileUploadExamSummaryComponent {
         this.fileService.downloadFile(filePath);
     }
 
-    attachmentExtension(filePath: string): string {
-        if (!filePath) {
-            return 'N/A';
-        }
+    fileName(filePath: string): string {
+        return FileDetails.getFileDetailsFromPath(filePath).name;
+    }
 
-        return filePath.split('.').pop()!;
+    attachmentExtension(filePath: string): string {
+        return FileDetails.getFileDetailsFromPath(filePath).extension;
     }
 }

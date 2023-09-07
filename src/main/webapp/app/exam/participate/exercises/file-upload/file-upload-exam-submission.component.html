@@ -1,4 +1,5 @@
 <!--resizable container-->
+<!-- nocheckin: NONE OF THIS is tested at all! -->
 <jhi-resizeable-container *ngIf="exercise">
     <!--region Left Panel-->
     <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
@@ -34,14 +35,21 @@
             </div>
         </div>
 
-        <div *ngIf="submittedFileName && studentSubmission?.filePath" class="card-text">
+        <div *ngIf="submittedFiles && studentSubmission?.filePaths" class="card-text">
             <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
+                {{ 'artemisApp.fileUploadSubmission.submittedFiles' | artemisTranslate }}
             </h6>
-            <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-            <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
-                {{ submittedFileExtension | uppercase }}
-            </span>
+
+            <ol>
+                <li *ngFor="let submittedFile of submittedFiles; let i = index" class="card-text">
+                    <a class="text-primary" (click)="downloadFile(studentSubmission!.filePaths![i]!)">
+                        {{ 'artemisApp.fileUploadSubmission.download' | artemisTranslate: { fileName: submittedFile.name } }}
+                    </a>
+                    <span class="ms-2 badge bg-info" *ngIf="submittedFile.extension">
+                        {{ submittedFile.extension | uppercase }}
+                    </span>
+                </li>
+            </ol>
         </div>
     </div>
     <!--endregion-->

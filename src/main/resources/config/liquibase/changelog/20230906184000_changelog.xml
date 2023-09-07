@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="erik" id="20230812135300">
+        <!--nocheckin-->
+        <comment>
+            Create the table to store multiple paths with a file submission
+            instead of only one and copy the old paths into the new table.
+        </comment>
+        <createTable tableName="file_submission_paths">
+            <column name="submission_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="path" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- nocheckin: should submission_id have an index? -->
+        <sql>INSERT INTO file_submission_paths (submission_id, path) SELECT id, file_path FROM submission</sql>
+        <comment>
+            Drop the old column only after the data has been migrated.
+        </comment>
+        <dropColumn tableName="submission" columnName="file_path"/>
+    </changeSet>
+</databaseChangeLog>

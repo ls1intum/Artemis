@@ -6,8 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.http.HttpStatus;
@@ -53,13 +52,13 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param fileUploadSubmission the file upload submission that should be saved
      * @param exercise             the corresponding file upload exercise
-     * @param file                 the file that will be stored on the server
+     * @param files                the files that will be stored on the server
      * @param user                 the user who initiated the save/submission
      * @return the saved file upload submission
      * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, FileUploadExercise exercise, User user)
             throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
@@ -77,7 +76,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission.setSubmitted(true);
         }
 
-        fileUploadSubmission = save(fileUploadSubmission, file, participation, exercise);
+        fileUploadSubmission = save(fileUploadSubmission, files, participation, exercise);
         return fileUploadSubmission;
     }
 
@@ -105,17 +104,17 @@ public class FileUploadSubmissionService extends SubmissionService {
      * calls.
      *
      * @param fileUploadSubmission the submission that should be saved
-     * @param file                 the file that will be saved on the server
+     * @param files                the files that will be saved on the server
      * @param participation        the participation the submission belongs to
      * @param exercise             the exercise the submission belongs to
      * @return the fileUploadSubmission entity that was saved to the database
      * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
+    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
-        String newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
+        String[] newFilePaths = storeFiles(fileUploadSubmission, participation, files, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -132,49 +131,67 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(newFilePath);
+        fileUploadSubmission.setFilePathsList(newFilePaths);
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         return fileUploadSubmission;
     }
 
-    private String storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
+    private String[] storeFiles(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile[] files, FileUploadExercise exercise)
             throws EmptyFileException, IOException {
-        if (file.isEmpty()) {
-            throw new EmptyFileException(file.getOriginalFilename());
-        }
-
-        final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-        final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
 
-        // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(savePath)));
-        if (!multipartFileHash.equals(storedFileHash)) {
-            throw new IOException("The file " + file.getName() + "could not be stored");
+        List<String> savePaths = new ArrayList<>(files.length);
+        List<String> newFilePaths = new ArrayList<>(files.length);
+
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                throw new EmptyFileException(file.getOriginalFilename());
+            }
+
+            // nocheckin: form here
+            final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+            final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise); // nocheckin
+            final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
+
+            savePaths.add(savePath);
+            newFilePaths.add(newFilePath);
+
+            // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
+            final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(savePath)));
+            if (!multipartFileHash.equals(storedFileHash)) {
+                throw new IOException("The file " + file.getName() + "could not be stored");
+            }
         }
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
-        previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
-            final String oldFilePath = previousSubmission.getFilePath();
-            // check if we already had a file associated with this submission
-            if (!oldFilePath.equals(newFilePath)) { // different name
-                // IMPORTANT: only delete the file when it has changed the name
-                previousSubmission.onDelete();
+        previousFileUploadSubmission.filter(previousSubmission -> !previousSubmission.getFilePaths().isEmpty()).ifPresent(previousSubmission -> {
+            final List<String> oldFilePaths = previousSubmission.getFilePaths();
+
+            for (String oldFilePath : oldFilePaths) {
+                // check if we already had a file associated with this submission
+                if (!newFilePaths.contains(oldFilePath)) {
+                    // IMPORTANT: only delete the file when it has become unused
+                    previousSubmission.onDeleteSingleFile(oldFilePath);
+                }
             }
-            else { // same name
-                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                fileService.evictCacheForPath(savePath);
+
+            for (int i = 0; i < newFilePaths.size(); i++) {
+                // check if we already had a file associated with this submission
+                if (oldFilePaths.contains(newFilePaths.get(i))) { // different name
+                    // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                    fileService.evictCacheForPath(savePaths.get(i));
+                }
             }
         });
-        return newFilePath;
+
+        return newFilePaths.toArray(new String[0]); // nocheckin: consolidate use of array and list
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {

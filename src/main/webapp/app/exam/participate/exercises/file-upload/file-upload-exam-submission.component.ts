@@ -1,3 +1,4 @@
+// nocheckin: NONE OF THIS is tested at all!
 import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -33,8 +35,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     @Input()
     exercise: FileUploadExercise;
 
-    submittedFileName: string;
-    submittedFileExtension: string;
+    submittedFiles?: FileDetails[];
     participation: StudentParticipation;
     result: Result;
     submissionFile?: File;
@@ -130,13 +131,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
+        if (this.studentSubmission.isSynced && this.studentSubmission.filePaths) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
+            this.submittedFiles = this.studentSubmission.filePaths.map((filePath) => FileDetails.getFileDetailsFromPath(filePath));
         }
     }
 
@@ -148,16 +146,16 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe({
+        /*this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, [this.submissionFile]).subscribe({ // nocheckin
             next: (res) => {
                 const submissionFromServer = res.body!;
-                this.studentSubmission.filePath = submissionFromServer.filePath;
+                this.studentSubmission.filePath = submissionFromServer.filePath; // nocheckin
                 this.studentSubmission.isSynced = true;
                 this.studentSubmission.submitted = true;
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),
-        });
+        });*/
     }
 
     /**
