@@ -169,7 +169,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
-        // if we do not have this assignment, eslint will complain because either the parameter is unused or if we suppress this with ts-ignore that ts-ignore shadows compilation errors.
+        // if we do not assign the parameter, eslint will complain because either the parameter is unused or if we suppress this with ts-ignore that ts-ignore shadows compilation errors.
         this.submissionVersion = submissionVersion;
         // submission versions are not supported for file upload exercises
         throw new Error('Submission versions are not supported for file upload exercises.');
