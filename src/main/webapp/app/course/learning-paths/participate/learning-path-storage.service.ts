@@ -95,8 +95,8 @@ export class LearningPathStorageService {
     }
 
     /**
-     * Returns if there is a recommendation left that has not been interacted with yet
-     * .
+     * Returns if there is a recommendation left that has not been interacted with yet.
+     *
      * @param learningPathId the id of the learning path
      */
     hasRecommendation(learningPathId: number) {

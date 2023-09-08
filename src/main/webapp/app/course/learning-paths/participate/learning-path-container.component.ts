@@ -98,10 +98,11 @@ export class LearningPathContainerComponent implements OnInit {
         } else if (entry instanceof ExerciseEntry) {
             this.learningObjectId = entry.exerciseId;
             this.loadExercise();
+        } else {
+            this.graphSidebar.learningPathGraphComponent.clearHighlighting();
+            return;
         }
-        if (entry && (entry instanceof LectureUnitEntry || entry instanceof ExerciseEntry)) {
-            this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
-        }
+        this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
     }
 
     loadLectureUnit() {
