@@ -210,7 +210,7 @@ jobs:
       run: ./gradlew checkstyleMain -x webapp
       if: success() || failure()
     - name: Java Architecture Tests
-      run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
+      run: ./gradlew architectureTest -x webapp
       if: success() || failure()
     - name: Test Report
       uses: dorny/test-reporter@v1

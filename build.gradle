@@ -114,6 +114,13 @@ tasks.register("testReport", TestReport) {
     testResults.from(test)
 }
 
+// Custom task to only execute ArchUnit tests
+tasks.register("architectureTest", Test) {
+    useJUnitPlatform {
+        includeTags "ArchitectureTest"
+    }
+}
+
 jacoco {
     toolVersion = "0.8.8"
 }
