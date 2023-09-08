@@ -447,18 +447,30 @@ public class ConversationService {
      * @return a stream of channels without channels belonging to unreleased lectures/exercises/exams
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
-        return channels.filter(channel -> {
-            if (channel.getLecture() != null) {
-                return channel.getLecture().isVisibleToStudents();
-            }
-            else if (channel.getExercise() != null) {
-                return channel.getExercise().isVisibleToStudents();
-            }
-            else if (channel.getExam() != null) {
-                return channel.getExam().isVisibleToStudents();
-            }
-            return true;
-        });
+        return channels.filter(this::isChannelVisibleToStudents);
+    }
+
+    /**
+     * Determines whether the provided channel is visible to students.
+     * <p>
+     * If the channel is not associated with a lecture/exam/exercise, then this method returns true.
+     * If it is connected to a lecture/exam/exercise, then the
+     * channel visibility depends on the visible date of the lecture/exam/exercise.
+     *
+     * @param channel the channel under consideration
+     * @return true if the channel is visible to students
+     */
+    public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
+        if (channel.getLecture() != null) {
+            return channel.getLecture().isVisibleToStudents();
+        }
+        else if (channel.getExercise() != null) {
+            return channel.getExercise().isVisibleToStudents();
+        }
+        else if (channel.getExam() != null) {
+            return channel.getExam().isVisibleToStudents();
+        }
+        return true;
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
