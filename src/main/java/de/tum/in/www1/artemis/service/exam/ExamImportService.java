@@ -13,10 +13,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
-import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
-import de.tum.in.www1.artemis.service.QuizExerciseImportService;
-import de.tum.in.www1.artemis.service.TextExerciseImportService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -106,7 +103,7 @@ public class ExamImportService {
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
         Channel createdChannel = channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(false, examCopied.getCourse(), createdChannel);
+        channelService.registerTutorsAndInstructorsToChannel(examCopied.getCourse(), createdChannel);
 
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }
@@ -230,7 +227,7 @@ public class ExamImportService {
         // Only exercise groups with at least one exercise should be imported.
         List<ExerciseGroup> filteredExerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
         // If no exercise group is existent, we can aboard the process
-        if (exerciseGroupsToCopy.isEmpty()) {
+        if (filteredExerciseGroupsToCopy.isEmpty()) {
             return;
         }
 
@@ -242,9 +239,6 @@ public class ExamImportService {
             targetExam.addExerciseGroup(exerciseGroupCopied);
         });
 
-        /*
-         * for (ExerciseGroup exerciseGroup : exerciseGroupsCopied) { targetExam.addExerciseGroup(exerciseGroup); }
-         */
         examRepository.save(targetExam);
 
         // We need to take the exercise groups from the exam to ensure the correct connection exam <-> exercise group
