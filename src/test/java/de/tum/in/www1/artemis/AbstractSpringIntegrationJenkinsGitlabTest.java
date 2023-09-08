@@ -91,16 +91,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
         if (!recreateBuildPlans) {
             mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
             mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
@@ -124,7 +120,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
     }
