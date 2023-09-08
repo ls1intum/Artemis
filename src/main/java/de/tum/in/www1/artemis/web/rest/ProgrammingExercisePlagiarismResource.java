@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -55,12 +53,10 @@ public class ProgrammingExercisePlagiarismResource {
     private final PlagiarismDetectionService plagiarismDetectionService;
 
     public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            PlagiarismResultRepository plagiarismResultRepository, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
-            PlagiarismDetectionService plagiarismDetectionService) {
+            PlagiarismResultRepository plagiarismResultRepository, PlagiarismDetectionService plagiarismDetectionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.plagiarismDetectionService = plagiarismDetectionService;
     }
 
