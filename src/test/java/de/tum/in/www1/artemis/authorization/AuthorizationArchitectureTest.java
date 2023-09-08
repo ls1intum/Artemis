@@ -28,7 +28,7 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
     void testNoPreAuthorizeOnRestControllers() {
         ArchRule rule = noClasses().that().areAnnotatedWith(RestController.class).should().beAnnotatedWith(PreAuthorize.class).because(
                 "All endpoints should be secured directly using the Artemis enforcement annotations on the method definition. Refer to the server guidelines in our documentation.");
-        rule.check(allClasses);
+        rule.check(productionClasses);
     }
 
     @Test
