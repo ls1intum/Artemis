@@ -169,13 +169,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username;
-        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
+        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName);
         bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username, true, false);
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
-            throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var buildPlanKey = (projectKey + "-" + planName).toUpperCase();
 
@@ -259,7 +258,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             mockBambooBuildPlanCreation(exerciseToBeImported, false, templateBuildPlanId, solutionBuildPlanId);
         }
         if (addAuxRepos) {
-            mockUpdatePlanRepository(exerciseToBeImported, "auxrepo", "auxrepo", "auxrepo", List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, "auxrepo", "auxrepo", "auxrepo");
         }
     }
 
@@ -315,15 +314,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
         bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName(), planExistsInCi, shouldPlanEnableFail);
         bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName(), planExistsInCi, shouldPlanEnableFail);
-        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName);
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName);
         for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
             final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
-            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), repository.getName(), auxRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), repository.getName(), auxRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), repository.getName(), auxRepoName);
+            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), repository.getName(), auxRepoName);
         }
-        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName);
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName);
         bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + TEMPLATE.getName());
         bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + SOLUTION.getName());
     }
