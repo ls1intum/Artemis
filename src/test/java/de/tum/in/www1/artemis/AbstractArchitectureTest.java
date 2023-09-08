@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 
-public abstract class AbstractArchitectureTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+@Tag("ArchitectureTest")
+public abstract class AbstractArchitectureTest {
 
     protected static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
 
