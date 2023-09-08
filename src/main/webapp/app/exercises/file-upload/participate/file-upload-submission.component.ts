@@ -203,6 +203,19 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (!this.stagedFiles) this.stagedFiles = [];
                 this.stagedFiles?.push(new StagedFile(FileDetails.getFileDetailsFromPath(submissionFile.name), submissionFile));
             }
+
+            this.fileInput.nativeElement.value = '';
+        }
+    }
+
+    /**
+     * Unstages a file submission.
+     * @param stagedFile File which is unstaged
+     */
+    unstageFile(stagedFile: StagedFile): void {
+        if (this.stagedFiles) {
+            this.stagedFiles = this.stagedFiles?.filter((file) => file != stagedFile);
+            if (this.stagedFiles!.length == 0) this.stagedFiles = undefined;
         }
     }
 
@@ -218,8 +231,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private setSubmittedFiles() {
-        // clear staged files and the file input
-        if (this.fileInput) this.fileInput.nativeElement.value = '';
+        // clear staged files
         this.stagedFiles = undefined;
         this.submittedFiles = [];
 

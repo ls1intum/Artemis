@@ -7,6 +7,7 @@ import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
@@ -71,9 +72,9 @@ public class FileUploadSubmission extends Submission {
         return filePaths;
     }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore // nocheckin: temporary until we remove the function
+    @JsonIgnore
     public String getFilePath() {
-        return isEmpty() ? null : filePaths.get(0); // nocheckin
+        return isEmpty() ? null : filePaths.get(0);
     }
 
     /**
@@ -98,7 +99,7 @@ public class FileUploadSubmission extends Submission {
 
     @Override
     public boolean isEmpty() {
-        return getFilePaths().isEmpty(); // nocheckin: This should only work with filePaths set to eager, not lazy... gonna have to figure out how lazy works after all
+        return getFilePaths().isEmpty();
     }
 
     @Override

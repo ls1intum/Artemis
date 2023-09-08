@@ -3,21 +3,22 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="erik" id="20230812135300">
-        <!--nocheckin-->
         <comment>
             Create the table to store multiple paths with a file submission
             instead of only one and copy the old paths into the new table.
         </comment>
         <createTable tableName="file_submission_paths">
             <column name="submission_id" type="bigint">
-                <constraints nullable="false"/>
+                <constraints nullable="false" />
             </column>
             <column name="path" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <!-- nocheckin: should submission_id have an index? -->
-        <sql>INSERT INTO file_submission_paths (submission_id, path) SELECT id, file_path FROM submission</sql>
+        <createIndex tableName="file_submission_paths" indexName="file_submission_paths_submission_id">
+            <column name="submission_id" />
+        </createIndex>
+        <sql>INSERT INTO file_submission_paths (submission_id, path) SELECT id, file_path FROM submission WHERE discriminator = 'F'</sql> <!-- nocheckin-->
         <comment>
             Drop the old column only after the data has been migrated.
         </comment>
