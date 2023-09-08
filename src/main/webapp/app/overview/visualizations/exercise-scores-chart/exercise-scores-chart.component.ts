@@ -132,9 +132,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
                 round(exerciseScoreDTO.maxScoreAchieved!),
                 this.maxScale,
             );
-            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!) + 1, ...extraInformation });
-            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!) + 1, ...extraInformation });
-            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!) + 1, ...extraInformation });
+            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!), ...extraInformation });
+            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!), ...extraInformation });
+            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!), ...extraInformation });
         });
 
         const studentScore = { name: this.yourScoreLabel, series: scoreSeries };
@@ -144,7 +144,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.ngxData.push(averageScore);
         this.ngxData.push(bestScore);
         this.ngxData = [...this.ngxData];
-        this.backUpData = [...this.ngxData];
+        this.backUpData = cloneDeep(this.ngxData);
     }
 
     /**
@@ -154,30 +154,25 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      * @param data the event sent by the framework
      */
     onSelect(data: any): void {
-        // delegate to the corresponding exercise if chart node is clicked
         if (data.exerciseId) {
+            // if a chart node is clicked, navigate to the corresponding exercise
             this.navigateToExercise(data.exerciseId);
         } else {
-            // if a legend label is clicked, the corresponding line has to disappear or reappear
-            const name = JSON.parse(JSON.stringify(data)) as string;
+            // if a legend label is clicked, the visibility of the corresponding line is toggled
+            const name: string = data;
             // find the affected line in the dataset
             const index = this.ngxData.findIndex((dataPack: any) => {
                 const dataName = dataPack.name as string;
                 return dataName === name;
             });
-            // check whether the line is currently displayed
             if (this.ngxColor.domain[index] !== 'rgba(255,255,255,0)') {
-                const placeHolder = cloneDeep(this.ngxData[index]);
-                placeHolder.series.forEach((piece: any) => {
-                    piece.value = 0;
-                });
-                // exchange actual line with all-zero line and make color transparent
-                this.ngxData[index] = placeHolder;
+                //if the line is displayed, remove its values and make it transparent
+                this.ngxData[index].series = [];
                 this.ngxColor.domain[index] = 'rgba(255,255,255,0)';
             } else {
-                // if the line is currently hidden, the color and the values are reset
+                // if the line is currently hidden, the values and the color are reset
+                this.ngxData[index].series = cloneDeep(this.backUpData[index].series);
                 this.ngxColor.domain[index] = this.colorBase[index];
-                this.ngxData[index] = this.backUpData[index];
             }
             // trigger a chart update
             this.ngxData = [...this.ngxData];

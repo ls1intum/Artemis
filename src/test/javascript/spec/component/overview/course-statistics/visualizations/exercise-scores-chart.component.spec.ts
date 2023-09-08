@@ -136,11 +136,11 @@ describe('ExerciseScoresChartComponent', () => {
         component.onSelect(legendClickEvent);
 
         expect(component.ngxColor.domain[2]).toBe('rgba(255,255,255,0)');
-        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([0, 0]);
+        expect(component.ngxData[2].series).toEqual([]);
 
         component.onSelect(legendClickEvent);
         expect(component.ngxColor.domain[2]).toBe(GraphColors.GREEN);
-        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([61, 71]);
+        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([60, 70]);
     });
 
     it('should react correct if chart point is clicked', () => {
@@ -177,7 +177,7 @@ describe('ExerciseScoresChartComponent', () => {
 });
 
 function validateStructureOfDataPoint(dataPoint: any, exerciseScoresDTO: ExerciseScoresDTO, score: number) {
-    const expectedStructure = { name: exerciseScoresDTO.exerciseTitle, value: score + 1, exerciseId: exerciseScoresDTO.exerciseId, exerciseType: exerciseScoresDTO.exerciseType };
+    const expectedStructure = { name: exerciseScoresDTO.exerciseTitle, value: score, exerciseId: exerciseScoresDTO.exerciseId, exerciseType: exerciseScoresDTO.exerciseType };
     expect(dataPoint).toEqual(expectedStructure);
 }
 
