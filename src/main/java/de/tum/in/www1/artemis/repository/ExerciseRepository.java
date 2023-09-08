@@ -89,33 +89,32 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT COUNT(e.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND (e.dueDate >= :#{#now} OR e.dueDate IS NULL)
             	AND (e.releaseDate <= :#{#now} OR e.releaseDate IS NULL)
-                AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countActiveExercisesByExerciseType(@Param("now") ZonedDateTime now, @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countActiveExercisesGroupByExerciseType(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT COUNT(e.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countExercisesByExerciseType(@Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
 
     @Query("""
-            SELECT COUNT(e.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#minDate}
             	AND e.dueDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countExercisesWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
@@ -142,15 +141,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
-            SELECT COUNT(e.id)
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#minDate}
             	AND e.releaseDate <= :#{#maxDate}
-                AND TYPE(e) = :#{#exerciseType}
+            GROUP BY TYPE(e)
             """)
-    Integer countExercisesWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate,
-            @Param("exerciseType") Class<? extends Exercise> exerciseTypeDiscriminator);
+    List<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))

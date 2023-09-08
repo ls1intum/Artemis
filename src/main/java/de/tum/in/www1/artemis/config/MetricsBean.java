@@ -45,7 +45,7 @@ public class MetricsBean {
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
-    private static final int[] minuteRanges = { 5, 15, 30, 45, 60, 120 };
+    private static final int[] minuteRanges = { 15, 30, 45, 60, 120 };
 
     private final MeterRegistry meterRegistry;
 
@@ -71,6 +71,7 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
+    // Public metrics
     private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
 
     private final AtomicInteger coursesGauge = new AtomicInteger(0);
@@ -85,17 +86,31 @@ public class MetricsBean {
 
     private MultiGauge studentsExamGauge;
 
+    // Internal metrics: Exercises
     private MultiGauge exerciseGauge;
 
     private MultiGauge activeExerciseGauge;
+
+    private MultiGauge dueExerciseGauge;
 
     private MultiGauge dueExerciseStudentMultiplierGauge;
 
     private MultiGauge dueExerciseStudentMultiplierActive14DaysGauge;
 
+    private MultiGauge releaseExerciseGauge;
+
     private MultiGauge releaseExerciseStudentMultiplierGauge;
 
     private MultiGauge releaseExerciseStudentMultiplierActive14DaysGauge;
+
+    // Internal metrics: Exams
+    private MultiGauge dueExamGauge;
+
+    private MultiGauge dueExamStudentMultiplierGauge;
+
+    private MultiGauge releaseExamGauge;
+
+    private MultiGauge releaseExamStudentMultiplierGauge;
 
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
@@ -117,8 +132,6 @@ public class MetricsBean {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
         registerExerciseAndExamMetrics();
-
-        registerStudentExerciseMetrics();
 
         registerPublicArtemisMetrics();
 
@@ -202,10 +215,15 @@ public class MetricsBean {
     }
 
     private void registerExerciseAndExamMetrics() {
-        for (int range : minuteRanges) {
-            registerExerciseMetrics(range);
-            registerExamMetrics(range);
-        }
+        dueExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.due.count").description("Number of exercises ending within the next minutes").register(meterRegistry);
+        releaseExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.release.count").description("Number of exercises starting within the next minutes")
+                .register(meterRegistry);
+
+        dueExamGauge = MultiGauge.builder("artemis.scheduled.exams.due.count").description("Number of exams ending within the next minutes").register(meterRegistry);
+        releaseExamGauge = MultiGauge.builder("artemis.scheduled.exams.release.count").description("Number of exams starting within the next minutes").register(meterRegistry);
+
+        registerStudentExerciseMetrics();
+        registerStudentExamMetrics();
     }
 
     private void registerStudentExerciseMetrics() {
@@ -221,12 +239,19 @@ public class MetricsBean {
                 .register(meterRegistry);
     }
 
+    private void registerStudentExamMetrics() {
+        dueExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.due.student_multiplier")
+                .description("Number of exams ending within the next minutes multiplied with students in the course").register(meterRegistry);
+        releaseExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.release.student_multiplier")
+                .description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
+    }
+
     /**
      * Update student multiplier metrics that are exposed via Prometheus.
      * The update (and recalculation) is performed every 1 minutes.
      */
     @Scheduled(fixedRate = 1 * 60 * 1000, initialDelay = 0) // Every 15 minutes
-    public void updateStudentMultiplierMetrics() {
+    public void recalculateMetrics() {
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -235,38 +260,23 @@ public class MetricsBean {
         var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
         var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
 
+        // Exercise metrics
+        updateUpcomingDueExercisesCount();
         updateUpcomingDueExercisesCountWithStudentMultiplier();
         updateUpcomingDueExercisesCountWithActiveStudentMultiplier(activeUserNames);
+
+        updateUpcomingReleasedExercisesCount();
         updateUpcomingReleasedExercisesCountWithStudentMultiplier();
         updateUpcomingReleasedExercisesCountWithActiveStudentMultiplier(activeUserNames);
 
-        log.info("updateStudentMultiplierMetrics took {}ms", System.currentTimeMillis() - startDate);
-    }
+        // Exam metrics
+        updateUpcomingEndingExamCount();
+        updateUpcomingEndingExamCountWithStudentMultiplier();
 
-    private void registerExerciseMetrics(int range) {
-        for (var exerciseType : ExerciseType.values()) {
-            final List<Tag> sharedTags = List.of(Tag.of("range", String.valueOf(range)), Tag.of("exerciseType", exerciseType.toString()));
+        updateUpcomingStartingExamCount();
+        updateUpcomingStartingExamCountWithStudentMultiplier();
 
-            Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true).tags(sharedTags)
-                    .description("Number of exercises ending within the next minutes").register(meterRegistry);
-
-            Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true).tags(sharedTags)
-                    .description("Number of exercises starting within the next minutes").register(meterRegistry);
-        }
-    }
-
-    private void registerExamMetrics(int range) {
-        Gauge.builder("artemis.scheduled.exams.due.count", range, this::getUpcomingEndingExamCount).strongReference(true).tag("range", String.valueOf(range))
-                .description("Number of exams ending within the next minutes").register(meterRegistry);
-
-        Gauge.builder("artemis.scheduled.exams.due.student_multiplier", range, this::getUpcomingEndingExamCountWithStudentMultiplier).strongReference(true)
-                .tag("range", String.valueOf(range)).description("Number of exams ending within the next minutes multiplied with students in the course").register(meterRegistry);
-
-        Gauge.builder("artemis.scheduled.exams.release.count", range, this::getUpcomingStartingExamCount).strongReference(true).tag("range", String.valueOf(range))
-                .description("Number of exams starting within the next minutes").register(meterRegistry);
-
-        Gauge.builder("artemis.scheduled.exams.release.student_multiplier", range, this::getUpcomingStartingExamCountWithStudentMultiplier).strongReference(true)
-                .tag("range", String.valueOf(range)).description("Number of exams starting within the next minutes multiplied with students in the course").register(meterRegistry);
+        log.info("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void registerPublicArtemisMetrics() {
@@ -292,14 +302,21 @@ public class MetricsBean {
         exerciseGauge = MultiGauge.builder("artemis.statistics.public.exercises").description("Number of exercises by type").register(meterRegistry);
     }
 
-    private double getUpcomingDueExercisesCount(int minutes, ExerciseType exerciseType) {
+    private void updateUpcomingDueExercisesCount() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = exerciseRepository.countExercisesWithEndDateBetween(now, endDate, exerciseType.getExerciseClass());
-        log.info("getUpcomingDueExercisesCount for minutes {} and exerciseType {} took {}ms", minutes, exerciseType, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
+        }
+
+        dueExerciseGauge.register(results, true);
+
+        log.info("updateUpcomingDueExercisesCount took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateUpcomingDueExercisesCountWithStudentMultiplier() {
@@ -311,7 +328,7 @@ public class MetricsBean {
         for (var minutes : minuteRanges) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate);
-            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, minutes);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
         }
 
         dueExerciseStudentMultiplierGauge.register(results, true);
@@ -328,7 +345,7 @@ public class MetricsBean {
         for (var minutes : minuteRanges) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = exerciseRepository.countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate, activeUserNames);
-            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, minutes);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
         }
 
         dueExerciseStudentMultiplierActive14DaysGauge.register(results, true);
@@ -336,14 +353,21 @@ public class MetricsBean {
         log.info("updateUpcomingDueExercisesCountWithActiveStudentMultiplier took {}ms", System.currentTimeMillis() - startDate);
     }
 
-    private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
+    private void updateUpcomingReleasedExercisesCount() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = exerciseRepository.countExercisesWithReleaseDateBetween(now, endDate, exerciseType.getExerciseClass());
-        log.info("getUpcomingReleasedExercisesCount for minutes {} and exerciseType {} took {}ms", minutes, exerciseType, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
+        }
+
+        releaseExerciseGauge.register(results, true);
+
+        log.info("updateUpcomingReleasedExercisesCount took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateUpcomingReleasedExercisesCountWithStudentMultiplier() {
@@ -355,7 +379,7 @@ public class MetricsBean {
         for (var minutes : minuteRanges) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate);
-            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, minutes);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
         }
 
         releaseExerciseStudentMultiplierGauge.register(results, true);
@@ -372,7 +396,7 @@ public class MetricsBean {
         for (var minutes : minuteRanges) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate, activeUserNames);
-            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, minutes);
+            extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
         }
 
         releaseExerciseStudentMultiplierActive14DaysGauge.register(results, true);
@@ -380,44 +404,72 @@ public class MetricsBean {
         log.info("updateUpcomingReleasedExercisesCountWithActiveStudentMultiplier took {}ms", System.currentTimeMillis() - startDate);
     }
 
-    private double getUpcomingEndingExamCount(int minutes) {
+    private void updateUpcomingEndingExamCount() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = examRepository.countExamsWithEndDateBetween(now, endDate);
-        log.info("getUpcomingEndingExamCount for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = examRepository.countExamsWithEndDateBetween(now, endDate);
+            results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
+        }
+
+        dueExamGauge.register(results, true);
+
+        log.info("updateUpcomingEndingExamCount took {}ms", System.currentTimeMillis() - startDate);
     }
 
-    private double getUpcomingEndingExamCountWithStudentMultiplier(int minutes) {
+    private void updateUpcomingEndingExamCountWithStudentMultiplier() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = examRepository.countExamUsersInExamsWithEndDateBetween(now, endDate);
-        log.info("getUpcomingEndingExamCountWithStudentMultiplier for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = examRepository.countExamUsersInExamsWithEndDateBetween(now, endDate);
+            results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
+        }
+
+        dueExamStudentMultiplierGauge.register(results, true);
+
+        log.info("updateUpcomingEndingExamCountWithStudentMultiplier took {}ms", System.currentTimeMillis() - startDate);
     }
 
-    private double getUpcomingStartingExamCount(int minutes) {
+    private void updateUpcomingStartingExamCount() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = examRepository.countExamsWithStartDateBetween(now, endDate);
-        log.info("getUpcomingStartingExamCount for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = examRepository.countExamsWithStartDateBetween(now, endDate);
+            results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
+        }
+
+        releaseExamGauge.register(results, true);
+
+        log.info("updateUpcomingStartingExamCount took {}ms", System.currentTimeMillis() - startDate);
     }
 
-    private double getUpcomingStartingExamCountWithStudentMultiplier(int minutes) {
+    private void updateUpcomingStartingExamCountWithStudentMultiplier() {
         var startDate = System.currentTimeMillis();
-        SecurityUtils.setAuthorizationObject();
+
         var now = ZonedDateTime.now();
-        var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        var result = examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
-        log.info("getUpcomingStartingExamCountWithStudentMultiplier for minutes {} took {}ms", minutes, System.currentTimeMillis() - startDate);
-        return result;
+        var results = new ArrayList<MultiGauge.Row<?>>();
+
+        for (var minutes : minuteRanges) {
+            var endDate = ZonedDateTime.now().plusMinutes(minutes);
+            var result = examRepository.countExamUsersInExamsWithStartDateBetween(now, endDate);
+            results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
+        }
+
+        releaseExamStudentMultiplierGauge.register(results, true);
+
+        log.info("updateUpcomingStartingExamCountWithStudentMultiplier took {}ms", System.currentTimeMillis() - startDate);
     }
 
     /**
@@ -426,6 +478,8 @@ public class MetricsBean {
      */
     @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
     public void updatePublicArtemisMetrics() {
+        var startDate = System.currentTimeMillis();
+
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
@@ -457,6 +511,8 @@ public class MetricsBean {
 
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set((int) examRepository.count());
+
+        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
@@ -485,22 +541,22 @@ public class MetricsBean {
     }
 
     private void updateActiveExerciseMultiGauge() {
-        activeExerciseGauge.register(Stream.of(ExerciseType.values())
-                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                        exerciseRepository.countActiveExercisesByExerciseType(ZonedDateTime.now(), exerciseType.getExerciseClass())))
-                // A mutable list is required here because otherwise the values can not be updated correctly
-                .collect(Collectors.toCollection(ArrayList::new)), true);
+        var results = new ArrayList<MultiGauge.Row<?>>();
+        var result = exerciseRepository.countActiveExercisesGroupByExerciseType(ZonedDateTime.now());
+        extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
+
+        activeExerciseGauge.register(results, true);
     }
 
     private void updateExerciseMultiGauge() {
-        exerciseGauge.register(Stream.of(ExerciseType.values())
-                .map(exerciseType -> MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString()),
-                        exerciseRepository.countExercisesByExerciseType(exerciseType.getExerciseClass())))
-                // A mutable list is required here because otherwise the values can not be updated correctly
-                .collect(Collectors.toCollection(ArrayList::new)), true);
+        var results = new ArrayList<MultiGauge.Row<?>>();
+        var result = exerciseRepository.countExercisesGroupByExerciseType();
+        extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.empty());
+
+        exerciseGauge.register(results, true);
     }
 
-    private void extractExerciseTypeMetricsAndAddToMetricsResults(List<ExerciseTypeMetricsEntry> resultFromDatabase, List<MultiGauge.Row<?>> resultForMetrics, int minutes) {
+    private void extractExerciseTypeMetricsAndAddToMetricsResults(List<ExerciseTypeMetricsEntry> resultFromDatabase, List<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
         for (var exerciseType : ExerciseType.values()) {
             var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType.getExerciseClass()).findAny();
             var value = 0L;
@@ -508,7 +564,7 @@ public class MetricsBean {
                 value = resultForExerciseType.get().value();
             }
 
-            resultForMetrics.add(MultiGauge.Row.of(Tags.of("exerciseType", exerciseType.toString(), "range", String.valueOf(minutes)), value));
+            resultForMetrics.add(MultiGauge.Row.of(existingTags.and("exerciseType", exerciseType.toString()), value));
         }
     }
 
