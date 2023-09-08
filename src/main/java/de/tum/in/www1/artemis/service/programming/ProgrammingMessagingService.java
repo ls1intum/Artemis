@@ -48,7 +48,7 @@ public class ProgrammingMessagingService {
      * Notify user on a new programming submission.
      *
      * @param submission ProgrammingSubmission
-     * @param exerciseId
+     * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
         var submissionDTO = SubmissionDTO.of(submission);
