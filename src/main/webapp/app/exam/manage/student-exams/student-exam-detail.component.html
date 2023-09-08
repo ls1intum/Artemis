@@ -33,9 +33,11 @@
                     </li>
                 </ol>
             </div>
-            <a *ngIf="course?.isAtLeastInstructor && studentExam.submitted" class="btn btn-primary mb-auto pl-5" [routerLink]="'./exam-timeline'">
-                <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>
-            </a>
+            <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
+                <button class="btn btn-primary mb-auto pl-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
+                    <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>
+                </button>
+            </div>
         </div>
     </div>
 
