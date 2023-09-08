@@ -48,15 +48,17 @@ public class ProgrammingMessagingService {
      * Notify user on a new programming submission.
      *
      * @param submission ProgrammingSubmission
+     * @param exerciseId
      */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
         var submissionDTO = SubmissionDTO.of(submission);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
         }
 
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null && !(submission.getParticipation() instanceof StudentParticipation)) {
-            var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
+        // send an update to tutors, editors and instructors about submissions for template and solution participations
+        if (!(submission.getParticipation() instanceof StudentParticipation)) {
+            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
             websocketMessagingService.sendMessage(topicDestination, submissionDTO);
         }
     }
