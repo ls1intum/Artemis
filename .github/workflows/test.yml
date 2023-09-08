@@ -211,6 +211,7 @@ jobs:
       if: success() || failure()
     - name: Java Architecture Tests
       run: ./gradlew test --tests "de.tum.in.www1.artemis.ArchitectureTest" -x webapp
+      if: success() || failure()
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
