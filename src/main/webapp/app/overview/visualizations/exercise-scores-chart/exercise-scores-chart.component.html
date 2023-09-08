@@ -51,7 +51,7 @@
             <ng-template #seriesTooltipTemplate let-model="model">
                 <ng-container *ngIf="model.length">
                     <h6>{{ model[0].name }}</h6>
-                    <div *ngFor="let entry of model; let i = index">{{ entry.series }}: {{ Math.max(entry.value, 0) }}%</div>
+                    <div *ngFor="let entry of model">{{ entry.series }}: {{ Math.max(entry.value, 0) }}%</div>
                     <b>
                         {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
                         {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
