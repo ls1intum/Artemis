@@ -53,6 +53,8 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ExamEditWorkingTimeButtonDirective } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-button.directive';
+import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -115,6 +117,8 @@ const ENTITY_STATES = [...examManagementState];
         ExamImportComponent,
         ExamExerciseImportComponent,
         BonusComponent,
+        ExamEditWorkingTimeButtonDirective,
+        ExamEditWorkingTimeDialogComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

@@ -326,6 +326,21 @@
                         </a>
                     </td>
                 </tr>
+                <tr>
+                    <td>2</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.editDuration' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.editDuration' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <button jhiEditWorkingTimeButton class="btn" [exam]="exam">
+                            <fa-icon [icon]="faHourglassHalf"></fa-icon>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.checklist.editDuration' | artemisTranslate }}</span>
+                        </button>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

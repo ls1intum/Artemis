@@ -152,6 +152,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",
                 "showNew": "Zeige nur neue Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolut",
+                "relative": "Änderung relativ zur normalen Bearbeitungszeit"
             }
         },
         "examScores": {
@@ -547,6 +551,7 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Seite",
+                "editDuration": "Prüfungsdauer bearbeiten",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
                     "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
@@ -566,7 +571,8 @@
                     "examReview": "Planung der Klausureinsicht ",
                     "resolveComplaints": "Auflösung aller Beschwerden",
                     "testRun": "Abhalten eines Testdurchlaufs",
-                    "exportResults": "Exportieren der Klausurergebnisse"
+                    "exportResults": "Exportieren der Klausurergebnisse",
+                    "editDuration": "Bearbeiten der Prüfungsdauer"
                 },
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
@@ -580,7 +586,8 @@
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
-                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
+                    "editDuration": "Bis kurz vor dem Ende der Prüfung können Sie deren Dauer verlängern."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
@@ -613,6 +620,11 @@
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten"
                 }
+            },
+            "editDuration": {
+                "title": "Prüfungszeit bearbeiten",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }
         },
         "studentExamDetail": {

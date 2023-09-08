@@ -153,6 +153,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
                 "showNew": "Only show new Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolute",
+                "relative": "Change relative to regular working time"
             }
         },
         "examScores": {
@@ -549,6 +553,7 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
+                "editDuration": "Edit duration",
                 "testExam": {
                     "title": "Test Exam Checklist",
                     "introduction": "This page gives an overview over the various steps when creating a test exam.",
@@ -568,7 +573,8 @@
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "editDuration": "Edit the exam duration"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -582,7 +588,8 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "editDuration": "Until close to the end of the exam, you can extend its duration."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -615,6 +622,11 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "editDuration": {
+                "title": "Edit Exam Duration",
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
             }
         },
         "studentExamDetail": {
