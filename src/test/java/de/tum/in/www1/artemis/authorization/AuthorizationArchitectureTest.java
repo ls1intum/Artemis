@@ -2,18 +2,9 @@ package de.tum.in.www1.artemis.authorization;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.tngtech.archunit.lang.ArchRule;
 
@@ -23,13 +14,7 @@ import de.tum.in.www1.artemis.security.annotations.*;
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */
-class AuthorizationTest extends AbstractArchitectureTest {
-
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private AuthorizationTestService authorizationTestService;
+class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
     private static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
 
@@ -40,21 +25,10 @@ class AuthorizationTest extends AbstractArchitectureTest {
     private static final String REST_OPEN_PACKAGE = REST_BASE_PACKAGE + ".open";
 
     @Test
-    void testEndpoints() throws InvocationTargetException, IllegalAccessException {
-        var requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
-        Map<RequestMappingInfo, HandlerMethod> endpointMap = requestMappingHandlerMapping.getHandlerMethods();
-        // Filter out endpoints that should not be tested.
-        endpointMap = endpointMap.entrySet().stream().filter(entry -> authorizationTestService.validEndpointToTest(entry.getValue(), false))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        authorizationTestService.testEndpoints(endpointMap);
-    }
-
-    @Test
     void testNoPreAuthorizeOnRestControllers() {
         ArchRule rule = noClasses().that().areAnnotatedWith(RestController.class).should().beAnnotatedWith(PreAuthorize.class).because(
                 "All endpoints should be secured directly using the Artemis enforcement annotations on the method definition. Refer to the server guidelines in our documentation.");
-        rule.check(productionClasses);
+        rule.check(allClasses);
     }
 
     @Test
