@@ -217,7 +217,7 @@ jobs:
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Java Architecture Tests
-        path: build/test-results/test/*.xml
+        path: build/test-results/architectureTest/*.xml
         reporter: java-junit
 
   client-tests:
