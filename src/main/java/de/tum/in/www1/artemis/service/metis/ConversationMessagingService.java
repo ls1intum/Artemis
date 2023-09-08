@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -13,9 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -86,8 +85,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
 
-        var conversation = conversationRepository.findWithConversationParticipantsByIdElseThrow(newMessage.getConversation().getId());
-        var notificationRecipients = getRecipientsForConversation(conversation).collect(Collectors.toSet());
+        var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -100,7 +98,7 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        conversation = conversationService.updateConversation(conversation);
+        Conversation savedConversation = conversationService.updateConversation(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -115,35 +113,71 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, conversation, notificationRecipients, course, createdMessage);
+        notifyAboutMessageCreation(author, savedConversation, course, createdMessage);
 
         return createdMessage;
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Set<User> notificationRecipients, Course course, Post createdMessage) {
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
+        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, notificationRecipients);
+        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, notificationRecipients);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipients);
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
-        notificationRecipients = notificationRecipients.stream().filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, notificationRecipients);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
+        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+    }
+
+    /**
+     * Filters the given list of recipients for users that should receive a notification about a new message.
+     * <p>
+     * In all cases, the author will be filtered out.
+     * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
+     * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
+     *
+     * @param author              the author of the message
+     * @param conversation        the conversation the new message has been written in
+     * @param webSocketRecipients the list of users that should be filtered
+     * @return filtered list of users that are supposed to receive a notification
+     */
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
+        // Initialize filter with check for author
+        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.user().getId(), author.getId());
+
+        if (conversation instanceof Channel channel) {
+            // If a channel is not an announcement channel, filter out users, that hid the conversation
+            if (!channel.getIsAnnouncementChannel()) {
+                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+            }
+
+            // If a channel is not visible to students, filter out participants that are only students
+            if (!conversationService.isChannelVisibleToStudents(channel)) {
+                filter = filter.and(ConversationWebSocketRecipientSummary::isAtLeastTutorInCourse);
+            }
+        }
+        else {
+            filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+        }
+
+        return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
     }
 
     /**

@@ -185,7 +185,7 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not create submission for solution participation", e);
         }
 
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
         try {
             // Set a flag to inform the instructor that the student results are now outdated.
@@ -240,7 +240,7 @@ public class LocalCIConnectorService {
 
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
 
         // Trigger the build for the new submission on the local CI system.
         localCITriggerService.triggerBuild(participation, commit.getCommitHash());
