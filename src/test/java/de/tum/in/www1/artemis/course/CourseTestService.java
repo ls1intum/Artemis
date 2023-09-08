@@ -209,6 +209,9 @@ public class CourseTestService {
     @Autowired
     private TeamUtilService teamUtilService;
 
+    @Autowired
+    private LearningPathRepository learningPathRepository;
+
     private static final int numberOfStudents = 8;
 
     private static final int numberOfTutors = 5;
@@ -3103,5 +3106,24 @@ public class CourseTestService {
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+    }
+
+    // Test
+    public void testUpdateCourseEnableLearningPaths() throws Exception {
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
+                "tutor", "editor", "instructor");
+        course.setLearningPathsEnabled(false);
+        courseRepo.save(course);
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        student.setGroups(Set.of("editlearningpathenabledcourse"));
+        userRepo.save(student);
+
+        course.setLearningPathsEnabled(true);
+
+        MvcResult result = request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }
 }
