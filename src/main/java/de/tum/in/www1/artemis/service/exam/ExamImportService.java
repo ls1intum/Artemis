@@ -230,7 +230,7 @@ public class ExamImportService {
         // Only exercise groups with at least one exercise should be imported.
         List<ExerciseGroup> filteredExerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
         // If no exercise group is existent, we can aboard the process
-        if (exerciseGroupsToCopy.isEmpty()) {
+        if (filteredExerciseGroupsToCopy.isEmpty()) {
             return;
         }
 
@@ -242,9 +242,6 @@ public class ExamImportService {
             targetExam.addExerciseGroup(exerciseGroupCopied);
         });
 
-        /*
-         * for (ExerciseGroup exerciseGroup : exerciseGroupsCopied) { targetExam.addExerciseGroup(exerciseGroup); }
-         */
         examRepository.save(targetExam);
 
         // We need to take the exercise groups from the exam to ensure the correct connection exam <-> exercise group
