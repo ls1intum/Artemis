@@ -96,10 +96,17 @@ modernizer {
 }
 
 // Execute the test cases: ./gradlew test
-
+// Execute only architecture tests: ./gradlew test -DincludeTags='ArchitectureTest'
 test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
+    if (System.getProperty("includeTags")) {
+        useJUnitPlatform {
+            includeTags System.getProperty("includeTags")
+        }
+    } else {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+
     testLogging {
         events "FAILED", "SKIPPED"
     }
@@ -112,20 +119,6 @@ test {
 tasks.register("testReport", TestReport) {
     destinationDirectory = file("$buildDir/reports/tests")
     testResults.from(test)
-}
-
-// Custom task to only execute ArchUnit tests
-tasks.register("architectureTest", Test) {
-    useJUnitPlatform {
-        includeTags "ArchitectureTest"
-    }
-    testLogging {
-        events "FAILED", "SKIPPED"
-    }
-    testLogging.showStandardStreams = true
-    reports.junitXml.required = true
-    minHeapSize = "1024m" // initial heap size
-    maxHeapSize = "3072m" // maximum heap size
 }
 
 jacoco {
