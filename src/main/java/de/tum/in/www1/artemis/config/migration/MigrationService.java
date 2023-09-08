@@ -74,7 +74,6 @@ public class MigrationService {
         Map<Integer, MigrationEntry> migrationEntryMap = entryMap.entrySet().stream().filter(entry -> !executedChanges.contains(entry.getValue().date()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        migrationEntryMap = entryMap;
         if (!migrationEntryMap.isEmpty()) {
             log.info("Executing migration entries");
             String startupHash = toMD5(ZonedDateTime.now().toString());
