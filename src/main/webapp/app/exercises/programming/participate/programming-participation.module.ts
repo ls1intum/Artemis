@@ -11,6 +11,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ProgrammingSubmissionPolicyStatusComponent } from 'app/exercises/programming/participate/programming-submission-policy-status';
 
 @NgModule({
     imports: [
@@ -26,6 +27,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisExerciseHintParticipationModule,
         ArtemisSharedComponentModule,
     ],
-    declarations: [CodeEditorStudentContainerComponent],
+    declarations: [CodeEditorStudentContainerComponent, ProgrammingSubmissionPolicyStatusComponent],
+    exports: [ProgrammingSubmissionPolicyStatusComponent],
 })
 export class ArtemisProgrammingParticipationModule {}

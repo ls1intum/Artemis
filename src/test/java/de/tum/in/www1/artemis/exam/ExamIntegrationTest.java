@@ -1668,7 +1668,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        Channel channel = examUtilService.addExamChannel(exam, "testchannel");
+        Channel examChannel = examUtilService.addExamChannel(exam, "testchannel");
         int numberOfStudentsInCourse = userRepo.findAllInGroup(course1.getStudentGroupName()).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
@@ -1692,7 +1692,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Channel channelFromDB = channelRepository.findChannelByExamId(exam.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getExam()).isEqualTo(exam);
-        assertThat(channelFromDB.getName()).isEqualTo(channel.getName());
+        assertThat(channelFromDB.getName()).isEqualTo(examChannel.getName());
 
         // Check that the conversation participants are added correctly to the exercise channel
         await().until(() -> {

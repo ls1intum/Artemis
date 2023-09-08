@@ -172,7 +172,7 @@ public class ExamResource {
         Exam savedExam = examRepository.save(exam);
 
         Channel createdChannel = channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(false, savedExam.getCourse(), createdChannel);
+        channelService.registerTutorsAndInstructorsToChannel(savedExam.getCourse(), createdChannel);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }

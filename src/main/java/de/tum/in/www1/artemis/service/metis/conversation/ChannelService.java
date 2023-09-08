@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -12,16 +15,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -41,16 +44,13 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            CourseRepository courseRepository, UserRepository userRepository) {
+            UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
 
@@ -65,6 +65,16 @@ public class ChannelService {
                 usersToGrant.stream().map(User::getId).collect(Collectors.toSet()));
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
             conversationParticipant.setIsModerator(true);
+        }
+        // If the channel is course-wide, there might not be a participant entry for some users yet. They are created here.
+        if (channel.getIsCourseWide()) {
+            var matchingParticipantIds = matchingParticipants.stream().map(participant -> participant.getUser().getId()).collect(Collectors.toSet());
+            var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
+            missingUsers.forEach(user -> {
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+                conversationParticipant.setIsModerator(true);
+                matchingParticipants.add(conversationParticipant);
+            });
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
@@ -164,19 +174,18 @@ public class ChannelService {
     }
 
     /**
-     * Adds users to the given channel asynchronously
+     * Adds tutors and instructors to the given channel asynchronously
      *
-     * @param addAllStudents if true, all students of the course will be added to the channel
-     * @param course         the course to add the students from
-     * @param channel        the channel to add the students to
+     * @param course  the course to add the tutors and instructors from
+     * @param channel the exam channel to add the users to
      */
     @Async
-    public void registerUsersToChannelAsynchronously(boolean addAllStudents, Course course, Channel channel) {
+    public void registerTutorsAndInstructorsToChannel(Course course, Channel channel) {
         if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
             return;
         }
         SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(addAllStudents, true, true, List.of(), course, channel);
+        registerUsersToChannel(false, true, true, List.of(), course, channel);
     }
 
     /**
@@ -223,42 +232,6 @@ public class ChannelService {
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             conversationService.deleteConversation(channel);
-        }
-    }
-
-    /**
-     * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
-     *
-     * @param userToAddToGroup the user to be added
-     * @param group            the group of the user
-     * @param role             the role of the user
-     */
-    @Async
-    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
-        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
-
-        List<Course> courses = switch (role) {
-            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-            default -> List.of();
-        };
-
-        for (Course c : courses) {
-            // set the security context because the async methods use multiple threads
-            SecurityUtils.setAuthorizationObject();
-
-            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
-                // add user to default channels
-                if (channelNames.contains(channel.getName())) {
-                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-                // add to exercise or lecture channel if user is not member
-                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
-                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-            });
-
         }
     }
 
@@ -363,6 +336,7 @@ public class ChannelService {
         }
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setIsPublic(false);
+        channelToCreate.setIsCourseWide(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -459,6 +433,7 @@ public class ChannelService {
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
         defaultChannel.setIsPublic(true);
+        defaultChannel.setIsCourseWide(true);
         defaultChannel.setIsAnnouncementChannel(false);
         defaultChannel.setIsArchived(false);
         return defaultChannel;

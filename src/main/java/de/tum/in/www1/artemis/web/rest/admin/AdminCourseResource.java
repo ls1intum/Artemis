@@ -22,7 +22,9 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -163,10 +165,10 @@ public class AdminCourseResource {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelType.getName());
         channelToCreate.setIsPublic(true);
+        channelToCreate.setIsCourseWide(true);
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
-        channelService.registerUsersToChannelAsynchronously(true, course, createdChannel);
+        channelService.createChannel(course, channelToCreate, Optional.empty());
     }
 }
