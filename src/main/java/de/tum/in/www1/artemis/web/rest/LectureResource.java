@@ -104,8 +104,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Lecture savedLecture = lectureRepository.save(lecture);
-        Channel createdChannel = channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
+        channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
 
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
@@ -246,10 +245,8 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
+        channelService.createLectureChannel(savedLecture, Optional.empty());
 
-        Channel createdChannel = channelService.createLectureChannel(savedLecture, Optional.empty());
-
-        channelService.registerUsersToChannelAsynchronously(true, savedLecture.getCourse(), createdChannel);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
