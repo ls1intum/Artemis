@@ -182,7 +182,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
         final var bambooRepositoryAuxRepo = new BambooRepositoryDTO(296200358L, "auxrepo");
-        final var newRepoUrl = exercise.getTemplateRepositoryUrl().replace("exercise", planName); // planName is username
+        final var newRepoUrl = exercise.getTestRepositoryUrl().replace("tests", planName); // planName is username
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
@@ -219,7 +219,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject, templateBuildPlanId, solutionBuildPlanId);
     }
 
-    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject, String templateBuildPlanId, String solutionBuildPlanId) throws IOException, URISyntaxException {
+    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject, String templateBuildPlanId, String solutionBuildPlanId)
+            throws IOException, URISyntaxException {
         if (!failToCreateCiProject) {
             // TODO: check the actual plan and plan permissions that get passed here
             doReturn(null).when(bambooServer).publish(any());
