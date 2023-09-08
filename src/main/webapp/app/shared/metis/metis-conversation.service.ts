@@ -31,6 +31,10 @@ export class MetisConversationService implements OnDestroy {
     // Stores the currently selected conversation
     private activeConversation: ConversationDto | undefined = undefined;
     _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
+    private isCodeOfConductAccepted: boolean = false;
+    _isCodeOfConductAccepted$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
+    private isCodeOfConductPresented: boolean = false;
+    _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
     // Stores the course for which the service is setup -> should not change during the lifetime of the service
@@ -74,6 +78,12 @@ export class MetisConversationService implements OnDestroy {
     get activeConversation$(): Observable<ConversationDto | undefined> {
         return this._activeConversation$.asObservable();
     }
+    get isCodeOfConductAccepted$(): Observable<boolean> {
+        return this._isCodeOfConductAccepted$.asObservable();
+    }
+    get isCodeOfConductPresented$(): Observable<boolean> {
+        return this._isCodeOfConductPresented$.asObservable();
+    }
     get hasUnreadMessages$(): Observable<boolean> {
         return this._hasUnreadMessages$.asObservable();
     }
@@ -90,7 +100,7 @@ export class MetisConversationService implements OnDestroy {
         return this._isLoading$.asObservable();
     }
 
-    public setActiveConversation = (conversationIdentifier: ConversationDto | number | undefined) => {
+    public setActiveConversation(conversationIdentifier: ConversationDto | number | undefined) {
         this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation = undefined;
         if (conversationIdentifier) {
@@ -104,7 +114,16 @@ export class MetisConversationService implements OnDestroy {
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
-    };
+        this.isCodeOfConductPresented = false;
+        this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
+
+    public setCodeOfConduct() {
+        this.activeConversation = undefined;
+        this._activeConversation$.next(this.activeConversation);
+        this.isCodeOfConductPresented = true;
+        this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
 
     private updateLastReadDateAndNumberOfUnreadMessages() {
         // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
@@ -238,6 +257,42 @@ export class MetisConversationService implements OnDestroy {
             },
         });
     };
+
+    acceptCodeOfConduct(course: Course) {
+        if (!course?.id) {
+            return;
+        }
+
+        this.conversationService.acceptCodeOfConduct(course.id).subscribe({
+            next: (response) => {
+                if (response.body !== null) {
+                    this.isCodeOfConductAccepted = response.body;
+                    this._isCodeOfConductAccepted$.next(this.isCodeOfConductAccepted);
+                }
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+            },
+        });
+    }
+
+    checkIsCodeOfConductAccepted(course: Course) {
+        if (!course?.id) {
+            return;
+        }
+
+        this.conversationService.checkIfCodeOfConductIsAccepted(course.id).subscribe({
+            next: (response) => {
+                if (response.body !== null) {
+                    this.isCodeOfConductAccepted = response.body;
+                    this._isCodeOfConductAccepted$.next(this.isCodeOfConductAccepted);
+                }
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+            },
+        });
+    }
 
     private hasUnreadMessagesCheck = (): void => {
         const hasNewMessages = this.conversationsOfUser.some((conversation) => {

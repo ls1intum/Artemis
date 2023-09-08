@@ -30,6 +30,7 @@ import { ConversationSidebarEntryComponent } from './layout/conversation-selecti
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 const routes: Routes = [
     {
@@ -46,6 +47,7 @@ const routes: Routes = [
     imports: [
         RouterModule.forChild(routes),
         MetisModule,
+        ArtemisMarkdownModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ArtemisDataTableModule,

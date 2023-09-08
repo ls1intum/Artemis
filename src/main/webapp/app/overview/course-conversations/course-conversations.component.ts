@@ -24,6 +24,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
+
+    isCodeOfConductAccepted: boolean = false;
+    isCodeOfConductPresented: boolean = false;
+
+    get codeOfConduct(): string {
+        if (this.course?.courseInformationSharingMessagingCodeOfConduct) {
+            return this.course?.courseInformationSharingMessagingCodeOfConduct;
+        } else {
+            return '';
+        }
+    }
+
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
         private router: Router,
@@ -56,6 +68,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToQueryParameter();
                 // service is fully set up, now we can subscribe to the respective observables
                 this.subscribeToActiveConversation();
+                this.subscribeToIsCodeOfConductAccepted();
+                this.subscribeToIsCodeOfConductPresented();
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
                 this.isServiceSetUp = true;
@@ -96,6 +110,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         });
     }
 
+    private subscribeToIsCodeOfConductAccepted() {
+        this.metisConversationService.isCodeOfConductAccepted$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductAccepted: boolean) => {
+            this.isCodeOfConductAccepted = isCodeOfConductAccepted;
+        });
+    }
+
+    private subscribeToIsCodeOfConductPresented() {
+        this.metisConversationService.isCodeOfConductPresented$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductPresented: boolean) => {
+            this.isCodeOfConductPresented = isCodeOfConductPresented;
+        });
+    }
+
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.conversationsOfUser = conversations ?? [];
@@ -106,5 +132,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.isLoading$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isLoading: boolean) => {
             this.isLoading = isLoading;
         });
+    }
+
+    acceptCodeOfConduct() {
+        if (this.course) {
+            this.metisConversationService.acceptCodeOfConduct(this.course);
+        }
     }
 }
