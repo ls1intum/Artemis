@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
@@ -66,6 +68,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -75,7 +79,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -89,6 +93,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.participationAuthCheckService = participationAuthCheckService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
@@ -105,6 +110,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Object requestBody)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
+        var existingSubmissionCount = participation.getSubmissions().size();
         ZonedDateTime submissionDate = ZonedDateTime.now();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -135,14 +141,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
                 && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) participation);
+            participationService.resumeProgrammingExercise(programmingExerciseStudentParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
@@ -167,11 +173,25 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        checkForIllegalExamSubmission(participation, programmingSubmission);
+        var programmingExercise = participation.getProgrammingExercise();
+        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId());
+
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        checkForIllegalSubmission(participation, programmingSubmission, submissionPolicy);
+
         participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        updateGitDiffReport(participation);
+        updateGitDiffReportForTemplateOrSolutionParticipation(participation);
+
+        // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
+        programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
+
+        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
+                && submissionPolicy instanceof LockRepositoryPolicy) {
+            // we set the participation to locked when the new submission count is at least as high as the submission limit
+            programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
+        }
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
@@ -182,7 +202,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param programmingExerciseParticipation The participation
      */
-    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
+    private void updateGitDiffReportForTemplateOrSolutionParticipation(ProgrammingExerciseParticipation programmingExerciseParticipation) {
         if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
                 || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
             try {
@@ -195,29 +215,67 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * We check if a submission for a programming exercise is after the individual end date and a student is not allowed to submit anymore.
      * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
      *
      * @param programmingExerciseParticipation current participation of the exam exercise
      * @param programmingSubmission            new created submission of the repository commit
      */
-    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+    private void checkForIllegalSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission,
+            SubmissionPolicy submissionPolicy) {
         ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
-                    : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
-                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
-                        + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
-                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
-                programmingSubmission.setType(SubmissionType.ILLEGAL);
-                programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
-                log.warn(message);
-            }
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        if (!(programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
         }
+        var optionalStudent = studentParticipation.getStudent();
+        var optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
+        if (optionalStudentWithGroups.isEmpty()) {
+            return;
+        }
+        User student = optionalStudentWithGroups.get();
+
+        if (!isAllowedToSubmit(studentParticipation, student, programmingSubmission)) {
+            final String message = "The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the programming exercise %d"
+                    .formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getId());
+            programmingSubmission.setType(SubmissionType.ILLEGAL);
+            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+            log.warn(message);
+            return;
+        }
+
+        // we include submission policies here: if the student (for whatever reason) has more submission than allowed attempts, the submission would be illegal
+        if (exceedsSubmissionPolicy(studentParticipation, submissionPolicy)) {
+            final String message = "The student %s illegally submitted code after the submission policy lock limit %d in the participation %d for the programming exercise %d"
+                    .formatted(student.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getId());
+            programmingSubmission.setType(SubmissionType.ILLEGAL);
+            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+            log.warn(message);
+        }
+    }
+
+    private boolean exceedsSubmissionPolicy(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionPolicy submissionPolicy) {
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
+                && submissionPolicy instanceof LockRepositoryPolicy) {
+            return programmingExerciseParticipation.getSubmissions().size() > submissionPolicy.getSubmissionLimit();
+        }
+        return false;
+    }
+
+    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise.isExamExercise()) {
+            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+        }
+        return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
+    }
+
+    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
+        var dueDate = ExerciseDateService.getDueDate(participation);
+        if (dueDate.isEmpty()) {
+            return true;
+        }
+        return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
     }
 
     /**
@@ -396,10 +454,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode      - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
