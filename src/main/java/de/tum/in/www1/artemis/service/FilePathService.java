@@ -125,22 +125,23 @@ public class FilePathService {
                 return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
             }
             try {
-                String shouldBeAttachmentUnitId = path.getName(4).toString();
-                String shouldBeSlideId = path.getName(6).toString();
-                Long.parseLong(shouldBeAttachmentUnitId);
-                Long.parseLong(shouldBeSlideId);
-                return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(shouldBeAttachmentUnitId, "slide", shouldBeSlideId, filename));
+                String attachmentUnitId = path.getName(4).toString();
+                String slideId = path.getName(6).toString();
+                // check if the ids are valid long values
+                Long.parseLong(attachmentUnitId);
+                Long.parseLong(slideId);
+                return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath, e);
+                throw new FilePathParsingException("Public path does not contain correct attachmentUnitId or slideId: " + publicPath, e);
             }
         }
         if (uriPath.startsWith("/api/files/file-upload-exercises")) {
             try {
-                String shouldBeExerciseId = path.getName(3).toString();
-                String shouldBeSubmissionId = path.getName(5).toString();
-                Long exerciseId = Long.parseLong(shouldBeExerciseId);
-                Long submissionId = Long.parseLong(shouldBeSubmissionId);
+                String expectedExerciseId = path.getName(3).toString();
+                String expectedSubmissionId = path.getName(5).toString();
+                Long exerciseId = Long.parseLong(expectedExerciseId);
+                Long submissionId = Long.parseLong(expectedSubmissionId);
                 return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
             }
             catch (IllegalArgumentException e) {
@@ -211,8 +212,8 @@ public class FilePathService {
             try {
                 // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
                 // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
-                final String shouldBeAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
-                final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
+                final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
                 return URI.create("/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
             }
             catch (IllegalArgumentException e) {
@@ -222,8 +223,8 @@ public class FilePathService {
         if (path.startsWith(FilePathService.getFileUploadExercisesFilePath())) {
             try {
                 // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
-                final var shouldBeExerciseId = path.getName(path.getNameCount() - 3).toString();
-                final long exerciseId = Long.parseLong(shouldBeExerciseId);
+                final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
+                final long exerciseId = Long.parseLong(expectedExerciseId);
                 return URI.create("/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
             }
             catch (IllegalArgumentException e) {
