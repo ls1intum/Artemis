@@ -181,7 +181,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
         final var bambooRepositoryAuxRepo = new BambooRepositoryDTO(296200358L, "auxrepo");
-        final var newRepoUrl = exercise.getTestRepositoryUrl().replace("tests", planName); // planName is username
+        final var newRepoUrl = versionControlService.getCloneRepositoryUrl(exercise.getProjectKey(), repoNameInVcs).toString();
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
