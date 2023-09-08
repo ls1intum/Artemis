@@ -9,10 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -20,9 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -121,18 +116,23 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Set<User> findAllInGroup(@Param("groupName") String groupName);
 
     @Query("""
-            SELECT DISTINCT user
-            FROM User user
-            JOIN UserGroup ug ON user.id = ug.userId
-            JOIN Course course ON (course.studentGroupName = ug.group
-                OR course.teachingAssistantGroupName = ug.group
-                OR course.editorGroupName = ug.group
-                OR course.instructorGroupName = ug.group
+            SELECT NEW de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary (
+                user,
+                CASE WHEN cp.isHidden = true THEN true ELSE false END,
+                CASE WHEN atLeastTutors.id IS NOT null THEN true ELSE false END
             )
+            FROM User user
+            JOIN UserGroup ug ON ug.userId = user.id
+            LEFT JOIN Course students ON ug.group = students.studentGroupName
+            LEFT JOIN Course atLeastTutors ON (atLeastTutors.teachingAssistantGroupName = ug.group
+                OR atLeastTutors.editorGroupName = ug.group
+                OR atLeastTutors.instructorGroupName = ug.group
+            )
+            LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
             WHERE user.isDeleted = false
-            AND course.id = :courseId
+            AND (students.id = :courseId OR atLeastTutors.id = :courseId)
             """)
-    Set<User> findAllInCourse(@Param("courseId") Long courseId);
+    Set<ConversationWebSocketRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("courseId") Long courseId, @Param("conversationId") Long conversationId);
 
     /**
      * Searches for users in a group by their login or full name.
