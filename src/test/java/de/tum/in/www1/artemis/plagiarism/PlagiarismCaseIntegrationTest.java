@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -53,6 +54,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private Course course;
 
@@ -385,5 +389,26 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         teamPlagiarismCase.setTeam(team);
 
         assertThat(teamPlagiarismCase.getStudents()).as("should get the set of all students in the team if it is a team plagiarism case").isEqualTo(teamStudents);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismCasesForExercise_instructor_correct() throws Exception {
+        var cases = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.OK, Long.class);
+        assertThat(cases).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course, "");
+        request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }
