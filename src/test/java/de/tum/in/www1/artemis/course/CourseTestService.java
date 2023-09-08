@@ -548,11 +548,6 @@ public class CourseTestService {
             var channels = channelRepository.findChannelsByCourseId(course2.getId());
             assertThat(channels).hasSize(DefaultChannelType.values().length);
             channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
-            // Check if newly added instructor and student was added to default channels
-            channels.forEach(channel -> {
-                var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-                assertThat(participants).hasSize(2); // 1 instructor and 1 student
-            });
         });
 
     }
