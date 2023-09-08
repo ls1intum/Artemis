@@ -12,6 +12,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
+/**
+ * Contains the one automatic test covering all rest endpoints for authorization tests.
+ */
 class AuthorizationEndpointTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

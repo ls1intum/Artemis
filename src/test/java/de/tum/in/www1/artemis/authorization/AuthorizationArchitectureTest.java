@@ -11,9 +11,6 @@ import com.tngtech.archunit.lang.ArchRule;
 import de.tum.in.www1.artemis.AbstractArchitectureTest;
 import de.tum.in.www1.artemis.security.annotations.*;
 
-/**
- * Contains the one automatic test covering all rest endpoints for authorization tests.
- */
 class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
     private static final String ARTEMIS_PACKAGE = "de.tum.in.www1.artemis";
