@@ -13,7 +13,7 @@ import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-
 import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { HealthStatus, LearningPathHealthDTO, getWarningAction, getWarningBody, getWarningHint, getWarningTitle } from 'app/entities/competency/learning-path-health.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
 
 export enum TableColumn {
     ID = 'ID',

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { By } from '@angular/platform-browser';
-import { LearningPathProgressNavComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-nav.component';
+import { LearningPathProgressNavComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-nav.component';
 import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { MockPipe } from 'ng-mocks';
