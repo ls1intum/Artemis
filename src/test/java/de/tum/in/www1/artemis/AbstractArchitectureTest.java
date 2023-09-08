@@ -22,10 +22,11 @@ public abstract class AbstractArchitectureTest {
 
     @BeforeAll
     static void loadClasses() {
-        testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-        productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-        allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-
+        if (allClasses == null) {
+            testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
+            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
+            allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
+        }
         ensureClassSetsNonEmpty();
         ensureAllClassesFound();
     }

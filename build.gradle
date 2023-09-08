@@ -119,6 +119,13 @@ tasks.register("architectureTest", Test) {
     useJUnitPlatform {
         includeTags "ArchitectureTest"
     }
+    testLogging {
+        events "FAILED", "SKIPPED"
+    }
+    testLogging.showStandardStreams = true
+    reports.html.required = false
+    minHeapSize = "1024m" // initial heap size
+    maxHeapSize = "3072m" // maximum heap size
 }
 
 jacoco {
