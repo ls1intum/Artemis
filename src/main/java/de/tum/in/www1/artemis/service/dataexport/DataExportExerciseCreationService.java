@@ -298,7 +298,7 @@ public class DataExportExerciseCreationService {
         for (var result : submission.getResults()) {
             if (result != null) {
                 // Do not include the results if the assessment due date is in the future and the assessment is not automatic and the user is not an instructor
-                // We only consider programming exercises here because for other exercises we this method is not called if the assessment due date is in the future
+                // We only consider programming exercises here because for other exercises this method is not called if the assessment due date is in the future
                 if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isInstructor) {
                     continue;
                 }
