@@ -228,8 +228,6 @@ public class ProgrammingExerciseService {
         scheduleOperations(savedProgrammingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
 
-        channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
-
         return savedProgrammingExercise;
     }
 

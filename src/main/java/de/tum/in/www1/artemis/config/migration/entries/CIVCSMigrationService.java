@@ -28,7 +28,9 @@ public interface CIVCSMigrationService {
     /**
      * Deletes all build triggers for the given build plan.
      *
-     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param projectKey    The key of the project, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param repositoryUrl the URL of the repository that triggers the build
      */
     void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
 
@@ -55,6 +57,7 @@ public interface CIVCSMigrationService {
      *
      * @param programmingExerciseStudentParticipationRepository the repository to get the participations from
      * @param pageable                                          the pageable object
+     * @return the page of participations
      */
     Page<ProgrammingExerciseStudentParticipation> getPageableStudentParticipations(
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Pageable pageable);
