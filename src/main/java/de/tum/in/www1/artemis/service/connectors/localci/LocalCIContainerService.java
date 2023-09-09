@@ -241,13 +241,13 @@ public class LocalCIContainerService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param programmingExercise1 the programming exercise for which to create the build script
+     * @param programmingExercise the programming exercise for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise1) {
+    public Path createBuildScript(ProgrammingExercise programmingExercise) {
 
         // Get programming exercise with auxiliary repos
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise1.getId());
+        // ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise1.getId());
 
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan() != null

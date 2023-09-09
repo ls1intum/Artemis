@@ -110,7 +110,7 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(participation.getProgrammingExercise().getId());
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();// programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(participation.getProgrammingExercise().getId());
 
         // Prepare script
 
