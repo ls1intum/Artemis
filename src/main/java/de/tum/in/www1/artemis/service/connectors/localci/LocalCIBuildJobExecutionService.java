@@ -95,10 +95,11 @@ public class LocalCIBuildJobExecutionService {
      * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
      * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String)} to execute the job.
      *
-     * @param participation The participation of the repository for which the build job should be executed.
-     * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
-     * @param containerName The name of the Docker container that will be used to run the build job.
-     *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
+     * @param programmingExercise The programming exercise for which the build job should be executed.
+     * @param participation       The participation of the repository for which the build job should be executed.
+     * @param commitHash          The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
+     * @param containerName       The name of the Docker container that will be used to run the build job.
+     *                                It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */

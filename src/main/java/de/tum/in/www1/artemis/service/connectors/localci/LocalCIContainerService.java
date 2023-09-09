@@ -56,6 +56,8 @@ public class LocalCIContainerService {
      * @param assignmentRepositoryPath   the path to the assignment repository in the file system
      * @param testRepositoryPath         the path to the test repository in the file system
      * @param auxiliaryRepositoriesPaths the paths to the auxiliary repositories in the file system
+     * @param auxiliaryRepositoryNames   the names of the auxiliary repositories
+     * @param buildScriptPath            the path to the build script in the file system
      * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      */
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
@@ -137,6 +139,11 @@ public class LocalCIContainerService {
         }
     }
 
+    /**
+     * Make the script specified in the container's bind mount executable.
+     *
+     * @param containerId the id of the container in which the script should be made executable
+     */
     public void makeScriptExecutable(String containerId) {
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("chmod", "+x", "script.sh")
                 .exec();
@@ -300,7 +307,7 @@ public class LocalCIContainerService {
             writer.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            throw new LocalCIException("Failed to create build script file", e);
         }
 
         return Path.of(buildScriptPath);
@@ -319,7 +326,7 @@ public class LocalCIContainerService {
             Files.deleteIfExists(Path.of(buildScriptPath));
         }
         catch (IOException e) {
-            e.printStackTrace();
+            throw new LocalCIException("Failed to delete build script file", e);
         }
     }
 }
