@@ -28,11 +28,11 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -57,7 +57,7 @@ public class LocalCIBuildJobExecutionService {
 
     private final LocalCIContainerService localCIContainerService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
@@ -71,11 +71,11 @@ public class LocalCIBuildJobExecutionService {
     private String localVCBasePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, ProgrammingExerciseRepository programmingExerciseRepository, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
@@ -110,11 +110,11 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();// programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(participation.getProgrammingExercise().getId());
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
 
         // Prepare script
 
-        Path buildScriptPath = localCIContainerService.createBuildScript(programmingExercise);
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise());
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
@@ -127,14 +127,14 @@ public class LocalCIBuildJobExecutionService {
 
         try {
             assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
-            testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
+            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
 
-            if (programmingExercise.getAuxiliaryRepositoriesForBuildPlan() != null) {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[programmingExercise.getAuxiliaryRepositoriesForBuildPlan().size()];
-                auxiliaryRepositoryNames = new String[programmingExercise.getAuxiliaryRepositoriesForBuildPlan().size()];
-                for (int i = 0; i < programmingExercise.getAuxiliaryRepositoriesForBuildPlan().size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(programmingExercise.getAuxiliaryRepositoriesForBuildPlan().get(i).getRepositoryUrl(), localVCBaseUrl);
-                    auxiliaryRepositoryNames[i] = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().get(i).getName();
+            if (auxiliaryRepositories != null) {
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
+                auxiliaryRepositoryNames = new String[auxiliaryRepositories.size()];
+                for (int i = 0; i < auxiliaryRepositories.size(); i++) {
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
+                    auxiliaryRepositoryNames[i] = auxiliaryRepositories.get(i).getName();
                 }
 
             }

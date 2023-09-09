@@ -30,7 +30,7 @@ import com.github.dockerjava.api.model.Volume;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -44,14 +44,14 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIContainerService(DockerClient dockerClient, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public LocalCIContainerService(DockerClient dockerClient, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.dockerClient = dockerClient;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -246,12 +246,10 @@ public class LocalCIContainerService {
      */
     public Path createBuildScript(ProgrammingExercise programmingExercise) {
 
-        // Get programming exercise with auxiliary repos
-        // ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise1.getId());
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId());
 
         Long programmingExerciseId = programmingExercise.getId();
-        boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan() != null
-                && programmingExercise.getAuxiliaryRepositoriesForBuildPlan().size() > 0;
+        boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && auxiliaryRepositories.size() > 0;
         Path scriptsPath = Path.of("local-ci-scripts");
 
         if (!Files.exists(scriptsPath)) {
@@ -278,7 +276,7 @@ public class LocalCIContainerService {
                 """);
 
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositoriesForBuildPlan()) {
+            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
                 buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
             }
         }
@@ -295,7 +293,7 @@ public class LocalCIContainerService {
 
         // Copy auxiliary repositories to checkout directories
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositoriesForBuildPlan()) {
+            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
                 buildScript.append("cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
                         .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
             }
