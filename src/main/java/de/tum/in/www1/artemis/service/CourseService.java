@@ -776,7 +776,7 @@ public class CourseService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
-        log.info("archiveCourse took {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
