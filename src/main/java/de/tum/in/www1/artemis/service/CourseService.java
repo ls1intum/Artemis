@@ -738,6 +738,7 @@ public class CourseService {
      */
     @Async
     public void archiveCourse(Course course) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
@@ -775,6 +776,7 @@ public class CourseService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
+        log.info("archiveCourse took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**

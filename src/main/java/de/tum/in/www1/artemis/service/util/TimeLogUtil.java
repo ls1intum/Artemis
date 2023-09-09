@@ -14,6 +14,14 @@ public class TimeLogUtil {
             double durationInMilliSeconds = durationInMicroSeconds / 1000.0;
             if (durationInMilliSeconds > 1000) {
                 double durationInSeconds = durationInMilliSeconds / 1000.0;
+                if (durationInSeconds > 60) {
+                    double durationInMinutes = durationInSeconds / 60.0;
+                    if (durationInMinutes > 60) {
+                        double durationInHours = durationInMinutes / 60.0;
+                        return roundOffTo2DecPlaces(durationInHours) + "hours";
+                    }
+                    return roundOffTo2DecPlaces(durationInSeconds) + "minutes";
+                }
                 return roundOffTo2DecPlaces(durationInSeconds) + "s";
             }
             return roundOffTo2DecPlaces(durationInMilliSeconds) + "ms";
