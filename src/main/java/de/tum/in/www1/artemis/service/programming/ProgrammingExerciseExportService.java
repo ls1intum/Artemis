@@ -554,10 +554,9 @@ public class ProgrammingExerciseExportService {
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
             }
-        }).toCompletableFuture()).toList().toArray(new CompletableFuture<?>[participations.size()]);
-        CompletableFuture.allOf(futures).thenAccept((emtpy) -> {
-            threadPool.shutdown();
-        });
+        }, threadPool).toCompletableFuture()).toList().toArray(new CompletableFuture<?>[participations.size()]);
+        // wait until all operations finish
+        CompletableFuture.allOf(futures).join();
         return exportedStudentRepositories;
     }
 

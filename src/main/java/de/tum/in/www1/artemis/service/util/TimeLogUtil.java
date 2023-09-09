@@ -10,23 +10,23 @@ public class TimeLogUtil {
      */
     public static String formatDurationFrom(long timeNanoStart) {
         long durationInMicroSeconds = (System.nanoTime() - timeNanoStart) / 1000;
-        if (durationInMicroSeconds > 1000) {
-            double durationInMilliSeconds = durationInMicroSeconds / 1000.0;
-            if (durationInMilliSeconds > 1000) {
-                double durationInSeconds = durationInMilliSeconds / 1000.0;
-                if (durationInSeconds > 60) {
-                    double durationInMinutes = durationInSeconds / 60.0;
-                    if (durationInMinutes > 60) {
-                        double durationInHours = durationInMinutes / 60.0;
-                        return roundOffTo2DecPlaces(durationInHours) + "hours";
-                    }
-                    return roundOffTo2DecPlaces(durationInSeconds) + "minutes";
-                }
-                return roundOffTo2DecPlaces(durationInSeconds) + "s";
-            }
+        if (durationInMicroSeconds < 1000) {
+            return durationInMicroSeconds + "µs";
+        }
+        double durationInMilliSeconds = durationInMicroSeconds / 1000.0;
+        if (durationInMilliSeconds < 1000) {
             return roundOffTo2DecPlaces(durationInMilliSeconds) + "ms";
         }
-        return durationInMicroSeconds + "µs";
+        double durationInSeconds = durationInMilliSeconds / 1000.0;
+        if (durationInSeconds < 60) {
+            return roundOffTo2DecPlaces(durationInSeconds) + "sec";
+        }
+        double durationInMinutes = durationInSeconds / 60.0;
+        if (durationInMinutes < 60) {
+            return roundOffTo2DecPlaces(durationInMinutes) + "min";
+        }
+        double durationInHours = durationInMinutes / 60.0;
+        return roundOffTo2DecPlaces(durationInHours) + "hours";
     }
 
     private static String roundOffTo2DecPlaces(double val) {
