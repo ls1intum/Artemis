@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { EntityResponseType, ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
@@ -11,6 +10,7 @@ import { normalWorkingTime } from 'app/exam/participate/exam.utils';
 })
 export class ExamEditWorkingTimeDialogComponent {
     exam: Exam;
+    examChange?: (exam: Exam) => void; // somehow, event emitter does not work
 
     isLoading: boolean;
 
@@ -22,20 +22,12 @@ export class ExamEditWorkingTimeDialogComponent {
 
     confirmEntityName: string;
 
-    workingTimeSeconds: number;
+    workingTimeSeconds = 0;
 
     constructor(
         private activeModal: NgbActiveModal,
         private examManagementService: ExamManagementService,
     ) {}
-
-    /**
-     * Life cycle hook called by Angular to indicate
-     * that Angular is done creating the component
-     */
-    // ngOnInit(): void {
-    //     this.workingTimeSeconds = this.exam.workingTime!;
-    // }
 
     /**
      * Closes the dialog
@@ -49,14 +41,12 @@ export class ExamEditWorkingTimeDialogComponent {
      * Emits delete event and passes additional checks from the dialog
      */
     confirmUpdateWorkingTime(): void {
-        if (this.isInvalid()) {
-            return;
-        }
+        if (!this.isWorkingTimeValid()) return;
         this.isLoading = true;
-        this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.getWorkingTimeChange()).subscribe({
-            next: () => {
-                // TODO: do we have to inform the application about the change or is it handled by the websocket?
+        this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
+            next: (res: EntityResponseType) => {
                 this.isLoading = false;
+                res.body && this.examChange?.(res.body);
                 this.clear();
             },
             error: () => {
@@ -66,12 +56,7 @@ export class ExamEditWorkingTimeDialogComponent {
         });
     }
 
-    isInvalid(): boolean {
-        return Math.abs(this.getWorkingTimeChange()) === 0;
-    }
-
-    private getWorkingTimeChange(): number {
-        const previousWorkingTime = normalWorkingTime(this.exam!)!;
-        return this.workingTimeSeconds - previousWorkingTime;
+    isWorkingTimeValid(): boolean {
+        return Math.abs(this.workingTimeSeconds) !== 0;
     }
 }

@@ -22,16 +22,23 @@ import { round } from 'app/shared/util/utils';
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     // Control disabled state
     @Input() disabled = false;
-    @Input() showRelative = true;
+    @Input() showRelative = false;
+
+    @Input() durationLabelText?: string;
+    @Input() relativeLabelText?: string;
 
     // The exam for which the working time should be updated
     @Input()
-    set exam(exam: Exam) {
+    set exam(exam: Exam | undefined) {
         this.currentExam = exam;
         this.initWorkingTimeFromCurrentExam();
     }
 
-    private currentExam: Exam;
+    get exam(): Exam | undefined {
+        return this.currentExam;
+    }
+
+    private currentExam?: Exam;
     private touched = false;
     private onTouched = () => {};
     private onChange: (_: number) => void = () => {};
@@ -82,9 +89,11 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * Updates the controls based on the working time of the student exam.
      */
     private initWorkingTimeFromCurrentExam() {
-        this.setWorkingTimeDuration(normalWorkingTime(this.currentExam!)!);
-        this.updateWorkingTimePercentFromDuration();
-        this.onChange(this.getWorkingTimeSeconds());
+        if (this.exam) {
+            this.setWorkingTimeDuration(normalWorkingTime(this.exam)!);
+            this.updateWorkingTimePercentFromDuration();
+            this.onChange(this.getWorkingTimeSeconds());
+        }
     }
 
     /**
@@ -112,7 +121,9 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * @private
      */
     private updateWorkingTimePercentFromDuration() {
-        this.workingTime.percent = getRelativeWorkingTimeExtension(this.currentExam, this.getWorkingTimeSeconds());
+        if (this.exam) {
+            this.workingTime.percent = getRelativeWorkingTimeExtension(this.exam, this.getWorkingTimeSeconds());
+        }
     }
 
     /**
@@ -120,10 +131,12 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * @private
      */
     private updateWorkingTimeDurationFromPercent() {
-        const regularWorkingTime = this.currentExam.workingTime!;
-        const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
-        console.log(regularWorkingTime, absoluteWorkingTimeSeconds);
-        this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
+        if (this.exam) {
+            const regularWorkingTime = this.exam.workingTime!;
+            const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
+            console.log(regularWorkingTime, absoluteWorkingTimeSeconds);
+            this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
+        }
     }
 
     /**

@@ -6,7 +6,7 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body d-flex flex-column">
-        <jhi-working-time-control name="workingTimeSeconds" [(ngModel)]="workingTimeSeconds" [exam]="exam" [showRelative]="false" [disabled]="isLoading" />
+        <jhi-working-time-control name="workingTimeSeconds" [(ngModel)]="workingTimeSeconds" [showRelative]="false" [disabled]="isLoading" />
 
         <hr />
 
@@ -29,8 +29,8 @@
             id="confirm"
             type="submit"
             [ngClass]="['btn', 'btn-warning']"
-            [style.cursor]="editForm.invalid || isLoading || isInvalid() ? 'not-allowed' : 'pointer'"
-            [disabled]="editForm.invalid || isLoading || isInvalid()"
+            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeValid() ? 'not-allowed' : 'pointer'"
+            [disabled]="editForm.invalid || isLoading || !isWorkingTimeValid()"
         >
             <span *ngIf="isLoading"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
             <fa-icon *ngIf="!isLoading" [icon]="faCheck"></fa-icon>&nbsp;

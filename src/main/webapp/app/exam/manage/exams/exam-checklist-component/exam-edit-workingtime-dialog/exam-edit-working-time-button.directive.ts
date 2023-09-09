@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, Input, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
 
@@ -10,6 +10,8 @@ import { AlertService } from 'app/core/util/alert.service';
 @Directive({ selector: '[jhiEditWorkingTimeButton]' })
 export class ExamEditWorkingTimeButtonDirective implements OnInit {
     @Input() exam: Exam;
+    @Output() examChange = new EventEmitter<Exam>();
+
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
     @Input() buttonType: ButtonType = ButtonType.WARNING;
 
@@ -40,6 +42,7 @@ export class ExamEditWorkingTimeButtonDirective implements OnInit {
         this.alertService.closeAll();
         this.modalRef = this.modalService.open(ExamEditWorkingTimeDialogComponent, { size: 'lg', backdrop: 'static', animation: true });
         this.modalRef.componentInstance.exam = this.exam;
+        this.modalRef.componentInstance.examChange = (exam: Exam) => this.examChange.emit(exam);
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = null));
     }
