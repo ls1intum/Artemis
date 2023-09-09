@@ -27,10 +27,8 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.HostConfig;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -58,8 +56,6 @@ public class LocalCIBuildJobExecutionService {
 
     private final LocalCIContainerService localCIContainerService;
 
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
      */
@@ -72,11 +68,10 @@ public class LocalCIBuildJobExecutionService {
     private String localVCBasePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
@@ -111,9 +106,6 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        // Get the correct Docker image
-        String dockerImageName = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
-
         // Prepare script
 
         Path buildScriptPath = localCIContainerService.createBuildScript(programmingExercise);
@@ -131,13 +123,13 @@ public class LocalCIBuildJobExecutionService {
             assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
             testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
 
-            if (participation.getProgrammingExercise().getAuxiliaryRepositories() != null) {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[participation.getProgrammingExercise().getAuxiliaryRepositories().size()];
-                auxiliaryRepositoryNames = new String[participation.getProgrammingExercise().getAuxiliaryRepositories().size()];
-                for (int i = 0; i < participation.getProgrammingExercise().getAuxiliaryRepositories().size(); i++) {
-                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getAuxiliaryRepositories().get(i).getRepositoryUrl(),
+            if (participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan() != null) {
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan().size()];
+                auxiliaryRepositoryNames = new String[participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan().size()];
+                for (int i = 0; i < participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan().size(); i++) {
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan().get(i).getRepositoryUrl(),
                             localVCBaseUrl);
-                    auxiliaryRepositoryNames[i] = participation.getProgrammingExercise().getAuxiliaryRepositories().get(i).getName();
+                    auxiliaryRepositoryNames[i] = participation.getProgrammingExercise().getAuxiliaryRepositoriesForBuildPlan().get(i).getName();
                 }
 
             }
@@ -196,8 +188,6 @@ public class LocalCIBuildJobExecutionService {
     private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch,
             String commitHash) {
 
-        ProjectType projectType = participation.getProgrammingExercise().getProjectType();
-
         long timeNanoStart = System.nanoTime();
 
         localCIContainerService.startContainer(containerId);
@@ -228,19 +218,14 @@ public class LocalCIBuildJobExecutionService {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
             localCIContainerService.stopContainer(containerName);
+            // Delete script file from host system
+            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
-        String testResultsPath = "";
-
-        if (projectType.isGradle()) {
-            testResultsPath = "/repositories/test-repository/build/test-results/test";
-        }
-        else {
-            testResultsPath = "/repositories/test-repository/target/surefire-reports";
-        }
+        String testResultsPath = "/repositories/test-repository/build/test-results/test";
 
         // Get an input stream of the test result files.
         TarArchiveInputStream testResultsTarInputStream;
@@ -251,10 +236,14 @@ public class LocalCIBuildJobExecutionService {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
             localCIContainerService.stopContainer(containerName);
+            // Delete script file from host system
+            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         localCIContainerService.stopContainer(containerName);
+        // Delete script file from host system
+        localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
 
         LocalCIBuildResult buildResult;
         try {
@@ -300,8 +289,7 @@ public class LocalCIBuildJobExecutionService {
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
-        return !tarArchiveEntry.isDirectory() && tarArchiveEntry.getName().endsWith(".xml")
-                && (tarArchiveEntry.getName().startsWith("test/TEST-") || tarArchiveEntry.getName().startsWith("surefire-reports/TEST-"))
+        return !tarArchiveEntry.isDirectory() && tarArchiveEntry.getName().endsWith(".xml") && (tarArchiveEntry.getName().startsWith("test/TEST-"))
                 && tarArchiveEntry.getName().endsWith(".xml");
     }
 

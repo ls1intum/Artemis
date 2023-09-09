@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -28,9 +29,6 @@ import com.github.dockerjava.api.model.Volume;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -227,18 +225,29 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
+    /**
+     * Creates a build script for a given programming exercise.
+     * The build script is stored in a file in the local-ci-scripts directory.
+     * The build script is used to build the programming exercise in a Docker container.
+     *
+     * @param programmingExercise the programming exercise for which to create the build script
+     * @return the path to the build script file
+     */
     public Path createBuildScript(ProgrammingExercise programmingExercise) {
 
         String programmingExerciseId = programmingExercise.getId().toString();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
-
         boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositories() != null && programmingExercise.getAuxiliaryRepositories().size() > 0;
-        boolean sequentialTestRuns = programmingExercise.hasSequentialTestRuns();
-        boolean isStaticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
-        boolean recordTestwiseCoverage = programmingExercise.isTestwiseCoverageEnabled();
-
         Path scriptsPath = Path.of("local-ci-scripts");
+
+        if (!Files.exists(scriptsPath)) {
+            try {
+                Files.createDirectory(scriptsPath);
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Failed to create directory for local CI scripts", e);
+            }
+        }
+
         String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + programmingExerciseId + "-build.sh";
 
         StringBuilder buildScript = new StringBuilder("""
@@ -254,7 +263,7 @@ public class LocalCIContainerService {
                 """);
 
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
+            for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositoriesForBuildPlan()) {
                 buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
             }
         }
@@ -267,74 +276,23 @@ public class LocalCIContainerService {
                 fi
                 mkdir /repositories/test-repository/assignment
                 cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
-                cd /repositories/test-repository
                 """);
 
-        // programming language specific tasks
-
-        switch (programmingLanguage) {
-            case JAVA, KOTLIN -> {
-                boolean isMavenProject = ProjectType.isMavenProject(projectType);
-
-                if (!isMavenProject) {
-                    buildScript.append("chmod +x gradlew\n");
-                }
-
-                if (!sequentialTestRuns) {
-                    if (isMavenProject) {
-                        // artifact?
-                        buildScript.append("mvn clean test");
-                        if (recordTestwiseCoverage) {
-                            buildScript.append(" -Pcoverage\n" + "mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json");
-                        }
-                        buildScript.append("\n");
-                    }
-                    else {
-                        // artifact?
-                        buildScript.append("""
-                                sed -i -e 's/\\r$//' gradlew
-                                ./gradlew clean test""");
-                        if (recordTestwiseCoverage) {
-                            buildScript.append(" tiaTests --run-all-tests\n");
-                        }
-                    }
-                }
-                else {
-                    if (isMavenProject) {
-                        // does not work yet
-                        buildScript.append("""
-                                cd structural
-                                mvn clean test
-                                cd ..
-                                cd behavior
-                                mvn clean test
-                                cd ..
-                                """);
-                    }
-                    else {
-                        buildScript.append("""
-                                ./gradlew clean test structuralTests
-                                ./gradlew behaviorTests
-                                """);
-                    }
-                }
-
-                if (isStaticCodeAnalysisEnabled) {
-
-                    // artifacts?
-
-                    if (isMavenProject) {
-                        String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                        buildScript.append("mvn ").append(command).append("\n");
-                    }
-                    else {
-                        buildScript.append("""
-                                ./gradlew check -x test
-                                """);
-                    }
-                }
+        // Copy auxiliary repositories to checkout directories
+        if (hasAuxiliaryRepositories) {
+            for (AuxiliaryRepository auxiliaryRepository : programmingExercise.getAuxiliaryRepositoriesForBuildPlan()) {
+                buildScript.append("cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
+                        .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
             }
         }
+
+        buildScript.append("cd /repositories/test-repository\n");
+
+        // programming language specific tasks
+        buildScript.append("""
+                chmod +x gradlew
+                sed -i -e 's/\\r$//' gradlew
+                ./gradlew clean test""");
 
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(buildScriptPath));
@@ -346,5 +304,22 @@ public class LocalCIContainerService {
         }
 
         return Path.of(buildScriptPath);
+    }
+
+    /**
+     * Deletes the build script for a given programming exercise.
+     * The build script is stored in a file in the local-ci-scripts directory.
+     *
+     * @param exerciseID the ID of the programming exercise for which to delete the build script
+     */
+    public void deleteScriptFile(String exerciseID) {
+        Path scriptsPath = Path.of("local-ci-scripts");
+        String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + exerciseID + "-build.sh";
+        try {
+            Files.deleteIfExists(Path.of(buildScriptPath));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
