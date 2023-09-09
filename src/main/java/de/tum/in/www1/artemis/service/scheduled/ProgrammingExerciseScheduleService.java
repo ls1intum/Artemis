@@ -294,7 +294,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Schedules all necessary tasks for participations with individual due dates.
-     *
+     * <p>
      * Also removes schedules for individual participations of their individual due date no longer exists.
      *
      * @param exercise the participations belong to.
@@ -453,7 +453,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will
      * (1) lock all student repositories and
      * (2) stash all student changes in the online editor for manual assessments.
-     *
+     * <p>
      * NOTE: this will not lock the student participations. See {@link #lockAllStudentRepositoriesAndParticipations(ProgrammingExercise)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
@@ -498,7 +498,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will
      * (1) lock all student repositories for students for which no individual due date is set and
      * (2) stash all student changes in the online editor for manual assessments.
-     *
+     * <p>
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise for which the repositories should be locked.
@@ -512,10 +512,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     /**
      * Returns a runnable, that, once executed, will update all results for the given exercise for students for which no
      * individual due date is set.
-     *
+     * <p>
      * This might be needed for an exercise that has test cases marked with
      * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
-     *
+     * <p>
      * Those test cases might already have been run in the continuous integration
      * service and their feedbacks are therefore stored in the database.
      * However, they are not included in the student score before the due date has passed.
@@ -789,9 +789,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     private void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
             Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
+
         // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
         var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.x() != null)
                 .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
+
         // 2. Transform those groups into lock-repository tasks with times
         Set<Tuple<ZonedDateTime, Runnable>> tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
             // Check that this participation is planed to be locked and has still the same due date
@@ -800,8 +802,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             var task = lockStudentRepositoriesAndParticipations(exercise, lockingCondition);
             return new Tuple<>(entry.getKey(), task);
         }).collect(Collectors.toSet());
+
         // 3. Schedule all tasks
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
+    }
+
+    /**
+     * Reschedules all programming exercises in this exam, since the working time was changed
+     *
+     * @param examId the id of the exam
+     */
+    public void rescheduleExamDuringConduction(Long examId) {
+        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        // TODO: check if `reschedule` really does a reschedule, i.e. removes the old tasks and schedules new ones
+        studentExams.forEach(studentExam -> rescheduleStudentExamDuringConduction(studentExam.getId()));
     }
 
     /**

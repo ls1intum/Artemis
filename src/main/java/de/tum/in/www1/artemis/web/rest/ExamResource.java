@@ -25,10 +25,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -277,7 +274,7 @@ public class ExamResource {
             var savedStudentExam = studentExamRepository.save(studentExam);
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 // TODO: this is probably not very efficient, instead we should re-calculate once for all student exams
-                instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(studentExam.getId());
+                instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExam.getId());
                 websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
         }

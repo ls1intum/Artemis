@@ -151,7 +151,13 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+    public void sendExamWorkingTimeChangeDuringConduction(Long examId) {
+        log.info("Sending schedule to reschedule exam {} to broker.", examId);
+        sendMessageDelayed(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION, examId);
+    }
+
+    @Override
+    public void sendStudentExamWorkingTimeChangeDuringConduction(Long studentExamId) {
         log.info("Sending schedule to reschedule student exam {} to broker.", studentExamId);
         sendMessageDelayed(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION, studentExamId);
     }

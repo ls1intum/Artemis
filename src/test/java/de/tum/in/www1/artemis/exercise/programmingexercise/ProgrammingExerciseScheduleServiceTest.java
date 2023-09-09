@@ -26,10 +26,7 @@ import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
-import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -660,7 +657,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         studentExam.setWorkingTime(1);
         studentExamRepository.save(studentExam);
 
-        instanceMessageReceiveService.processExamWorkingTimeChangeDuringConduction(studentExam.getId());
+        instanceMessageReceiveService.processStudentExamWorkingTimeChangeDuringConduction(studentExam.getId());
 
         verify(versionControlService, timeout(200)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
                 participation.getStudents());

@@ -146,9 +146,13 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processExamWorkingTimeChangeDuringConduction(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processStudentExamWorkingTimeChangeDuringConduction(message.getMessageObject());
         });
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -286,7 +290,12 @@ public class InstanceMessageReceiveService {
         notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
     }
 
-    public void processExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+    public void processExamWorkingTimeChangeDuringConduction(Long examId) {
+        log.info("Received reschedule of exam during conduction {}", examId);
+        programmingExerciseScheduleService.rescheduleExamDuringConduction(examId);
+    }
+
+    public void processStudentExamWorkingTimeChangeDuringConduction(Long studentExamId) {
         log.info("Received reschedule of student exam during conduction {}", studentExamId);
         programmingExerciseScheduleService.rescheduleStudentExamDuringConduction(studentExamId);
     }
