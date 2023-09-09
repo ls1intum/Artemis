@@ -166,7 +166,7 @@ public class TextExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 

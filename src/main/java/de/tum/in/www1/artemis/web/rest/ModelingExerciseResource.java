@@ -150,7 +150,7 @@ public class ModelingExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }

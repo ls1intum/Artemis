@@ -129,7 +129,7 @@ public class FileUploadExerciseResource {
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
-        groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
