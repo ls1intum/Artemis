@@ -327,6 +327,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         privacy_statement: 'artemisApp.legal.privacyStatement.title',
         imprint: 'artemisApp.legal.imprint.title',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
+        suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -476,6 +478,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'import-from-file':
                 this.addTranslationAsCrumb(currentPath, 'import-from-file');
+                break;
+            case 'suspicious-behavior':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-behavior');
+                break;
+            case 'suspicious-sessions':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-sessions');
                 break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
