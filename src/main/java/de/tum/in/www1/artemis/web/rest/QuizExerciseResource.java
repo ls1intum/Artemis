@@ -553,7 +553,6 @@ public class QuizExerciseResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        conversationService.deregisterAllClientsFromChannel(quizExercise);
         exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();

@@ -367,7 +367,6 @@ public class LectureResource {
         }
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        conversationService.deregisterAllClientsFromChannel(lecture);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
