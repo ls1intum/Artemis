@@ -8,7 +8,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.hazelcast.spi.exception.RestClientException;
@@ -139,7 +141,16 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             // TODO: in the unlikely case the buildPlanId is null, we could skip the template participation
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getTotalElements());
-            templateParticipationPage.forEach(templateParticipation -> {
+            templateParticipationPage.map(templateParticipation -> {
+                if (!ciMigrationService.orElseThrow().buildPlanExists(templateParticipation.getProgrammingExercise().getProjectKey(), templateParticipation.getBuildPlanId())) {
+                    log.warn("Build plan {} does not exist for exercise {}", templateParticipation.getBuildPlanId(), templateParticipation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", templateParticipation.getProgrammingExercise().getId());
+                    templateParticipation.setBuildPlanId(null);
+                    templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+                    return null;
+                }
+                return templateParticipation;
+            }).filter(Objects::nonNull).forEach(templateParticipation -> {
                 List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
                 if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
                     auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(templateParticipation.getProgrammingExercise().getId());
@@ -152,18 +163,38 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             // TODO: in the unlikely case the buildPlanId is null, we could skip the solution participation
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getTotalElements());
-            solutionParticipationPage.forEach(solutionParticipation -> {
+            solutionParticipationPage.map(solutionParticipation -> {
+                if (!ciMigrationService.orElseThrow().buildPlanExists(solutionParticipation.getProgrammingExercise().getProjectKey(), solutionParticipation.getBuildPlanId())) {
+                    log.warn("Build plan {} does not exist for exercise {}", solutionParticipation.getBuildPlanId(), solutionParticipation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", solutionParticipation.getProgrammingExercise().getId());
+                    solutionParticipation.setBuildPlanId(null);
+                    solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+                    return null;
+                }
+                return solutionParticipation;
+            }).filter(Objects::nonNull).forEach(solutionParticipation -> {
                 List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
                 if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
                     auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(solutionParticipation.getProgrammingExercise().getId());
                 }
                 migrateSolutionBuildPlan(solutionParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
+
+                migrateTestBuildPlan(solutionParticipation.getProgrammingExercise(), errorMap);
             });
 
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
                     .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
             log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getTotalElements());
-            studentParticipationPage.forEach(studentParticipation -> {
+            studentParticipationPage.map(studentParticipation -> {
+                if (!ciMigrationService.orElseThrow().buildPlanExists(studentParticipation.getProgrammingExercise().getProjectKey(), studentParticipation.getBuildPlanId())) {
+                    log.warn("Build plan {} does not exist for exercise {}", studentParticipation.getBuildPlanId(), studentParticipation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", studentParticipation.getProgrammingExercise().getId());
+                    studentParticipation.setBuildPlanId(null);
+                    programmingExerciseStudentParticipationRepository.save(studentParticipation);
+                    return null;
+                }
+                return studentParticipation;
+            }).filter(Objects::nonNull).forEach(studentParticipation -> {
                 List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
                 if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
                     auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(studentParticipation.getProgrammingExercise().getId());

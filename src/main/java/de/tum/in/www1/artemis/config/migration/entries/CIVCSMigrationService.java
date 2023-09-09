@@ -69,4 +69,13 @@ public interface CIVCSMigrationService {
      * @return true if the migration service supports auxiliary repositories, false otherwise
      */
     boolean supportsAuxiliaryRepositories();
+
+    /**
+     * Checks if the build plan exists.
+     *
+     * @param projectKey   The key of the project, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @return true if the build plan exists in the CI system, false otherwise
+     */
+    boolean buildPlanExists(String projectKey, String buildPlanKey);
 }

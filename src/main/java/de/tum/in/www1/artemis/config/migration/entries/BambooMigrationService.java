@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 
 /**
  * Services for executing migration tasks for Bamboo.
@@ -42,6 +43,8 @@ public class BambooMigrationService implements CIVCSMigrationService {
     @Value("${artemis.continuous-integration.url}")
     protected URL bambooServerUrl;
 
+    private BambooService bambooService;
+
     @Value("${server.url}")
     private String artemisServerUrl;
 
@@ -52,8 +55,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
 
-    public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
+    public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooService bambooService) {
         this.restTemplate = restTemplate;
+        this.bambooService = bambooService;
     }
 
     /**
@@ -220,6 +224,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
     @Override
     public boolean supportsAuxiliaryRepositories() {
         return true;
+    }
+
+    @Override
+    public boolean buildPlanExists(String projectKey, String buildPlanKey) {
+        return bambooService.checkIfBuildPlanExists(projectKey, buildPlanKey);
     }
 
     /**

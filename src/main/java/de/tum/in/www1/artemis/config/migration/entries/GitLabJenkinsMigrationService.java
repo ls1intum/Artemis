@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -47,14 +48,17 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
+    private JenkinsService jenkinsService;
+
     private final UrlService urlService;
 
     private final GitLabApi gitlab;
 
-    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab) {
+    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab, JenkinsService jenkinsService) {
         this.jenkinsJobService = jenkinsJobService;
         this.urlService = new UrlService();
         this.gitlab = gitlab;
+        this.jenkinsService = jenkinsService;
     }
 
     @Override
@@ -106,6 +110,11 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     @Override
     public boolean supportsAuxiliaryRepositories() {
         return false;
+    }
+
+    @Override
+    public boolean buildPlanExists(String projectKey, String buildPlanKey) {
+        return jenkinsService.checkIfBuildPlanExists(projectKey, buildPlanKey);
     }
 
     protected void removeWebHook(VcsRepositoryUrl repositoryUrl) {
