@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -55,7 +56,7 @@ public class LectureUnitProcessingService {
      */
     public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(file.getBytes())) {
             List<AttachmentUnit> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
@@ -165,7 +166,7 @@ public class LectureUnitProcessingService {
      * @return The prepared map
      */
     private Outline separateIntoUnits(MultipartFile file) throws IOException {
-        try (PDDocument document = PDDocument.load(file.getBytes())) {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
             Splitter pdfSplitter = new Splitter();
             PDFTextStripper pdfStripper = new PDFTextStripper();

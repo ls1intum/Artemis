@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
@@ -218,7 +219,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
+        PDDocument mergedDoc = Loader.loadPDF(mergedFile.get());
         assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
     }
 
