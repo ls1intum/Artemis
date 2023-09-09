@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -282,7 +282,7 @@ public class ExamResource {
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 // TODO: this is probably not very efficient, instead we should re-calculate once for all student exams
                 instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExam.getId());
-                websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
         }
 

@@ -57,7 +57,7 @@ export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @return The relative working time extension in percent points rounded to two digits after the decimal separator.
  */
 export const getRelativeWorkingTimeExtension = (exam: Exam, studentExamWorkingTime: number): number => {
-    const regularExamDuration = exam.workingTime!;
+    const regularExamDuration = normalWorkingTime(exam)!;
     return round((studentExamWorkingTime / regularExamDuration - 1.0) * 100, 2);
 };
 

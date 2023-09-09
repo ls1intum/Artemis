@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
-import static de.tum.in.www1.artemis.config.Constants.WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
+import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
@@ -25,10 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -209,7 +206,7 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExamId);
-                websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
             if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
                     && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
