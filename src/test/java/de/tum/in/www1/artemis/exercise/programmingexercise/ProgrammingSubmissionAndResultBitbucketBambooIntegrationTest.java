@@ -205,7 +205,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * However the participation id provided by the VCS on the request is invalid.
+     * However, the participation id provided by the VCS on the request is invalid.
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
@@ -214,7 +214,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         String commitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         Long participationId = getParticipationIdByType(participationType, 0);
         // set the author name to "Artemis"
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participationId);
+
+        // bambooRequestMockProvider.mockTriggerBuild(submission.getParticipation());
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
