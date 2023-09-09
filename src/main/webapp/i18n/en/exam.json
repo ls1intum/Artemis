@@ -553,7 +553,7 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
-                "editDuration": "Edit duration",
+                "editWorkingTime": "Edit duration",
                 "testExam": {
                     "title": "Test Exam Checklist",
                     "introduction": "This page gives an overview over the various steps when creating a test exam.",
@@ -574,7 +574,7 @@
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
                     "exportResults": "Export the exam results",
-                    "editDuration": "Edit the exam duration"
+                    "editWorkingTime": "Edit the exam duration"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -589,7 +589,7 @@
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file.",
-                    "editDuration": "Until close to the end of the exam, you can extend its duration."
+                    "editWorkingTime": "Until close to the end of the exam, you can extend its duration."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -623,8 +623,9 @@
                     "variants": "Variants"
                 }
             },
-            "editDuration": {
+            "editWorkingTime": {
                 "title": "Edit Exam Duration",
+                "label": "Exam duration change",
                 "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
             }

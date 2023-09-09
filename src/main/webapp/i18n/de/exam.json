@@ -551,7 +551,7 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Seite",
-                "editDuration": "Prüfungsdauer bearbeiten",
+                "editWorkingTime": "Prüfungsdauer bearbeiten",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
                     "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
@@ -572,7 +572,7 @@
                     "resolveComplaints": "Auflösung aller Beschwerden",
                     "testRun": "Abhalten eines Testdurchlaufs",
                     "exportResults": "Exportieren der Klausurergebnisse",
-                    "editDuration": "Bearbeiten der Prüfungsdauer"
+                    "editWorkingTime": "Bearbeiten der Prüfungsdauer"
                 },
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
@@ -587,7 +587,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "editDuration": "Bis kurz vor dem Ende der Prüfung können Sie deren Dauer verlängern."
+                    "editWorkingTime": "Bis kurz vor dem Ende der Prüfung können Sie deren Dauer verlängern."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
@@ -621,8 +621,9 @@
                     "variants": "Varianten"
                 }
             },
-            "editDuration": {
+            "editWorkingTime": {
                 "title": "Prüfungszeit bearbeiten",
+                "label": "Änderung der Prüfungszeit",
                 "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             }

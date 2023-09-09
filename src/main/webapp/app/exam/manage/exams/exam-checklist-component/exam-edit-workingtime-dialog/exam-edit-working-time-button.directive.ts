@@ -1,4 +1,4 @@
-import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
 
@@ -6,9 +6,10 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Exam } from 'app/entities/exam.model';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs/esm';
 
 @Directive({ selector: '[jhiEditWorkingTimeButton]' })
-export class ExamEditWorkingTimeButtonDirective implements OnInit {
+export class ExamEditWorkingTimeButtonDirective implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Output() examChange = new EventEmitter<Exam>();
 
@@ -16,6 +17,8 @@ export class ExamEditWorkingTimeButtonDirective implements OnInit {
     @Input() buttonType: ButtonType = ButtonType.WARNING;
 
     private modalRef: NgbModalRef | null;
+
+    private intervalRef: any;
 
     constructor(
         private modalService: NgbModal,
@@ -33,6 +36,22 @@ export class ExamEditWorkingTimeButtonDirective implements OnInit {
         this.renderer.addClass(this.elementRef.nativeElement, this.buttonType);
         this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize);
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
+
+        this.checkWorkingTimeChangeAllowed();
+        this.intervalRef = setInterval(this.checkWorkingTimeChangeAllowed.bind(this), 1000);
+    }
+
+    ngOnDestroy() {
+        this.intervalRef && clearInterval(this.intervalRef);
+    }
+
+    private checkWorkingTimeChangeAllowed() {
+        const workingTimeChangeAllowed = dayjs().isBetween(this.exam.startDate, this.exam.endDate?.subtract(5, 'minutes'));
+        if (workingTimeChangeAllowed) {
+            this.renderer.removeAttribute(this.elementRef.nativeElement, 'disabled');
+        } else {
+            this.renderer.setAttribute(this.elementRef.nativeElement, 'disabled', '');
+        }
     }
 
     /**

@@ -1,19 +1,25 @@
 <form name="workingTimeForm" (ngSubmit)="confirmUpdateWorkingTime()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.examManagement.editDuration.title">Edit Exam Duration</span>
+            <span jhiTranslate="artemisApp.examManagement.editWorkingTime.title">Edit Exam Duration</span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body d-flex flex-column">
-        <jhi-working-time-control name="workingTimeSeconds" [(ngModel)]="workingTimeSeconds" [showRelative]="false" [disabled]="isLoading" />
+        <jhi-working-time-control
+            name="workingTimeSeconds"
+            durationLabelText="artemisApp.examManagement.editWorkingTime.label"
+            [(ngModel)]="workingTimeSeconds"
+            [showRelative]="false"
+            [disabled]="isLoading"
+        />
 
         <hr />
 
         <div>
-            <p jhiTranslate="artemisApp.examManagement.editDuration.question" [translateValues]="{ title: exam.title }">Do you really want to edit the duration of the exam?</p>
+            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }">Do you really want to edit the duration of the exam?</p>
             <jhi-confirm-entity-name
-                confirmationText="artemisApp.examManagement.editDuration.typeNameToConfirm"
+                confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
                 [entityName]="exam.title!"
                 [disabled]="isLoading"
                 [(ngModel)]="confirmEntityName"
