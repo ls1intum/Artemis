@@ -290,7 +290,9 @@
             "browserFingerprintHash": "Browser Fingerprint",
             "instanceId": "Browser Instance ID",
             "ipAddress": "IP Address",
-            "createdDate": "Created Date"
+            "createdDate": "Created Date",
+            "studentExamId": "Exam ID",
+            "userLogin": "Login"
         },
         "studentExams": {
             "title": "Student exams",
@@ -569,7 +571,8 @@
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -583,7 +586,8 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -616,6 +620,31 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "suspiciousBehavior": {
+                "title": "Suspicious Behavior",
+                "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
+                "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
+                "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
+                "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessions": {
+                    "title": "Suspicious Sessions",
+                    "view": "View Suspicious Sessions",
+                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "reasons": "Suspicious because of:",
+                    "case": "Case",
+                    "sameIpAddress": "Same IP address",
+                    "sameBrowserFingerprint": "Same browser fingerprint"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiarism Cases Overview",
+                "exerciseName": "Exercise",
+                "numberOfResults": "Number of potential plagiarism cases",
+                "numberOfCases": "Number of plagiarism cases",
+                "actions": "Actions",
+                "viewResultsOrRunDetection": "View Results or Run Detection",
+                "viewCases": "View Cases"
             }
         },
         "studentExamDetail": {
