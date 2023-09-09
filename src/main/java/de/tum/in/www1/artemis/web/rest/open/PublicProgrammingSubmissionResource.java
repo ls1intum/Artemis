@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -85,18 +82,19 @@ public class PublicProgrammingSubmissionResource {
                 throw new EntityNotFoundException("Programming Exercise Participation", participationId);
             }
 
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
-            // Remove unnecessary information from the new submission.
-            submission.getParticipation().setSubmissions(null);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
-
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiNewResultService.onNewResult((StudentParticipation) participation);
             }
+
+            ProgrammingSubmission newProgrammingSubmission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
+            var exerciseId = participation.getExercise().getId();
+            // Remove unnecessary information from the new programming submission, in particular submission and exercise (avoid sending too much information over websocket)
+            newProgrammingSubmission.getParticipation().setSubmissions(null);
+            newProgrammingSubmission.getParticipation().setExercise(null);
+            programmingMessagingService.notifyUserAboutSubmission(newProgrammingSubmission, exerciseId);
         }
         catch (IllegalArgumentException ex) {
-            log.error(
-                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
+            log.error("Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request body {}",
                     participationId, requestBody, ex);
             throw new BadRequestAlertException("Exception encountered when trying to extract the commit hash from the request body " + ex.getMessage(), "ProgrammingSubmission",
                     "extractCommitHashNotPossible");
@@ -109,8 +107,8 @@ public class PublicProgrammingSubmissionResource {
             return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
-            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, participationId, requestBody, ex);
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request body {}", participationId,
+                    participationId, requestBody, ex);
             throw ex;
         }
         catch (VersionControlException ex) {
@@ -157,7 +155,7 @@ public class PublicProgrammingSubmissionResource {
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
         ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, exerciseId);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChanged(exerciseId, true);
 
