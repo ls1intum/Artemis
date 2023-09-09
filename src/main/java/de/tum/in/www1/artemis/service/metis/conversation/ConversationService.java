@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -249,11 +248,7 @@ public class ConversationService {
      *
      * @param conversation the conversation to be deleted
      */
-    @Transactional // ok because of delete
     public void deleteConversation(Conversation conversation) {
-        var usersToMessage = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.DELETE, conversation, usersToMessage);
         this.postRepository.deleteAllByConversationId(conversation.getId());
         this.conversationParticipantRepository.deleteAllByConversationId(conversation.getId());
         this.conversationRepository.deleteById(conversation.getId());
