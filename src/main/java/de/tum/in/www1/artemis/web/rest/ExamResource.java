@@ -33,9 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -113,12 +111,16 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExamSessionService examSessionService;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -138,6 +140,8 @@ public class ExamResource {
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.examSessionService = examSessionRepository;
     }
 
     /**
@@ -167,8 +171,8 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
 
-        Channel createdChannel = channelService.createExamChannel(savedExam, exam.getChannelName());
-        channelService.registerUsersToChannelAsynchronously(false, savedExam.getCourse(), createdChannel);
+        Channel createdChannel = channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
+        channelService.registerTutorsAndInstructorsToChannel(savedExam.getCourse(), createdChannel);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
@@ -712,13 +716,7 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
-
-        var studentDto = new StudentDTO();
-        studentDto.setRegistrationNumber(student.getRegistrationNumber());
-        studentDto.setFirstName(student.getFirstName());
-        studentDto.setLastName(student.getLastName());
-        studentDto.setLogin(student.getLogin());
-        return ResponseEntity.ok().body(studentDto);
+        return ResponseEntity.ok().body(new StudentDTO(student));
     }
 
     /**
@@ -818,7 +816,7 @@ public class ExamResource {
             throw new BadRequestAlertException("There are still exams running, quizzes can only be evaluated once all exams are finished.", ENTITY_NAME,
                     "evaluateQuizExercisesTooEarly");
         }
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
@@ -1155,6 +1153,52 @@ public class ExamResource {
         File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism : Get all exercises with potential plagiarism for exam.
+     * An exercise has potential plagiarism if Artemis supports plagiarism detection for it.
+     * This applies to the exercise types TEXT, MODELING and PROGRAMMING.
+     *
+     * @param courseId the id of the course the exam belongs to
+     * @param examId   the id of the exam for which to find exercises with potential plagiarism
+     * @return the list of exercises with potential plagiarism
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
+    @EnforceAtLeastInstructor
+    public List<ExerciseForPlagiarismCasesOverviewDTO> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exercises with potential plagiarism cases for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+        List<ExerciseForPlagiarismCasesOverviewDTO> exerciseForPlagiarismCasesOverviewDTOS = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());
+            var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+            var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+            ExerciseForPlagiarismCasesOverviewDTO exerciseForPlagiarismCasesOverviewDTO = new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(),
+                    exercise.getType(), exerciseGroupDTO);
+            exerciseForPlagiarismCasesOverviewDTOS.add(exerciseForPlagiarismCasesOverviewDTO);
+        }
+        return exerciseForPlagiarismCasesOverviewDTOS;
+
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
+     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long)}
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return a set containing all tuples of exam sessions that are suspicious.
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
+    @EnforceAtLeastInstructor
+    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId);
     }
 
 }

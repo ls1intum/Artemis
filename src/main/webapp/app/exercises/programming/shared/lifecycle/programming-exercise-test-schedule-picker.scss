@@ -1,6 +1,6 @@
 .timeline-box {
     padding: 10px 0;
-    overflow-x: scroll;
+    overflow-x: auto;
 }
 
 .test-schedule-date p {
@@ -15,6 +15,7 @@
     display: table;
     width: 100%;
     position: relative;
+    margin-bottom: 2rem;
 }
 
 .test-schedule-date .btn {
@@ -22,12 +23,7 @@
 }
 
 .test-schedule-date-title {
-    display: block;
-    word-wrap: break-word;
-    text-overflow: ellipsis;
-    overflow: hidden;
     height: 34px;
-    max-height: 34px;
     line-height: 17px;
 }
 
@@ -50,6 +46,7 @@
     display: table-cell;
     text-align: center;
     position: relative;
+    width: max-content;
 }
 
 .btn-lifecycle.btn-lifecycle {

@@ -1,5 +1,5 @@
 import { userManagementAPIRequest } from '../support/artemis';
-import { USER_ID, USER_ROLE, admin, instructor, studentOne, studentThree, studentTwo, tutor, users } from '../support/users';
+import { USER_ID, USER_ROLE, admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../support/users';
 
 describe('Setup users', () => {
     if (Cypress.env('createUsers')) {
@@ -24,5 +24,6 @@ describe('Setup users', () => {
         cy.login(studentOne);
         cy.login(studentTwo);
         cy.login(studentThree);
+        cy.login(studentFour);
     });
 });

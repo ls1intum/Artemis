@@ -59,11 +59,11 @@ interface SortStrategy {
 }
 
 class BubbleSort {
-  <color:testsColor(testBubbleSort)>+performSort(List<Date>)</color>
+  <color:testsColor(testBubbleSort())>+performSort(List<Date>)</color>
 }
 
 class MergeSort {
-  <color:testsColor(testMergeSort)>+performSort(List<Date>)</color>
+  <color:testsColor(testMergeSort())>+performSort(List<Date>)</color>
 }
 
 MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])

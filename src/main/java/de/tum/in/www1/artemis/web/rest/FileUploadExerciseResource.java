@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,8 +132,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(result, fileUploadExercise.getChannelName());
-        channelService.registerUsersToChannelAsynchronously(true, result.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);

@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 import { RouterModule } from '@angular/router';
 import { tutorialGroupManagementRoutes } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
