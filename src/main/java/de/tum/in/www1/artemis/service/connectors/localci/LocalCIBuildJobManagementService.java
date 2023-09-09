@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -80,13 +79,11 @@ public class LocalCIBuildJobManagementService {
             throw new LocalCIException("Project type must be Gradle.");
         }
 
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(programmingExercise, participation, commitHash, containerName);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName);
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);

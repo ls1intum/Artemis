@@ -30,6 +30,7 @@ import com.github.dockerjava.api.model.Volume;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -43,11 +44,14 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIContainerService(DockerClient dockerClient) {
+    public LocalCIContainerService(DockerClient dockerClient, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.dockerClient = dockerClient;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -237,13 +241,17 @@ public class LocalCIContainerService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param programmingExercise the programming exercise for which to create the build script
+     * @param programmingExercise1 the programming exercise for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise) {
+    public Path createBuildScript(ProgrammingExercise programmingExercise1) {
 
-        String programmingExerciseId = programmingExercise.getId().toString();
-        boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositories() != null && programmingExercise.getAuxiliaryRepositories().size() > 0;
+        // Get programming exercise with auxiliary repos
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExercise1.getId());
+
+        Long programmingExerciseId = programmingExercise.getId();
+        boolean hasAuxiliaryRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan() != null
+                && programmingExercise.getAuxiliaryRepositoriesForBuildPlan().size() > 0;
         Path scriptsPath = Path.of("local-ci-scripts");
 
         if (!Files.exists(scriptsPath)) {
@@ -255,7 +263,7 @@ public class LocalCIContainerService {
             }
         }
 
-        String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + programmingExerciseId + "-build.sh";
+        String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + programmingExerciseId.toString() + "-build.sh";
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
