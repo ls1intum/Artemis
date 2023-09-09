@@ -134,32 +134,32 @@ under ``localhost:7990``.
              - **Jira:**
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../../_images/bamboo_bitbucket_applicationLink.png
+                  :target: ../_images/bamboo_bitbucket_applicationLink.png
 
                   Bamboo → Bitbucket
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
                   :align: center
-                  :target: ../../_images/bitbucket_bamboo_applicationLink.png
+                  :target: ../_images/bitbucket_bamboo_applicationLink.png
 
                   Bitbucket → Bamboo
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
                   :align: center
-                  :target: ../../_images/jira_bamboo_applicationLink.png
+                  :target: ../_images/jira_bamboo_applicationLink.png
 
                   Jira → Bamboo
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
                   :align: center
-                  :target: ../../_images/bamboo_jira_applicationLink.png
+                  :target: ../_images/bamboo_jira_applicationLink.png
 
                   Bamboo → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
                   :align: center
-                  :target: ../../_images/bitbucket_jira_applicationLink.png
+                  :target: ../_images/bitbucket_jira_applicationLink.png
 
                   Bitbucket → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../../_images/jira_bitbucket_applicationLink.png
+                  :target: ../_images/jira_bitbucket_applicationLink.png
 
                   Jira → Bitbucket
 
@@ -175,8 +175,8 @@ under ``localhost:7990``.
    Jira <https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html>`__
    to synchronize the users in bitbucket and bamboo:
 
-   -  Go to Jira → User management → Jira user server → Add application →
-      Create one application for bitbucket and one for bamboo → add the
+   -  Go to `Jira → User management → Jira user server <http://localhost:8081/secure/admin/ConfigureCrowdServer.jspa>`__
+      → Add application → Create one application for bitbucket and one for bamboo → add the
       IP-address ``0.0.0.0/0`` to IP Addresses
 
     .. list-table::
@@ -185,12 +185,12 @@ under ``localhost:7990``.
 
           - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
-   -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
-      Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
+   -  Go to `Bitbucket → User Directories <http://localhost:7990/plugins/servlet/embedded-crowd/directories/list>`__
+      and `Bamboo → User Directories <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
+      → Add Directories → Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
       use the application name and password which you used in the previous
       step. Also, you should decrease the synchronisation period (e.g. to 2
-      minutes). Press synchronise after adding the directory, the users and
-      groups should now be available.
+      minutes).
 
     .. list-table::
 
@@ -202,10 +202,12 @@ under ``localhost:7990``.
 
                 Adding Crowd Server in **Bamboo**
 
-#. Give the test users User access on Bitbucket: On the Administration interface (settings cogwheel on the top),
-   go to the Global permissions. Type the names of all test users in the search field ("Add Users") and give them
-   the "Bitbucket User" permission. If you skip this step, the users will not be able to log in to Bitbucket or
-   clone repositories.
+   - Press synchronise after adding the directory, the users and groups should now be available.
+
+#. Give the test users User access on Bitbucket: `On the Administration interface (settings cogwheel on the top),
+   go to the Global permissions <http://localhost:7990/admin/permissions>`__. Type the names of all test users in
+   the search field ("Add Users") and give them the "Bitbucket User" permission. If you skip this step, the users
+   will not be able to log in to Bitbucket or clone repositories.
 
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
@@ -216,16 +218,17 @@ under ``localhost:7990``.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
-   and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
+   and add it to bamboo. Go to `Bamboo → Manage apps <http://localhost:8085/plugins/servlet/upm>`__ → Upload app → select
    the downloaded .jar file → Upload
 
-#. Authorize the Bamboo agent. Bamboo Administration → Agents → Remote agents → Agent authentication
+#. Authorize the Bamboo agent. `Bamboo Administration → Agents <http://localhost:8085/admin/agent/configureAgents!doDefault.action>`__
+   → Remote agents → Agent authentication
 
    Approve the agent and edit the IP address in a development setup to ``*.*.*.*`` as the Docker container doesn't
    have a static IP address.
 
    .. figure:: setup/bamboo-bitbucket-jira/bamboo_agent_configuration.png
-      :target: ../../_images/bamboo_agent_configuration.png
+      :target: ../_images/bamboo_agent_configuration.png
       :align: center
 
 #. Generate a personal access token
@@ -235,8 +238,8 @@ under ``localhost:7990``.
 
    #. Personal access token for Bamboo:
 
-      - Log in as the admin user and go to Bamboo → Profile (top right corner) → Personal access tokens →
-        Create token
+      - Log in as the admin user and go to `Bamboo → Profile (top right corner) → Personal access tokens →
+        Create token <http://localhost:8085/profile/createAccessToken.action>`__
 
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
@@ -253,8 +256,8 @@ under ``localhost:7990``.
 
    #. Personal access token for Bitbucket:
 
-      - Log in as the admin user and go to Bitbucket → Your profile image (top right corner) → Manage account →
-        HTTP access tokens → Create token
+      - Log in as the admin user and go to `Bitbucket → Your profile image (top right corner) → Manage account
+        <http://localhost:7990/account>`__ → HTTP access tokens → Create token
 
           .. figure:: setup/bamboo-bitbucket-jira/bitbucket_create_token.png
              :align: center

@@ -755,7 +755,7 @@ Other Docker Compose Setups
 
 .. figure:: setup/artemis-docker-file-structure.drawio.png
    :align: center
-   :target: ../../_images/artemis-docker-file-structure.drawio.png
+   :target: ../_images/artemis-docker-file-structure.drawio.png
 
    Overview of the Artemis Docker / Docker Compose structure
 
