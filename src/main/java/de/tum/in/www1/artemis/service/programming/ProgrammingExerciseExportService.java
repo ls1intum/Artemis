@@ -556,7 +556,7 @@ public class ProgrammingExerciseExportService {
             }
         }, threadPool).toCompletableFuture()).toList().toArray(new CompletableFuture<?>[participations.size()]);
         // wait until all operations finish
-        CompletableFuture.allOf(futures).join();
+        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
         return exportedStudentRepositories;
     }
 
