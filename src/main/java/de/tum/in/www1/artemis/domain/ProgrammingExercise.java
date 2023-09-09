@@ -50,7 +50,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
@@ -199,7 +199,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
-        return auxiliaryRepositories;
+        return this.auxiliaryRepositories;
     }
 
     public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {

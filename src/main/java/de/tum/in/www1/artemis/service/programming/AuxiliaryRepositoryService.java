@@ -217,7 +217,7 @@ public class AuxiliaryRepositoryService {
      * @return true if the repository is an auxiliary repository of the exercise, false otherwise.
      */
     public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> auxiliaryRepositories = exercise.getAuxiliaryRepositories();
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
         for (AuxiliaryRepository repo : auxiliaryRepositories) {
             if (repo.getName().equals(repositoryName)) {
                 return true;
