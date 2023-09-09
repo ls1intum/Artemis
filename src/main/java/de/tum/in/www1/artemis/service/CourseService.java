@@ -149,6 +149,8 @@ public class CourseService {
 
     private final ConversationRepository conversationRepository;
 
+    private final LearningPathService learningPathService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -159,7 +161,7 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -197,6 +199,7 @@ public class CourseService {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -470,6 +473,9 @@ public class CourseService {
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.generateLearningPathForUser(course, user);
+        }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
@@ -477,11 +483,10 @@ public class CourseService {
 
     /**
      * Add multiple users to the course so that they can access it
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: enrollment based on other user attributes (e.g. name) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId    the id of the course
      * @param studentDTOs the list of students (with at least registration number)
@@ -490,16 +495,19 @@ public class CourseService {
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getLearningPathsEnabled()) {
+            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+        }
         String courseGroupName = course.defineCourseGroupName(courseGroup);
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            var email = studentDto.getEmail();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
+            }
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                learningPathService.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
 

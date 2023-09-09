@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -24,7 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
@@ -82,9 +85,9 @@ public class StudentExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final WebsocketMessagingService messagingService;
-
     private final WebsocketMessagingService websocketMessagingService;
+
+    private final SubmissionPolicyRepository submissionPolicyRepository;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -99,7 +102,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService messagingService, WebsocketMessagingService websocketMessagingService) {
+            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -115,8 +118,8 @@ public class StudentExamResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.messagingService = messagingService;
         this.websocketMessagingService = websocketMessagingService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
@@ -262,7 +265,7 @@ public class StudentExamResource {
 
         studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
-        messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
@@ -310,7 +313,7 @@ public class StudentExamResource {
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            messagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+            websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
 
         prepareStudentExamForConduction(request, currentUser, studentExam);
@@ -646,6 +649,20 @@ public class StudentExamResource {
             studentExam.setStartedAndStartDate(startDate);
             // send those changes in a modifying query to the database
             studentExamRepository.startStudentExam(studentExam.getId(), startDate);
+        }
+
+        var programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise)
+                .collect(Collectors.toSet());
+        if (!programmingExercises.isEmpty()) {
+            // Load all potential submission policies from the database
+            var submissionPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet()));
+            // Add the policy to their respective programming exercise
+            if (!submissionPolicies.isEmpty()) {
+                for (var programmingExercise : programmingExercises) {
+                    programmingExercise.setSubmissionPolicy(
+                            submissionPolicies.stream().filter(policy -> policy.getProgrammingExercise().getId().equals(programmingExercise.getId())).findFirst().orElse(null));
+                }
+            }
         }
 
         // Load quizzes from database, because they include lazy relationships

@@ -55,6 +55,10 @@ import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-p
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeButtonDirective } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-button.directive';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
+import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
+import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
+import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -119,6 +123,10 @@ const ENTITY_STATES = [...examManagementState];
         BonusComponent,
         ExamEditWorkingTimeButtonDirective,
         ExamEditWorkingTimeDialogComponent,
+        SuspiciousBehaviorComponent,
+        SuspiciousSessionsOverviewComponent,
+        PlagiarismCasesOverviewComponent,
+        SuspiciousSessionsComponent,
     ],
 })
 export class ArtemisExamManagementModule {}
