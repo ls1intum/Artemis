@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.exam;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -39,6 +42,9 @@ public class ExamSession extends AbstractAuditingEntity {
 
     @Transient
     private boolean isInitialSessionTransient;
+
+    @Transient
+    private Set<SuspiciousSessionReason> suspiciousSessionReasons = new HashSet<>();
 
     public StudentExam getStudentExam() {
         return studentExam;
@@ -106,10 +112,35 @@ public class ExamSession extends AbstractAuditingEntity {
         this.isInitialSessionTransient = isInitialSessionTransient;
     }
 
+    public Set<SuspiciousSessionReason> getSuspiciousReasons() {
+        return suspiciousSessionReasons;
+    }
+
+    public void setSuspiciousReasons(Set<SuspiciousSessionReason> suspiciousSessionReasons) {
+        this.suspiciousSessionReasons = suspiciousSessionReasons;
+    }
+
+    public void addSuspiciousReason(SuspiciousSessionReason suspiciousSessionReason) {
+        this.suspiciousSessionReasons.add(suspiciousSessionReason);
+    }
+
     public void hideDetails() {
         setUserAgent(null);
         setBrowserFingerprintHash(null);
         setInstanceId(null);
         setIpAddress(null);
     }
+
+    @JsonIgnore
+    public boolean hasSameIpAddress(ExamSession other) {
+
+        return other != null && getIpAddressAsIpAddress() != null && getIpAddressAsIpAddress().equals(other.getIpAddressAsIpAddress());
+    }
+
+    @JsonIgnore
+    public boolean hasSameBrowserFingerprint(ExamSession other) {
+
+        return other != null && getBrowserFingerprintHash() != null && getBrowserFingerprintHash().equals(other.getBrowserFingerprintHash());
+    }
+
 }

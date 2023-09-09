@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -209,6 +210,13 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     @OrderBy("title")
     private Set<Competency> competencies = new HashSet<>();
+
+    @Column(name = "learning_paths_enabled", nullable = false)
+    private boolean learningPathsEnabled = false;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("course")
+    private Set<LearningPath> learningPaths = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -739,6 +747,22 @@ public class Course extends DomainObject {
 
     public void setCompetencies(Set<Competency> competencies) {
         this.competencies = competencies;
+    }
+
+    public boolean getLearningPathsEnabled() {
+        return learningPathsEnabled;
+    }
+
+    public void setLearningPathsEnabled(boolean learningPathsEnabled) {
+        this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
     }
 
     public boolean hasCourseArchive() {
