@@ -258,13 +258,16 @@ public class ExamResource {
         if (workingTimeChange == 0) {
             throw new BadRequestException();
         }
+
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         var originalExamDuration = exam.getDuration();
-        // update the end date of the exam
+
+        // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
-        // re-calculate the working times of all student exams
+        // 2. Re-calculate the working times of all student exams
         var studentExams = studentExamRepository.findByExamId(examId);
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
@@ -279,11 +282,15 @@ public class ExamResource {
                 studentExam.setWorkingTime(originalStudentWorkingTime + adjustedTimeExtension);
             }
             var savedStudentExam = studentExamRepository.save(studentExam);
+            // NOTE: if the exam already started, notify the student about the working time change
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-                // TODO: this is probably not very efficient, instead we should re-calculate once for all student exams
-                instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExam.getId());
                 websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
+        }
+
+        // NOTE: if the exam already started, notify instances about the working time change
+        if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+            instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(exam.getId());
         }
 
         if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
