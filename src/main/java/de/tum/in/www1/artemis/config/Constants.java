@@ -301,6 +301,9 @@ public final class Constants {
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
+    /**
+     * The name of the topic for notifying the client about changes in the exam working time.
+     */
     public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
     private Constants() {
