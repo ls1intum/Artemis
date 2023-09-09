@@ -1,0 +1,31 @@
+<h5>{{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}</h5>
+
+<p>
+    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
+</p>
+
+<ul>
+    <li>
+        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}
+    </li>
+    <li>
+        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}
+    </li>
+</ul>
+
+<p>
+    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate: { numberOfSuspiciousSessions: suspiciousSessions.length } }}
+</p>
+
+<button *ngIf="suspiciousSessions.length !== 0" [disabled]="suspiciousSessions.length === 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
+    <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
+</button>
+<jhi-plagiarism-cases-overview
+    [exercises]="exercises"
+    [plagiarismCasesPerExercise]="plagiarismCasesPerExercise"
+    [plagiarismResultsPerExercise]="plagiarismResultsPerExercise"
+    [anyPlagiarismCases]="anyPlagiarismCases"
+    [courseId]="courseId"
+    [examId]="examId"
+>
+</jhi-plagiarism-cases-overview>
