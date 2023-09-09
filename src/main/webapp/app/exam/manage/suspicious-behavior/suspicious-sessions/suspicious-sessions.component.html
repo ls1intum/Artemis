@@ -1,0 +1,39 @@
+<p>
+    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}
+    <!-- all sessions have the same reasons, so we can just use the first one -->
+    <ng-container *ngFor="let reason of suspiciousSessions.examSessions.at(0)?.suspiciousReasons; let i = index">
+        <span class="bold">{{ mapEnumToTranslationString(reason) | artemisTranslate }}</span>
+        <span *ngIf="i < suspiciousSessions.examSessions.at(0)?.suspiciousReasons?.length! - 1">,</span>
+    </ng-container>
+</p>
+
+<div style="overflow-x: auto">
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th scope="col">{{ 'artemisApp.examSession.id' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.browserFingerprintHash' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.ipAddress' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.createdDate' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.studentExamId' | artemisTranslate }}</th>
+                <th scope="col">{{ 'artemisApp.examSession.userLogin' | artemisTranslate }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <ng-container *ngFor="let session of suspiciousSessions.examSessions; let i = index">
+                <tr>
+                    <th scope="row">{{ session.id }}</th>
+                    <td [ngClass]="suspiciousFingerprint ? 'suspicious' : ''">{{ session.browserFingerprintHash }}</td>
+                    <td [ngClass]="suspiciousIpAddress ? 'suspicious' : ''">{{ session.ipAddress }}</td>
+                    <td>{{ session.createdDate | artemisDate }}</td>
+                    <td>
+                        <a [routerLink]="getStudentExamLink(session.studentExam!)">
+                            {{ session.studentExam!.id }}
+                        </a>
+                    </td>
+                    <td>{{ session.studentExam?.user?.login }}</td>
+                </tr>
+            </ng-container>
+        </tbody>
+    </table>
+</div>

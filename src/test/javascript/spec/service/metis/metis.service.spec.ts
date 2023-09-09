@@ -33,6 +33,7 @@ import {
     metisLecture,
     metisLecturePosts,
     metisPostExerciseUser1,
+    metisPostInChannel,
     metisReactionUser2,
     metisResolvingAnswerPostUser1,
     metisUser1,
@@ -40,6 +41,7 @@ import {
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -506,6 +508,46 @@ describe('Metis Service', () => {
             metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] });
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseIds: [metisExercise.id!] }, false);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('subscribes to broadcast topic for course-wide channels', fakeAsync(() => {
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
+            metisService.setPageType(PageType.OVERVIEW);
+            // setup subscription
+            metisService.getFilteredPosts({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: true,
+            } as ChannelDTO);
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}/conversations/1`);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            tick();
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: true,
+            } as ChannelDTO);
+        }));
+
+        it('subscribes to user specific topic for non-course-wide channels', fakeAsync(() => {
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
+            metisService.setPageType(PageType.OVERVIEW);
+            // setup subscription
+            metisService.getFilteredPosts({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: false,
+            } as ChannelDTO);
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(`/user${MetisWebsocketChannelPrefix}courses/${metisCourse.id}/conversations/1`);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
+            // receive message on channel
+            tick();
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+                id: 1,
+                type: ConversationType.CHANNEL,
+                isCourseWide: false,
+            } as ChannelDTO);
         }));
     });
 });

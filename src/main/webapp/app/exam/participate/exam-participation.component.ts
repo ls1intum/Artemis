@@ -18,7 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -800,10 +800,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .pipe(
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
+                tap((submissionStateObj) => {
+                    const exerciseForSubmission = this.studentExam.exercises?.find(
+                        (programmingExercise) =>
+                            programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
+                    );
+                    if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
+                        exerciseForSubmission.studentParticipations[0] = submissionStateObj.submission.participation;
+                    }
+                }),
             )
             .subscribe((programmingSubmissionObj) => {
-                const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
-                    programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                const exerciseForSubmission = this.studentExam.exercises?.find(
+                    (programmingExercise) =>
+                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
                     exerciseForSubmission?.studentParticipations &&

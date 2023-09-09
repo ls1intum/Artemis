@@ -22,6 +22,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     buttonType: ButtonType;
 
     deleteQuestion: string;
+    translateValues: { [key: string]: unknown } = {};
     deleteConfirmationText: string;
     requireConfirmationOnlyForAdditionalChecks: boolean;
     additionalChecks?: { [key: string]: string };
@@ -40,7 +41,10 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faCheck = faCheck;
     warningTextColor: string;
 
-    constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
