@@ -189,22 +189,6 @@ public class ChannelService {
     }
 
     /**
-     * Adds users to the channel of the given exam asynchronously
-     *
-     * @param users list of user logins to register for the exam channel
-     * @param exam  exam to which channel the users should be added
-     */
-    @Async
-    public void registerUsersToExamChannel(List<String> users, Exam exam) {
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        if (channel == null) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(false, false, false, users, exam.getCourse(), channel);
-    }
-
-    /**
      * Register users to the newly created channel
      *
      * @param addAllStudents        if true, all students of the course will be added to the channel
@@ -389,21 +373,6 @@ public class ChannelService {
         }
         Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
         return updateChannelName(channel, updatedExam.getChannelName());
-    }
-
-    /**
-     * Removes users from an exam channel
-     *
-     * @param users  users to remove from the channel
-     * @param examId id of the exam the channel belongs to
-     */
-    public void deregisterUsersFromExamChannel(Set<User> users, Long examId) {
-        Channel channel = channelRepository.findChannelByExamId(examId);
-        if (channel == null) {
-            return;
-        }
-
-        conversationService.deregisterUsersFromAConversation(channel.getCourse(), users, channel);
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
