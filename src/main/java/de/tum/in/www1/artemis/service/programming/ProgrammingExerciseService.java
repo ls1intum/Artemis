@@ -222,7 +222,7 @@ public class ProgrammingExerciseService {
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
         scheduleOperations(savedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         return savedProgrammingExercise;
     }
 
