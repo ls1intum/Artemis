@@ -245,7 +245,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a lecture and sets the channel name of the lecture accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel
@@ -260,7 +260,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly.
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
@@ -276,7 +276,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a real exam and sets the channel name of the exam accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a real exam and sets the channel name of the exam accordingly.
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
