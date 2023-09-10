@@ -151,6 +151,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {
+        if (buildPlanName == null) {
+            return List.of();
+        }
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanName);
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainTriggers.action";
