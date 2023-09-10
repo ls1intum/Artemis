@@ -31,6 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamEditWorkingTimeButtonDirective } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-button.directive';
 
 @Component({
     template: '',
@@ -52,7 +53,10 @@ describe('ExamDetailComponent', () => {
                 RouterTestingModule.withRoutes([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/assessment-dashboard', component: DummyComponent },
+                    {
+                        path: 'course-management/:courseId/exams/:examId/assessment-dashboard',
+                        component: DummyComponent,
+                    },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
@@ -77,6 +81,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
+                ExamEditWorkingTimeButtonDirective,
             ],
             providers: [
                 {
