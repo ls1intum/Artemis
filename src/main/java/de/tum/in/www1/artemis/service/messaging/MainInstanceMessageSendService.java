@@ -21,11 +21,13 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendProgrammingExerciseSchedule(Long exerciseId) {
         instanceMessageReceiveService.processScheduleProgrammingExercise(exerciseId);
+        instanceMessageReceiveService.processSchedulePotentialAthenaExercise(exerciseId);
     }
 
     @Override
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
         instanceMessageReceiveService.processScheduleProgrammingExerciseCancel(exerciseId);
+        instanceMessageReceiveService.processPotentialAthenaExerciseScheduleCancel(exerciseId);
     }
 
     @Override
