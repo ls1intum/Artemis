@@ -95,7 +95,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
-                componentRef.instance.tests = testIds;
+                componentRef.instance.testIds = testIds;
 
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];

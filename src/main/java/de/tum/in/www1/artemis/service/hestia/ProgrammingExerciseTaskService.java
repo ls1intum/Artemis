@@ -239,16 +239,26 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Replaces a comma separated list of test case names with their corresponding ids.
+     * Replaces a comma separated list of test case names with their corresponding id replacement.
      * If no matching test case exists (e.g. due to a typo), we keep the test name.
+     * <p>
+     * Example: {@code testBubbleSort(),doesNotExists -> <testid>27</testid>,doesNotExists }
      */
-    private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
+    private String extractTestCaseIdReplacementsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
         var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-        return testCaseNames.stream().map(testName -> convertTestNameToTestId(testName, testCases)).collect(Collectors.joining(","));
+        return testCaseNames.stream().map(testName -> convertTestNameToTestIdReplacement(testName, testCases)).collect(Collectors.joining(","));
     }
 
-    private String convertTestNameToTestId(String testName, Set<ProgrammingExerciseTestCase> testCases) {
+    /**
+     * Converts a test name to its id-reference replacement in the problem statement.
+     * Example: {@code testBubbleSort() -> <testid>27</testid>}
+     *
+     * @param testName  the test name to replace
+     * @param testCases all test cases of the exercise, used to find the correct id
+     * @return the new replacement to be used in the problem statement
+     */
+    private String convertTestNameToTestIdReplacement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
         for (ProgrammingExerciseTestCase testCase : testCases) {
             if (testName.equals(testCase.getTestName())) {
                 String id = testCase.getId().toString();
@@ -258,7 +268,7 @@ public class ProgrammingExerciseTaskService {
         return testName;
     }
 
-    private String extractTestNamesFromIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
+    private String extractTestNamesFromTestIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
         var capturedTestIds = extractTestCaseNames(capturedTestCaseIds);
 
         return capturedTestIds.stream().map(tc -> convertTestIdToTestName(tc, testCases)).collect(Collectors.joining(","));
@@ -281,10 +291,23 @@ public class ProgrammingExerciseTaskService {
         return testId;
     }
 
-    private Long extractTestId(String test) {
-        var matcher = TESTID_PATTERN.matcher(test);
+    /**
+     * Finds the test case id wrapped into a <testid></testid> text.
+     * Returns null if the text does not reference a testid, but is e.g. a name instead.
+     * <p>
+     * Examples:
+     * <ul>
+     * <li>{@code <testid>17</testid> -> 17}
+     * <li>{@code testBubbleSort -> null}
+     * </ul>
+     *
+     * @param testidText The text found in the problem statement.
+     * @return the id of the test case
+     */
+    private Long extractTestId(String testidText) {
+        var matcher = TESTID_PATTERN.matcher(testidText);
         if (!matcher.find()) {
-            // This not a test id but a name that got not replaced previously, e.g., due to a typo
+            // This is not a test id but a name that did not get replaced previously, e.g., due to a typo
             return null;
         }
 
@@ -355,7 +378,7 @@ public class ProgrammingExerciseTaskService {
     public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
         // Only replace active test cases (tests that actually exist in the repository).
         // The other test cases will get replaced as soon as they get active.
-        replaceInProblemStatement(exercise, this::extractTestCaseIdsFromNames, true);
+        replaceInProblemStatement(exercise, this::extractTestCaseIdReplacementsFromNames, true);
     }
 
     /**
@@ -368,7 +391,7 @@ public class ProgrammingExerciseTaskService {
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
         // Also replace inactive test cases; don't send any testids (e.g. ids referring to previoulsy active test cases) to the editor.
         // The client will then show a warning that the mentioned test name no longer exists.
-        replaceInProblemStatement(exercise, this::extractTestNamesFromIds, false);
+        replaceInProblemStatement(exercise, this::extractTestNamesFromTestIds, false);
     }
 
     private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer, boolean onlyActive) {
@@ -432,7 +455,10 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Updates the existing testids to the newly provided ids. Used when importing programming exercises.
+     * Updates the problem statement by replacing existing testid references with the newly provided ids.
+     * Used when importing programming exercises.
+     * <p>
+     * Example: {@code <testid>27</testid> -> <testid>52</testid>}
      *
      * @param exercise             the exercise to replace the ids in.
      * @param newTestCaseIdByOldId a map indicating which ids should be replaced with their corresponding new ones.

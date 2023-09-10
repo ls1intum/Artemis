@@ -22,13 +22,13 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
      * array of test ids
      */
     @Input()
-    get tests() {
-        return this.testIds;
+    get testIds() {
+        return this.testIdsValue;
     }
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
 
-    testIds: number[];
+    testIdsValue: number[];
     testCaseState: TestCaseState;
 
     /**
@@ -50,12 +50,12 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         private modalService: NgbModal,
     ) {}
 
-    set tests(testIds: number[]) {
-        this.testIds = testIds;
+    set testIds(testIds: number[]) {
+        this.testIdsValue = testIds;
         const {
             testCaseState,
             detailed: { successfulTests, notExecutedTests, failedTests },
-        } = this.programmingExerciseInstructionService.testStatusForTask(this.tests, this.latestResult);
+        } = this.programmingExerciseInstructionService.testStatusForTask(this.testIds, this.latestResult);
         this.testCaseState = testCaseState;
         this.successfulTests = successfulTests;
         this.notExecutedTests = notExecutedTests;
@@ -68,7 +68,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
      * @param testIds the test case ids that should be checked for
      */
     private hasTestMessage(testIds: number[]): boolean {
-        if (!this.latestResult || !this.latestResult.feedbacks) {
+        if (!this.latestResult?.feedbacks) {
             return false;
         }
         const feedbacks = this.latestResult.feedbacks;
@@ -86,7 +86,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
-        componentInstance.feedbackFilter = this.tests;
+        componentInstance.feedbackFilter = this.testIds;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = this.taskName;
         componentInstance.numberOfNotExecutedTests = this.notExecutedTests.length;
