@@ -81,7 +81,8 @@ class PlagiarismDetectionServiceTest {
         programmingExercise.setId(1L);
         var programmingPlagiarismResult = new TextPlagiarismResult();
         programmingPlagiarismResult.setComparisons(emptySet());
-        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.getSimilarityThreshold(), config.getMinimumScore())).thenReturn(programmingPlagiarismResult);
+        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
+                .thenReturn(programmingPlagiarismResult);
 
         // and
         var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false, false);
@@ -111,7 +112,8 @@ class PlagiarismDetectionServiceTest {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
         var zipFile = new File("");
-        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(eq(1L), anyFloat(), anyInt())).thenReturn(zipFile);
+        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
+                .thenReturn(zipFile);
 
         // and
         var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false, false, false);

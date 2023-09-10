@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,8 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -155,6 +152,23 @@ public class ProgrammingExerciseGitDiffReportService {
         }
         else {
             return report;
+        }
+    }
+
+    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUrl urlRepoA, Path localPathRepoA, VcsRepositoryUrl urlRepoB, Path localPathRepoB) {
+        var repoA = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoA, urlRepoA);
+        var repoB = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoB, urlRepoB);
+
+        var treeParserRepoA = new FileTreeIterator(repoA);
+        var treeParserRepoB = new FileTreeIterator(repoB);
+
+        try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoA)) {
+            git.diff().setOldTree(treeParserRepoA).setNewTree(treeParserRepoB).setOutputStream(diffOutputStream).call();
+            var diff = diffOutputStream.toString();
+            return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
+        }
+        catch (IOException | GitAPIException e) {
+            return Integer.MAX_VALUE;
         }
     }
 

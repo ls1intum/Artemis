@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -72,10 +73,12 @@ class ProgrammingPlagiarismDetectionService {
 
     private final UrlService urlService;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
             ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService) {
+            UrlService urlService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -85,6 +88,7 @@ class ProgrammingPlagiarismDetectionService {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -97,7 +101,7 @@ class ProgrammingPlagiarismDetectionService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
         long start = System.nanoTime();
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
@@ -112,7 +116,7 @@ class ProgrammingPlagiarismDetectionService {
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
             if (jPlagResult == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
                 TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
@@ -148,11 +152,11 @@ class ProgrammingPlagiarismDetectionService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
-        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
 
         log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
@@ -167,7 +171,7 @@ class ProgrammingPlagiarismDetectionService {
      * @return the JPlag result or null if there are not enough participations
      */
     @NotNull
-    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         long programmingExerciseId = programmingExercise.getId();
         final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
@@ -188,9 +192,18 @@ class ProgrammingPlagiarismDetectionService {
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
                 // JPlag expects a value between 0.0 and 1.0
                 .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
+
         if (templateRepoName != null) {
+
             var templateFolder = targetPath.resolve(projectKey).resolve(templateRepoName).toFile();
             options = options.withBaseCodeSubmissionDirectory(templateFolder);
+
+            repositories = repositories.stream().filter(repository -> {
+                var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(
+                        programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), templateFolder.toPath(), repository.getRemoteRepositoryUrl(),
+                        repository.getLocalPath());
+                return diffToTemplate >= minimumSize;
+            }).toList();
         }
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
