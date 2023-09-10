@@ -34,7 +34,7 @@ export enum DocumentationType {
     `,
 })
 export class DocumentationButtonComponent {
-    baseUrl = 'https://docs.artemis.cit.tum.de/user/';
+    baseUrl = 'https://ls1intum.github.io/Artemis/user/';
 
     @Input() type: DocumentationType;
 
