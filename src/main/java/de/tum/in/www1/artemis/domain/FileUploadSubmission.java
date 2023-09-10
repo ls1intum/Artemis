@@ -30,7 +30,7 @@ public class FileUploadSubmission extends Submission {
     @Transient
     private transient FileService fileService = new FileService();
 
-    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER) // nocheckin: try lazy. see https://www.baeldung.com/java-jpa-persist-string-list
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "file_submission_paths", joinColumns = @JoinColumn(name = "submission_id"))
     @Column(name = "path")
     private List<String> filePaths;
