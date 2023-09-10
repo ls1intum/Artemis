@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service.hestia;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -155,6 +160,15 @@ public class ProgrammingExerciseGitDiffReportService {
         }
     }
 
+    /**
+     * Calculates git diff between two repositories and returns the cumulative number of diff lines.
+     *
+     * @param urlRepoA       url of the first repo to compare
+     * @param localPathRepoA local path to the checked out instance of the first repo to compare
+     * @param urlRepoB       url of the second repo to compare
+     * @param localPathRepoB local path to the checked out instance of the second repo to compare
+     * @return cumulative number of lines in the git diff of given repositories
+     */
     public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUrl urlRepoA, Path localPathRepoA, VcsRepositoryUrl urlRepoB, Path localPathRepoB) {
         var repoA = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoA, urlRepoA);
         var repoB = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoB, urlRepoB);
