@@ -146,13 +146,28 @@ describe('LearningPathStorageService', () => {
         expect(storageService.hasPrevious(learningPath2Id)).toBeFalsy();
     });
 
+    it.each([new LectureUnitEntry(1, 2), new ExerciseEntry(1)])('should reduce sequence of same entry', (entry) => {
+        expect(storageService.hasPrevious(learningPathId)).toBeFalsy();
+        if (entry instanceof LectureUnitEntry) {
+            storageService.storeLectureUnit(learningPathId, entry.lectureId, entry.lectureUnitId);
+            storageService.storeLectureUnit(learningPathId, entry.lectureId, entry.lectureUnitId);
+            storageService.storeLectureUnit(learningPathId, entry.lectureId, entry.lectureUnitId);
+        } else if (entry instanceof ExerciseEntry) {
+            storageService.storeExercise(learningPathId, entry.exerciseId);
+            storageService.storeExercise(learningPathId, entry.exerciseId);
+            storageService.storeExercise(learningPathId, entry.exerciseId);
+        }
+        expect(storageService.hasPrevious(learningPathId)).toBeTruthy();
+        storageService.getPrevious(learningPathId);
+        expect(storageService.hasPrevious(learningPathId)).toBeFalsy();
+    });
+
     it('should return first uncompleted if entry not existing', () => {
         storageService.storeRecommendations(learningPathId, ngxPath);
         const expectedLectureUnitEntry = new LectureUnitEntry(6, 5);
         expectedLectureUnitEntry.interacted = true;
         expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedLectureUnitEntry);
 
-        storageService.setInteraction(learningPathId, new LectureUnitEntry(6, 5));
         const expectedExerciseEntry = new ExerciseEntry(7);
         expectedExerciseEntry.interacted = true;
         expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toStrictEqual(expectedExerciseEntry);
@@ -160,8 +175,8 @@ describe('LearningPathStorageService', () => {
 
     it('should return undefined if all recommendations completed', () => {
         storageService.storeRecommendations(learningPathId, ngxPath);
-        storageService.setInteraction(learningPathId, new LectureUnitEntry(6, 5));
-        storageService.setInteraction(learningPathId, new ExerciseEntry(7));
+        storageService.setInteraction(learningPathId, new LectureUnitEntry(6, 5), true);
+        storageService.setInteraction(learningPathId, new ExerciseEntry(7), true);
         expect(storageService.getNextRecommendation(learningPathId, new LectureUnitEntry(10, 10))).toBeFalsy();
     });
 });

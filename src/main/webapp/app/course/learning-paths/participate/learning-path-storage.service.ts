@@ -42,6 +42,9 @@ export class LearningPathStorageService {
         if (!this.learningPathHistories.has(learningPathId)) {
             this.learningPathHistories.set(learningPathId, []);
         }
+        if (this.hasPrevious(learningPathId) && entry.equals(this.learningPathHistories.get(learningPathId)![this.learningPathHistories.get(learningPathId)!.length - 1])) {
+            return;
+        }
         this.learningPathHistories.get(learningPathId)!.push(entry);
     }
 
@@ -107,18 +110,19 @@ export class LearningPathStorageService {
     }
 
     /**
-     * Sets the given entry as interacted with.
+     * Sets the given entry interaction.
      *
      * @param learningPathId the id of the learning path the entry belongs to
      * @param entry the entry that should be set to interacted with
+     * @param value the value that should be set
      */
-    setInteraction(learningPathId: number, entry: StorageEntry) {
+    setInteraction(learningPathId: number, entry: StorageEntry, value: boolean) {
         if (!this.learningPathRecommendations.has(learningPathId)) {
             return;
         }
-        const storedEntry = this.getStoredEntry(learningPathId, entry);
+        const storedEntry = this.getStoredRecommendationEntry(learningPathId, entry);
         if (storedEntry) {
-            storedEntry.interacted = true;
+            storedEntry.interacted = value;
         }
     }
 
@@ -129,26 +133,35 @@ export class LearningPathStorageService {
      * @param learningPathId the id of the learning path
      * @param entry the entry for which the successor should be returned
      */
-    getNextRecommendation(learningPathId: number, entry: StorageEntry | undefined) {
+    getNextRecommendation(learningPathId: number, entry: StorageEntry | undefined): StorageEntry | undefined {
         if (!this.learningPathRecommendations.has(learningPathId)) {
             return undefined;
         }
+        // if no entry given, retrieve first not interacted entry
         if (!entry) {
-            return this.learningPathRecommendations.get(learningPathId)!.find((e) => !e.interacted);
+            const nextEntry = this.learningPathRecommendations.get(learningPathId)!.find((e) => !e.interacted);
+            if (nextEntry) {
+                nextEntry.interacted = true;
+            }
+            return nextEntry;
         }
-        const storedEntry = this.getStoredEntry(learningPathId, entry);
+        const storedEntry = this.getStoredRecommendationEntry(learningPathId, entry);
         const nextIndex = this.learningPathRecommendations.get(learningPathId)!.indexOf(storedEntry!) + 1;
         const nextEntry = this.learningPathRecommendations.get(learningPathId)!.find((e, idx) => idx >= nextIndex && !e.interacted);
         if (nextEntry) {
+            // if there is a successor, update interaction and return
             nextEntry.interacted = true;
+            return nextEntry;
+        } else {
+            // if there is no successor, retrieve first not interacted entry
+            return this.getNextRecommendation(learningPathId, undefined);
         }
-        return nextEntry;
     }
 
-    private getStoredEntry(learningPathId: number, entry: StorageEntry) {
+    private getStoredRecommendationEntry(learningPathId: number, entry: StorageEntry) {
         return this.learningPathRecommendations.get(learningPathId)!.find((e) => {
             if (e instanceof LectureUnitEntry && entry instanceof LectureUnitEntry) {
-                return e.lectureId === entry.lectureId && e.lectureUnitId === e.lectureUnitId;
+                return e.lectureId === entry.lectureId && e.lectureUnitId === entry.lectureUnitId;
             } else if (e instanceof ExerciseEntry && entry instanceof ExerciseEntry) {
                 return e.exerciseId === entry.exerciseId;
             }
@@ -158,17 +171,26 @@ export class LearningPathStorageService {
 }
 
 export abstract class StorageEntry {
-    interacted?: boolean;
+    interacted = false;
+
+    abstract equals(other: StorageEntry): boolean;
 }
 
 export class LectureUnitEntry extends StorageEntry {
-    lectureUnitId: number;
-    lectureId: number;
+    readonly lectureUnitId: number;
+    readonly lectureId: number;
 
     constructor(lectureId: number, lectureUnitId: number) {
         super();
         this.lectureId = lectureId;
         this.lectureUnitId = lectureUnitId;
+    }
+
+    equals(other: StorageEntry): boolean {
+        if (other instanceof LectureUnitEntry) {
+            return this.lectureId === other.lectureId && this.lectureUnitId === other.lectureUnitId;
+        }
+        return false;
     }
 }
 
@@ -178,5 +200,12 @@ export class ExerciseEntry extends StorageEntry {
     constructor(exerciseId: number) {
         super();
         this.exerciseId = exerciseId;
+    }
+
+    equals(other: StorageEntry): boolean {
+        if (other instanceof ExerciseEntry) {
+            return this.exerciseId === other.exerciseId;
+        }
+        return false;
     }
 }

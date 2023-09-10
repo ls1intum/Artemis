@@ -28,7 +28,7 @@ export class LearningPathContainerComponent implements OnInit {
     @Input() courseId: number;
     learningPathId: number;
 
-    learningObjectId: number;
+    learningObjectId?: number;
     lectureId?: number;
     lecture: Lecture | undefined;
     lectureUnit: LectureUnit | undefined;
@@ -76,17 +76,26 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     undefineAll() {
+        // reset ids
+        this.lectureId = undefined;
+        this.learningObjectId = undefined;
+        // reset models
         this.lecture = undefined;
         this.lectureUnit = undefined;
         this.exercise = undefined;
     }
 
     onPrevTask() {
+        // reset interaction with current learning object
+        if (this.learningObjectId && this.lectureId) {
+            this.learningPathStorageService.setInteraction(this.learningPathId, new LectureUnitEntry(this.lectureId, this.learningObjectId), false);
+        } else if (this.learningObjectId) {
+            this.learningPathStorageService.setInteraction(this.learningPathId, new ExerciseEntry(this.learningObjectId), false);
+        }
         // reset state to avoid invalid states
         this.undefineAll();
         if (this.learningPathStorageService.hasPrevious(this.learningPathId)) {
-            const entry = this.learningPathStorageService.getPrevious(this.learningPathId);
-            this.loadEntry(entry);
+            this.loadEntry(this.learningPathStorageService.getPrevious(this.learningPathId));
         }
     }
 
@@ -119,7 +128,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     loadExercise() {
-        this.exerciseService.getExerciseDetails(this.learningObjectId).subscribe({
+        this.exerciseService.getExerciseDetails(this.learningObjectId!).subscribe({
             next: (exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
             },
@@ -152,7 +161,7 @@ export class LearningPathContainerComponent implements OnInit {
         if (this.exercise) {
             instance.learningPathMode = true;
             instance.courseId = this.courseId;
-            instance.exerciseId = this.learningObjectId;
+            instance.exerciseId = this.learningObjectId!;
         }
     }
 

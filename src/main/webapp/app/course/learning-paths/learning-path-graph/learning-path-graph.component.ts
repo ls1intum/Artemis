@@ -123,7 +123,6 @@ export class LearningPathGraphComponent implements OnInit {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxGraph = ngxLearningPathResponse.body!;
-            console.log(this.ngxGraph);
             if (render) {
                 this.ngxLearningPath = this.ngxGraph;
                 this.update$.next(true);
@@ -136,7 +135,6 @@ export class LearningPathGraphComponent implements OnInit {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
             this.ngxPath = ngxLearningPathResponse.body!;
-            console.log(this.ngxPath);
             if (render) {
                 this.ngxLearningPath = this.ngxPath;
                 this.update$.next(true);
