@@ -8,13 +8,13 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.4",
-        "@types/node": "20.5.9",
+        "@types/node": "20.6.0",
         "cypress": "13.1.0",
-        "cypress-cloud": "1.9.4",
+        "cypress-cloud": "1.10.0-beta.4",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "2.0.1",
         "typescript": "5.2.2",
-        "uuid": "9.0.0",
+        "uuid": "9.0.1",
         "wait-on": "7.0.1"
     },
     "overrides": {
