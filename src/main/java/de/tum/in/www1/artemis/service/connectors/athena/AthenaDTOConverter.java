@@ -60,25 +60,24 @@ public class AthenaDTOConverter {
     /**
      * Convert a feedback to a DTO for Athena.
      *
-     * @param exerciseId   the id of the exercise the feedback belongs to
+     * @param exercise     the exercise the feedback belongs to
      * @param submissionId the id of the submission the feedback belongs to
      * @param feedback     the feedback to convert
      * @return *FeedbackDTO for Athena
      */
-    public Object ofFeedback(long exerciseId, long submissionId, Feedback feedback) {
-        var exerciseType = feedback.getResult().getParticipation().getExercise().getExerciseType();
-        switch (exerciseType) {
+    public Object ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
+        switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
                 if (feedback.getReference() != null) {
                     feedbackTextBlock = textBlockRepository.findById(feedback.getReference()).orElse(null);
                 }
-                return TextFeedbackDTO.of(exerciseId, submissionId, feedback, feedbackTextBlock);
+                return TextFeedbackDTO.of(exercise.getId(), submissionId, feedback, feedbackTextBlock);
             }
             case PROGRAMMING -> {
-                return ProgrammingFeedbackDTO.of(exerciseId, submissionId, feedback);
+                return ProgrammingFeedbackDTO.of(exercise.getId(), submissionId, feedback);
             }
         }
-        throw new IllegalArgumentException("Feedback type not supported: " + exerciseType);
+        throw new IllegalArgumentException("Feedback type not supported: " + exercise.getId());
     }
 }

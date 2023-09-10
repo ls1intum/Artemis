@@ -84,7 +84,13 @@ public class AthenaFeedbackSendingService {
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission),
-                    feedbacks.stream().map((feedback) -> athenaDTOConverter.ofFeedback(exercise.getId(), submission.getId(), feedback)).toList());
+                    feedbacks.stream().filter((feedback) -> !feedback.isTestFeedback() && !feedback.isStaticCodeAnalysisFeedback() && !feedback.isSubmissionPolicyFeedback()) // Only
+                                                                                                                                                                              // send
+                                                                                                                                                                              // manual
+                                                                                                                                                                              // feedback
+                                                                                                                                                                              // from
+                                                                                                                                                                              // tutors
+                            .map((feedback) -> athenaDTOConverter.ofFeedback(exercise, submission.getId(), feedback)).toList());
             ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
