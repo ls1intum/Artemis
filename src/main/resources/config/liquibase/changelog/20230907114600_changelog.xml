@@ -14,6 +14,7 @@
             SET is_course_wide = true
             WHERE c.lecture_id IS NOT null
                 OR c.exercise_id IS NOT null
+                OR c.exam_id IS NOT null
                 OR (
                     c.creator_id IS null
                     AND NOT EXISTS (
