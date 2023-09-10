@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -18,6 +18,9 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -40,7 +43,14 @@ describe('LearningPathContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(LearningPathGraphSidebarComponent), MockModule(RouterModule)],
+            imports: [
+                ArtemisTestModule,
+                MockModule(RouterModule),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbTooltip),
+                LearningPathGraphSidebarComponent,
+                LearningPathGraphComponent,
+            ],
             declarations: [LearningPathContainerComponent],
             providers: [
                 {
@@ -130,10 +140,10 @@ describe('LearningPathContainerComponent', () => {
     it('should load previous lecture unit', () => {
         hasPreviousStub.mockReturnValue(true);
         getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         fixture.detectChanges();
         comp.onPrevTask();
-        expect(findWithDetailsStub).toHaveBeenCalled();
-        expect(findWithDetailsStub).toHaveBeenCalledWith(lecture.id);
+        expect(findWithDetailsStub).toHaveBeenCalledExactlyOnceWith(lecture.id);
         expect(getExerciseDetailsStub).not.toHaveBeenCalled();
     });
 
@@ -141,10 +151,10 @@ describe('LearningPathContainerComponent', () => {
         hasPreviousStub.mockReturnValue(true);
         getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id!));
         fixture.detectChanges();
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         comp.onPrevTask();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalledWith(exercise.id);
+        expect(getExerciseDetailsStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
     });
 
     it('should set properties of lecture unit view on activate', () => {
@@ -171,6 +181,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle lecture unit node click', () => {
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
@@ -179,6 +190,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle exercise node click', () => {
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
@@ -186,6 +198,7 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle store current lecture unit in history on node click', () => {
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         comp.learningObjectId = lectureUnit.id!;
         comp.lectureUnit = lectureUnit;
         comp.lectureId = lecture.id;
@@ -193,12 +206,12 @@ describe('LearningPathContainerComponent', () => {
         fixture.detectChanges();
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
-        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
-        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id!);
+        expect(storeLectureUnitStub).toHaveBeenCalledExactlyOnceWith(learningPathId, lecture.id, lectureUnit.id!);
         expect(storeExerciseStub).not.toHaveBeenCalled();
     });
 
     it('should handle store current exercise in history on node click', () => {
+        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         comp.learningObjectId = exercise.id!;
         comp.exercise = exercise;
         fixture.detectChanges();

@@ -5,9 +5,11 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { ExerciseEntry, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningPathGraphComponent', () => {
     let fixture: ComponentFixture<LearningPathGraphComponent>;
@@ -32,7 +34,7 @@ describe('LearningPathGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxGraphModule)],
+            imports: [ArtemisTestModule, MockModule(NgxGraphModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
             declarations: [LearningPathGraphComponent],
         })
             .compileComponents()
