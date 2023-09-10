@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
@@ -156,36 +154,6 @@ public class ChannelService {
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         return savedChannel;
-    }
-
-    /**
-     * Adds all course students to the given channel asynchronously
-     *
-     * @param course  the course to add the students from
-     * @param channel the channel to add the students to
-     */
-    @Async
-    public void registerCourseStudentsToChannelAsynchronously(Course course, Channel channel) {
-        if (channel == null) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(true, false, false, List.of(), course, channel);
-    }
-
-    /**
-     * Adds tutors and instructors to the given channel asynchronously
-     *
-     * @param course  the course to add the tutors and instructors from
-     * @param channel the exam channel to add the users to
-     */
-    @Async
-    public void registerTutorsAndInstructorsToChannel(Course course, Channel channel) {
-        if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(false, true, true, List.of(), course, channel);
     }
 
     /**
