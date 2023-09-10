@@ -251,7 +251,7 @@ public class ExamResource {
     @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/working-time")
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
-        log.debug("REST request to update the working time of exam : {}", examId);
+        log.debug("REST request to update the working time of exam with id {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
