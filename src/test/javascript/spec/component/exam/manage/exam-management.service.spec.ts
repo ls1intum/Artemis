@@ -13,6 +13,9 @@ import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
@@ -692,5 +695,18 @@ describe('Exam Management Service Tests', () => {
 
         expect(accountServiceSpy).toHaveBeenCalledOnce();
         expect(accountServiceSpy).toHaveBeenCalledWith(course);
+    }));
+
+    it('should make GET request to retrieve exam exercises that potentially have plagiarism cases', fakeAsync(() => {
+        const exerciseGroup = new ExerciseGroup();
+        const textExercise = new TextExercise(undefined, exerciseGroup);
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, exerciseGroup);
+        const programmingExercise = new ProgrammingExercise(undefined, exerciseGroup);
+
+        const exercises = [textExercise, modelingExercise, programmingExercise];
+        service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exams/1/exercises-with-potential-plagiarism' });
+        req.flush(exercises);
+        tick();
     }));
 });

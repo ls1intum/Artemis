@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -249,11 +248,7 @@ public class ConversationService {
      *
      * @param conversation the conversation to be deleted
      */
-    @Transactional // ok because of delete
     public void deleteConversation(Conversation conversation) {
-        var usersToMessage = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.DELETE, conversation, usersToMessage);
         this.postRepository.deleteAllByConversationId(conversation.getId());
         this.conversationParticipantRepository.deleteAllByConversationId(conversation.getId());
         this.conversationRepository.deleteById(conversation.getId());
@@ -270,36 +265,6 @@ public class ConversationService {
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
         recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
-    }
-
-    /**
-     * Deregister all clients from the exercise channel of the given exercise
-     *
-     * @param exercise the exercise that is being deleted
-     */
-    public void deregisterAllClientsFromChannel(Exercise exercise) {
-        // deregister all clients from the channel
-        Channel originalChannel = channelRepository.findChannelByExerciseId(exercise.getId());
-        if (exercise.isCourseExercise() && originalChannel != null) {
-            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
-            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
-            broadcastOnConversationMembershipChannel(originalChannel.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
-        }
-    }
-
-    /**
-     * Deregister all clients from the lecture channel of the given exercise
-     *
-     * @param lecture the lecture that is being deleted
-     */
-    public void deregisterAllClientsFromChannel(Lecture lecture) {
-        // deregister all clients from the channel
-        Channel originalChannel = channelRepository.findChannelByLectureId(lecture.getId());
-        if (originalChannel != null) {
-            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
-            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
-            broadcastOnConversationMembershipChannel(lecture.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
-        }
     }
 
     @NotNull
@@ -447,18 +412,30 @@ public class ConversationService {
      * @return a stream of channels without channels belonging to unreleased lectures/exercises/exams
      */
     public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
-        return channels.filter(channel -> {
-            if (channel.getLecture() != null) {
-                return channel.getLecture().isVisibleToStudents();
-            }
-            else if (channel.getExercise() != null) {
-                return channel.getExercise().isVisibleToStudents();
-            }
-            else if (channel.getExam() != null) {
-                return channel.getExam().isVisibleToStudents();
-            }
-            return true;
-        });
+        return channels.filter(this::isChannelVisibleToStudents);
+    }
+
+    /**
+     * Determines whether the provided channel is visible to students.
+     * <p>
+     * If the channel is not associated with a lecture/exam/exercise, then this method returns true.
+     * If it is connected to a lecture/exam/exercise, then the
+     * channel visibility depends on the visible date of the lecture/exam/exercise.
+     *
+     * @param channel the channel under consideration
+     * @return true if the channel is visible to students
+     */
+    public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
+        if (channel.getLecture() != null) {
+            return channel.getLecture().isVisibleToStudents();
+        }
+        else if (channel.getExercise() != null) {
+            return channel.getExercise().isVisibleToStudents();
+        }
+        else if (channel.getExam() != null) {
+            return channel.getExam().isVisibleToStudents();
+        }
+        return true;
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {
