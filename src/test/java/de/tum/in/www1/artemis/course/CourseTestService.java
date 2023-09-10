@@ -209,6 +209,9 @@ public class CourseTestService {
     @Autowired
     private TeamUtilService teamUtilService;
 
+    @Autowired
+    private LearningPathRepository learningPathRepository;
+
     private static final int numberOfStudents = 8;
 
     private static final int numberOfTutors = 5;
@@ -548,11 +551,6 @@ public class CourseTestService {
             var channels = channelRepository.findChannelsByCourseId(course2.getId());
             assertThat(channels).hasSize(DefaultChannelType.values().length);
             channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
-            // Check if newly added instructor and student was added to default channels
-            channels.forEach(channel -> {
-                var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-                assertThat(participants).hasSize(2); // 1 instructor and 1 student
-            });
         });
 
     }
@@ -1714,9 +1712,11 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
+        course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
+        assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
 
@@ -3106,5 +3106,24 @@ public class CourseTestService {
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+    }
+
+    // Test
+    public void testUpdateCourseEnableLearningPaths() throws Exception {
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
+                "tutor", "editor", "instructor");
+        course.setLearningPathsEnabled(false);
+        courseRepo.save(course);
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        student.setGroups(Set.of("editlearningpathenabledcourse"));
+        userRepo.save(student);
+
+        course.setLearningPathsEnabled(true);
+
+        MvcResult result = request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }
 }

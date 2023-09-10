@@ -21,6 +21,7 @@ import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 
 export const courseManagementState: Routes = [
     {
@@ -217,6 +218,15 @@ export const courseManagementState: Routes = [
                                 canActivate: [UserRouteAccessService],
                             },
                         ],
+                    },
+                    {
+                        path: 'learning-path-management',
+                        component: LearningPathManagementComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
+                        },
+                        canActivate: [UserRouteAccessService],
                     },
                 ],
             },

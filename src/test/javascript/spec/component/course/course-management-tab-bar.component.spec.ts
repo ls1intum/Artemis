@@ -15,6 +15,7 @@ import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-e
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('Course Management Tab Bar Component', () => {
@@ -45,6 +46,7 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(FeatureToggleLinkDirective),
+                MockDirective(FeatureToggleHideDirective),
             ],
             imports: [HttpClientTestingModule, RouterModule, ArtemisTestModule],
             providers: [

@@ -239,7 +239,7 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Replaces a comma seperated list of test case names with their corresponding ids.
+     * Replaces a comma separated list of test case names with their corresponding ids.
      * If no matching test case exists (e.g. due to a typo), we keep the test name.
      */
     private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
