@@ -118,7 +118,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     /**
      * Updates the working time percent value of the control based on the current working time duration.
-     * @private
      */
     private updateWorkingTimePercentFromDuration() {
         if (this.exam) {
@@ -128,7 +127,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     /**
      * Updates the working time duration values of the control based on the current working time percent.
-     * @private
      */
     private updateWorkingTimeDurationFromPercent() {
         if (this.exam) {
